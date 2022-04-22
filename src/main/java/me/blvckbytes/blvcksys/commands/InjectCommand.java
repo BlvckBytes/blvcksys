@@ -4,14 +4,12 @@ import io.netty.channel.*;
 import me.blvckbytes.blvcksys.Main;
 import me.blvckbytes.blvcksys.config.Config;
 import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.cmd.APlayerCommand;
 import me.blvckbytes.blvcksys.util.cmd.CommandResult;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.server.network.PlayerConnection;
 import org.bukkit.Bukkit;
-import org.bukkit.craftbukkit.v1_18_R2.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -69,14 +67,18 @@ public class InjectCommand extends APlayerCommand implements Listener, IAutoCons
 
     // Already injected, uninject
     if (this.handlers.containsKey(target)) {
-      this.uninjectPlayer(target);
-      p.sendMessage(Config.getP(ConfigKey.INJECT_UNINJECTED, target.getDisplayName()));
+      if (this.uninjectPlayer(target))
+        p.sendMessage(Config.getP(ConfigKey.INJECT_UNINJECTED, target.getDisplayName()));
+      else
+        p.sendMessage(Config.getP(ConfigKey.ERR_INTERNAL));
       return success();
     }
 
     // Create a new injection
-    this.injectPlayer(target);
-    p.sendMessage(Config.getP(ConfigKey.INJECT_INJECTED, target.getDisplayName()));
+    if (this.injectPlayer(target))
+      p.sendMessage(Config.getP(ConfigKey.INJECT_INJECTED, target.getDisplayName()));
+    else
+      p.sendMessage(Config.getP(ConfigKey.ERR_INTERNAL));
     return success();
   }
 
@@ -139,61 +141,76 @@ public class InjectCommand extends APlayerCommand implements Listener, IAutoCons
   /**
    * Create a new injection for the player
    * @param p Target player
+   * @return Success state
    */
-  private void injectPlayer(Player p) {
-    // Already injected
-    if (handlers.containsKey(p))
-      return;
+  private boolean injectPlayer(Player p) {
+    try {
+      // Already injected
+      if (handlers.containsKey(p))
+        return true;
 
-    // Create a new channel handler that overrides R/W to intercept
-    // This handler gets created in this closure to provide player context (if ever needed)
-    ChannelDuplexHandler handler = new ChannelDuplexHandler() {
+      // Create a new channel handler that overrides R/W to intercept
+      // This handler gets created in this closure to provide player context (if ever needed)
+      ChannelDuplexHandler handler = new ChannelDuplexHandler() {
 
-      @Override
-      public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        logEvent("INBOUND", msg);
-        super.channelRead(ctx, msg);
-      }
+        @Override
+        public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+          logEvent("INBOUND", msg);
+          super.channelRead(ctx, msg);
+        }
 
-      @Override
-      public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-        logEvent("OUTBOUND", msg);
-        super.write(ctx, msg, promise);
-      }
-    };
+        @Override
+        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+          logEvent("OUTBOUND", msg);
+          super.write(ctx, msg, promise);
+        }
+      };
 
-    // Register handler in local map
-    handlers.put(p, handler);
+      // Register handler in local map
+      handlers.put(p, handler);
 
-    // Add custom interception handler before default packet handler
-    getPipe(p).addBefore("packet_handler", handlerName, handler);
+      // Add custom interception handler before default packet handler
+      getPipe(p).addBefore("packet_handler", handlerName, handler);
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
   }
 
-  private ChannelPipeline getPipe(Player p) {
-    CraftPlayer cp = ((CraftPlayer) p);
-    PlayerConnection pc = cp.getHandle().b;
-    NetworkManager nm = pc.a;
-    Channel c = nm.m;
+  /**
+   * Get the network pipeline of a player
+   * @param p Target player
+   * @return Pipeline of the target
+   * @throws Exception Issues during reflection access
+   */
+  private ChannelPipeline getPipe(Player p) throws Exception {
+    Channel c = MCReflect.getNetworkChannel(p);
     return c.pipeline();
   }
 
   /**
    * Remove a previously created injection from the player
    * @param p Target player
+   * @return Success state
    */
-  private void uninjectPlayer(Player p) {
-    // Not injected
-    if (handlers.remove(p) == null)
-      return;
+  private boolean uninjectPlayer(Player p) {
+    try {
+      // Not injected
+      if (handlers.remove(p) == null)
+        return true;
 
-    // Remove pipeline entry
-    ChannelPipeline pipe = getPipe(p);
+      // Remove pipeline entry
+      ChannelPipeline pipe = getPipe(p);
 
-    // Not registered in the pipeline
-    if (!pipe.names().contains(handlerName))
-      return;
+      // Not registered in the pipeline
+      if (!pipe.names().contains(handlerName))
+        return true;
 
-    // Remove handler
-    pipe.remove(handlerName);
+      // Remove handler
+      pipe.remove(handlerName);
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
   }
 }

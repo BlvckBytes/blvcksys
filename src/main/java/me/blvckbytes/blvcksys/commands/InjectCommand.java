@@ -16,12 +16,24 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Stream;
 
 @AutoConstruct
 public class InjectCommand extends APlayerCommand implements Listener, IAutoConstructed {
+
+  /**
+   * Describes the direction a intercepted packet can travel
+   */
+  enum PacketDirection {
+    IN,     // Inbound only
+    OUT,    // Outbound only
+    IN_OUT  // In- and outbound
+  }
 
   // Name of the intercepting handler inside the channel pipeline
   private static final String handlerName = "blvcksys_injectcmd";
@@ -33,7 +45,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IAutoCons
     super(
       "inject",
       "Inject an interceptor to monitor a player's packets",
-      "/inject <player>"
+      "/inject <player> [direction] [regex]"
     );
 
     this.handlers = new HashMap<>();
@@ -52,18 +64,52 @@ public class InjectCommand extends APlayerCommand implements Listener, IAutoCons
         .map(Player::getDisplayName)
         .filter(n -> n.toLowerCase().contains(args[currArg].toLowerCase()));
 
+    // Second argument - provide all PacketDirection values
+    if (currArg == 1)
+      return Arrays.stream(PacketDirection.values())
+        .map(Enum::toString)
+        .filter(pd -> pd.toLowerCase().contains(args[currArg].toLowerCase()));
+
     return super.onTabCompletion(p, args, currArg);
   }
 
   @Override
   protected CommandResult onInvocation(Player p, String label, String[] args) {
-    if (args.length != 1)
+    if (args.length < 1)
       return usageMismatch();
 
     // Get the target player
     Player target = Bukkit.getPlayer(args[0]);
     if (target == null)
       return playerOffline(args[0]);
+
+    // The default direction is in and out
+    PacketDirection dir = PacketDirection.IN_OUT;
+
+    // Try to parse the packet direction
+    if (args.length >= 2) {
+      String dirStr = args[1].toUpperCase();
+
+      try {
+        dir = PacketDirection.valueOf(dirStr);
+      } catch (IllegalArgumentException e) {
+        return customError(Config.getP(ConfigKey.INJECT_INVALID_DIR, dirStr));
+      }
+    }
+
+    // The default regex is null (match everything)
+    Pattern regex = null;
+
+    // Regex has been provided, collect supporting spaces and try to compile the pattern
+    if (args.length >= 3) {
+      String regStr = argvar(args, 2);
+
+      try {
+        regex = Pattern.compile(regStr);
+      } catch (PatternSyntaxException e) {
+        return customError(Config.getP(ConfigKey.INJECT_INVALID_REGEX, regStr));
+      }
+    }
 
     // Already injected, uninject
     if (this.handlers.containsKey(target)) {
@@ -75,7 +121,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IAutoCons
     }
 
     // Create a new injection
-    if (this.injectPlayer(target))
+    if (this.injectPlayer(target, dir, regex))
       p.sendMessage(Config.getP(ConfigKey.INJECT_INJECTED, target.getDisplayName()));
     else
       p.sendMessage(Config.getP(ConfigKey.ERR_INTERNAL));
@@ -141,9 +187,11 @@ public class InjectCommand extends APlayerCommand implements Listener, IAutoCons
   /**
    * Create a new injection for the player
    * @param p Target player
+   * @param dir Direction to capture
+   * @param regex Regex to match simple classnames against, null for any
    * @return Success state
    */
-  private boolean injectPlayer(Player p) {
+  private boolean injectPlayer(Player p, PacketDirection dir, Pattern regex) {
     try {
       // Already injected
       if (handlers.containsKey(p))
@@ -155,13 +203,29 @@ public class InjectCommand extends APlayerCommand implements Listener, IAutoCons
 
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-          logEvent("INBOUND", msg);
+          if (
+            // Direction matches
+            (dir == PacketDirection.IN || dir == PacketDirection.IN_OUT) &&
+
+            // Pattern matches
+            (regex == null || regex.matcher(msg.getClass().getSimpleName()).find())
+          )
+            logEvent("INBOUND", msg);
+
           super.channelRead(ctx, msg);
         }
 
         @Override
         public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-          logEvent("OUTBOUND", msg);
+          if (
+            // Direction matches
+            (dir == PacketDirection.OUT || dir == PacketDirection.IN_OUT) &&
+
+            // Pattern matches
+            (regex == null || regex.matcher(msg.getClass().getSimpleName()).find())
+          )
+            logEvent("OUTBOUND", msg);
+
           super.write(ctx, msg, promise);
         }
       };

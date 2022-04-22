@@ -1,13 +1,9 @@
 package me.blvckbytes.blvcksys.util;
 
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelPipeline;
 import me.blvckbytes.blvcksys.Main;
-import net.minecraft.network.NetworkManager;
-import net.minecraft.server.network.PlayerConnection;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
-import org.bukkit.craftbukkit.v1_18_R2.entity.CraftPlayer;
 import org.bukkit.entity.Player;
 
 import java.lang.reflect.Field;

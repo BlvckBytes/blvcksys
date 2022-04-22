@@ -9,16 +9,12 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 public class Main extends JavaPlugin {
 
-  // All logging occurs within the console
-  private static final ILogger logger = new ConsoleSenderLogger("BVS", true);
-
+  private static ILogger logger;
   private static Main inst;
 
   @Override
   public void onEnable() {
     inst = this;
-    // Auto-construct all commands, which loads them through their super-calls
-    AutoConstructer.execute("me.blvckbytes.blvcksys.commands");
 
     // Load the config file
     try {
@@ -27,15 +23,27 @@ public class Main extends JavaPlugin {
       logger().logError(e);
     }
 
+    // Auto-construct all commands, which loads them through their super-calls
+    AutoConstructer.execute("me.blvckbytes.blvcksys.commands");
+
     logger().logInfo("Plugin loaded successfully!");
   }
 
   @Override
   public void onDisable() {
+    // Call cleanup on our resources
+    AutoConstructer.cleanup();
+
     logger().logInfo("Plugin unloaded successfully!");
   }
 
   public static ILogger logger() {
+    // Create logger on the first call
+    // Calls should only appear after onEnable, and thus we can expect Config to be loaded
+    if (logger == null)
+      // All logging occurs within the console
+      logger = new ConsoleSenderLogger(Config.get(ConfigKey.PREFIX), true);
+
     return logger;
   }
   public static Main getInst() { return inst; }

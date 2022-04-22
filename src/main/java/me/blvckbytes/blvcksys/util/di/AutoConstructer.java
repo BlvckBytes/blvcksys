@@ -18,6 +18,21 @@ public class AutoConstructer {
   }
 
   /**
+   * Calls the cleanup-routine on all resources that implement it
+   */
+  public static void cleanup() {
+    // Iterate all created instances
+    for (Object ref : refs.values()) {
+      // Does not implement the autoconstructed interface (which is not mandatory), thus skip
+      if (!IAutoConstructed.class.isAssignableFrom(ref.getClass()))
+        continue;
+
+      // Call cleanup
+      ((IAutoConstructed) ref).cleanup();
+    }
+  }
+
+  /**
    * Execute the auto-constructor and thus instantiate all available
    * classes within the specified package that are annotated by @AutoConstruct
    *

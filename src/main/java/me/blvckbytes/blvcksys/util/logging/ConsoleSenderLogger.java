@@ -7,17 +7,17 @@ import java.io.StringWriter;
 
 public class ConsoleSenderLogger implements ILogger {
 
-  private String name;
-  private boolean debug;
+  private final String prefix;
+  private final boolean debug;
 
-  public ConsoleSenderLogger(String name, boolean debug) {
-    this.name = name;
+  public ConsoleSenderLogger(String prefix, boolean debug) {
+    this.prefix = prefix;
     this.debug = debug;
   }
 
   private void log(String format, Object... args) {
     Bukkit.getConsoleSender().sendMessage(
-      "§7[§5%s§7] §f%s".formatted(this.name, format.formatted(args))
+      this.prefix + format.formatted(args)
     );
   }
 

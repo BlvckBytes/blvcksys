@@ -248,4 +248,50 @@ public abstract class APlayerCommand extends Command {
       return new CommandResult(CommandError.INT_UNPARSEABLE, value);
     }
   }
+
+  /**
+   * Turn an object into a human readable string, if possible
+   * @param o Object to stringify
+   * @return String representation
+   */
+  protected String stringifyObject(Object o) {
+    // Directly stringify null values
+    if (o == null)
+      return "null";
+
+    Class<?> c = o.getClass();
+
+    // Just stringify primitives (and their wrappers), enums or strings
+    if (
+      c.isPrimitive()
+        || c.isEnum()
+        || o instanceof String
+        || o instanceof Integer
+        || o instanceof Long
+        || o instanceof Double
+        || o instanceof Float
+        || o instanceof Boolean
+        || o instanceof Byte
+        || o instanceof Short
+        || o instanceof Character
+    )
+      return o.toString();
+
+    // Is an array or a list, format as [...]
+    boolean isList = List.class.isAssignableFrom(c);
+    if (c.isArray() || isList) {
+      StringBuilder sb = new StringBuilder("[");
+
+      // Iterate list or list from array
+      List<?> list = (List<?>) (isList ? o : Arrays.asList((Object[]) o));
+      for (int i = 0; i < list.size(); i++)
+        sb.append(i == 0 ? "" : ", ").append(stringifyObject(list.get(i)));
+
+      sb.append("]");
+      return sb.toString();
+    }
+
+    // Not "easily" formattable, at least inform about the classname
+    return "<" + c.getSimpleName() + ">";
+  }
 }

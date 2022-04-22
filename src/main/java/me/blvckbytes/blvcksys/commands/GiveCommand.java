@@ -1,5 +1,7 @@
 package me.blvckbytes.blvcksys.commands;
 
+import me.blvckbytes.blvcksys.config.Config;
+import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.util.cmd.APlayerCommand;
 import me.blvckbytes.blvcksys.util.cmd.CommandResult;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
@@ -20,7 +22,7 @@ public class GiveCommand extends APlayerCommand {
     super(
       "give",
       "Give a certain amount of an item to yourself or others",
-      "/give <item> <amount> [Player]"
+      "/give <item> <amount> [player]"
     );
   }
 
@@ -57,7 +59,7 @@ public class GiveCommand extends APlayerCommand {
 
     // Unknown material requested, provide proper help
     if (mat == null)
-      return customError("The material %s does not exist".formatted(matstr));
+      return customError(Config.getP(ConfigKey.GIVE_INVALID_ITEM, matstr));
 
     // Try to parse the amount
     MutableInt amount = new MutableInt(0);
@@ -80,20 +82,25 @@ public class GiveCommand extends APlayerCommand {
 
     // Hand out the items
     int dropped = giveItems(target, mat, amount.intValue());
+    String dropMsg = Config.getP(ConfigKey.GIVE_DROPPED, dropped);
 
-    // Pre-format info strings
-    String items = "%dx %s".formatted(amount.intValue(), mat.toString());
-    String drop = dropped > 0 ? " §c(%d dropped)§r".formatted(dropped) : "";
+    // Notify the executor about the drop
+    if (dropped > 0)
+      p.sendMessage(dropMsg);
 
     // Notify about giveaway
     if (target != p) {
-      p.sendMessage("You gave %s to %s%s".formatted(items, target.getName(), drop));
-      target.sendMessage("%s gave %s to you%s".formatted(p.getName(), items, drop));
+      p.sendMessage(Config.getP(ConfigKey.GIVE_SENDER, target.getDisplayName(), amount.intValue(), mat.toString()));
+      target.sendMessage(Config.getP(ConfigKey.GIVE_RECEIVER, p.getDisplayName(), amount.intValue(), mat.toString()));
+
+      // Notify the target about the drop
+      if (dropped > 0)
+        target.sendMessage(dropMsg);
     }
 
-    // Notify self
+    // Notify self give
     else
-      p.sendMessage("You received %s%s".formatted(items, drop));
+      p.sendMessage(Config.getP(ConfigKey.GIVE_SELF, amount.intValue(), mat.toString()));
 
     return success();
   }

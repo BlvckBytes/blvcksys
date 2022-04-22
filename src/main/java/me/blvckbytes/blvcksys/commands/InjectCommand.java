@@ -162,8 +162,23 @@ public class InjectCommand extends APlayerCommand implements Listener, IAutoCons
     StringBuilder props = new StringBuilder();
 
     try {
+      Class<?> cl = msg.getClass();
+      Field[] fields = cl.getDeclaredFields();
+
+      // This class doesn't contain any fields, search for superclasses
+      while (
+        // No fields yet
+        fields.length == 0 &&
+
+        // Superclass available
+        msg.getClass().getSuperclass() != null
+      ) {
+        // Navigate into superclass and list it's fields
+        cl = cl.getSuperclass();
+        fields = cl.getDeclaredFields();
+      }
+
       // Loop all fields of this packet and add them to a comma separated list
-      Field[] fields = msg.getClass().getDeclaredFields();
       for (int i = 0; i < fields.length; i++) {
         Field f = fields[i];
 

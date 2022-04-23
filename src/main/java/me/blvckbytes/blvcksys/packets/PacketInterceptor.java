@@ -175,14 +175,24 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
           }
 
           // Run through all global modifiers
-          for (IPacketModifier modifier : globalModifiers)
+          for (IPacketModifier modifier : globalModifiers) {
             packet = modifier.modifyIncoming(p, packet);
+
+            // Packet has been terminated
+            if (packet == null)
+              return;
+          }
 
           // Run through all specific modifiers
           ArrayList<IPacketModifier> specifics = specificModifiers.get(p);
           if (specifics != null) {
-            for (IPacketModifier modifier : specifics)
+            for (IPacketModifier modifier : specifics) {
               packet = modifier.modifyIncoming(p, packet);
+
+              // Packet has been terminated
+              if (packet == null)
+                return;
+            }
           }
 
           // Relay modified packet
@@ -198,14 +208,24 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
           }
 
           // Run through all global modifiers
-          for (IPacketModifier modifier : globalModifiers)
+          for (IPacketModifier modifier : globalModifiers) {
             packet = modifier.modifyOutgoing(p, packet);
+
+            // Packet has been terminated
+            if (packet == null)
+              return;
+          }
 
           // Run through all specific modifiers
           ArrayList<IPacketModifier> specifics = specificModifiers.get(p);
           if (specifics != null) {
-            for (IPacketModifier modifier : specifics)
+            for (IPacketModifier modifier : specifics) {
               packet = modifier.modifyOutgoing(p, packet);
+
+              // Packet has been terminated
+              if (packet == null)
+                return;
+            }
           }
 
           // Relay modified packet

@@ -1,19 +1,21 @@
 package me.blvckbytes.blvcksys.commands;
 
-import me.blvckbytes.blvcksys.Main;
-import me.blvckbytes.blvcksys.config.Config;
 import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
+import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.cmd.APlayerCommand;
 import me.blvckbytes.blvcksys.util.cmd.CommandResult;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
+import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.network.protocol.Packet;
 import org.apache.commons.lang.mutable.MutableInt;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -49,9 +51,14 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
   private final IPacketInterceptor interceptor;
 
   public InjectCommand(
+    @AutoInject JavaPlugin main,
+    @AutoInject ILogger logger,
+    @AutoInject IConfig cfg,
+    @AutoInject MCReflect refl,
     @AutoInject IPacketInterceptor interceptor
-    ) {
+  ) {
     super(
+      main, logger, cfg, refl,
       "inject",
       "Inject an interceptor to monitor a player's packets",
       new String[][] {
@@ -112,7 +119,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
       try {
         dir = PacketDirection.valueOf(dirStr);
       } catch (IllegalArgumentException e) {
-        return customError(Config.getP(ConfigKey.INJECT_INVALID_DIR, dirStr));
+        return customError(cfg.getP(ConfigKey.INJECT_INVALID_DIR, dirStr));
       }
     }
 
@@ -136,21 +143,21 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
       try {
         regex = Pattern.compile(regStr);
       } catch (PatternSyntaxException e) {
-        return customError(Config.getP(ConfigKey.INJECT_INVALID_REGEX, regStr));
+        return customError(cfg.getP(ConfigKey.INJECT_INVALID_REGEX, regStr));
       }
     }
 
     // Already injected, uninject
     if (this.interceptor.isRegisteredSpecific(target, this)) {
       this.interceptor.unregisterSpecific(target, this);
-      p.sendMessage(Config.getP(ConfigKey.INJECT_UNINJECTED, target.getDisplayName()));
+      p.sendMessage(cfg.getP(ConfigKey.INJECT_UNINJECTED, target.getDisplayName()));
       return success();
     }
 
     // Create a new injection and store the request locally
     this.requests.put(target, new InterceptionRequest(dir, depth.intValue(), regex));
     this.interceptor.registerSpecific(target, this);
-    p.sendMessage(Config.getP(ConfigKey.INJECT_INJECTED, target.getDisplayName()));
+    p.sendMessage(cfg.getP(ConfigKey.INJECT_INJECTED, target.getDisplayName()));
     return success();
   }
 
@@ -207,23 +214,18 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
    * @param depth Levels of recursion to allow when stringifying object fields
    */
   private void logEvent(String dir, Object msg, int depth) {
-    String cOth = Config.get(ConfigKey.INJECT_EVENT_COLOR_OTHER);
-    String cVal = Config.get(ConfigKey.INJECT_EVENT_COLOR_VALUES);
-
-    // Get stringification result with proper colors applied
-    String res = stringifyObjectProperties(
-      msg, depth,
-      Config.get(ConfigKey.INJECT_EVENT_COLOR_OTHER),
-      Config.get(ConfigKey.INJECT_EVENT_COLOR_VALUES)
-    );
+    String cOth = cfg.get(ConfigKey.INJECT_EVENT_COLOR_OTHER);
+    String cVal = cfg.get(ConfigKey.INJECT_EVENT_COLOR_VALUES);
 
     // Log this event as an info message
-    Main.logger().logInfo(Config.get(
+    logger.logInfo(cfg.get(
       ConfigKey.INJECT_EVENT,
       dir,
       "%s%s(%s%s%s)".formatted(
         cOth, msg.getClass().getSimpleName(),
-        cVal, res, cOth
+
+        // Get stringification result with proper colors applied
+        cVal, stringifyObjectProperties(msg, depth, cOth, cVal), cOth
       )
     ));
   }

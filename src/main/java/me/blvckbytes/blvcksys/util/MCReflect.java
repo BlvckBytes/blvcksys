@@ -1,23 +1,38 @@
 package me.blvckbytes.blvcksys.util;
 
 import io.netty.channel.Channel;
-import me.blvckbytes.blvcksys.Main;
+import me.blvckbytes.blvcksys.util.di.AutoConstruct;
+import me.blvckbytes.blvcksys.util.di.AutoInject;
+import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.Optional;
 
+@AutoConstruct
 public class MCReflect {
 
-  private static String ver = findVersion();
+  private final JavaPlugin main;
+  private final ILogger logger;
+  private final String ver;
+
+  public MCReflect(
+    @AutoInject JavaPlugin main,
+    @AutoInject ILogger logger
+  ) {
+    this.main = main;
+    this.logger = logger;
+    this.ver = findVersion();
+  }
 
   /**
    * Find the minecraft version by parsing the bukkit package
    */
-  private static String findVersion() {
+  private String findVersion() {
     return Bukkit.getServer().getClass().getName().split("\\.")[3];
   }
 
@@ -27,7 +42,7 @@ public class MCReflect {
    * @return Loaded class
    * @throws ClassNotFoundException Class could not be found
    */
-  public static Class<?> getClassBKT(String name) throws ClassNotFoundException {
+  public Class<?> getClassBKT(String name) throws ClassNotFoundException {
     return Class.forName("org.bukkit.craftbukkit.%s.%s".formatted(ver, name));
   }
 
@@ -37,17 +52,17 @@ public class MCReflect {
    * @return Loaded class
    * @throws ClassNotFoundException Class could not be found
    */
-  public static Class<?> getClassNMS(String name) throws ClassNotFoundException {
+  public Class<?> getClassNMS(String name) throws ClassNotFoundException {
     return Class.forName("net.minecraft.server.%s.%s".formatted(ver, name));
   }
 
   /**
    * Get the instance of the CraftServer
    */
-  public static Object getCraftServer() throws ClassNotFoundException {
+  public Object getCraftServer() throws ClassNotFoundException {
     // Get the server instance and cast it to a CraftServer
     Class<?> clazz = getClassBKT("CraftServer");
-    return clazz.cast(Main.getInst().getServer());
+    return clazz.cast(main.getServer());
   }
 
   /**
@@ -56,7 +71,7 @@ public class MCReflect {
    * @param name Name of the command
    * @param command Command handler
    */
-  public static void registerCommand(String name, Command command) {
+  public void registerCommand(String name, Command command) {
     try {
       Object cs = getCraftServer();
 
@@ -67,7 +82,7 @@ public class MCReflect {
       // Invoke the register method using the passed parameters
       cmdMap.getClass().getMethod("register", String.class, Command.class).invoke(cmdMap, name, command);
     } catch (Exception e) {
-      Main.logger().logError(e);
+      logger.logError(e);
     }
   }
 
@@ -77,14 +92,14 @@ public class MCReflect {
    * @param fieldClass Simple name of the target field's class
    * @return Optional field, no value on reflection errors
    */
-  public static Optional<Field> findFieldByType(Class<?> c, String fieldClass) {
+  public Optional<Field> findFieldByType(Class<?> c, String fieldClass) {
     try {
       // Try to find a field of type PlayerConnection in the EntityPlayer
       return Arrays.stream(c.getDeclaredFields())
         .filter(it -> it.getType().getSimpleName().equals(fieldClass))
         .findFirst();
     } catch (Exception e) {
-      Main.logger().logError(e);
+      logger.logError(e);
       return Optional.empty();
     }
   }
@@ -95,7 +110,7 @@ public class MCReflect {
    * @param fieldClass Simple name of the target field's class
    * @return Optional field value, no value on reflection errors
    */
-  public static Optional<Object> getFieldByType(Object o, String fieldClass) {
+  public Optional<Object> getFieldByType(Object o, String fieldClass) {
     try {
       // Try to get the field by it's type
       Optional<Field> f = findFieldByType(o.getClass(), fieldClass);
@@ -107,7 +122,7 @@ public class MCReflect {
       f.get().setAccessible(true);
       return Optional.of(f.get().get(o));
     } catch (Exception e) {
-      Main.logger().logError(e);
+      logger.logError(e);
       return Optional.empty();
     }
   }
@@ -118,13 +133,13 @@ public class MCReflect {
    * @param fieldClass Simple name of the target field's class
    * @param v Value to set
    */
-  public static void setFieldByType(Object o, String fieldClass, Object v) {
+  public void setFieldByType(Object o, String fieldClass, Object v) {
     findFieldByType(o.getClass(), fieldClass).ifPresent(f -> {
       try {
         f.setAccessible(true);
         f.set(o, v);
       } catch (Exception e) {
-        Main.logger().logError(e);
+        logger.logError(e);
       }
     });
   }
@@ -135,11 +150,11 @@ public class MCReflect {
    * @param c Class to check for
    * @return True if it's an instance, false if not (or on errors)
    */
-  public static boolean isInstanceOf(Object o, Class<?> c) {
+  public boolean isInstanceOf(Object o, Class<?> c) {
     try {
       return c.isAssignableFrom(o.getClass());
     } catch (Exception e) {
-      Main.logger().logError(e);
+      logger.logError(e);
       return false;
     }
   }
@@ -150,12 +165,12 @@ public class MCReflect {
    * @param nmsClass Class to check for
    * @return True if it's an instance, false if not (or on errors)
    */
-  public static boolean isInstanceOfNMS(Object o, String nmsClass) {
+  public boolean isInstanceOfNMS(Object o, String nmsClass) {
     try {
       Class<?> c = getClassNMS(nmsClass);
       return isInstanceOf(o, c);
     } catch (Exception e) {
-      Main.logger().logError(e);
+      logger.logError(e);
       return false;
     }
   }
@@ -166,7 +181,7 @@ public class MCReflect {
    * @return CraftPlayer instance
    * @throws Exception Issues during reflection access
    */
-  public static Object getCraftPlayer(Player p) throws Exception {
+  public Object getCraftPlayer(Player p) throws Exception {
     Class<?> cpC = getClassBKT("entity.CraftPlayer");
     return cpC.cast(p);
   }
@@ -177,7 +192,7 @@ public class MCReflect {
    * @return EntityPlayer of the player
    * @throws Exception Issues during reflection access
    */
-  public static Object getEntityPlayer(Player p) throws Exception {
+  public Object getEntityPlayer(Player p) throws Exception {
     Object cp = getCraftPlayer(p);
     return cp.getClass().getMethod("getHandle").invoke(p);
   }
@@ -188,7 +203,7 @@ public class MCReflect {
    * @return PlayerConnection of the player
    * @throws Exception Issues during reflection access
    */
-  public static Object getPlayerConnection(Player p) throws Exception {
+  public Object getPlayerConnection(Player p) throws Exception {
     Object ep = getEntityPlayer(p);
     assert ep != null;
 
@@ -210,7 +225,7 @@ public class MCReflect {
    * @return NetworkManager of the player
    * @throws Exception Issues during reflection access
    */
-  public static Object getNetworkManager(Player p) throws Exception {
+  public Object getNetworkManager(Player p) throws Exception {
     Object pc = getPlayerConnection(p);
     assert pc != null;
 
@@ -232,7 +247,7 @@ public class MCReflect {
    * @return NetworkChannel of the player
    * @throws Exception Issues during reflection access
    */
-  public static Channel getNetworkChannel(Player p) throws Exception {
+  public Channel getNetworkChannel(Player p) throws Exception {
     Object nm = getNetworkManager(p);
     assert nm != null;
 
@@ -255,14 +270,14 @@ public class MCReflect {
    * @return Value of the field
    * @throws Exception Issues during reflection access
    */
-  public static Optional<Object> getFieldByName(Object o, String field) {
+  public Optional<Object> getFieldByName(Object o, String field) {
     try {
       Class<?> cl = o.getClass();
       Field f = cl.getDeclaredField(field);
       f.setAccessible(true);
       return Optional.of(f.get(o));
     } catch (Exception e) {
-      Main.logger().logError(e);
+      logger.logError(e);
       return Optional.empty();
     }
   }
@@ -273,14 +288,14 @@ public class MCReflect {
    * @param field Name of the field
    * @param value New value
    */
-  public static void setFieldByName(Object o, String field, Object value) {
+  public void setFieldByName(Object o, String field, Object value) {
     try {
       Class<?> cl = o.getClass();
       Field f = cl.getDeclaredField(field);
       f.setAccessible(true);
       f.set(o, value);
     } catch (Exception e) {
-      Main.logger().logError(e);
+      logger.logError(e);
     }
   }
 }

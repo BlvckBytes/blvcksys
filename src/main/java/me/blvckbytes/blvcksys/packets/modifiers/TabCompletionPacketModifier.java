@@ -22,11 +22,14 @@ public class TabCompletionPacketModifier implements IPacketModifier {
 
   // Mapping the last completion requests to their players
   private final Map<Player, String> lastCompletions;
+  private final MCReflect refl;
 
   public TabCompletionPacketModifier(
-    @AutoInject IPacketInterceptor interceptor
+    @AutoInject IPacketInterceptor interceptor,
+    @AutoInject MCReflect refl
   ) {
     this.lastCompletions = new ConcurrentHashMap<>();
+    this.refl = refl;
     interceptor.register(this);
   }
 
@@ -35,7 +38,7 @@ public class TabCompletionPacketModifier implements IPacketModifier {
     // Incoming tab completion packet, telling the server what's in the chat bar
     // There's only one int (transaction ID) and a String (value) inside this packet
     if (incoming instanceof PacketPlayInTabComplete)
-      MCReflect.getFieldByType(incoming, "String").ifPresent(o -> lastCompletions.put(sender, o.toString()));
+      refl.getFieldByType(incoming, "String").ifPresent(o -> lastCompletions.put(sender, o.toString()));
 
     return incoming;
   }
@@ -61,17 +64,17 @@ public class TabCompletionPacketModifier implements IPacketModifier {
         return outgoing;
 
       // Get the suggestions object from this packet
-      MCReflect.getFieldByType(outgoing, "Suggestions").ifPresent(sug -> {
+      refl.getFieldByType(outgoing, "Suggestions").ifPresent(sug -> {
 
         // Get the list of suggestions within that object
-        boolean isArgsOnly = MCReflect.getFieldByName(sug, "suggestions")
+        boolean isArgsOnly = refl.getFieldByName(sug, "suggestions")
 
           // Map this list to a boolean that signals whether or not all suggestions are placeholders
           .map(sugs -> {
             // Loop all suggestions
             for (Object suggestion : (List<?>) sugs) {
               // Get the text of this suggestion
-              String text = MCReflect.getFieldByName(suggestion, "text")
+              String text = refl.getFieldByName(suggestion, "text")
                 .map(Object::toString)
                 .orElse("");
 
@@ -84,12 +87,12 @@ public class TabCompletionPacketModifier implements IPacketModifier {
                 return false;
 
               // Color in placeholder
-              MCReflect.setFieldByName(suggestion, "text", APlayerCommand.colorizeUsage(text));
+              refl.setFieldByName(suggestion, "text", cmd.get().colorizeUsage(text));
 
               // Set the argument description as a hover-tooltip
               // Decide on the index through the present number of spaces
               String desc = cmd.get().getArgumentDescripton(Math.max(0, lastCompletion.split(" ").length - 1));
-              MCReflect.setFieldByName(suggestion, "tooltip", new ChatMessage(desc));
+              refl.setFieldByName(suggestion, "tooltip", new ChatMessage(desc));
             }
 
             // Only consisting of placeholder(s)
@@ -99,9 +102,9 @@ public class TabCompletionPacketModifier implements IPacketModifier {
         // Only consists of argument placeholders
         if (isArgsOnly) {
           // Decrement the top level string-range's start so the suggestion isn't rendered into the textbox
-          MCReflect.getFieldByType(sug, "StringRange").ifPresent(sr -> {
-            MCReflect.getFieldByName(sr, "start").ifPresent(start -> {
-              MCReflect.setFieldByName(sr, "start", Math.max(0, ((int) start) - 1));
+          refl.getFieldByType(sug, "StringRange").ifPresent(sr -> {
+            refl.getFieldByName(sr, "start").ifPresent(start -> {
+              refl.setFieldByName(sr, "start", Math.max(0, ((int) start) - 1));
             });
           });
         }

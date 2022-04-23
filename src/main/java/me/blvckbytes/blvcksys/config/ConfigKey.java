@@ -4,7 +4,19 @@ public enum ConfigKey {
 
   // TODO: Change templating to a proper format, like {var}, since placeholders are now unmovable
 
+  //=========================================================================//
+  //                               Global Prefix                             //
+  //=========================================================================//
+
   PREFIX("prefix", "&8[&5BVS&8]&r "),
+
+  //=========================================================================//
+  //                                 Logging                                 //
+  //=========================================================================//
+
+  LOGGING_PREFIX_DEBUG("logging_prefix.debug", "&6"),
+  LOGGING_PREFIX_INFO("logging_prefix.info", "&a"),
+  LOGGING_PREFIX_ERROR("logging_prefix.error", "&4"),
 
   //=========================================================================//
   //                              MSG, R Command                             //

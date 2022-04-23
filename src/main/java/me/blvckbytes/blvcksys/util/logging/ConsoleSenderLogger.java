@@ -1,37 +1,39 @@
 package me.blvckbytes.blvcksys.util.logging;
 
+import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.util.di.AutoConstruct;
+import me.blvckbytes.blvcksys.util.di.AutoInject;
 import org.bukkit.Bukkit;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+@AutoConstruct
 public class ConsoleSenderLogger implements ILogger {
 
-  private final String prefix;
-  private final boolean debug;
+  private final IConfig cfg;
 
-  public ConsoleSenderLogger(String prefix, boolean debug) {
-    this.prefix = prefix;
-    this.debug = debug;
+  public ConsoleSenderLogger(
+    @AutoInject IConfig cfg
+  ) {
+    this.cfg = cfg;
   }
 
   private void log(String format, Object... args) {
     Bukkit.getConsoleSender().sendMessage(
-      this.prefix + format.formatted(args)
+      cfg.get(ConfigKey.PREFIX) + format.formatted(args)
     );
   }
 
   @Override
   public void logDebug(String format, Object... args) {
-    if (!debug)
-      return;
-
-    log("§6%s".formatted(format.formatted(args)));
+    log(cfg.get(ConfigKey.LOGGING_PREFIX_DEBUG) + format.formatted(args));
   }
 
   @Override
   public void logInfo(String format, Object... args) {
-    log("§a%s".formatted(format.formatted(args)));
+    log(cfg.get(ConfigKey.LOGGING_PREFIX_INFO) + format.formatted(args));
   }
 
   @Override
@@ -39,11 +41,11 @@ public class ConsoleSenderLogger implements ILogger {
     StringWriter sw = new StringWriter();
     PrintWriter pw = new PrintWriter(sw);
     e.printStackTrace(pw);
-    log("§c%s".formatted(sw.toString()));
+    logError(sw.toString());
   }
 
   @Override
   public void logError(String format, Object... args) {
-    log("§c%s".formatted(format.formatted(args)));
+    log(cfg.get(ConfigKey.LOGGING_PREFIX_ERROR) + format.formatted(args));
   }
 }

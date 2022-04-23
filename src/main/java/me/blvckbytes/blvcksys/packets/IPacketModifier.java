@@ -3,6 +3,10 @@ package me.blvckbytes.blvcksys.packets;
 import net.minecraft.network.protocol.Packet;
 import org.bukkit.entity.Player;
 
+/**
+ * Represents a class that can modify in- and outgoing packets
+ * and will be registered within a chain of modifiers
+ */
 public interface IPacketModifier {
 
   /**

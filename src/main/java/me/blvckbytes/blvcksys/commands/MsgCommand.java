@@ -1,15 +1,19 @@
 package me.blvckbytes.blvcksys.commands;
 
-import me.blvckbytes.blvcksys.config.Config;
+import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.cmd.APlayerCommand;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.cmd.CommandResult;
+import me.blvckbytes.blvcksys.util.di.AutoInject;
+import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -22,8 +26,14 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener 
   // B executes: /msg A results in: B->A, A->B
   private final Map<Player, Player> partners;
 
-  public MsgCommand() {
+  public MsgCommand(
+    @AutoInject JavaPlugin main,
+    @AutoInject ILogger logger,
+    @AutoInject IConfig cfg,
+    @AutoInject MCReflect refl
+  ) {
     super(
+      main, logger, cfg, refl,
       "msg",
       "Send a message to someone",
       new String[][] {
@@ -68,7 +78,7 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener 
 
     // Cannot send yourself messages
     if (recipient == p)
-      return customError(Config.getP(ConfigKey.MSG_SELF));
+      return customError(cfg.getP(ConfigKey.MSG_SELF));
 
     // Get the message
     String message = argvar(args, 1);
@@ -94,8 +104,8 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener 
 
   @Override
   public void sendMessage(Player sender, Player receiver, String message) {
-    receiver.sendMessage(Config.get(ConfigKey.MSG_RECEIVER, sender.getDisplayName(), message));
-    sender.sendMessage(Config.get(ConfigKey.MSG_SENDER, receiver.getDisplayName(), message));
+    receiver.sendMessage(cfg.get(ConfigKey.MSG_RECEIVER, sender.getDisplayName(), message));
+    sender.sendMessage(cfg.get(ConfigKey.MSG_SENDER, receiver.getDisplayName(), message));
   }
 
   //=========================================================================//

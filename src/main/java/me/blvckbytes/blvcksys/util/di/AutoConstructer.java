@@ -2,20 +2,28 @@ package me.blvckbytes.blvcksys.util.di;
 
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ScanResult;
-import me.blvckbytes.blvcksys.Main;
+import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.event.Listener;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Parameter;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class AutoConstructer {
 
   // Cache for already constructed classes (singletons)
   private static final Map<Class<?>, Object> refs;
 
+  // Queues log messages until the logger is available
+  private static final List<String> logQueue;
+
   static {
     refs = new HashMap<>();
+    logQueue = new ArrayList<>();
   }
 
   /**
@@ -39,7 +47,7 @@ public class AutoConstructer {
    *
    * @param pkg Package to search for targets in
    */
-  public static void execute(String pkg) {
+  public static void execute(JavaPlugin main, String pkg) {
     // Scan all classes in the target package and auto-close the scanner
     try (
       ScanResult result = new ClassGraph()
@@ -68,7 +76,7 @@ public class AutoConstructer {
       // Resolve all dependencies recursively
       List<Class<?>> seen = new ArrayList<>();
       for (Map.Entry<Class<?>, Constructor<?>> e : ctorMap.entrySet())
-        createWithDependencies(ctorMap, e.getKey(), seen);
+        createWithDependencies(main, ctorMap, e.getKey(), seen);
 
       // Call the init method on all resources
       for (Object o : refs.values()) {
@@ -77,7 +85,7 @@ public class AutoConstructer {
       }
 
     } catch (Exception e) {
-      Main.logger().logError(e);
+      e.printStackTrace();
     }
   }
 
@@ -171,11 +179,9 @@ public class AutoConstructer {
         break;
       }
 
-      // Cannot construct this class, just skip it
-      if (tarCtor == null) {
-        Main.logger().logError("No valid @AutoConstruct constructors in %s", c.getName());
-        continue;
-      }
+      // Cannot construct this class
+      if (tarCtor == null)
+        throw new RuntimeException("No valid @AutoConstruct constructors in " + c.getName());
 
       // Register this constructor
       ctorMap.put(c, tarCtor);
@@ -186,21 +192,23 @@ public class AutoConstructer {
 
   /**
    * Called whenever a resource has been instantiated
+   * @param main Reference of the JavaPlugin instance
    */
-  private static void onInstantiation(Object instance) {
+  private static void onInstantiation(JavaPlugin main, Object instance) {
     String name = instance.getClass().getName();
 
     // Also register events if the listener interface has been implemented
     if (instance instanceof Listener l) {
-      Main.getInst().getServer().getPluginManager().registerEvents(l, Main.getInst());
-      Main.logger().logDebug("Registered event-listener using handler: %s", name);
+      main.getServer().getPluginManager().registerEvents(l, main);
+      logDebug("Registered event-listener using handler: " + name);
     }
 
-    Main.logger().logDebug("Created @AutoConstruct resource: %s", name);
+    logDebug("Created @AutoConstruct resource: " + name);
   }
 
   /**
    * Create a new instance of a class by creating all it's constructor's dependencies beforehand
+   * @param main Reference of the JavaPlugin instance
    * @param ctorMap Constructor map of pre-selected, valid constructors
    * @param target Target class to construct
    * @param seen List of already seen classes, passed for recursion
@@ -209,6 +217,7 @@ public class AutoConstructer {
    * @throws Exception Issues with instantiation or dependency conflicts
    */
   private static Object createWithDependencies(
+    JavaPlugin main,
     Map<Class<?>, Constructor<?>> ctorMap,
     Class<?> target,
     List<Class<?>> seen
@@ -230,7 +239,7 @@ public class AutoConstructer {
     if (params.length == 0) {
       // Invoke empty constructor
       Object inst = targetC.newInstance();
-      onInstantiation(inst);
+      onInstantiation(main, inst);
       refs.put(target, inst);
 
       // As this dependency now exists, remove it from the seen list, as it
@@ -244,6 +253,12 @@ public class AutoConstructer {
     for (int i = 0; i < params.length; i++) {
       Class<?> dep = params[i].getType();
 
+      // Directly inject main at this point
+      if (dep.isAssignableFrom(main.getClass())) {
+        args[i] = main;
+        continue;
+      }
+
       // Circular dependency (not resolved but already seen)
       if (seen.contains(dep))
         throw new RuntimeException(
@@ -252,16 +267,55 @@ public class AutoConstructer {
 
       // Remember this dependency and resolve it's dependencies
       seen.add(dep);
-      args[i] = createWithDependencies(ctorMap, dep, seen);
+      args[i] = createWithDependencies(main, ctorMap, dep, seen);
       seen.remove(dep);
     }
 
     // All constructor dependencies instantiated, now create the target itself
     // using all created dependencies
     Object inst = targetC.newInstance(args);
-    onInstantiation(inst);
+    onInstantiation(main, inst);
     refs.put(target, inst);
 
     return inst;
+  }
+
+  /**
+   * Find the logger within the local list of refs
+   * @return Logger instance or null if it's not yet constructed
+   */
+  private static ILogger findLogger() {
+    // Look through ref-list
+    for (Map.Entry<Class<?>, Object> ref : refs.entrySet()) {
+      // This is a logger implementation
+      if (ILogger.class.isAssignableFrom(ref.getKey()))
+        return (ILogger) ref.getValue();
+    }
+
+    // Logger not yet available
+    return null;
+  }
+
+  /**
+   * Internal logging utility method, as no logger is existing at the absolute beginning.
+   * Log messages get queued until the logger's instantiated
+   * @param message Message to log
+   */
+  private static void logDebug(String message) {
+    // Logger available
+    ILogger logger = findLogger();
+    if (logger != null) {
+      // Empty out queue
+      for (String msg : logQueue)
+        logger.logDebug(msg);
+      logQueue.clear();
+
+      // Log latest message
+      logger.logDebug(message);
+      return;
+    }
+
+    // Queue message for later
+    logQueue.add(message);
   }
 }

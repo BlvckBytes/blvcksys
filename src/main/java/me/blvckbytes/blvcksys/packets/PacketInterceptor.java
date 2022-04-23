@@ -1,10 +1,11 @@
 package me.blvckbytes.blvcksys.packets;
 
 import io.netty.channel.*;
-import me.blvckbytes.blvcksys.Main;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
+import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
+import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.network.protocol.Packet;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -21,13 +22,26 @@ import java.util.Map;
 @AutoConstruct
 public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoConstructed {
 
+  // Name of ChannelHandler within the player's pipeline
   private static final String handlerName = "packet_interceptor";
+
+  // List of globally registered modifiers
   private final List<IPacketModifier> globalModifiers;
+
+  // List of per-player registered modifiers
   private final Map<Player, ArrayList<IPacketModifier>> specificModifiers;
 
-  public PacketInterceptor() {
+  private final ILogger logger;
+  private final MCReflect refl;
+
+  public PacketInterceptor(
+    @AutoInject ILogger logger,
+    @AutoInject MCReflect refl
+    ) {
     this.globalModifiers = new ArrayList<>();
     this.specificModifiers = new HashMap<>();
+    this.logger = logger;
+    this.refl = refl;
   }
 
   //=========================================================================//
@@ -121,24 +135,13 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
   //=========================================================================//
 
   /**
-   * Get the network pipeline of a player
-   * @param p Target player
-   * @return Pipeline of the target
-   * @throws Exception Issues during reflection access
-   */
-  private ChannelPipeline getPipe(Player p) throws Exception {
-    Channel c = MCReflect.getNetworkChannel(p);
-    return c.pipeline();
-  }
-
-  /**
    * Remove a previously created injection from the player
    * @param p Target player
    */
   private void uninjectPlayer(Player p) {
     try {
       // Remove pipeline entry
-      ChannelPipeline pipe = getPipe(p);
+      ChannelPipeline pipe = refl.getNetworkChannel(p).pipeline();
 
       // Not registered in the pipeline
       if (!pipe.names().contains(handlerName))
@@ -147,7 +150,7 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
       // Remove handler
       pipe.remove(handlerName);
     } catch (Exception e) {
-      Main.logger().logError(e);
+      logger.logError(e);
     }
   }
 
@@ -158,7 +161,7 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
   private void injectPlayer(Player p) {
     try {
       // Already registered in the pipeline
-      ChannelPipeline pipe = getPipe(p);
+      ChannelPipeline pipe = refl.getNetworkChannel(p).pipeline();
       if (pipe.names().contains(handlerName))
         return;
 
@@ -235,7 +238,7 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
 
       pipe.addBefore("packet_handler", handlerName, handler);
     } catch (Exception e) {
-      Main.logger().logError(e);
+      logger.logError(e);
     }
   }
 }

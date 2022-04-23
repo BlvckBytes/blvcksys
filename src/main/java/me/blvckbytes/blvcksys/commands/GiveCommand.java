@@ -1,16 +1,20 @@
 package me.blvckbytes.blvcksys.commands;
 
-import me.blvckbytes.blvcksys.config.Config;
 import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.cmd.APlayerCommand;
 import me.blvckbytes.blvcksys.util.cmd.CommandResult;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
+import me.blvckbytes.blvcksys.util.di.AutoInject;
+import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.apache.commons.lang.mutable.MutableInt;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Arrays;
 import java.util.stream.Stream;
@@ -18,8 +22,14 @@ import java.util.stream.Stream;
 @AutoConstruct
 public class GiveCommand extends APlayerCommand {
 
-  public GiveCommand() {
+  public GiveCommand(
+    @AutoInject JavaPlugin main,
+    @AutoInject ILogger logger,
+    @AutoInject IConfig cfg,
+    @AutoInject MCReflect refl
+  ) {
     super(
+      main, logger, cfg, refl,
       "give",
       "Give a certain amount of an item to yourself or others",
       new String[][] {
@@ -67,7 +77,7 @@ public class GiveCommand extends APlayerCommand {
 
     // Unknown material requested, provide proper help
     if (mat == null)
-      return customError(Config.getP(ConfigKey.GIVE_INVALID_ITEM, matstr));
+      return customError(cfg.getP(ConfigKey.GIVE_INVALID_ITEM, matstr));
 
     // Try to parse the amount
     MutableInt amount = new MutableInt(0);
@@ -90,7 +100,7 @@ public class GiveCommand extends APlayerCommand {
 
     // Hand out the items
     int dropped = giveItems(target, mat, amount.intValue());
-    String dropMsg = Config.getP(ConfigKey.GIVE_DROPPED, dropped);
+    String dropMsg = cfg.getP(ConfigKey.GIVE_DROPPED, dropped);
 
     // Notify the executor about the drop
     if (dropped > 0)
@@ -98,8 +108,8 @@ public class GiveCommand extends APlayerCommand {
 
     // Notify about giveaway
     if (target != p) {
-      p.sendMessage(Config.getP(ConfigKey.GIVE_SENDER, target.getDisplayName(), amount.intValue(), mat.toString()));
-      target.sendMessage(Config.getP(ConfigKey.GIVE_RECEIVER, p.getDisplayName(), amount.intValue(), mat.toString()));
+      p.sendMessage(cfg.getP(ConfigKey.GIVE_SENDER, target.getDisplayName(), amount.intValue(), mat.toString()));
+      target.sendMessage(cfg.getP(ConfigKey.GIVE_RECEIVER, p.getDisplayName(), amount.intValue(), mat.toString()));
 
       // Notify the target about the drop
       if (dropped > 0)
@@ -108,7 +118,7 @@ public class GiveCommand extends APlayerCommand {
 
     // Notify self give
     else
-      p.sendMessage(Config.getP(ConfigKey.GIVE_SELF, amount.intValue(), mat.toString()));
+      p.sendMessage(cfg.getP(ConfigKey.GIVE_SELF, amount.intValue(), mat.toString()));
 
     return success();
   }

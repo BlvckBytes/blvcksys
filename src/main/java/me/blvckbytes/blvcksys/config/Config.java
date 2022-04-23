@@ -1,24 +1,37 @@
 package me.blvckbytes.blvcksys.config;
 
+import me.blvckbytes.blvcksys.util.di.AutoConstruct;
+import me.blvckbytes.blvcksys.util.di.AutoInject;
+import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 
-public class Config {
+@AutoConstruct
+public class Config implements IConfig, IAutoConstructed {
 
-  private static final String name = "config";
-  private static YamlConfiguration cfg = null;
-  private static File yf = null;
+  // Loaded configuration and it's corresponding file handle
+  private YamlConfiguration cfg = null;
+  private File yf = null;
 
-  /**
-   * Get a string by it's config key and apply format arguments to it, if applicable
-   * @param key Key inside the config
-   * @param formatArgs Arguments to apply to formatting
-   * @return Formatted and color-translated value or null on missing keys
-   */
-  public static String get(ConfigKey key, Object... formatArgs) {
+  private final JavaPlugin plugin;
+
+  public Config(
+    @AutoInject JavaPlugin plugin
+  ) {
+    this.plugin = plugin;
+    this.load();
+  }
+
+  //=========================================================================//
+  //                                   API                                   //
+  //=========================================================================//
+
+  @Override
+  public String get(ConfigKey key, Object... formatArgs) {
+    // Config is not yet loaded
     if (cfg == null)
       return "";
 
@@ -33,41 +46,63 @@ public class Config {
     return ChatColor.translateAlternateColorCodes('&', val);
   }
 
-  /**
-   * Get a string by it's config key and apply format arguments to it, if applicable, and prepend the prefix
-   * @param key Key inside the config
-   * @param formatArgs Arguments to apply to formatting
-   * @return Formatted and color-translated value or null on missing keys
-   */
-  public static String getP(ConfigKey key, Object... formatArgs) {
+  @Override
+  public String getP(ConfigKey key, Object... formatArgs) {
     return get(ConfigKey.PREFIX) + get(key, formatArgs);
   }
 
-  public static void load(JavaPlugin plugin) throws Exception {
-    File df = plugin.getDataFolder();
-
-    // Create data folder if absent
-    if (!df.exists())
-      if (!df.mkdirs())
-        throw new RuntimeException("Could not create data-folder to store the config in");
-
-    yf = new File("%s/%s.yml".formatted(df.getAbsolutePath(), name));
-
-    // Create file if absent
-    if (!yf.exists())
-      if (!yf.createNewFile())
-        throw new RuntimeException("Could not create config file");
-
-    // Load configuration from file
-    cfg = YamlConfiguration.loadConfiguration(yf);
-
-    // Initialize config (appending missing keys)
-    // Save on diffs
-    if (initialize())
-      save();
+  @Override
+  public void cleanup() {
+    // Save the file on disabling
+    this.save();
   }
 
-  private static boolean initialize() {
+  @Override
+  public void initialize() {
+    // Nothing to do here (yet)
+  }
+
+
+  //=========================================================================//
+  //                               Utilities                                 //
+  //=========================================================================//
+
+  /**
+   * Load the config from the corresponding file
+   */
+  private void load() {
+    try {
+      File df = plugin.getDataFolder();
+
+      // Create data folder if absent
+      if (!df.exists())
+        if (!df.mkdirs())
+          throw new RuntimeException("Could not create data-folder to store the config in");
+
+      yf = new File(df.getAbsolutePath() + "/config.yml");
+
+      // Create file if absent
+      if (!yf.exists())
+        if (!yf.createNewFile())
+          throw new RuntimeException("Could not create config file");
+
+      // Load configuration from file
+      cfg = YamlConfiguration.loadConfiguration(yf);
+
+      // Initialize config (appending missing keys)
+      // Save on diffs
+      if (ensureEntries())
+        save();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  /**
+   * Initialize the yaml config with all values from the enum
+   * @return True if items were added, false otherwise
+   */
+  private boolean ensureEntries() {
     if (cfg == null)
       return false;
 
@@ -85,9 +120,19 @@ public class Config {
     return diffs;
   }
 
-  private static void save() throws Exception {
+  /**
+   * Save the local yaml config into it's file
+   */
+  private void save() {
+    // No config loaded yet
     if (cfg == null || yf == null)
       return;
-    cfg.save(yf);
+
+    try {
+      // Save config using the file handle
+      cfg.save(yf);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 }

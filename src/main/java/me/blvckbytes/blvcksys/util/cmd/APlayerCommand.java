@@ -1,9 +1,9 @@
 package me.blvckbytes.blvcksys.util.cmd;
 
-import me.blvckbytes.blvcksys.Main;
-import me.blvckbytes.blvcksys.config.Config;
 import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.util.MCReflect;
+import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
@@ -11,6 +11,7 @@ import org.apache.commons.lang.mutable.MutableInt;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -29,8 +30,16 @@ import java.util.stream.Stream;
 public abstract class APlayerCommand extends Command {
 
   // Argument placeholder to description map
-  private String[][] argDescs;
-  private static Map<String, APlayerCommand> registeredCommands;
+  private final String[][] argDescs;
+
+  // Mapping command names to their dispatchers
+  private static final Map<String, APlayerCommand> registeredCommands;
+
+  // Injected dependencies, leave them protected for quick access within command classes
+  protected final JavaPlugin main;
+  protected final ILogger logger;
+  protected final IConfig cfg;
+  protected final MCReflect refl;
 
   static {
     registeredCommands = new HashMap<>();
@@ -42,7 +51,16 @@ public abstract class APlayerCommand extends Command {
    * @param argDescs Mapping
    * @param aliases Aliases the command can also be called by
    */
-  public APlayerCommand(String name, String description, String[][] argDescs, String ...aliases) {
+  public APlayerCommand(
+    JavaPlugin main,
+    ILogger logger,
+    IConfig cfg,
+    MCReflect refl,
+    String name,
+    String description,
+    String[][] argDescs,
+    String ...aliases
+  ) {
     super(
       name,
       description,
@@ -56,11 +74,15 @@ public abstract class APlayerCommand extends Command {
     );
 
     this.argDescs = argDescs;
+    this.main = main;
+    this.logger = logger;
+    this.cfg = cfg;
+    this.refl = refl;
 
     // Register this command within the server's command map
-    MCReflect.registerCommand(Main.getInst().getDescription().getName(), this);
+    refl.registerCommand(main.getDescription().getName(), this);
     registeredCommands.put(name, this);
-    Main.logger().logDebug("Registered command /%s using handler %s", name, this.getClass().getName());
+    logger.logDebug("Registered command /%s using handler %s", name, this.getClass().getName());
   }
 
 
@@ -107,7 +129,7 @@ public abstract class APlayerCommand extends Command {
   public boolean execute(CommandSender cs, String label, String[] args) {
     // Not a player
     if (!(cs instanceof Player)) {
-      cs.sendMessage(Config.getP(ConfigKey.ERR_NOT_A_PLAYER));
+      cs.sendMessage(cfg.getP(ConfigKey.ERR_NOT_A_PLAYER));
       return false;
     }
 
@@ -120,17 +142,17 @@ public abstract class APlayerCommand extends Command {
 
     // Decide on error-response
     switch (res.error()) {
-      case PLAYER_NOT_ONLINE -> cs.sendMessage(Config.getP(ConfigKey.ERR_NOT_ONLINE, res.args()));
+      case PLAYER_NOT_ONLINE -> cs.sendMessage(cfg.getP(ConfigKey.ERR_NOT_ONLINE, res.args()));
 
-      case USAGE_MISMATCH -> cs.spigot().sendMessage(buildAdvancedUsage(Config.getP(ConfigKey.ERR_USAGE)));
+      case USAGE_MISMATCH -> cs.spigot().sendMessage(buildAdvancedUsage(cfg.getP(ConfigKey.ERR_USAGE)));
 
       // Custom error with custom format, [0] is the message and [1]..[n] are the args to format the message
       case CUSTOM_ERROR -> cs.sendMessage(res.args()[0].toString().formatted(Arrays.copyOfRange(res.args(), 1, res.args().length)));
 
       // Unparsable integer
-      case INT_UNPARSEABLE -> cs.sendMessage(Config.getP(ConfigKey.ERR_INTPARSE, res.args()));
+      case INT_UNPARSEABLE -> cs.sendMessage(cfg.getP(ConfigKey.ERR_INTPARSE, res.args()));
 
-      default -> cs.sendMessage(Config.getP(ConfigKey.ERR_INTERNAL));
+      default -> cs.sendMessage(cfg.getP(ConfigKey.ERR_INTERNAL));
     }
 
     return false;
@@ -177,7 +199,7 @@ public abstract class APlayerCommand extends Command {
    */
   protected TextComponent[] buildAdvancedUsage(String prefix) {
     List<TextComponent> components = new ArrayList<>();
-    String cOth = Config.get(ConfigKey.ERR_USAGE_COLOR_OTHER);
+    String cOth = cfg.get(ConfigKey.ERR_USAGE_COLOR_OTHER);
 
     // Add a prefix, if provided
     if (prefix != null)
@@ -198,12 +220,12 @@ public abstract class APlayerCommand extends Command {
    * @param vanilla Vanilla usage string
    * @return Colorized usage string
    */
-  public static String colorizeUsage(String vanilla) {
+  public String colorizeUsage(String vanilla) {
     // Usage formatting colors
-    String cMan = Config.get(ConfigKey.ERR_USAGE_COLOR_MANDATORY);
-    String cOpt = Config.get(ConfigKey.ERR_USAGE_COLOR_OPTIONAL);
-    String cBra = Config.get(ConfigKey.ERR_USAGE_COLOR_BRACKETS);
-    String cOth = Config.get(ConfigKey.ERR_USAGE_COLOR_OTHER);
+    String cMan = cfg.get(ConfigKey.ERR_USAGE_COLOR_MANDATORY);
+    String cOpt = cfg.get(ConfigKey.ERR_USAGE_COLOR_OPTIONAL);
+    String cBra = cfg.get(ConfigKey.ERR_USAGE_COLOR_BRACKETS);
+    String cOth = cfg.get(ConfigKey.ERR_USAGE_COLOR_OTHER);
 
     // Start out by coloring other
     StringBuilder colorized = new StringBuilder(cOth);
@@ -473,7 +495,7 @@ public abstract class APlayerCommand extends Command {
           .append(str);
       }
     } catch (Exception e) {
-      Main.logger().logError(e);
+      logger.logError(e);
     }
 
     // Re-set the colors at the end

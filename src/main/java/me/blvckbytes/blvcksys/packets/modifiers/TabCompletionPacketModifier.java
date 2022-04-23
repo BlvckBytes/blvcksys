@@ -1,6 +1,5 @@
 package me.blvckbytes.blvcksys.packets.modifiers;
 
-import me.blvckbytes.blvcksys.Main;
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
 import me.blvckbytes.blvcksys.util.MCReflect;
@@ -19,12 +18,12 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 @AutoConstruct
-public class TabCompletionPacketMofifier implements IPacketModifier {
+public class TabCompletionPacketModifier implements IPacketModifier {
 
   // Mapping the last completion requests to their players
   private final Map<Player, String> lastCompletions;
 
-  public TabCompletionPacketMofifier(
+  public TabCompletionPacketModifier(
     @AutoInject IPacketInterceptor interceptor
   ) {
     this.lastCompletions = new ConcurrentHashMap<>();

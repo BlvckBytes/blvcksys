@@ -38,6 +38,12 @@ public enum ConfigKey {
   INJECT_INVALID_REGEX("inject.invalid_regex", "&cDas Regex \"%s\" ist ungültig!"),
 
   //=========================================================================//
+  //                            Generic Messages                             //
+  //=========================================================================//
+  GENERIC_JOINED("generic.joined", "&7Der Spieler &d%s &7ist dem Server &dbeigetreten&7!"),
+  GENERIC_QUIT("generic.quit", "&7Der Spieler &d%s &7hat den Server &dverlassen&7!"),
+
+  //=========================================================================//
   //                              Error Messages                             //
   //=========================================================================//
 

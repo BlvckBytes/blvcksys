@@ -9,13 +9,13 @@ import me.blvckbytes.blvcksys.util.cmd.APlayerCommand;
 import me.blvckbytes.blvcksys.util.cmd.CommandResult;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
+import org.apache.commons.lang.mutable.MutableInt;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import java.lang.reflect.Field;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -45,7 +45,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IAutoCons
     super(
       "inject",
       "Inject an interceptor to monitor a player's packets",
-      "/inject <player> [direction] [regex]"
+      "/inject <player> [direction] [depth] [regex]"
     );
 
     this.handlers = new HashMap<>();
@@ -97,12 +97,22 @@ public class InjectCommand extends APlayerCommand implements Listener, IAutoCons
       }
     }
 
+    // Try to parse the depth, fallback to zero if not provided
+    MutableInt depth = new MutableInt(0);
+    if (args.length >= 3) {
+      CommandResult res = parseInt(args[2], depth);
+
+      // Not an integer
+      if (res != null)
+        return res;
+    }
+
     // The default regex is null (match everything)
     Pattern regex = null;
 
     // Regex has been provided, collect supporting spaces and try to compile the pattern
-    if (args.length >= 3) {
-      String regStr = argvar(args, 2);
+    if (args.length >= 4) {
+      String regStr = argvar(args, 3);
 
       try {
         regex = Pattern.compile(regStr);
@@ -121,7 +131,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IAutoCons
     }
 
     // Create a new injection
-    if (this.injectPlayer(target, dir, regex))
+    if (this.injectPlayer(target, dir, regex, depth.intValue()))
       p.sendMessage(Config.getP(ConfigKey.INJECT_INJECTED, target.getDisplayName()));
     else
       p.sendMessage(Config.getP(ConfigKey.ERR_INTERNAL));
@@ -157,45 +167,20 @@ public class InjectCommand extends APlayerCommand implements Listener, IAutoCons
    * Log an event of a passing packet
    * @param dir Direction the packet travels in
    * @param msg The packet
+   * @param depth Levels of recursion to allow when stringifying object fields
    */
-  private void logEvent(String dir, Object msg) {
-    StringBuilder props = new StringBuilder();
-
-    try {
-      Class<?> cl = msg.getClass();
-      Field[] fields = cl.getDeclaredFields();
-
-      // This class doesn't contain any fields, search for superclasses
-      while (
-        // No fields yet
-        fields.length == 0 &&
-
-        // Superclass available
-        msg.getClass().getSuperclass() != null
-      ) {
-        // Navigate into superclass and list it's fields
-        cl = cl.getSuperclass();
-        fields = cl.getDeclaredFields();
-      }
-
-      // Loop all fields of this packet and add them to a comma separated list
-      for (int i = 0; i < fields.length; i++) {
-        Field f = fields[i];
-
-        // Also access private fields, of course
-        f.setAccessible(true);
-
-        // Stringify and append with leading comma, if applicable
-        props.append(i == 0 ? "" : ", ").append(stringifyObject(f.get(msg)));
-      }
-    } catch (Exception e) {
-      Main.logger().logError(e);
-    }
+  private void logEvent(String dir, Object msg, int depth) {
+    // Get stringification result with proper colors applied
+    String res = stringifyObjectProperties(
+      msg, depth,
+      Config.get(ConfigKey.INJECT_EVENT_COLOR_OTHER),
+      Config.get(ConfigKey.INJECT_EVENT_COLOR_VALUES)
+    );
 
     // Log this event as an info message
     Main.logger().logInfo(Config.get(
       ConfigKey.INJECT_EVENT,
-      dir, msg.getClass().getSimpleName(), props.toString()
+      dir, msg.getClass().getSimpleName(), res
     ));
   }
 
@@ -204,9 +189,10 @@ public class InjectCommand extends APlayerCommand implements Listener, IAutoCons
    * @param p Target player
    * @param dir Direction to capture
    * @param regex Regex to match simple classnames against, null for any
+   * @param depth Levels of recursion to allow when stringifying object fields
    * @return Success state
    */
-  private boolean injectPlayer(Player p, PacketDirection dir, Pattern regex) {
+  private boolean injectPlayer(Player p, PacketDirection dir, Pattern regex, int depth) {
     try {
       // Already injected
       if (handlers.containsKey(p))
@@ -225,7 +211,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IAutoCons
             // Pattern matches
             (regex == null || regex.matcher(msg.getClass().getSimpleName()).find())
           )
-            logEvent("INBOUND", msg);
+            logEvent("INBOUND", msg, depth);
 
           super.channelRead(ctx, msg);
         }
@@ -239,7 +225,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IAutoCons
             // Pattern matches
             (regex == null || regex.matcher(msg.getClass().getSimpleName()).find())
           )
-            logEvent("OUTBOUND", msg);
+            logEvent("OUTBOUND", msg, depth);
 
           super.write(ctx, msg, promise);
         }

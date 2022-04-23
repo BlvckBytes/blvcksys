@@ -10,6 +10,8 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -252,9 +254,12 @@ public abstract class APlayerCommand extends Command {
   /**
    * Turn an object into a human readable string, if possible
    * @param o Object to stringify
-   * @return String representation
+   * @param otherColor Color prepended to non-values
+   * @param valueColor Color prepended to values
+   *
+   * @return String representation or null if it's an object
    */
-  protected String stringifyObject(Object o) {
+  protected String stringifyObject(Object o, String otherColor, String valueColor) {
     // Directly stringify null values
     if (o == null)
       return "null";
@@ -280,18 +285,103 @@ public abstract class APlayerCommand extends Command {
     // Is an array or a list, format as [...]
     boolean isList = List.class.isAssignableFrom(c);
     if (c.isArray() || isList) {
-      StringBuilder sb = new StringBuilder("[");
+      StringBuilder sb = new StringBuilder(otherColor + "[");
 
       // Iterate list or list from array
       List<?> list = (List<?>) (isList ? o : Arrays.asList((Object[]) o));
       for (int i = 0; i < list.size(); i++)
-        sb.append(i == 0 ? "" : ", ").append(stringifyObject(list.get(i)));
+        // Call recursively until a scalar value occurs
+        sb
+          .append(i == 0 ? "" : otherColor + ", ")
+          .append(valueColor)
+          .append(
+          stringifyObject(list.get(i), otherColor, valueColor)
+        );
 
-      sb.append("]");
+      // Reset color at the end
+      sb.append(otherColor).append("]").append("§r");
       return sb.toString();
     }
 
-    // Not "easily" formattable, at least inform about the classname
-    return "<" + c.getSimpleName() + ">";
+    // Not "easily" formattable
+    return null;
+  }
+
+  /**
+   * Stringify an object's properties into a comma separated list
+   * @param o Object to query
+   * @param depth Levels of recursion to allow when stringifying object fields
+   * @param otherColor Color prepended to non-values
+   * @param valueColor Color prepended to values
+   * @return Built comma separated list string
+   */
+  protected String stringifyObjectProperties(Object o, int depth, String otherColor, String valueColor) {
+    StringBuilder props = new StringBuilder();
+
+    try {
+      Class<?> cl = o.getClass();
+      Field[] fields = cl.getDeclaredFields();
+
+      // This class doesn't contain any fields, search for superclasses
+      while (
+        // No fields yet
+        fields.length == 0 &&
+
+          // Superclass available
+          cl.getSuperclass() != null
+      ) {
+        // Navigate into superclass and list it's fields
+        cl = cl.getSuperclass();
+        fields = cl.getDeclaredFields();
+      }
+
+      // Skip static fields
+      fields = Arrays.stream(fields).filter(f -> !Modifier.isStatic(f.getModifiers())).toArray(Field[]::new);
+
+      // Loop all fields of this packet and add them to a comma separated list
+      for (int i = 0; i < fields.length; i++) {
+        Field f = fields[i];
+
+          // Also access private fields, of course
+        try {
+          f.setAccessible(true);
+        } catch (Exception e) {
+          // Could not access this field, skip it
+          continue;
+        }
+
+        // Call to resolve this object into a simple string (no object field walking)
+        Object tar = f.get(o);
+        String tarName = tar.getClass().getSimpleName();
+        String str = stringifyObject(tar, otherColor, valueColor);
+
+        // Not an "easy" stringify
+        if (str == null) {
+
+          // Depth used up
+          if (depth == 0)
+            // Could not stringify, use placeholder with classname as indicator
+            str = "<%s>".formatted(tarName);
+
+          // Call recursively
+          else
+            str = "%s%s(%s%s)".formatted(
+              otherColor, tarName, valueColor,
+              stringifyObjectProperties(tar, depth - 1, otherColor, valueColor)
+            );
+        }
+
+        // Stringify and append with leading comma, if applicable
+        props
+          .append(i == 0 ? "" : otherColor + ", ")
+          .append(valueColor)
+          .append(str);
+      }
+    } catch (Exception e) {
+      Main.logger().logError(e);
+    }
+
+    // Re-set the colors at the end
+    return props + "§r";
   }
 }

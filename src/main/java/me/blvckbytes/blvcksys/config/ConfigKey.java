@@ -31,7 +31,9 @@ public enum ConfigKey {
 
   INJECT_INJECTED("inject.injected", "&7Die Pakete von &d%s &7werden &dnun &7abgefangen."),
   INJECT_UNINJECTED("inject.uninjected", "&7Die Pakete von &d%s &7werden nun &dnicht mehr &7abgefangen."),
-  INJECT_EVENT("inject.event", "&8[&5%s&8] &7%s(&d%s&7)"),
+  INJECT_EVENT("inject.event", "&8[&5%s&8] %s"),
+  INJECT_EVENT_COLOR_OTHER("inject.event_color.other", "&7"),
+  INJECT_EVENT_COLOR_VALUES("inject.event_color.values", "&d"),
   INJECT_INVALID_DIR("inject.invalid_dir", "&cDie Richtung %s existiert nicht!"),
   INJECT_INVALID_REGEX("inject.invalid_regex", "&cDas Regex \"%s\" ist ungültig!"),
 

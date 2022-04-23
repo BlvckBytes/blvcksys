@@ -22,7 +22,11 @@ public class GiveCommand extends APlayerCommand {
     super(
       "give",
       "Give a certain amount of an item to yourself or others",
-      "/give <item> <amount> [player]"
+      new String[][] {
+        { "<item>", "Material of the item" },
+        { "<amount>", "Number of items" },
+        { "[player]", "The receiving player" }
+      }
     );
   }
 

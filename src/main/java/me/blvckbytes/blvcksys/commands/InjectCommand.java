@@ -1,20 +1,19 @@
 package me.blvckbytes.blvcksys.commands;
 
-import io.netty.channel.*;
 import me.blvckbytes.blvcksys.Main;
 import me.blvckbytes.blvcksys.config.Config;
 import me.blvckbytes.blvcksys.config.ConfigKey;
-import me.blvckbytes.blvcksys.util.MCReflect;
+import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
+import me.blvckbytes.blvcksys.packets.IPacketModifier;
 import me.blvckbytes.blvcksys.util.cmd.APlayerCommand;
 import me.blvckbytes.blvcksys.util.cmd.CommandResult;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
-import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
+import me.blvckbytes.blvcksys.util.di.AutoInject;
+import net.minecraft.network.protocol.Packet;
 import org.apache.commons.lang.mutable.MutableInt;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -24,31 +23,47 @@ import java.util.regex.PatternSyntaxException;
 import java.util.stream.Stream;
 
 @AutoConstruct
-public class InjectCommand extends APlayerCommand implements Listener, IAutoConstructed {
+public class InjectCommand extends APlayerCommand implements Listener, IPacketModifier {
 
   /**
    * Describes the direction a intercepted packet can travel
    */
-  enum PacketDirection {
+  private enum PacketDirection {
     IN,     // Inbound only
     OUT,    // Outbound only
     IN_OUT  // In- and outbound
   }
 
-  // Name of the intercepting handler inside the channel pipeline
-  private static final String handlerName = "blvcksys_injectcmd";
+  /**
+   * Describes an issued interception request and all it's parameters
+   */
+  private record InterceptionRequest(
+    PacketDirection dir,  // Direction to intercept
+    int depth,            // Max. recursion depth for stringification
+    Pattern regex         // Pattern to match packet names against
+  ) {}
 
   // Map assigning intercepting handlers to players
-  private final Map<Player, ChannelDuplexHandler> handlers;
+  private final Map<Player, InterceptionRequest> requests;
 
-  public InjectCommand() {
+  private final IPacketInterceptor interceptor;
+
+  public InjectCommand(
+    @AutoInject IPacketInterceptor interceptor
+    ) {
     super(
       "inject",
       "Inject an interceptor to monitor a player's packets",
-      "/inject <player> [direction] [depth] [regex]"
+      new String[][] {
+        { "<player>", "Player to capture" },
+        { "[direction]", "Direction of packets" },
+        { "[depth]", "Recursion depth for stringification" },
+        { "[regex]", "Regex pattern matching packet names" }
+      }
     );
 
-    this.handlers = new HashMap<>();
+    this.interceptor = interceptor;
+    this.requests = new HashMap<>();
   }
 
   //=========================================================================//
@@ -69,6 +84,9 @@ public class InjectCommand extends APlayerCommand implements Listener, IAutoCons
       return Arrays.stream(PacketDirection.values())
         .map(Enum::toString)
         .filter(pd -> pd.toLowerCase().contains(args[currArg].toLowerCase()));
+
+    if (currArg >= 2)
+      return Stream.of(getArgumentPlaceholder(currArg));
 
     return super.onTabCompletion(p, args, currArg);
   }
@@ -122,41 +140,59 @@ public class InjectCommand extends APlayerCommand implements Listener, IAutoCons
     }
 
     // Already injected, uninject
-    if (this.handlers.containsKey(target)) {
-      if (this.uninjectPlayer(target))
-        p.sendMessage(Config.getP(ConfigKey.INJECT_UNINJECTED, target.getDisplayName()));
-      else
-        p.sendMessage(Config.getP(ConfigKey.ERR_INTERNAL));
+    if (this.interceptor.isRegisteredSpecific(target, this)) {
+      this.interceptor.unregisterSpecific(target, this);
+      p.sendMessage(Config.getP(ConfigKey.INJECT_UNINJECTED, target.getDisplayName()));
       return success();
     }
 
-    // Create a new injection
-    if (this.injectPlayer(target, dir, regex, depth.intValue()))
-      p.sendMessage(Config.getP(ConfigKey.INJECT_INJECTED, target.getDisplayName()));
-    else
-      p.sendMessage(Config.getP(ConfigKey.ERR_INTERNAL));
+    // Create a new injection and store the request locally
+    this.requests.put(target, new InterceptionRequest(dir, depth.intValue(), regex));
+    this.interceptor.registerSpecific(target, this);
+    p.sendMessage(Config.getP(ConfigKey.INJECT_INJECTED, target.getDisplayName()));
     return success();
   }
 
   //=========================================================================//
-  //                                Listeners                                //
-  //=========================================================================//
-
-  @EventHandler
-  public void onQuit(PlayerQuitEvent e) {
-    // Uninject players before they quit
-    uninjectPlayer(e.getPlayer());
-  }
-
-  //=========================================================================//
-  //                                   API                                   //
+  //                                Modifiers                                //
   //=========================================================================//
 
   @Override
-  public void cleanup() {
-    // Uninject all players
-    for (Player p : this.handlers.keySet())
-      uninjectPlayer(p);
+  public Packet<?> modifyIncoming(Player sender, Packet<?> incoming) {
+    // No request present yet
+    InterceptionRequest req = requests.get(sender);
+    if (req == null)
+      return incoming;
+
+    if (
+      // Direction matches
+      (req.dir == PacketDirection.IN || req.dir == PacketDirection.IN_OUT) &&
+
+        // Pattern matches
+        (req.regex == null || req.regex.matcher(incoming.getClass().getSimpleName()).find())
+    )
+      logEvent("INBOUND", incoming, req.depth);
+
+    return incoming;
+  }
+
+  @Override
+  public Packet<?> modifyOutgoing(Player receiver, Packet<?> outgoing) {
+    // No request present yet
+    InterceptionRequest req = requests.get(receiver);
+    if (req == null)
+      return outgoing;
+
+    if (
+      // Direction matches
+      (req.dir == PacketDirection.OUT || req.dir == PacketDirection.IN_OUT) &&
+
+        // Pattern matches
+        (req.regex == null || req.regex.matcher(outgoing.getClass().getSimpleName()).find())
+    )
+      logEvent("OUTBOUND", outgoing, req.depth);
+
+    return outgoing;
   }
 
   //=========================================================================//
@@ -170,6 +206,9 @@ public class InjectCommand extends APlayerCommand implements Listener, IAutoCons
    * @param depth Levels of recursion to allow when stringifying object fields
    */
   private void logEvent(String dir, Object msg, int depth) {
+    String cOth = Config.get(ConfigKey.INJECT_EVENT_COLOR_OTHER);
+    String cVal = Config.get(ConfigKey.INJECT_EVENT_COLOR_VALUES);
+
     // Get stringification result with proper colors applied
     String res = stringifyObjectProperties(
       msg, depth,
@@ -180,102 +219,11 @@ public class InjectCommand extends APlayerCommand implements Listener, IAutoCons
     // Log this event as an info message
     Main.logger().logInfo(Config.get(
       ConfigKey.INJECT_EVENT,
-      dir, msg.getClass().getSimpleName(), res
+      dir,
+      "%s%s(%s%s%s)".formatted(
+        cOth, msg.getClass().getSimpleName(),
+        cVal, res, cOth
+      )
     ));
-  }
-
-  /**
-   * Create a new injection for the player
-   * @param p Target player
-   * @param dir Direction to capture
-   * @param regex Regex to match simple classnames against, null for any
-   * @param depth Levels of recursion to allow when stringifying object fields
-   * @return Success state
-   */
-  private boolean injectPlayer(Player p, PacketDirection dir, Pattern regex, int depth) {
-    try {
-      // Already injected
-      if (handlers.containsKey(p))
-        return true;
-
-      // Create a new channel handler that overrides R/W to intercept
-      // This handler gets created in this closure to provide player context (if ever needed)
-      ChannelDuplexHandler handler = new ChannelDuplexHandler() {
-
-        @Override
-        public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-          if (
-            // Direction matches
-            (dir == PacketDirection.IN || dir == PacketDirection.IN_OUT) &&
-
-            // Pattern matches
-            (regex == null || regex.matcher(msg.getClass().getSimpleName()).find())
-          )
-            logEvent("INBOUND", msg, depth);
-
-          super.channelRead(ctx, msg);
-        }
-
-        @Override
-        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-          if (
-            // Direction matches
-            (dir == PacketDirection.OUT || dir == PacketDirection.IN_OUT) &&
-
-            // Pattern matches
-            (regex == null || regex.matcher(msg.getClass().getSimpleName()).find())
-          )
-            logEvent("OUTBOUND", msg, depth);
-
-          super.write(ctx, msg, promise);
-        }
-      };
-
-      // Register handler in local map
-      handlers.put(p, handler);
-
-      // Add custom interception handler before default packet handler
-      getPipe(p).addBefore("packet_handler", handlerName, handler);
-      return true;
-    } catch (Exception e) {
-      return false;
-    }
-  }
-
-  /**
-   * Get the network pipeline of a player
-   * @param p Target player
-   * @return Pipeline of the target
-   * @throws Exception Issues during reflection access
-   */
-  private ChannelPipeline getPipe(Player p) throws Exception {
-    Channel c = MCReflect.getNetworkChannel(p);
-    return c.pipeline();
-  }
-
-  /**
-   * Remove a previously created injection from the player
-   * @param p Target player
-   * @return Success state
-   */
-  private boolean uninjectPlayer(Player p) {
-    try {
-      // Not injected
-      if (handlers.remove(p) == null)
-        return true;
-
-      // Remove pipeline entry
-      ChannelPipeline pipe = getPipe(p);
-
-      // Not registered in the pipeline
-      if (!pipe.names().contains(handlerName))
-        return true;
-
-      // Remove handler
-      pipe.remove(handlerName);
-      return true;
-    } catch (Exception e) {
-      return false;
-    }
   }
 }

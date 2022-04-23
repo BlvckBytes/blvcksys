@@ -4,17 +4,17 @@ import me.blvckbytes.blvcksys.Main;
 import me.blvckbytes.blvcksys.config.Config;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.util.MCReflect;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import org.apache.commons.lang.mutable.MutableInt;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Listener;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Stream;
 
 /**
@@ -28,23 +28,41 @@ import java.util.stream.Stream;
  */
 public abstract class APlayerCommand extends Command {
 
+  // Argument placeholder to description map
+  private String[][] argDescs;
+  private static Map<String, APlayerCommand> registeredCommands;
+
+  static {
+    registeredCommands = new HashMap<>();
+  }
+
   /**
    * @param name Name of the command
    * @param description Description of the command
-   * @param usage Command's usage
+   * @param argDescs Mapping
    * @param aliases Aliases the command can also be called by
    */
-  public APlayerCommand(String name, String description, String usage, String ...aliases) {
-    super(name, description, usage, Arrays.asList(aliases));
+  public APlayerCommand(String name, String description, String[][] argDescs, String ...aliases) {
+    super(
+      name,
+      description,
+
+      // Generate a usage string from all first tuple items of the args-map
+      Arrays.stream(argDescs)
+        .map(strings -> strings[0])
+        .reduce("/" + name, (acc, curr) -> acc + " " + curr),
+
+      Arrays.asList(aliases)
+    );
+
+    this.argDescs = argDescs;
 
     // Register this command within the server's command map
     MCReflect.registerCommand(Main.getInst().getDescription().getName(), this);
+    registeredCommands.put(name, this);
     Main.logger().logDebug("Registered command /%s using handler %s", name, this.getClass().getName());
-
-    // Also register events if the listener interface has been implemented
-    if (this instanceof Listener l)
-      Main.getInst().getServer().getPluginManager().registerEvents(l, Main.getInst());
   }
+
 
   //=========================================================================//
   //                              Overrideables                              //
@@ -104,7 +122,7 @@ public abstract class APlayerCommand extends Command {
     switch (res.error()) {
       case PLAYER_NOT_ONLINE -> cs.sendMessage(Config.getP(ConfigKey.ERR_NOT_ONLINE, res.args()));
 
-      case USAGE_MISMATCH -> cs.sendMessage(Config.getP(ConfigKey.ERR_USAGE, colorizedUsage()));
+      case USAGE_MISMATCH -> cs.spigot().sendMessage(buildAdvancedUsage(Config.getP(ConfigKey.ERR_USAGE)));
 
       // Custom error with custom format, [0] is the message and [1]..[n] are the args to format the message
       case CUSTOM_ERROR -> cs.sendMessage(res.args()[0].toString().formatted(Arrays.copyOfRange(res.args(), 1, res.args().length)));
@@ -123,13 +141,64 @@ public abstract class APlayerCommand extends Command {
   //=========================================================================//
 
   /**
+   * Get an argument's placeholder by it's argument id (zero based index)
+   * @param argId Argument id
+   * @return Placeholder value
+   */
+  protected String getArgumentPlaceholder(int argId) {
+    return argDescs[Math.min(argId, argDescs.length - 1)][0];
+  }
+
+  /**
+   * Get an argument's description by it's argument id (zero based index)
+   * @param argId Argument id
+   * @return Description value
+   */
+  public String getArgumentDescripton(int argId) {
+    return argDescs[Math.min(argId, argDescs.length - 1)][1];
+  }
+
+  /**
+   * Build a hoverable message
+   * @param text Message to send
+   * @param hover Message to display on hover
+   * @return Built component
+   */
+  private TextComponent buildHoverable(String text, String hover) {
+    // Build the hoverable text-component and add it to the list
+    TextComponent tc = new TextComponent(text);
+    tc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hover)));
+    return tc;
+  }
+
+  /**
+   * Build the usage-string in advanced mode, which supports hover tooltips
+   * @param prefix Prepended text, can be null if not needed
+   */
+  protected TextComponent[] buildAdvancedUsage(String prefix) {
+    List<TextComponent> components = new ArrayList<>();
+    String cOth = Config.get(ConfigKey.ERR_USAGE_COLOR_OTHER);
+
+    // Add a prefix, if provided
+    if (prefix != null)
+      components.add(new TextComponent(prefix));
+
+    // Add /command with it's description as a tooltip
+    components.add(buildHoverable(cOth + "/" + getName(), cOth + getDescription()));
+
+    // Add all it's arguments with their descriptive text as hover-tooltips
+    for (String[] desc : this.argDescs)
+      components.add(buildHoverable(colorizeUsage(desc[0]), cOth + desc[1]));
+
+    return components.toArray(TextComponent[]::new);
+  }
+
+  /**
    * Colorize the usage string based on the colors specified inside the config
+   * @param vanilla Vanilla usage string
    * @return Colorized usage string
    */
-  private String colorizedUsage() {
-    // Vanilla usage string
-    String vanilla = getUsage();
-
+  public static String colorizeUsage(String vanilla) {
     // Usage formatting colors
     String cMan = Config.get(ConfigKey.ERR_USAGE_COLOR_MANDATORY);
     String cOpt = Config.get(ConfigKey.ERR_USAGE_COLOR_OPTIONAL);
@@ -267,11 +336,14 @@ public abstract class APlayerCommand extends Command {
 
     Class<?> c = o.getClass();
 
-    // Just stringify primitives (and their wrappers), enums or strings
+    // Return the string wrapped in quotes
+    if (o instanceof String)
+      return "\"" + o + "\"";
+
+    // Just stringify primitives (and their wrappers) or enums
     if (
       c.isPrimitive()
         || c.isEnum()
-        || o instanceof String
         || o instanceof Integer
         || o instanceof Long
         || o instanceof Double
@@ -406,5 +478,18 @@ public abstract class APlayerCommand extends Command {
 
     // Re-set the colors at the end
     return props + "§r";
+  }
+
+  /**
+   * Get a command by it's command name string
+   * @param command Command name string, casing will be ignored
+   */
+  public static Optional<APlayerCommand> getByCommand(String command) {
+    for (Map.Entry<String, APlayerCommand> entry : registeredCommands.entrySet()) {
+      if (entry.getKey().toLowerCase().equals(command.toLowerCase()))
+        return Optional.of(entry.getValue());
+    }
+
+    return Optional.empty();
   }
 }

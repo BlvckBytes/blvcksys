@@ -3,6 +3,7 @@ package me.blvckbytes.blvcksys.util.di;
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ScanResult;
 import me.blvckbytes.blvcksys.Main;
+import org.bukkit.event.Listener;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Parameter;
@@ -68,6 +69,12 @@ public class AutoConstructer {
       List<Class<?>> seen = new ArrayList<>();
       for (Map.Entry<Class<?>, Constructor<?>> e : ctorMap.entrySet())
         createWithDependencies(ctorMap, e.getKey(), seen);
+
+      // Call the init method on all resources
+      for (Object o : refs.values()) {
+        if (o instanceof IAutoConstructed a)
+          a.initialize();
+      }
 
     } catch (Exception e) {
       Main.logger().logError(e);
@@ -178,6 +185,21 @@ public class AutoConstructer {
   }
 
   /**
+   * Called whenever a resource has been instantiated
+   */
+  private static void onInstantiation(Object instance) {
+    String name = instance.getClass().getName();
+
+    // Also register events if the listener interface has been implemented
+    if (instance instanceof Listener l) {
+      Main.getInst().getServer().getPluginManager().registerEvents(l, Main.getInst());
+      Main.logger().logDebug("Registered event-listener using handler: %s", name);
+    }
+
+    Main.logger().logDebug("Created @AutoConstruct resource: %s", name);
+  }
+
+  /**
    * Create a new instance of a class by creating all it's constructor's dependencies beforehand
    * @param ctorMap Constructor map of pre-selected, valid constructors
    * @param target Target class to construct
@@ -208,6 +230,7 @@ public class AutoConstructer {
     if (params.length == 0) {
       // Invoke empty constructor
       Object inst = targetC.newInstance();
+      onInstantiation(inst);
       refs.put(target, inst);
 
       // As this dependency now exists, remove it from the seen list, as it
@@ -230,11 +253,13 @@ public class AutoConstructer {
       // Remember this dependency and resolve it's dependencies
       seen.add(dep);
       args[i] = createWithDependencies(ctorMap, dep, seen);
+      seen.remove(dep);
     }
 
     // All constructor dependencies instantiated, now create the target itself
     // using all created dependencies
     Object inst = targetC.newInstance(args);
+    onInstantiation(inst);
     refs.put(target, inst);
 
     return inst;

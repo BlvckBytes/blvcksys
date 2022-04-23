@@ -77,7 +77,7 @@ public class MCReflect {
    * @param fieldClass Simple name of the target field's class
    * @return Optional field, no value on reflection errors
    */
-  private static Optional<Field> findFieldByType(Class<?> c, String fieldClass) {
+  public static Optional<Field> findFieldByType(Class<?> c, String fieldClass) {
     try {
       // Try to find a field of type PlayerConnection in the EntityPlayer
       return Arrays.stream(c.getDeclaredFields())
@@ -86,6 +86,77 @@ public class MCReflect {
     } catch (Exception e) {
       Main.logger().logError(e);
       return Optional.empty();
+    }
+  }
+
+  /**
+   * Try to find a class' member field's value by it's type, choose the first occurrence
+   * @param o Object to search in
+   * @param fieldClass Simple name of the target field's class
+   * @return Optional field value, no value on reflection errors
+   */
+  public static Optional<Object> getFieldByType(Object o, String fieldClass) {
+    try {
+      // Try to get the field by it's type
+      Optional<Field> f = findFieldByType(o.getClass(), fieldClass);
+
+      if (f.isEmpty())
+        return Optional.empty();
+
+      // Respond with the value of this field in reference to the provided object
+      f.get().setAccessible(true);
+      return Optional.of(f.get().get(o));
+    } catch (Exception e) {
+      Main.logger().logError(e);
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Try to set a class' member field's value by it's type, choose the first occurrence
+   * @param o Object to manipulate in
+   * @param fieldClass Simple name of the target field's class
+   * @param v Value to set
+   */
+  public static void setFieldByType(Object o, String fieldClass, Object v) {
+    findFieldByType(o.getClass(), fieldClass).ifPresent(f -> {
+      try {
+        f.setAccessible(true);
+        f.set(o, v);
+      } catch (Exception e) {
+        Main.logger().logError(e);
+      }
+    });
+  }
+
+  /**
+   * Checks whether or not the object is an instance of the required class
+   * @param o Object to check
+   * @param c Class to check for
+   * @return True if it's an instance, false if not (or on errors)
+   */
+  public static boolean isInstanceOf(Object o, Class<?> c) {
+    try {
+      return c.isAssignableFrom(o.getClass());
+    } catch (Exception e) {
+      Main.logger().logError(e);
+      return false;
+    }
+  }
+
+  /**
+   * Checks whether or not the object is an instance of the required NMS class
+   * @param o Object to check
+   * @param nmsClass Class to check for
+   * @return True if it's an instance, false if not (or on errors)
+   */
+  public static boolean isInstanceOfNMS(Object o, String nmsClass) {
+    try {
+      Class<?> c = getClassNMS(nmsClass);
+      return isInstanceOf(o, c);
+    } catch (Exception e) {
+      Main.logger().logError(e);
+      return false;
     }
   }
 
@@ -175,5 +246,41 @@ public class MCReflect {
       throw new RuntimeException("Could not find a field of type Channel!");
 
     return (Channel) field.get().get(nm);
+  }
+
+  /**
+   * Get a private field's value
+   * @param o Object to modify
+   * @param field Name of the field
+   * @return Value of the field
+   * @throws Exception Issues during reflection access
+   */
+  public static Optional<Object> getFieldByName(Object o, String field) {
+    try {
+      Class<?> cl = o.getClass();
+      Field f = cl.getDeclaredField(field);
+      f.setAccessible(true);
+      return Optional.of(f.get(o));
+    } catch (Exception e) {
+      Main.logger().logError(e);
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Set a private field's value
+   * @param o Object to modify
+   * @param field Name of the field
+   * @param value New value
+   */
+  public static void setFieldByName(Object o, String field, Object value) {
+    try {
+      Class<?> cl = o.getClass();
+      Field f = cl.getDeclaredField(field);
+      f.setAccessible(true);
+      f.set(o, value);
+    } catch (Exception e) {
+      Main.logger().logError(e);
+    }
   }
 }

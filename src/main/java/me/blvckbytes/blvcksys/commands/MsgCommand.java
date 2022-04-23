@@ -26,7 +26,10 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener 
     super(
       "msg",
       "Send a message to someone",
-      "/msg <Recipient> <Message>"
+      new String[][] {
+        { "<recipient>", "Message receiver" },
+        { "<message>", "Message to send" }
+      }
     );
 
     this.partners = new HashMap<>();

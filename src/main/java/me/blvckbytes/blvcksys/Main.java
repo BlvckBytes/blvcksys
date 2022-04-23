@@ -16,16 +16,13 @@ public class Main extends JavaPlugin {
   public void onEnable() {
     inst = this;
 
-    // Load the config file
     try {
       Config.load(this);
     } catch (Exception e) {
       logger().logError(e);
     }
 
-    // Auto-construct all commands, which loads them through their super-calls
-    AutoConstructer.execute("me.blvckbytes.blvcksys.commands");
-
+    AutoConstructer.execute("me.blvckbytes.blvcksys");
     logger().logInfo("Plugin loaded successfully!");
   }
 

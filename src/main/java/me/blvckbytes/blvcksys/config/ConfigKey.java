@@ -44,7 +44,7 @@ public enum ConfigKey {
   ERR_INTERNAL("errors.internal", "&4Es trat ein interner Fehler auf!"),
   ERR_INTPARSE("errors.intparse", "&cDie Eingabe %s ist keine Ganzzahl!"),
   ERR_NOT_ONLINE("errors.not_online", "&cDer Spieler %s ist nicht online!"),
-  ERR_USAGE("errors.usage", "&7Benutzung: %s"),
+  ERR_USAGE("errors.usage", "&7Benutzung: "),
   ERR_USAGE_COLOR_MANDATORY("errors.usage_color.mandatory", "&d"),
   ERR_USAGE_COLOR_OPTIONAL("errors.usage_color.optional", "&b"),
   ERR_USAGE_COLOR_BRACKETS("errors.usage_color.brackets", "&8"),

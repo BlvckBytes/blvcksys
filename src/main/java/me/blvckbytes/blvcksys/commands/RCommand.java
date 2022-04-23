@@ -19,7 +19,9 @@ public class RCommand extends APlayerCommand {
     super(
       "r",
       "Respond to the last message",
-      "/r <Message>",
+      new String[][] {
+        { "<message>", "Message to send" }
+      },
       "reply"
     );
 

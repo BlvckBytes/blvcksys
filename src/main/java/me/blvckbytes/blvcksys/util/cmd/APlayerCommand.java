@@ -256,10 +256,11 @@ public abstract class APlayerCommand extends Command {
    * @param o Object to stringify
    * @param otherColor Color prepended to non-values
    * @param valueColor Color prepended to values
+   * @param depth How deep to stringify list or array elements if they're objects
    *
    * @return String representation or null if it's an object
    */
-  protected String stringifyObject(Object o, String otherColor, String valueColor) {
+  protected String stringifyObject(Object o, String otherColor, String valueColor, int depth) {
     // Directly stringify null values
     if (o == null)
       return "null";
@@ -289,14 +290,34 @@ public abstract class APlayerCommand extends Command {
 
       // Iterate list or list from array
       List<?> list = (List<?>) (isList ? o : Arrays.asList((Object[]) o));
-      for (int i = 0; i < list.size(); i++)
+      for (int i = 0; i < list.size(); i++) {
+        Object curr = list.get(i);
+        Object res = stringifyObject(curr, otherColor, valueColor, depth);
+
+        // Could not stringify locally
+        if (res == null) {
+          String tarName = curr.getClass().getSimpleName();
+
+          // Depth remains, try to reach out to the object stringifier
+          if (depth > 0)
+            res = "%s%s(%s%s)".formatted(
+              otherColor, tarName, valueColor,
+              stringifyObjectProperties(curr, depth - 1, otherColor, valueColor)
+            );
+
+          // No more depth, use placeholding indicator
+          else
+            res = "<%s>".formatted(tarName);
+        }
+
         // Call recursively until a scalar value occurs
         sb
           .append(i == 0 ? "" : otherColor + ", ")
           .append(valueColor)
           .append(
-          stringifyObject(list.get(i), otherColor, valueColor)
-        );
+            res
+          );
+      }
 
       // Reset color at the end
       sb.append(otherColor).append("]").append("§r");
@@ -336,7 +357,9 @@ public abstract class APlayerCommand extends Command {
       }
 
       // Skip static fields
-      fields = Arrays.stream(fields).filter(f -> !Modifier.isStatic(f.getModifiers())).toArray(Field[]::new);
+      fields = Arrays.stream(fields)
+        .filter(f -> !Modifier.isStatic(f.getModifiers()))
+        .toArray(Field[]::new);
 
       // Loop all fields of this packet and add them to a comma separated list
       for (int i = 0; i < fields.length; i++) {
@@ -352,11 +375,11 @@ public abstract class APlayerCommand extends Command {
 
         // Call to resolve this object into a simple string (no object field walking)
         Object tar = f.get(o);
-        String tarName = tar.getClass().getSimpleName();
-        String str = stringifyObject(tar, otherColor, valueColor);
+        String str = stringifyObject(tar, otherColor, valueColor, depth - 1);
 
         // Not an "easy" stringify
         if (str == null) {
+          String tarName = tar.getClass().getSimpleName();
 
           // Depth used up
           if (depth == 0)

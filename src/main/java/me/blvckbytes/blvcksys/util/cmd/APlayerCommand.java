@@ -188,7 +188,7 @@ public abstract class APlayerCommand extends Command {
 
     // Add all it's arguments with their descriptive text as hover-tooltips
     for (String[] desc : this.argDescs)
-      components.add(buildHoverable(colorizeUsage(desc[0]), cOth + desc[1]));
+      components.add(buildHoverable(" " + colorizeUsage(desc[0]), cOth + desc[1]));
 
     return components.toArray(TextComponent[]::new);
   }
@@ -486,7 +486,7 @@ public abstract class APlayerCommand extends Command {
    */
   public static Optional<APlayerCommand> getByCommand(String command) {
     for (Map.Entry<String, APlayerCommand> entry : registeredCommands.entrySet()) {
-      if (entry.getKey().toLowerCase().equals(command.toLowerCase()))
+      if (entry.getKey().equalsIgnoreCase(command))
         return Optional.of(entry.getValue());
     }
 

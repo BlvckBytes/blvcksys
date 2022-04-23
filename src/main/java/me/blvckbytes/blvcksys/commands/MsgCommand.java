@@ -49,6 +49,10 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener 
         .map(Player::getDisplayName)
         .filter(n -> n.toLowerCase().contains(args[currArg].toLowerCase()));
 
+    // Provide remaining args as placeholders (message is variadic)
+    if (currArg >= 1)
+      return Stream.of(getArgumentPlaceholder(currArg));
+
     return super.onTabCompletion(p, args, currArg);
   }
 

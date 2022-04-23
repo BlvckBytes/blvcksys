@@ -8,6 +8,8 @@ import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.cmd.CommandResult;
 import org.bukkit.entity.Player;
 
+import java.util.stream.Stream;
+
 @AutoConstruct
 public class RCommand extends APlayerCommand {
 
@@ -47,5 +49,11 @@ public class RCommand extends APlayerCommand {
     this.msgC.sendMessage(p, partner, message);
 
     return success();
+  }
+
+  @Override
+  protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
+    // Provide placeholder (message is variadic)
+    return Stream.of(getArgumentPlaceholder(currArg));
   }
 }

@@ -85,6 +85,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
         .map(Enum::toString)
         .filter(pd -> pd.toLowerCase().contains(args[currArg].toLowerCase()));
 
+    // Provide remaining args as placeholders (regex is variadic)
     if (currArg >= 2)
       return Stream.of(getArgumentPlaceholder(currArg));
 

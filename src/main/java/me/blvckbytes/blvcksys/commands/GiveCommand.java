@@ -42,7 +42,11 @@ public class GiveCommand extends APlayerCommand {
         .map(Enum::toString)
         .filter(m -> m.toLowerCase().contains(args[currArg].toLowerCase()));
 
-    // Third argument - provide all online players
+    // Provide placeholder for the amount
+    else if (currArg == 1)
+      return Stream.of(getArgumentPlaceholder(currArg));
+
+      // Third argument - provide all online players
     else if (currArg == 2)
       return Bukkit.getOnlinePlayers()
         .stream()

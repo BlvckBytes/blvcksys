@@ -2,11 +2,14 @@ package me.blvckbytes.blvcksys.util.di;
 
 import io.github.classgraph.ClassGraph;
 import io.github.classgraph.ScanResult;
+import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import net.minecraft.util.Tuple;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Parameter;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -18,11 +21,15 @@ public class AutoConstructer {
   // Cache for already constructed classes (singletons)
   private static final Map<Class<?>, Object> refs;
 
+  // Cache for @AutoConstruct'ed class fields that are waiting for late init injections
+  private static final Map<Class<?>, List<Tuple<Object, Field>>> lateinits;
+
   // Queues log messages until the logger is available
   private static final List<String> logQueue;
 
   static {
     refs = new HashMap<>();
+    lateinits = new HashMap<>();
     logQueue = new ArrayList<>();
   }
 
@@ -193,17 +200,35 @@ public class AutoConstructer {
   /**
    * Called whenever a resource has been instantiated
    * @param main Reference of the JavaPlugin instance
+   * @param instance Created object
+   * @param vanillaC Vanilla class (unresolved interface for example) of this object
    */
-  private static void onInstantiation(JavaPlugin main, Object instance) {
+  private static void onInstantiation(JavaPlugin main, Object instance, Class<?> vanillaC) {
     String name = instance.getClass().getName();
+    logDebug("Created @AutoConstruct resource: " + name);
+
+    // Check for lateinits that need this type
+    List<Tuple<Object, Field>> receivers = lateinits.remove(vanillaC);
+    if (receivers != null) {
+      try {
+        // Loop all tuples of object to field and set the value
+        for (Tuple<Object, Field> fr : receivers) {
+          Field f = fr.b();
+          f.setAccessible(true);
+          f.set(fr.a(), instance);
+
+          logDebug("Injected lateinit dependency " + name + " into " + fr.a().getClass().getName());
+        }
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
 
     // Also register events if the listener interface has been implemented
     if (instance instanceof Listener l) {
       main.getServer().getPluginManager().registerEvents(l, main);
       logDebug("Registered event-listener using handler: " + name);
     }
-
-    logDebug("Created @AutoConstruct resource: " + name);
   }
 
   /**
@@ -223,6 +248,7 @@ public class AutoConstructer {
     List<Class<?>> seen
   ) throws Exception {
     // Resolve the interface implementation, if applicable
+    Class<?> vanillaC = target;
     target = resolveInterface(target, new ArrayList<>(ctorMap.keySet()));
 
     // Already exists, return "singleton" object
@@ -239,7 +265,7 @@ public class AutoConstructer {
     if (params.length == 0) {
       // Invoke empty constructor
       Object inst = targetC.newInstance();
-      onInstantiation(main, inst);
+      onInstantiation(main, inst, vanillaC);
       refs.put(target, inst);
 
       // As this dependency now exists, remove it from the seen list, as it
@@ -248,10 +274,50 @@ public class AutoConstructer {
       return inst;
     }
 
+    // Keep a list of fields within this class that need to be late-initialized
+    List<Field> lateinitFields = new ArrayList<>();
+
     // Loop all parameters of this constructor and thus all dependencies
     Object[] args = new Object[params.length];
     for (int i = 0; i < params.length; i++) {
-      Class<?> dep = params[i].getType();
+      Parameter p = params[i];
+      Class<?> dep = p.getType();
+
+      // Get the auto-inject annotation to access it's parameters
+      AutoInject aia = p.getAnnotation(AutoInject.class);
+      if (aia == null)
+        throw new RuntimeException(
+          "Parameter %s of %s is not annotated by @AutoInject".formatted(p.getName(), target.getName())
+        );
+
+      // This dependency can be late-inited
+      if (aia.lateinit()) {
+        // Already exists
+        if (refs.containsKey(target)) {
+          args[i] = refs.get(target);
+          continue;
+        }
+
+        // Search for a matching member field
+        Field f = null;
+        for (Field tf : target.getDeclaredFields()) {
+          if (!tf.getType().equals(p.getType()))
+            continue;
+
+          f = tf;
+          break;
+        }
+
+        // Lateinits need to have a corresponding member field (same type)
+        if (f == null)
+          throw new RuntimeException(
+            "Parameter %s of %s has no corresponding member field".formatted(p.getName(), target.getName())
+          );
+
+        // Add to buffer
+        lateinitFields.add(f);
+        continue;
+      }
 
       // Directly inject main at this point
       if (dep.isAssignableFrom(main.getClass())) {
@@ -274,7 +340,20 @@ public class AutoConstructer {
     // All constructor dependencies instantiated, now create the target itself
     // using all created dependencies
     Object inst = targetC.newInstance(args);
-    onInstantiation(main, inst);
+
+    // Add all fields as a tuple with their instance
+    for (Field f : lateinitFields) {
+      Class<?> t = f.getType();
+
+      // Class not yet requested, create empty list
+      if (!lateinits.containsKey(vanillaC))
+        lateinits.put(t, new ArrayList<>());
+
+      // Add the newly created object's lateinit request
+      lateinits.get(t).add(new Tuple<>(inst, f));
+    }
+
+    onInstantiation(main, inst, vanillaC);
     refs.put(target, inst);
 
     return inst;

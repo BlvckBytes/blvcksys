@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.util.logging;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.util.ObjectStringifier;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import org.bukkit.Bukkit;
@@ -13,11 +14,14 @@ import java.io.StringWriter;
 public class ConsoleSenderLogger implements ILogger {
 
   private final IConfig cfg;
+  private final ObjectStringifier ostr;
 
   public ConsoleSenderLogger(
-    @AutoInject IConfig cfg
+    @AutoInject IConfig cfg,
+    @AutoInject(lateinit = true) ObjectStringifier ostr
   ) {
     this.cfg = cfg;
+    this.ostr = ostr;
   }
 
   private void log(String format, Object... args) {
@@ -29,6 +33,11 @@ public class ConsoleSenderLogger implements ILogger {
   @Override
   public void logDebug(String format, Object... args) {
     log(cfg.get(ConfigKey.LOGGING_PREFIX_DEBUG) + format.formatted(args));
+  }
+
+  @Override
+  public void logDebug(Object o, int depth) {
+    log(cfg.get(ConfigKey.LOGGING_PREFIX_DEBUG) + ostr.stringifyObject(o, depth));
   }
 
   @Override

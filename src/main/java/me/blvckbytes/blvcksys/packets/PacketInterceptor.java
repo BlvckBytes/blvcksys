@@ -8,6 +8,7 @@ import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.server.network.ServerConnection;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -270,7 +271,7 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
       // Find all network managers inside the ServerConnection
       List<?> nmans = refl.getCraftServer()
         .flatMap(cs -> refl.getFieldByName(cs, "console"))
-        .flatMap(console -> refl.getFieldByType(console, "ServerConnection"))
+        .flatMap(console -> refl.getFieldByType(console, ServerConnection.class))
         .flatMap(sc ->
           refl.findListFieldByType(sc.getClass(), "NetworkManager")
             .flatMap(nmlf -> refl.getFieldValue(nmlf, sc))

@@ -11,8 +11,10 @@ import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.chat.ChatMessage;
+import net.minecraft.network.chat.IChatBaseComponent;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.status.PacketStatusOutServerInfo;
+import net.minecraft.network.protocol.status.ServerPing;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -63,30 +65,30 @@ public class ServerListPacketModifier implements IPacketModifier {
       return outgoing;
 
     if (outgoing instanceof PacketStatusOutServerInfo si) {
-      refl.getFieldByType(si, "ServerPing")
+      refl.getFieldByType(si, ServerPing.class)
         .ifPresent(sp -> {
           // Set the text
           refl.setFieldByType(
-            sp, "IChatBaseComponent",
+            sp, IChatBaseComponent.class,
             new ChatMessage(cfg.get(ConfigKey.PLAYERLIST_TEXT))
           );
 
           // Modify the icon base64 string value
           if (this.encodedIcon != null)
-            refl.setFieldByType(sp, "String", encodedIcon);
+            refl.setFieldByType(sp, String.class, encodedIcon);
 
           // Modify the player-sample by overriding online players with fake players
           String online = cfg.get(ConfigKey.PLAYERLIST_ONLINE);
           if (!online.isEmpty()) {
-            refl.getFieldByType(sp, "ServerData")
+            refl.getFieldByType(sp, ServerPing.ServerData.class)
               .ifPresent(sd -> {
-                refl.setFieldByType(sd, "String", online);
-                refl.setFieldByType(sd, "int", 0);
+                refl.setFieldByType(sd, String.class, online);
+                refl.setFieldByType(sd, int.class, 0);
               });
           }
 
           // Modify the player-sample by overriding online players with fake players
-          refl.getFieldByType(sp, "ServerPingPlayerSample")
+          refl.getFieldByType(sp, ServerPing.ServerPingPlayerSample.class)
             .ifPresent(ps -> {
               // Map individual hover lines to gameprofiles with random UUIDs
               GameProfile[] profiles = Arrays.stream(

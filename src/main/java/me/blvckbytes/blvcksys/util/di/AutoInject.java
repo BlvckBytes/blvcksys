@@ -10,4 +10,17 @@ import java.lang.annotation.Target;
  */
 @Target({ ElementType.PARAMETER })
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AutoInject {}
+public @interface AutoInject {
+
+  /**
+   * Whether or not to init this dependency "late" (as soon as
+   * possible), which is used to break circular dependencies that
+   * do not require to be instantly resolved. This mode does require
+   * a local member field that has the exact same type as the
+   * dependency to be injected.
+   *
+   * WARNING: This also means that until this dependency becomes
+   * available, null will be injected (account for that!)
+   */
+  boolean lateinit() default false;
+}

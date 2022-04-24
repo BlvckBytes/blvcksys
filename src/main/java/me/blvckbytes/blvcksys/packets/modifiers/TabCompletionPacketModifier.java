@@ -1,5 +1,7 @@
 package me.blvckbytes.blvcksys.packets.modifiers;
 
+import com.mojang.brigadier.context.StringRange;
+import com.mojang.brigadier.suggestion.Suggestions;
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
 import me.blvckbytes.blvcksys.util.MCReflect;
@@ -43,7 +45,7 @@ public class TabCompletionPacketModifier implements IPacketModifier {
     // Incoming tab completion packet, telling the server what's in the chat bar
     // There's only one int (transaction ID) and a String (value) inside this packet
     if (incoming instanceof PacketPlayInTabComplete)
-      refl.getFieldByType(incoming, "String").ifPresent(o -> lastCompletions.put(sender, o.toString()));
+      refl.getFieldByType(incoming, String.class).ifPresent(o -> lastCompletions.put(sender, o.toString()));
 
     return incoming;
   }
@@ -73,7 +75,7 @@ public class TabCompletionPacketModifier implements IPacketModifier {
         return outgoing;
 
       // Get the suggestions object from this packet
-      refl.getFieldByType(outgoing, "Suggestions").ifPresent(sug -> {
+      refl.getFieldByType(outgoing, Suggestions.class).ifPresent(sug -> {
 
         // Get the list of suggestions within that object
         boolean isArgsOnly = refl.getFieldByName(sug, "suggestions")
@@ -111,7 +113,7 @@ public class TabCompletionPacketModifier implements IPacketModifier {
         // Only consists of argument placeholders
         if (isArgsOnly) {
           // Decrement the top level string-range's start so the suggestion isn't rendered into the textbox
-          refl.getFieldByType(sug, "StringRange").ifPresent(sr -> {
+          refl.getFieldByType(sug, StringRange.class).ifPresent(sr -> {
             refl.getFieldByName(sr, "start").ifPresent(start -> {
               refl.setFieldByName(sr, "start", Math.max(0, ((int) start) - 1));
             });

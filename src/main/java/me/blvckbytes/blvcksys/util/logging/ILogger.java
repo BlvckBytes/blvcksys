@@ -10,6 +10,13 @@ public interface ILogger {
   void logDebug(String format, Object... args);
 
   /**
+   * Log a stringified object on the debug level
+   * @param o Object to stringify
+   * @param depth Depth of recursion
+   */
+  void logDebug(Object o, int depth);
+
+  /**
    * Log a message on the information level
    * @param format Format of the message
    * @param args Arguments to apply the format

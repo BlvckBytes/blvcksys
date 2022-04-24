@@ -1,17 +1,22 @@
 package me.blvckbytes.blvcksys.util;
 
+import com.google.common.primitives.Primitives;
 import io.netty.channel.Channel;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import net.minecraft.network.NetworkManager;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.server.network.PlayerConnection;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -100,35 +105,36 @@ public class MCReflect {
   /**
    * Try to find a class' member field by it's type, choose the first occurrence
    * @param c Class to search in
-   * @param fieldClass Simple name of the target field's class
+   * @param fieldClass Target field's class
    * @return Optional field, no value on reflection errors
    */
-  public Optional<Field> findFieldByType(Class<?> c, String fieldClass) {
-    try {
-      Class<?> currC = c;
-      Optional<Field> res = Optional.empty();
+  public Optional<Field> findFieldByType(Class<?> c, Class<?> fieldClass) {
+    return findFieldByType(c, fieldClass, 0);
+  }
 
-      while(
-        // While there's still a superclass
-        currC != null &&
-
-        // And there's not yet a result
-        res.isEmpty()
-      ) {
-        // Try to find the field
-        res = Arrays.stream(currC.getDeclaredFields())
-          .filter(it -> it.getType().getSimpleName().equals(fieldClass))
-          .findFirst();
-
-        // Walk into superclass
-        currC = currC.getSuperclass();
+  /**
+   * Try to find a class' member field by it's type, choose the first occurrence after skipping some
+   * @param c Class to search in
+   * @param fieldClass Target field's class
+   * @param skip How many occurrences to skip
+   * @return Optional field, no value on reflection errors
+   */
+  public Optional<Field> findFieldByType(Class<?> c, Class<?> fieldClass, int skip) {
+    return walkHierarchyToFind(c, cc -> {
+      try {
+        return Arrays.stream(cc.getDeclaredFields())
+          .filter(it -> compareTypes(it.getType(), fieldClass, false))
+          .skip(skip)
+          .findFirst()
+          .map(f -> {
+            f.setAccessible(true);
+            return f;
+          });
+      } catch (Exception e) {
+        logger.logError(e);
+        return Optional.empty();
       }
-
-      return res;
-    } catch (Exception e) {
-      logger.logError(e);
-      return Optional.empty();
-    }
+    });
   }
 
   /**
@@ -138,31 +144,32 @@ public class MCReflect {
    * @return Optional field, no value on reflection errors
    */
   public Optional<Field> findFieldByName(Class<?> c, String name) {
-    try {
-      Class<?> currC = c;
-      Optional<Field> res = Optional.empty();
+    return findFieldByName(c, name, 0);
+  }
 
-      while(
-        // While there's still a superclass
-        currC != null &&
-
-          // And there's not yet a result
-          res.isEmpty()
-      ) {
-        // Try to find the field
-        res = Arrays.stream(c.getDeclaredFields())
+  /**
+   * Try to find a class' member field by it's name
+   * @param c Class to search in
+   * @param name Name of the target field
+   * @param skip How many occurrences to skip
+   * @return Optional field, no value on reflection errors
+   */
+  public Optional<Field> findFieldByName(Class<?> c, String name, int skip) {
+    return walkHierarchyToFind(c, cc -> {
+      try {
+        return Arrays.stream(cc.getDeclaredFields())
           .filter(it -> it.getName().equals(name))
-          .findFirst();
-
-        // Walk into superclass
-        currC = currC.getSuperclass();
+          .skip(skip)
+          .findFirst()
+          .map(f -> {
+            f.setAccessible(true);
+            return f;
+          });
+      } catch (Exception e) {
+        logger.logError(e);
+        return Optional.empty();
       }
-
-      return res;
-    } catch (Exception e) {
-      logger.logError(e);
-      return Optional.empty();
-    }
+    });
   }
 
   /**
@@ -281,10 +288,10 @@ public class MCReflect {
   /**
    * Try to find a class' member field's value by it's type, choose the first occurrence
    * @param o Object to search in
-   * @param fieldClass Simple name of the target field's class
+   * @param fieldClass Target field's class
    * @return Optional field value, no value on reflection errors
    */
-  public Optional<Object> getFieldByType(Object o, String fieldClass) {
+  public Optional<Object> getFieldByType(Object o, Class<?> fieldClass) {
     try {
       // Try to get the field by it's type
       Optional<Field> f = findFieldByType(o.getClass(), fieldClass);
@@ -304,11 +311,22 @@ public class MCReflect {
   /**
    * Try to set a class' member field's value by it's type, choose the first occurrence
    * @param o Object to manipulate in
-   * @param fieldClass Simple name of the target field's class
+   * @param fieldClass Target field's class
    * @param v Value to set
    */
-  public void setFieldByType(Object o, String fieldClass, Object v) {
-    findFieldByType(o.getClass(), fieldClass).ifPresent(f -> {
+  public void setFieldByType(Object o, Class<?> fieldClass, Object v) {
+    setFieldByType(o, fieldClass, v, 0);
+  }
+
+  /**
+   * Try to set a class' member field's value by it's type, choose the first occurrence
+   * @param o Object to manipulate in
+   * @param fieldClass Target field's class
+   * @param v Value to set
+   * @param skip How many occurrences to skip
+   */
+  public void setFieldByType(Object o, Class<?> fieldClass, Object v, int skip) {
+    findFieldByType(o.getClass(), fieldClass, skip).ifPresent(f -> {
       try {
         f.setAccessible(true);
         f.set(o, v);
@@ -408,7 +426,7 @@ public class MCReflect {
       Class<?> epC = ep.getClass();
 
       // Try to find a field of type PlayerConnection in the EntityPlayer
-      return findFieldByType(epC, "PlayerConnection")
+      return findFieldByType(epC, PlayerConnection.class)
         .flatMap(field -> {
           try {
             return Optional.of(field.get(ep));
@@ -428,7 +446,7 @@ public class MCReflect {
   public Optional<Object> getNetworkManager(Player p) {
     return getPlayerConnection(p)
       .flatMap(pc ->
-        findFieldByType(pc.getClass(), "NetworkManager")
+        findFieldByType(pc.getClass(), NetworkManager.class)
         .flatMap(nmf -> {
           try {
             return Optional.of(nmf.get(pc));
@@ -505,7 +523,7 @@ public class MCReflect {
           boolean matches = true;
           for (int i = 0; i < paramTypes.length; i++) {
             // Type matches
-            if (paramTypes[i].equals(args[i]))
+            if (compareTypes(paramTypes[i], args[i], false))
               continue;
 
             // Parameter mismatch
@@ -562,7 +580,7 @@ public class MCReflect {
   public Optional<Channel> getNetworkChannel(Player p) {
     return getNetworkManager(p)
       .flatMap(nm ->
-        findFieldByType(nm.getClass(), "Channel")
+        findFieldByType(nm.getClass(), Channel.class)
           .flatMap(cf -> {
             try {
               return Optional.of(cf.get(nm));
@@ -581,7 +599,7 @@ public class MCReflect {
    * @return NetworkChannel of the player
    */
   public Optional<Channel> getNetworkChannel(Object nm) {
-    return findFieldByType(nm.getClass(), "Channel")
+    return findFieldByType(nm.getClass(), Channel.class)
       .flatMap(cf -> {
         try {
           return Optional.of(cf.get(nm));
@@ -618,13 +636,116 @@ public class MCReflect {
    * @param value New value
    */
   public void setFieldByName(Object o, String field, Object value) {
+    setFieldByName(o, field, value, 0);
+  }
+
+  /**
+   * Set a private field's value
+   * @param o Object to modify
+   * @param field Name of the field
+   * @param value New value
+   * @param skip How many occurrences to skip
+   */
+  public void setFieldByName(Object o, String field, Object value, int skip) {
+    findFieldByName(o.getClass(), field, skip)
+      .ifPresent(f -> {
+        try {
+          f.set(o, value);
+        } catch (Exception e) {
+          logger.logError(e);
+        }
+      });
+  }
+
+  /**
+   * Compare types and account for primitive wrappers
+   * @param a Class a
+   * @param b Class b
+   * @param acceptAssignable Whether or not to accept isAssignableFrom as equality
+   * @return True if a equals b, false otherwise
+   */
+  private boolean compareTypes(Class<?> a, Class<?> b, boolean acceptAssignable) {
+    // Unwrap a if it's a wrapper
+    if (Primitives.isWrapperType(a))
+      a = Primitives.unwrap(a);
+
+    // Unwrap b if it's a wrapper
+    if (Primitives.isWrapperType(b))
+      b = Primitives.unwrap(b);
+
+    // Compare
+    return (
+      // A directly equals B
+      a.equals(b) ||
+      // Assignable is accepted, compare on that level
+      (acceptAssignable && (a.isAssignableFrom(b) || b.isAssignableFrom(a)))
+    );
+  }
+
+  /**
+   * Invoke a class' constructor, no matter if it's accessible or not
+   * @param c Class to search for constructors in
+   * @param args Arguments to invoke with
+   * @return Optional instance
+   */
+  public Optional<Object> invokeConstructor(Class<?> c, Object ...args) {
     try {
-      Class<?> cl = o.getClass();
-      Field f = cl.getDeclaredField(field);
-      f.setAccessible(true);
-      f.set(o, value);
+      // Search through all constructors
+      for (Constructor<?> ctor : c.getDeclaredConstructors()) {
+        Parameter[] params = ctor.getParameters();
+
+        // Arg count mismatch
+        if (params.length != args.length)
+          continue;
+
+        // Check args
+        boolean matches = true;
+        for (int i = 0; i < params.length; i++) {
+          if (compareTypes(params[i].getType(), args[i].getClass(), true))
+            continue;
+
+          // Arg mismatch
+          matches = false;
+          break;
+        }
+
+        // Return instance using matching constructor
+        if (matches) {
+          ctor.setAccessible(true);
+          return Optional.of(ctor.newInstance(args));
+        }
+      }
+
+      // No matches found
+      return Optional.empty();
     } catch (Exception e) {
       logger.logError(e);
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Instantiate an object by using the hidden empty default constructor and
+   * then setting all internal fields to a list of members
+   * @param c Class to instantiate
+   * @param members List of members of this class - has to have the right order
+   * @return Optional instance
+   */
+  public Optional<Object> instantiateUsingMembers(Class<?> c, Object ...members) {
+    try {
+      // Find empty constructor and make it accessible
+      Constructor<?> emptyCtor = c.getDeclaredConstructor();
+      emptyCtor.setAccessible(true);
+
+      // Create a new instance and set all it's fields in order
+      Object res = emptyCtor.newInstance();
+      for (int i = 0; i < members.length; i++)
+        c.getDeclaredFields()[i].set(res, members[i]);
+
+      return Optional.of(res);
+    } catch (Exception e) {
+      logger.logError(e);
+      return Optional.empty();
     }
   }
 }

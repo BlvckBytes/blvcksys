@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.packets.modifiers;
 
+import io.netty.buffer.Unpooled;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
@@ -8,16 +9,26 @@ import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
+import me.blvckbytes.blvcksys.util.logging.ILogger;
+import net.minecraft.EnumChatFormat;
 import net.minecraft.network.NetworkManager;
+import net.minecraft.network.PacketDataSerializer;
 import net.minecraft.network.chat.ChatComponentText;
+import net.minecraft.network.chat.ChatMessage;
+import net.minecraft.network.chat.IChatBaseComponent;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.PacketPlayOutPlayerListHeaderFooter;
+import net.minecraft.network.protocol.game.PacketPlayOutScoreboardTeam;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 
 // TODO: PacketPlayOutScoreboardTeam
 
@@ -26,14 +37,18 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
 
   private final IConfig cfg;
   private final MCReflect refl;
+  private final ILogger logger;
 
   public TabListPacketModifier(
     @AutoInject IPacketInterceptor interceptor,
     @AutoInject IConfig cfg,
-    @AutoInject MCReflect refl
+    @AutoInject MCReflect refl,
+    @AutoInject ILogger logger
   ) {
     this.cfg = cfg;
     this.refl = refl;
+    this.logger = logger;
+
     interceptor.register(this);
   }
 
@@ -48,9 +63,13 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
 
   @Override
   public Packet<?> modifyOutgoing(Player receiver, NetworkManager nm, Packet<?> outgoing) {
-    // Override this packet if it occurs naturally
+    // Override header and footer packets
     if (outgoing instanceof PacketPlayOutPlayerListHeaderFooter)
       return generateTabHeaderFooter(receiver);
+
+    // Override scoreboard team packets
+    if (outgoing instanceof PacketPlayOutScoreboardTeam)
+      return outgoing;
 
     return outgoing;
   }
@@ -64,7 +83,7 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
 
   @Override
   public void initialize() {
-    updateAllHeaderFooter();
+    updateAll();
   }
 
   //=========================================================================//
@@ -73,12 +92,12 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
 
   @EventHandler
   public void onJoin(PlayerJoinEvent e) {
-    updateAllHeaderFooter();
+    updateAll();
   }
 
   @EventHandler
   public void onQuit(PlayerQuitEvent e) {
-    updateAllHeaderFooter();
+    updateAll();
   }
 
   //=========================================================================//
@@ -88,9 +107,14 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
   /**
    * Update the header and footer for all online players
    */
-  private void updateAllHeaderFooter() {
-    for (Player t : Bukkit.getOnlinePlayers())
+  private void updateAll() {
+    for (Player t : Bukkit.getOnlinePlayers()) {
       refl.sendPacket(t, generateTabHeaderFooter(t));
+      generateScoreboardTeam(t).ifPresent(p -> {
+        System.out.println("sending scoreboard");
+        refl.sendPacket(t, p);
+      });
+    }
   }
 
   /**
@@ -103,5 +127,30 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
       new ChatComponentText(cfg.get(ConfigKey.TABLIST_HEADER)),
       new ChatComponentText(cfg.get(ConfigKey.TABLIST_FOOTER))
     );
+  }
+
+  private Optional<Packet<?>> generateScoreboardTeam(Player p) {
+    List<String> l = new ArrayList<>();
+    l.add(p.getName());
+    l.add("X");
+
+    PacketPlayOutScoreboardTeam.b b = new PacketPlayOutScoreboardTeam.b(
+      new PacketDataSerializer(Unpooled.copiedBuffer(new byte[1024]))
+    );
+
+    refl.setFieldByType(b, IChatBaseComponent.class, new ChatMessage("1"), 0);
+    refl.setFieldByType(b, IChatBaseComponent.class, new ChatMessage("2"), 1);
+    refl.setFieldByType(b, IChatBaseComponent.class, new ChatMessage("3"), 2);
+    refl.setFieldByType(b, String.class, "4", 0);
+    refl.setFieldByType(b, String.class, "5", 1);
+    refl.setFieldByType(b, EnumChatFormat.class, EnumChatFormat.g, 0);
+    refl.setFieldByType(b, int.class, 5, 0);
+
+    logger.logDebug(b, 5);
+
+    return refl.invokeConstructor(
+      PacketPlayOutScoreboardTeam.class,
+      "A", 0, Optional.of(b), l
+    ).map(o -> (Packet<?>) o);
   }
 }

@@ -10,11 +10,11 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 @AutoConstruct
-public class JoinQuitEvent implements Listener {
+public class JoinQuitListener implements Listener {
 
   private final IConfig cfg;
 
-  public JoinQuitEvent(
+  public JoinQuitListener(
     @AutoInject IConfig cfg
   ) {
     this.cfg = cfg;

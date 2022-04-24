@@ -1,7 +1,8 @@
-package me.blvckbytes.blvcksys.managers;
+package me.blvckbytes.blvcksys.packets.modifiers.tablist;
 
-import me.blvckbytes.blvcksys.packets.modifiers.tablist.TabListGroup;
 import org.bukkit.entity.Player;
+
+import java.util.Optional;
 
 public interface ITabGroupManager {
 
@@ -17,4 +18,11 @@ public interface ITabGroupManager {
    * @param p Player to add to that group
    */
   void setPlayerGroup(TabListGroup group, Player p);
+
+  /**
+   * Get a group by it's name (ignores casing)
+   * @param name Name of the group
+   * @return Target group
+   */
+  Optional<TabListGroup> getGroup(String name);
 }

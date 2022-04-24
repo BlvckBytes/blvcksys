@@ -296,9 +296,10 @@ public class MCReflect {
    * @param o Object to manipulate in
    * @param fieldClass Target field's class
    * @param v Value to set
+   * @return Success state
    */
-  public void setFieldByType(Object o, Class<?> fieldClass, Object v) {
-    setFieldByType(o, fieldClass, v, 0);
+  public boolean setFieldByType(Object o, Class<?> fieldClass, Object v) {
+    return setFieldByType(o, fieldClass, v, 0);
   }
 
   /**
@@ -307,16 +308,19 @@ public class MCReflect {
    * @param fieldClass Target field's class
    * @param v Value to set
    * @param skip How many occurrences to skip
+   * @return Success state
    */
-  public void setFieldByType(Object o, Class<?> fieldClass, Object v, int skip) {
-    findFieldByType(o.getClass(), fieldClass, skip).ifPresent(f -> {
+  public boolean setFieldByType(Object o, Class<?> fieldClass, Object v, int skip) {
+    return findFieldByType(o.getClass(), fieldClass, skip).map(f -> {
       try {
         f.setAccessible(true);
         f.set(o, v);
+        return true;
       } catch (Exception e) {
         logger.logError(e);
+        return false;
       }
-    });
+    }).orElse(false);
   }
 
   /**
@@ -617,9 +621,10 @@ public class MCReflect {
    * @param o Object to modify
    * @param field Name of the field
    * @param value New value
+   * @return Success state
    */
-  public void setFieldByName(Object o, String field, Object value) {
-    setFieldByName(o, field, value, 0);
+  public boolean setFieldByName(Object o, String field, Object value) {
+    return setFieldByName(o, field, value, 0);
   }
 
   /**
@@ -628,16 +633,19 @@ public class MCReflect {
    * @param field Name of the field
    * @param value New value
    * @param skip How many occurrences to skip
+   * @return Success state
    */
-  public void setFieldByName(Object o, String field, Object value, int skip) {
-    findFieldByName(o.getClass(), field, skip)
-      .ifPresent(f -> {
+  public boolean setFieldByName(Object o, String field, Object value, int skip) {
+    return findFieldByName(o.getClass(), field, skip)
+      .map(f -> {
         try {
           f.set(o, value);
+          return true;
         } catch (Exception e) {
           logger.logError(e);
+          return false;
         }
-      });
+      }).orElse(false);
   }
 
   /**

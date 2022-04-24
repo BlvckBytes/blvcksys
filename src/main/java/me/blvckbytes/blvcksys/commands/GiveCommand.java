@@ -23,13 +23,13 @@ import java.util.stream.Stream;
 public class GiveCommand extends APlayerCommand {
 
   public GiveCommand(
-    @AutoInject JavaPlugin main,
+    @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl
   ) {
     super(
-      main, logger, cfg, refl,
+      plugin, logger, cfg, refl,
       "give",
       "Give a certain amount of an item to yourself or others",
       new String[][] {

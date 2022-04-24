@@ -54,7 +54,7 @@ public class AutoConstructer {
    *
    * @param pkg Package to search for targets in
    */
-  public static void execute(JavaPlugin main, String pkg) {
+  public static void execute(JavaPlugin plugin, String pkg) {
     // Scan all classes in the target package and auto-close the scanner
     try (
       ScanResult result = new ClassGraph()
@@ -83,7 +83,7 @@ public class AutoConstructer {
       // Resolve all dependencies recursively
       List<Class<?>> seen = new ArrayList<>();
       for (Map.Entry<Class<?>, Constructor<?>> e : ctorMap.entrySet())
-        createWithDependencies(main, ctorMap, e.getKey(), seen);
+        createWithDependencies(plugin, ctorMap, e.getKey(), seen);
 
       // Call the init method on all resources
       for (Object o : refs.values()) {
@@ -199,11 +199,11 @@ public class AutoConstructer {
 
   /**
    * Called whenever a resource has been instantiated
-   * @param main Reference of the JavaPlugin instance
+   * @param plugin Reference of the JavaPlugin instance
    * @param instance Created object
    * @param vanillaC Vanilla class (unresolved interface for example) of this object
    */
-  private static void onInstantiation(JavaPlugin main, Object instance, Class<?> vanillaC) {
+  private static void onInstantiation(JavaPlugin plugin, Object instance, Class<?> vanillaC) {
     String name = instance.getClass().getName();
     logDebug("Created @AutoConstruct resource: " + name);
 
@@ -226,14 +226,14 @@ public class AutoConstructer {
 
     // Also register events if the listener interface has been implemented
     if (instance instanceof Listener l) {
-      main.getServer().getPluginManager().registerEvents(l, main);
+      plugin.getServer().getPluginManager().registerEvents(l, plugin);
       logDebug("Registered event-listener using handler: " + name);
     }
   }
 
   /**
    * Create a new instance of a class by creating all it's constructor's dependencies beforehand
-   * @param main Reference of the JavaPlugin instance
+   * @param plugin Reference of the JavaPlugin instance
    * @param ctorMap Constructor map of pre-selected, valid constructors
    * @param target Target class to construct
    * @param seen List of already seen classes, passed for recursion
@@ -242,7 +242,7 @@ public class AutoConstructer {
    * @throws Exception Issues with instantiation or dependency conflicts
    */
   private static Object createWithDependencies(
-    JavaPlugin main,
+    JavaPlugin plugin,
     Map<Class<?>, Constructor<?>> ctorMap,
     Class<?> target,
     List<Class<?>> seen
@@ -265,7 +265,7 @@ public class AutoConstructer {
     if (params.length == 0) {
       // Invoke empty constructor
       Object inst = targetC.newInstance();
-      onInstantiation(main, inst, vanillaC);
+      onInstantiation(plugin, inst, vanillaC);
       refs.put(target, inst);
 
       // As this dependency now exists, remove it from the seen list, as it
@@ -320,8 +320,8 @@ public class AutoConstructer {
       }
 
       // Directly inject main at this point
-      if (dep.isAssignableFrom(main.getClass())) {
-        args[i] = main;
+      if (dep.isAssignableFrom(plugin.getClass())) {
+        args[i] = plugin;
         continue;
       }
 
@@ -333,7 +333,7 @@ public class AutoConstructer {
 
       // Remember this dependency and resolve it's dependencies
       seen.add(dep);
-      args[i] = createWithDependencies(main, ctorMap, dep, seen);
+      args[i] = createWithDependencies(plugin, ctorMap, dep, seen);
       seen.remove(dep);
     }
 
@@ -353,7 +353,7 @@ public class AutoConstructer {
       lateinits.get(t).add(new Tuple<>(inst, f));
     }
 
-    onInstantiation(main, inst, vanillaC);
+    onInstantiation(plugin, inst, vanillaC);
     refs.put(target, inst);
 
     return inst;

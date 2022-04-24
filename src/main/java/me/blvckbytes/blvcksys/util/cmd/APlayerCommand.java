@@ -36,7 +36,7 @@ public abstract class APlayerCommand extends Command {
   private static final Map<String, APlayerCommand> registeredCommands;
 
   // Injected dependencies, leave them protected for quick access within command classes
-  protected final JavaPlugin main;
+  protected final JavaPlugin plugin;
   protected final ILogger logger;
   protected final IConfig cfg;
   protected final MCReflect refl;
@@ -52,7 +52,7 @@ public abstract class APlayerCommand extends Command {
    * @param aliases Aliases the command can also be called by
    */
   public APlayerCommand(
-    JavaPlugin main,
+    JavaPlugin plugin,
     ILogger logger,
     IConfig cfg,
     MCReflect refl,
@@ -74,13 +74,13 @@ public abstract class APlayerCommand extends Command {
     );
 
     this.argDescs = argDescs;
-    this.main = main;
+    this.plugin = plugin;
     this.logger = logger;
     this.cfg = cfg;
     this.refl = refl;
 
     // Register this command within the server's command map
-    refl.registerCommand(main.getDescription().getName(), this);
+    refl.registerCommand(plugin.getDescription().getName(), this);
     registeredCommands.put(name, this);
     logger.logDebug("Registered command /%s using handler %s", name, this.getClass().getName());
   }

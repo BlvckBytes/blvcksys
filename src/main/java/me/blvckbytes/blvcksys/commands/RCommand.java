@@ -19,14 +19,14 @@ public class RCommand extends APlayerCommand {
   private final IMsgCommand msgC;
 
   public RCommand(
-    @AutoInject JavaPlugin main,
+    @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
     @AutoInject IMsgCommand msgC
   ) {
     super(
-      main, logger, cfg, refl,
+      plugin, logger, cfg, refl,
       "r",
       "Respond to the last message",
       new String[][] {

@@ -26,15 +26,15 @@ import java.util.function.Function;
 @AutoConstruct
 public class MCReflect {
 
-  private final JavaPlugin main;
+  private final JavaPlugin plugin;
   private final ILogger logger;
   private final String ver;
 
   public MCReflect(
-    @AutoInject JavaPlugin main,
+    @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger
   ) {
-    this.main = main;
+    this.plugin = plugin;
     this.logger = logger;
     this.ver = findVersion();
   }
@@ -73,7 +73,7 @@ public class MCReflect {
     try {
       // Get the server instance and cast it to a CraftServer
       Class<?> clazz = getClassBKT("CraftServer");
-      return Optional.of(clazz.cast(main.getServer()));
+      return Optional.of(clazz.cast(plugin.getServer()));
     } catch (Exception e) {
       logger.logError(e);
       return Optional.empty();

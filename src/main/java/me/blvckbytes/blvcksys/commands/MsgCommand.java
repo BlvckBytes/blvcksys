@@ -27,13 +27,13 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener 
   private final Map<Player, Player> partners;
 
   public MsgCommand(
-    @AutoInject JavaPlugin main,
+    @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl
   ) {
     super(
-      main, logger, cfg, refl,
+      plugin, logger, cfg, refl,
       "msg",
       "Send a message to someone",
       new String[][] {

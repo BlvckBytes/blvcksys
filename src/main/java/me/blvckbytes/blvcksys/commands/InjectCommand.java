@@ -54,7 +54,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
   private final ObjectStringifier ostr;
 
   public InjectCommand(
-    @AutoInject JavaPlugin main,
+    @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
@@ -62,7 +62,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
     @AutoInject ObjectStringifier ostr
   ) {
     super(
-      main, logger, cfg, refl,
+      plugin, logger, cfg, refl,
       "inject",
       "Inject an interceptor to monitor a player's packets",
       new String[][] {

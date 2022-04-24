@@ -10,6 +10,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 @AutoConstruct
 public class ObjectStringifier {
@@ -131,6 +132,17 @@ public class ObjectStringifier {
       return sb.toString();
     }
 
+    // Is an optional
+    if (o instanceof Optional<?> opt) {
+      // Empty, just write placeholder
+      if (opt.isEmpty())
+        return "<empty>";
+
+      // Stringify it's contents
+      else
+        o = opt.get();
+    }
+
     // Complex object, call object stringifier
     String sub = stringifyObjectProperties(o, depth);
 
@@ -149,6 +161,10 @@ public class ObjectStringifier {
     // Depth used up
     if (depth <= 0)
       return null;
+
+    // Object is null
+    if (o == null)
+      return "null";
 
     StringBuilder props = new StringBuilder();
 
@@ -186,6 +202,7 @@ public class ObjectStringifier {
           f.setAccessible(true);
         } catch (Exception e) {
           // Could not access this field, skip it
+          // I am intentionally not logging exceptions here, as it may pollute fast logs
           continue;
         }
 

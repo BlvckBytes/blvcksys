@@ -130,27 +130,30 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
   }
 
   private Optional<Packet<?>> generateScoreboardTeam(Player p) {
-    List<String> l = new ArrayList<>();
+    List<String> l = new ArrayList<>(); // Names of all team members
     l.add(p.getName());
-    l.add("X");
 
     PacketPlayOutScoreboardTeam.b b = new PacketPlayOutScoreboardTeam.b(
       new PacketDataSerializer(Unpooled.copiedBuffer(new byte[1024]))
     );
 
-    refl.setFieldByType(b, IChatBaseComponent.class, new ChatMessage("1"), 0);
-    refl.setFieldByType(b, IChatBaseComponent.class, new ChatMessage("2"), 1);
-    refl.setFieldByType(b, IChatBaseComponent.class, new ChatMessage("3"), 2);
+    refl.setFieldByType(b, IChatBaseComponent.class, new ChatMessage("1"), 0);  // Team display name
+    refl.setFieldByType(b, IChatBaseComponent.class, new ChatMessage("§c[Prefix] "), 1);  // Prefix
+    refl.setFieldByType(b, IChatBaseComponent.class, new ChatMessage(" §b[Suffix]"), 2);  // Suffix
     refl.setFieldByType(b, String.class, "4", 0);
     refl.setFieldByType(b, String.class, "5", 1);
     refl.setFieldByType(b, EnumChatFormat.class, EnumChatFormat.g, 0);
     refl.setFieldByType(b, int.class, 5, 0);
 
-    logger.logDebug(b, 5);
-
     return refl.invokeConstructor(
       PacketPlayOutScoreboardTeam.class,
-      "A", 0, Optional.of(b), l
-    ).map(o -> (Packet<?>) o);
+      "A",              // Unique team name
+      0,                // Mode (0=create, 1=remove, 2=update, 3=add entites, 4=remove entities)
+      Optional.of(b),   // Optional team (not needed for remove, I guess?)
+      l
+    ).map(o -> {
+      logger.logDebug(o, 5);
+      return (Packet<?>) o;
+    });
   }
 }

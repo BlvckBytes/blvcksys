@@ -11,6 +11,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 @AutoConstruct
@@ -59,10 +60,15 @@ public class MCReflect {
   /**
    * Get the instance of the CraftServer
    */
-  public Object getCraftServer() throws ClassNotFoundException {
-    // Get the server instance and cast it to a CraftServer
-    Class<?> clazz = getClassBKT("CraftServer");
-    return clazz.cast(main.getServer());
+  public Optional<Object> getCraftServer() {
+    try {
+      // Get the server instance and cast it to a CraftServer
+      Class<?> clazz = getClassBKT("CraftServer");
+      return Optional.of(clazz.cast(main.getServer()));
+    } catch (Exception e) {
+      logger.logError(e);
+      return Optional.empty();
+    }
   }
 
   /**
@@ -72,18 +78,18 @@ public class MCReflect {
    * @param command Command handler
    */
   public void registerCommand(String name, Command command) {
-    try {
-      Object cs = getCraftServer();
+    getCraftServer().ifPresent(cs -> {
+      try {
+        // Get the server's command map
+        Class<?> clazz = getClassBKT("CraftServer");
+        Object cmdMap = clazz.getMethod("getCommandMap").invoke(cs);
 
-      // Get the server's command map
-      Class<?> clazz = getClassBKT("CraftServer");
-      Object cmdMap = clazz.getMethod("getCommandMap").invoke(cs);
-
-      // Invoke the register method using the passed parameters
-      cmdMap.getClass().getMethod("register", String.class, Command.class).invoke(cmdMap, name, command);
-    } catch (Exception e) {
-      logger.logError(e);
-    }
+        // Invoke the register method using the passed parameters
+        cmdMap.getClass().getMethod("register", String.class, Command.class).invoke(cmdMap, name, command);
+      } catch (Exception e) {
+        logger.logError(e);
+      }
+    });
   }
 
   /**
@@ -94,10 +100,115 @@ public class MCReflect {
    */
   public Optional<Field> findFieldByType(Class<?> c, String fieldClass) {
     try {
-      // Try to find a field of type PlayerConnection in the EntityPlayer
-      return Arrays.stream(c.getDeclaredFields())
-        .filter(it -> it.getType().getSimpleName().equals(fieldClass))
-        .findFirst();
+      Class<?> currC = c;
+      Optional<Field> res = Optional.empty();
+
+      while(
+        // While there's still a superclass
+        currC != null &&
+
+        // And there's not yet a result
+        res.isEmpty()
+      ) {
+        // Try to find the field
+        res = Arrays.stream(currC.getDeclaredFields())
+          .filter(it -> it.getType().getSimpleName().equals(fieldClass))
+          .findFirst();
+
+        // Walk into superclass
+        currC = currC.getSuperclass();
+      }
+
+      return res;
+    } catch (Exception e) {
+      logger.logError(e);
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Try to find a class' member field by it's name
+   * @param c Class to search in
+   * @param name Name of the target field
+   * @return Optional field, no value on reflection errors
+   */
+  public Optional<Field> findFieldByName(Class<?> c, String name) {
+    try {
+      Class<?> currC = c;
+      Optional<Field> res = Optional.empty();
+
+      while(
+        // While there's still a superclass
+        currC != null &&
+
+          // And there's not yet a result
+          res.isEmpty()
+      ) {
+        // Try to find the field
+        res = Arrays.stream(c.getDeclaredFields())
+          .filter(it -> it.getName().equals(name))
+          .findFirst();
+
+        // Walk into superclass
+        currC = currC.getSuperclass();
+      }
+
+      return res;
+    } catch (Exception e) {
+      logger.logError(e);
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Try to find a class' member list field by it's generic type
+   * @param c Class to search in
+   * @param listType Name of the generic type
+   * @return Optional field, no value on reflection errors
+   */
+  public Optional<Field> findListFieldByType(Class<?> c, String listType) {
+    try {
+      Class<?> currC = c;
+      Optional<Field> res = Optional.empty();
+
+      while(
+        // While there's still a superclass
+        currC != null &&
+
+          // And there's not yet a result
+          res.isEmpty()
+      ) {
+        // Try to find the field
+        res = Arrays.stream(currC.getDeclaredFields())
+          .filter(it -> List.class.isAssignableFrom(it.getType()))
+          .filter(it -> it.getGenericType().getTypeName().contains(listType))
+          .findFirst();
+
+        // Walk into superclass
+        currC = currC.getSuperclass();
+      }
+
+      return res;
+    } catch (Exception e) {
+      logger.logError(e);
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Try to get a field's value relative to an object
+   * @param f Field to resolve
+   * @param o Object to search in
+   * @return Optional field value, no value on reflection errors
+   */
+  public Optional<Object> getFieldValue(Field f, Object o) {
+    try {
+      if (f == null)
+        return Optional.empty();
+
+      // Respond with the value of this field in reference to the provided object
+      f.setAccessible(true);
+      return Optional.of(f.get(o));
     } catch (Exception e) {
       logger.logError(e);
       return Optional.empty();
@@ -179,88 +290,113 @@ public class MCReflect {
    * Get a player casted to a CraftPlayer
    * @param p Target Player
    * @return CraftPlayer instance
-   * @throws Exception Issues during reflection access
    */
-  public Object getCraftPlayer(Player p) throws Exception {
-    Class<?> cpC = getClassBKT("entity.CraftPlayer");
-    return cpC.cast(p);
+  public Optional<Object> getCraftPlayer(Player p) {
+    try {
+      Class<?> cpC = getClassBKT("entity.CraftPlayer");
+      return Optional.of(cpC.cast(p));
+    } catch (Exception e) {
+      logger.logError(e);
+      return Optional.empty();
+    }
   }
 
   /**
    * Get a player's assigned EntityPlayer
    * @param p Target Player
    * @return EntityPlayer of the player
-   * @throws Exception Issues during reflection access
    */
-  public Object getEntityPlayer(Player p) throws Exception {
-    Object cp = getCraftPlayer(p);
-    return cp.getClass().getMethod("getHandle").invoke(p);
+  public Optional<Object> getEntityPlayer(Player p) {
+      return getCraftPlayer(p)
+        .flatMap(cp -> {
+          try {
+            return Optional.of(cp.getClass().getMethod("getHandle").invoke(p));
+          } catch (Exception e) {
+            logger.logError(e);
+            return Optional.empty();
+          }
+        });
   }
 
   /**
    * Get a player's assigned PlayerConnection
    * @param p Target Player
    * @return PlayerConnection of the player
-   * @throws Exception Issues during reflection access
    */
-  public Object getPlayerConnection(Player p) throws Exception {
-    Object ep = getEntityPlayer(p);
-    assert ep != null;
+  public Optional<Object> getPlayerConnection(Player p) {
+    return getEntityPlayer(p).flatMap(ep -> {
+      Class<?> epC = ep.getClass();
 
-    Class<?> epC = ep.getClass();
-
-    // Try to find a field of type PlayerConnection in the EntityPlayer
-    Optional<Field> field = findFieldByType(epC, "PlayerConnection");
-
-    // Field not found
-    if (field.isEmpty())
-      throw new RuntimeException("Could not find a field of type PlayerConnection!");
-
-    return field.get().get(ep);
+      // Try to find a field of type PlayerConnection in the EntityPlayer
+      return findFieldByType(epC, "PlayerConnection")
+        .flatMap(field -> {
+          try {
+            return Optional.of(field.get(ep));
+          } catch (Exception e) {
+            logger.logError(e);
+            return Optional.empty();
+          }
+        });
+    });
   }
 
   /**
    * Get a player's assigned NetworkManager
    * @param p Target Player
    * @return NetworkManager of the player
-   * @throws Exception Issues during reflection access
    */
-  public Object getNetworkManager(Player p) throws Exception {
-    Object pc = getPlayerConnection(p);
-    assert pc != null;
-
-    Class<?> pcC = pc.getClass();
-
-    // Try to find a field of type NetworkManager in the EntityPlayer
-    Optional<Field> field = findFieldByType(pcC, "NetworkManager");
-
-    // Field not found
-    if (field.isEmpty())
-      throw new RuntimeException("Could not find a field of type NetworkManager!");
-
-    return field.get().get(pc);
+  public Optional<Object> getNetworkManager(Player p) {
+    return getPlayerConnection(p)
+      .flatMap(pc ->
+        findFieldByType(pc.getClass(), "NetworkManager")
+        .flatMap(nmf -> {
+          try {
+            return Optional.of(nmf.get(pc));
+          } catch (Exception e) {
+            logger.logError(e);
+            return Optional.empty();
+          }
+        })
+      );
   }
 
   /**
    * Get a player's assigned NetworkChannel
    * @param p Target Player
    * @return NetworkChannel of the player
-   * @throws Exception Issues during reflection access
    */
-  public Channel getNetworkChannel(Player p) throws Exception {
-    Object nm = getNetworkManager(p);
-    assert nm != null;
+  public Optional<Channel> getNetworkChannel(Player p) {
+    return getNetworkManager(p)
+      .flatMap(nm ->
+        findFieldByType(nm.getClass(), "Channel")
+          .flatMap(cf -> {
+            try {
+              return Optional.of(cf.get(nm));
+            } catch (Exception e) {
+              logger.logError(e);
+              return Optional.empty();
+            }
+          })
+          .map(o -> ((Channel) o))
+      );
+  }
 
-    Class<?> nmC = nm.getClass();
-
-    // Try to find a field of type NetworkManager in the EntityPlayer
-    Optional<Field> field = findFieldByType(nmC, "Channel");
-
-    // Field not found
-    if (field.isEmpty())
-      throw new RuntimeException("Could not find a field of type Channel!");
-
-    return (Channel) field.get().get(nm);
+  /**
+   * Get a player's assigned NetworkChannel
+   * @param nm NetworkManager instance to search for a channel in
+   * @return NetworkChannel of the player
+   */
+  public Optional<Channel> getNetworkChannel(Object nm) {
+    return findFieldByType(nm.getClass(), "Channel")
+      .flatMap(cf -> {
+        try {
+          return Optional.of(cf.get(nm));
+        } catch (Exception e) {
+          logger.logError(e);
+          return Optional.empty();
+        }
+      })
+      .map(o -> (Channel) o);
   }
 
   /**
@@ -268,7 +404,6 @@ public class MCReflect {
    * @param o Object to modify
    * @param field Name of the field
    * @return Value of the field
-   * @throws Exception Issues during reflection access
    */
   public Optional<Object> getFieldByName(Object o, String field) {
     try {

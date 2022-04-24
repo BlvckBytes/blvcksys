@@ -6,13 +6,16 @@ import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import net.minecraft.network.NetworkManager;
 import net.minecraft.network.protocol.Packet;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.server.ServerListPingEvent;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -130,6 +133,11 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
     uninjectPlayer(e.getPlayer());
   }
 
+  @EventHandler
+  public void onPing(ServerListPingEvent e) {
+    this.injectAllConnections();
+  }
+
   //=========================================================================//
   //                                Utilities                                //
   //=========================================================================//
@@ -139,9 +147,9 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
    * @param p Target player
    */
   private void uninjectPlayer(Player p) {
-    try {
+    refl.getNetworkChannel(p).ifPresent(nc -> {
       // Remove pipeline entry
-      ChannelPipeline pipe = refl.getNetworkChannel(p).pipeline();
+      ChannelPipeline pipe = nc.pipeline();
 
       // Not registered in the pipeline
       if (!pipe.names().contains(handlerName))
@@ -149,94 +157,128 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
 
       // Remove handler
       pipe.remove(handlerName);
-    } catch (Exception e) {
-      logger.logError(e);
-    }
+    });
+  }
+
+  /**
+   * Create a new injection for a pipeline
+   * @param nm NetworkManager instance corresponding to the player, optional (null means not yet connected)
+   * @param p Target player, optional (null means not yet connected)
+   */
+  private void injectChannel(Player p, NetworkManager nm, ChannelPipeline pipe) {
+    // Create a new channel handler that overrides R/W to intercept
+    // This handler gets created in this closure to provide player context
+    ChannelDuplexHandler handler = new ChannelDuplexHandler() {
+
+      @Override
+      public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        // Not a packet, not interested
+        if (!(msg instanceof Packet<?> packet)) {
+          super.channelRead(ctx, msg);
+          return;
+        }
+
+        // Run through all global modifiers
+        for (IPacketModifier modifier : globalModifiers) {
+          packet = modifier.modifyIncoming(p, nm, packet);
+
+          // Packet has been terminated
+          if (packet == null)
+            return;
+        }
+
+        // Run through all specific modifiers
+        ArrayList<IPacketModifier> specifics = specificModifiers.get(p);
+        if (specifics != null) {
+          for (IPacketModifier modifier : specifics) {
+            packet = modifier.modifyIncoming(p, nm, packet);
+
+            // Packet has been terminated
+            if (packet == null)
+              return;
+          }
+        }
+
+        // Relay modified packet
+        super.channelRead(ctx, packet);
+      }
+
+      @Override
+      public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+        // Not a packet, not interested
+        if (!(msg instanceof Packet<?> packet)) {
+          super.write(ctx, msg, promise);
+          return;
+        }
+
+        // Run through all global modifiers
+        for (IPacketModifier modifier : globalModifiers) {
+          packet = modifier.modifyOutgoing(p, nm, packet);
+
+          // Packet has been terminated
+          if (packet == null)
+            return;
+        }
+
+        // Run through all specific modifiers
+        ArrayList<IPacketModifier> specifics = specificModifiers.get(p);
+        if (specifics != null) {
+          for (IPacketModifier modifier : specifics) {
+            packet = modifier.modifyOutgoing(p, nm, packet);
+
+            // Packet has been terminated
+            if (packet == null)
+              return;
+          }
+        }
+
+        // Relay modified packet
+        super.write(ctx, packet, promise);
+      }
+    };
+
+    pipe.addBefore("packet_handler", handlerName, handler);
   }
 
   /**
    * Create a new injection for the player
-   * @param p Target player
+   * @param p Target player, mandatory
    */
   private void injectPlayer(Player p) {
+    refl.getNetworkChannel(p).ifPresent(nc -> {
+      refl.getNetworkManager(p).ifPresent(nm -> {
+        // Already registered in the pipeline
+        ChannelPipeline pipe = nc.pipeline();
+        if (pipe.names().contains(handlerName))
+          return;
+
+        injectChannel(p, (NetworkManager) nm, pipe);
+      });
+    });
+  }
+
+  /**
+   * Inject the local handler into all connections that still are missing it
+   */
+  private void injectAllConnections() {
     try {
-      // Already registered in the pipeline
-      ChannelPipeline pipe = refl.getNetworkChannel(p).pipeline();
-      if (pipe.names().contains(handlerName))
-        return;
+      // Find all network managers inside the ServerConnection
+      List<?> nmans = refl.getCraftServer()
+        .flatMap(cs -> refl.getFieldByName(cs, "console"))
+        .flatMap(console -> refl.getFieldByType(console, "ServerConnection"))
+        .flatMap(sc ->
+          refl.findListFieldByType(sc.getClass(), "NetworkManager")
+            .flatMap(nmlf -> refl.getFieldValue(nmlf, sc))
+        )
+        .map(nml -> (List<?>) nml)
+        .orElse(new ArrayList<>());
 
-      // Create a new channel handler that overrides R/W to intercept
-      // This handler gets created in this closure to provide player context
-      ChannelDuplexHandler handler = new ChannelDuplexHandler() {
-
-        @Override
-        public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-          // Not a packet, not interested
-          if (!(msg instanceof Packet<?> packet)) {
-            super.channelRead(ctx, msg);
-            return;
-          }
-
-          // Run through all global modifiers
-          for (IPacketModifier modifier : globalModifiers) {
-            packet = modifier.modifyIncoming(p, packet);
-
-            // Packet has been terminated
-            if (packet == null)
-              return;
-          }
-
-          // Run through all specific modifiers
-          ArrayList<IPacketModifier> specifics = specificModifiers.get(p);
-          if (specifics != null) {
-            for (IPacketModifier modifier : specifics) {
-              packet = modifier.modifyIncoming(p, packet);
-
-              // Packet has been terminated
-              if (packet == null)
-                return;
-            }
-          }
-
-          // Relay modified packet
-          super.channelRead(ctx, packet);
-        }
-
-        @Override
-        public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
-          // Not a packet, not interested
-          if (!(msg instanceof Packet<?> packet)) {
-            super.write(ctx, msg, promise);
-            return;
-          }
-
-          // Run through all global modifiers
-          for (IPacketModifier modifier : globalModifiers) {
-            packet = modifier.modifyOutgoing(p, packet);
-
-            // Packet has been terminated
-            if (packet == null)
-              return;
-          }
-
-          // Run through all specific modifiers
-          ArrayList<IPacketModifier> specifics = specificModifiers.get(p);
-          if (specifics != null) {
-            for (IPacketModifier modifier : specifics) {
-              packet = modifier.modifyOutgoing(p, packet);
-
-              // Packet has been terminated
-              if (packet == null)
-                return;
-            }
-          }
-
-          // Relay modified packet
-          super.write(ctx, packet, promise);
-        }
-      };
-
-      pipe.addBefore("packet_handler", handlerName, handler);
+      // Call inject on all of them, as it will only register absent handlers
+      for (Object nm : nmans) {
+        refl.getNetworkChannel(nm).ifPresent(ch -> {
+          injectChannel(null, (NetworkManager) nm, ch.pipeline());
+        });
+      }
     } catch (Exception e) {
       logger.logError(e);
     }

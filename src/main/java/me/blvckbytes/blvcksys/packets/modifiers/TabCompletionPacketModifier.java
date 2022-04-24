@@ -6,6 +6,7 @@ import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.cmd.APlayerCommand;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
+import net.minecraft.network.NetworkManager;
 import net.minecraft.network.chat.ChatMessage;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.PacketPlayInTabComplete;
@@ -34,7 +35,11 @@ public class TabCompletionPacketModifier implements IPacketModifier {
   }
 
   @Override
-  public Packet<?> modifyIncoming(Player sender, Packet<?> incoming) {
+  public Packet<?> modifyIncoming(Player sender, NetworkManager nm, Packet<?> incoming) {
+    // Not an active player packet
+    if (sender == null)
+      return incoming;
+
     // Incoming tab completion packet, telling the server what's in the chat bar
     // There's only one int (transaction ID) and a String (value) inside this packet
     if (incoming instanceof PacketPlayInTabComplete)
@@ -44,7 +49,11 @@ public class TabCompletionPacketModifier implements IPacketModifier {
   }
 
   @Override
-  public Packet<?> modifyOutgoing(Player receiver, Packet<?> outgoing) {
+  public Packet<?> modifyOutgoing(Player receiver, NetworkManager nm, Packet<?> outgoing) {
+    // Not an active player packet
+    if (receiver == null)
+      return outgoing;
+
     // Outgoing tab completion packet, telling the client which suggestions are available and at
     // what offset they should be rendered (from the left hand side of the screen)
     if (outgoing instanceof PacketPlayOutTabComplete) {

@@ -5,11 +5,13 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
 import me.blvckbytes.blvcksys.util.MCReflect;
+import me.blvckbytes.blvcksys.util.ObjectStringifier;
 import me.blvckbytes.blvcksys.util.cmd.APlayerCommand;
 import me.blvckbytes.blvcksys.util.cmd.CommandResult;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import net.minecraft.network.NetworkManager;
 import net.minecraft.network.protocol.Packet;
 import org.apache.commons.lang.mutable.MutableInt;
 import org.bukkit.Bukkit;
@@ -49,13 +51,15 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
   private final Map<Player, InterceptionRequest> requests;
 
   private final IPacketInterceptor interceptor;
+  private final ObjectStringifier ostr;
 
   public InjectCommand(
     @AutoInject JavaPlugin main,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
-    @AutoInject IPacketInterceptor interceptor
+    @AutoInject IPacketInterceptor interceptor,
+    @AutoInject ObjectStringifier ostr
   ) {
     super(
       main, logger, cfg, refl,
@@ -69,6 +73,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
       }
     );
 
+    this.ostr = ostr;
     this.interceptor = interceptor;
     this.requests = new HashMap<>();
   }
@@ -166,7 +171,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
   //=========================================================================//
 
   @Override
-  public Packet<?> modifyIncoming(Player sender, Packet<?> incoming) {
+  public Packet<?> modifyIncoming(Player sender, NetworkManager nm, Packet<?> incoming) {
     // No request present yet
     InterceptionRequest req = requests.get(sender);
     if (req == null)
@@ -185,7 +190,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
   }
 
   @Override
-  public Packet<?> modifyOutgoing(Player receiver, Packet<?> outgoing) {
+  public Packet<?> modifyOutgoing(Player receiver, NetworkManager nm, Packet<?> outgoing) {
     // No request present yet
     InterceptionRequest req = requests.get(receiver);
     if (req == null)
@@ -214,19 +219,11 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
    * @param depth Levels of recursion to allow when stringifying object fields
    */
   private void logEvent(String dir, Object msg, int depth) {
-    String cOth = cfg.get(ConfigKey.INJECT_EVENT_COLOR_OTHER);
-    String cVal = cfg.get(ConfigKey.INJECT_EVENT_COLOR_VALUES);
-
     // Log this event as an info message
     logger.logInfo(cfg.get(
       ConfigKey.INJECT_EVENT,
       dir,
-      "%s%s(%s%s%s)".formatted(
-        cOth, msg.getClass().getSimpleName(),
-
-        // Get stringification result with proper colors applied
-        cVal, stringifyObjectProperties(msg, depth, cOth, cVal), cOth
-      )
+      ostr.stringifyObject(msg, depth)
     ));
   }
 }

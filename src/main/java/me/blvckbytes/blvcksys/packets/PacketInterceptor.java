@@ -12,7 +12,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerPreLoginEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.server.ServerListPingEvent;
@@ -237,7 +236,13 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
       }
     };
 
-    pipe.addBefore("packet_handler", handlerName, handler);
+    // Packet handler registered already, add afterwards
+    if (pipe.names().contains("packet_handler"))
+      pipe.addBefore("packet_handler", handlerName, handler);
+
+    // No packet handler yet, just register as last entry
+    else
+      pipe.addLast(handlerName, handler);
   }
 
   /**

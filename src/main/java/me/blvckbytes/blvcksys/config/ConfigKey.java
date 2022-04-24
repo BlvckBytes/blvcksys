@@ -19,6 +19,15 @@ public enum ConfigKey {
   LOGGING_PREFIX_ERROR("logging_prefix.error", "&4"),
 
   //=========================================================================//
+  //                                Playerlist                               //
+  //=========================================================================//
+
+  PLAYERLIST_LINE1("playerlist.line1", "&7» &8❘ &e&lDevelopment Server"),
+  PLAYERLIST_LINE2("playerlist.line2", "&7» &8❘ ➟ &aYour &8× &dAdvertisement &8× &6Placed &8× &9Here"),
+  PLAYERLIST_HOVER("playerlist.hover", "&bThis server has an\n&bawesome hover applied!"),
+  PLAYERLIST_ONLINE("playerlist.online", "&c5&7/&c12 &7(&dHello World&7)"),
+
+  //=========================================================================//
   //                              MSG, R Command                             //
   //=========================================================================//
 

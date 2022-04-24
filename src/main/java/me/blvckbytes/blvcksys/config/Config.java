@@ -53,8 +53,7 @@ public class Config implements IConfig, IAutoConstructed {
 
   @Override
   public void cleanup() {
-    // Save the file on disabling
-    this.save();
+    // Nothing to do here (yet)
   }
 
   @Override
@@ -109,7 +108,6 @@ public class Config implements IConfig, IAutoConstructed {
     // Loop all available enum entries and keep track of differences to the config file
     boolean diffs = false;
     for (ConfigKey key : ConfigKey.values()) {
-
       // Only set the key when it's missing
       if (!cfg.contains(key.toString())) {
         cfg.set(key.toString(), key.getDefaultValue());

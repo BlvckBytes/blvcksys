@@ -161,6 +161,64 @@ public class MCReflect {
   }
 
   /**
+   * Try to find a class' member array field by it's generic type
+   * @param c Class to search in
+   * @param arrayType Name of the generic type
+   * @return Optional field, no value on reflection errors
+   */
+  public Optional<Field> findArrayFieldByType(Class<?> c, String arrayType) {
+    try {
+      Class<?> currC = c;
+      Optional<Field> res = Optional.empty();
+
+      while(
+        // While there's still a superclass
+        currC != null &&
+
+          // And there's not yet a result
+          res.isEmpty()
+      ) {
+        // Try to find the field
+        res = Arrays.stream(currC.getDeclaredFields())
+          .filter(it -> it.getType().isArray())
+          .filter(it -> it.getGenericType().getTypeName().contains(arrayType))
+          .findFirst();
+
+        // Walk into superclass
+        currC = currC.getSuperclass();
+      }
+
+      return res;
+    } catch (Exception e) {
+      logger.logError(e);
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Try to find a class' member array field's value by it's generic type
+   * @param o Object to search in
+   * @param arrayType Name of the generic type
+   * @return Optional field value, no value on reflection errors
+   */
+  public Optional<Object> getArrayFieldByType(Object o, String arrayType) {
+    try {
+      // Try to get the field by it's type
+      Optional<Field> f = findArrayFieldByType(o.getClass(), arrayType);
+
+      if (f.isEmpty())
+        return Optional.empty();
+
+      // Respond with the value of this field in reference to the provided object
+      f.get().setAccessible(true);
+      return Optional.of(f.get().get(o));
+    } catch (Exception e) {
+      logger.logError(e);
+      return Optional.empty();
+    }
+  }
+
+  /**
    * Try to find a class' member list field by it's generic type
    * @param c Class to search in
    * @param listType Name of the generic type
@@ -246,6 +304,23 @@ public class MCReflect {
    */
   public void setFieldByType(Object o, String fieldClass, Object v) {
     findFieldByType(o.getClass(), fieldClass).ifPresent(f -> {
+      try {
+        f.setAccessible(true);
+        f.set(o, v);
+      } catch (Exception e) {
+        logger.logError(e);
+      }
+    });
+  }
+
+  /**
+   * Try to set a class' member array field's value by it's type, choose the first occurrence
+   * @param o Object to manipulate in
+   * @param arrayType Name of the generic type
+   * @param v Value to set
+   */
+  public void setArrayFieldByType(Object o, String arrayType, Object v) {
+    findArrayFieldByType(o.getClass(), arrayType).ifPresent(f -> {
       try {
         f.setAccessible(true);
         f.set(o, v);

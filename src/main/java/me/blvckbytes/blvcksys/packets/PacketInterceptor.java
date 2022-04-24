@@ -166,6 +166,10 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
    * @param p Target player, optional (null means not yet connected)
    */
   private void injectChannel(Player p, NetworkManager nm, ChannelPipeline pipe) {
+    // Already registered in the pipeline
+    if (pipe.names().contains(handlerName))
+      return;
+
     // Create a new channel handler that overrides R/W to intercept
     // This handler gets created in this closure to provide player context
     ChannelDuplexHandler handler = new ChannelDuplexHandler() {
@@ -253,12 +257,7 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
   private void injectPlayer(Player p) {
     refl.getNetworkChannel(p).ifPresent(nc -> {
       refl.getNetworkManager(p).ifPresent(nm -> {
-        // Already registered in the pipeline
-        ChannelPipeline pipe = nc.pipeline();
-        if (pipe.names().contains(handlerName))
-          return;
-
-        injectChannel(p, (NetworkManager) nm, pipe);
+        injectChannel(p, (NetworkManager) nm, nc.pipeline());
       });
     });
   }

@@ -1,11 +1,13 @@
 package me.blvckbytes.blvcksys.util;
 
 import com.google.common.primitives.Primitives;
+import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.network.NetworkManager;
+import net.minecraft.network.PacketDataSerializer;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.network.PlayerConnection;
 import org.bukkit.Bukkit;
@@ -13,10 +15,7 @@ import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
+import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -123,6 +122,7 @@ public class MCReflect {
     return walkHierarchyToFind(c, cc -> {
       try {
         return Arrays.stream(cc.getDeclaredFields())
+          .filter(it -> !Modifier.isStatic(it.getModifiers()))
           .filter(it -> compareTypes(it.getType(), fieldClass, false))
           .skip(skip)
           .findFirst()
@@ -158,6 +158,7 @@ public class MCReflect {
     return walkHierarchyToFind(c, cc -> {
       try {
         return Arrays.stream(cc.getDeclaredFields())
+          .filter(it -> !Modifier.isStatic(it.getModifiers()))
           .filter(it -> it.getName().equals(name))
           .skip(skip)
           .findFirst()
@@ -179,32 +180,13 @@ public class MCReflect {
    * @return Optional field, no value on reflection errors
    */
   public Optional<Field> findArrayFieldByType(Class<?> c, String arrayType) {
-    try {
-      Class<?> currC = c;
-      Optional<Field> res = Optional.empty();
-
-      while(
-        // While there's still a superclass
-        currC != null &&
-
-          // And there's not yet a result
-          res.isEmpty()
-      ) {
-        // Try to find the field
-        res = Arrays.stream(currC.getDeclaredFields())
-          .filter(it -> it.getType().isArray())
-          .filter(it -> it.getGenericType().getTypeName().contains(arrayType))
-          .findFirst();
-
-        // Walk into superclass
-        currC = currC.getSuperclass();
-      }
-
-      return res;
-    } catch (Exception e) {
-      logger.logError(e);
-      return Optional.empty();
-    }
+    return walkHierarchyToFind(c, cc -> {
+      return Arrays.stream(cc.getDeclaredFields())
+        .filter(it -> !Modifier.isStatic(it.getModifiers()))
+        .filter(it -> it.getType().isArray())
+        .filter(it -> it.getGenericType().getTypeName().contains(arrayType))
+        .findFirst();
+    });
   }
 
   /**
@@ -250,6 +232,7 @@ public class MCReflect {
       ) {
         // Try to find the field
         res = Arrays.stream(currC.getDeclaredFields())
+          .filter(it -> !Modifier.isStatic(it.getModifiers()))
           .filter(it -> List.class.isAssignableFrom(it.getType()))
           .filter(it -> it.getGenericType().getTypeName().contains(listType))
           .findFirst();
@@ -747,5 +730,23 @@ public class MCReflect {
       logger.logError(e);
       return Optional.empty();
     }
+  }
+
+  /**
+   * Create a new instance of a class containing garbage data
+   * to be overwritten later on. This is handy as packets don't have
+   * an empty default constructor.
+   * @param c Class of the target to create
+   * @return Optional instance, empty when the packet doesn't support this method
+   */
+  public Optional<Object> createGarbageInstance(Class<?> c) {
+    return invokeConstructor(
+      c,
+
+      // Create a packet serializer from an empty array of bytes (all zeros)
+      // This way, the packet will just read garbage in it's constructor (which is
+      // fine, as values are later reflected into the object anyways)
+      new PacketDataSerializer(Unpooled.wrappedBuffer(new byte[1024]))
+    );
   }
 }

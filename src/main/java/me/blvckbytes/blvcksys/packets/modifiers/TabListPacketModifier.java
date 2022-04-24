@@ -1,6 +1,5 @@
 package me.blvckbytes.blvcksys.packets.modifiers;
 
-import io.netty.buffer.Unpooled;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
@@ -12,7 +11,6 @@ import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.EnumChatFormat;
 import net.minecraft.network.NetworkManager;
-import net.minecraft.network.PacketDataSerializer;
 import net.minecraft.network.chat.ChatComponentText;
 import net.minecraft.network.chat.ChatMessage;
 import net.minecraft.network.chat.IChatBaseComponent;
@@ -26,7 +24,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -129,31 +126,55 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
     );
   }
 
+  /**
+   * Get a EnumChatFormat by it's color character
+   * @param color Color character
+   * @return Result or empty on errors
+   */
+  private Optional<EnumChatFormat> chatFormatFromColor(char color) {
+    // Loop all enum values
+    for (EnumChatFormat cf : EnumChatFormat.values()) {
+      Optional<Object> colorCode = refl.getFieldByType(cf, char.class);
+
+      // Could not get the color code of this enum entry
+      if (colorCode.isEmpty())
+        continue;
+
+      // Color char matches
+      if (((char) colorCode.get()) == color)
+        return Optional.of(cf);
+    }
+
+    // Not found
+    return Optional.empty();
+  }
+
   private Optional<Packet<?>> generateScoreboardTeam(Player p) {
-    List<String> l = new ArrayList<>(); // Names of all team members
-    l.add(p.getName());
+    return refl.createGarbageInstance(PacketPlayOutScoreboardTeam.b.class)
+      .flatMap(b -> {
 
-    PacketPlayOutScoreboardTeam.b b = new PacketPlayOutScoreboardTeam.b(
-      new PacketDataSerializer(Unpooled.copiedBuffer(new byte[1024]))
-    );
+        refl.setFieldByType(b, IChatBaseComponent.class, new ChatMessage("1"), 0);  // Team display name
+        refl.setFieldByType(b, IChatBaseComponent.class, new ChatMessage("§c[Prefix] "), 1);  // Prefix
+        refl.setFieldByType(b, IChatBaseComponent.class, new ChatMessage(" §b[Suffix]"), 2);  // Suffix
+        refl.setFieldByType(b, String.class, "always", 0); // Name tag visibility: always, hideForOtherTeams, hideForOwnTeam, never
+        refl.setFieldByType(b, String.class, "always", 1); // Collision rule: always, pushOtherTeams, pushOwnTeam, never
 
-    refl.setFieldByType(b, IChatBaseComponent.class, new ChatMessage("1"), 0);  // Team display name
-    refl.setFieldByType(b, IChatBaseComponent.class, new ChatMessage("§c[Prefix] "), 1);  // Prefix
-    refl.setFieldByType(b, IChatBaseComponent.class, new ChatMessage(" §b[Suffix]"), 2);  // Suffix
-    refl.setFieldByType(b, String.class, "4", 0);
-    refl.setFieldByType(b, String.class, "5", 1);
-    refl.setFieldByType(b, EnumChatFormat.class, EnumChatFormat.g, 0);
-    refl.setFieldByType(b, int.class, 5, 0);
+        chatFormatFromColor('9').ifPresent(ecf -> {
+          refl.setFieldByType(b, EnumChatFormat.class, ecf, 0); // Player name color
+        });
 
-    return refl.invokeConstructor(
-      PacketPlayOutScoreboardTeam.class,
-      "A",              // Unique team name
-      0,                // Mode (0=create, 1=remove, 2=update, 3=add entites, 4=remove entities)
-      Optional.of(b),   // Optional team (not needed for remove, I guess?)
-      l
-    ).map(o -> {
-      logger.logDebug(o, 5);
-      return (Packet<?>) o;
-    });
+        refl.setFieldByType(b, int.class, 0x02, 0); // Bit mask. 0x01: Allow friendly fire, 0x02: can see invisible players on same team.
+
+        return refl.invokeConstructor(
+          PacketPlayOutScoreboardTeam.class,
+          "A",                  // Unique team name
+          0,                    // Mode (0=create, 1=remove, 2=update, 3=add entites, 4=remove entities)
+          Optional.of(b),       // Optional team (not needed for (1 | 3 | 4), I guess?)
+          Bukkit.getOnlinePlayers().stream().map(Player::getName).toList()  // Names of all team members
+        ).map(o -> {
+          logger.logDebug(o, 5);
+          return (Packet<?>) o;
+        });
+      });
   }
 }

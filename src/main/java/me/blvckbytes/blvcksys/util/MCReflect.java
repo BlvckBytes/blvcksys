@@ -4,15 +4,20 @@ import io.netty.channel.Channel;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import net.minecraft.network.protocol.Packet;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
+
+// TODO: Structure and maybe refactor this HUGE util
 
 @AutoConstruct
 public class MCReflect {
@@ -433,6 +438,120 @@ public class MCReflect {
           }
         })
       );
+  }
+
+  /**
+   * Walks the class hierarchy (superclasses) for as long as the searcher couldn't
+   * come up with a result yet, or stops at the latest possible point end returns empty
+   * @param c Class to walk
+   * @param searcher Class member searcher funtion
+   * @return Optional member
+   * @param <T> Type of member to be searched
+   */
+  private<T> Optional<T> walkHierarchyToFind(Class<?> c, Function<Class<?>, Optional<T>> searcher) {
+    try {
+      Class<?> currC = c;
+      Optional<T> res = Optional.empty();
+
+      while(
+        // While there's still a superclass
+        currC != null &&
+
+        // And there's not yet a result
+        res.isEmpty()
+      ) {
+        // Try to find the target
+        res = searcher.apply(currC);
+
+        // Walk into superclass
+        currC = currC.getSuperclass();
+      }
+
+      return res;
+    } catch (Exception e) {
+      logger.logError(e);
+      return Optional.empty();
+    }
+  }
+
+  public Optional<Method> findMethodByName(Class<?> c, String name, Class<?> ...args) {
+    return walkHierarchyToFind(c, (Class<?> cc) -> {
+      try {
+        return Optional.of(cc.getDeclaredMethod(name, args));
+      } catch (Exception e) {
+        logger.logError(e);
+        return Optional.empty();
+      }
+    });
+  }
+
+  /**
+   * Find a method only by it's argument types
+   * @param c Class to search in
+   * @param args Arg types of target method
+   * @return Optional method
+   */
+  public Optional<Method> findMethodByArgsOnly(Class<?> c, Class<?> ...args) {
+    return walkHierarchyToFind(c, (Class<?> cc) -> {
+      try {
+        for (Method m : cc.getDeclaredMethods()) {
+          Class<?>[] paramTypes = m.getParameterTypes();
+
+          // Parameter count mismatch
+          if (paramTypes.length != args.length)
+            continue;
+
+          // Compare all args individually
+          boolean matches = true;
+          for (int i = 0; i < paramTypes.length; i++) {
+            // Type matches
+            if (paramTypes[i].equals(args[i]))
+              continue;
+
+            // Parameter mismatch
+            matches = false;
+            break;
+          }
+
+          // Args match, return this method
+          if (matches)
+            return Optional.of(m);
+        }
+
+        // Nothing matched
+        return Optional.empty();
+      } catch (Exception e) {
+        logger.logError(e);
+        return Optional.empty();
+      }
+    });
+  }
+
+  /**
+   * Invoke a method safely using an internal try-catch
+   * @param m Method to invoke
+   * @param o Object to invoke on
+   * @param args Arguments to that method
+   */
+  public void invokeMethod(Method m, Object o, Object ...args) {
+    try {
+      m.invoke(o, args);
+    } catch (Exception e) {
+      logger.logError(e);
+    }
+  }
+
+  /**
+   * Send a packet to a specific player
+   * @param p Player to send the packet to
+   * @param packet Packet to send
+   */
+  public void sendPacket(Player p, Packet<?> packet) {
+    getNetworkManager(p).ifPresent(nm -> {
+      findMethodByArgsOnly(nm.getClass(), Packet.class).ifPresent(sendM -> {
+        invokeMethod(sendM, nm, packet);
+      });
+    });
   }
 
   /**

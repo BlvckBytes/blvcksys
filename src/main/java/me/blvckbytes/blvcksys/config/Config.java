@@ -8,6 +8,8 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.util.Arrays;
+import java.util.List;
 
 @AutoConstruct
 public class Config implements IConfig, IAutoConstructed {
@@ -30,20 +32,30 @@ public class Config implements IConfig, IAutoConstructed {
   //=========================================================================//
 
   @Override
+  @SuppressWarnings("unchecked")
   public String get(ConfigKey key, Object... formatArgs) {
     // Config is not yet loaded
     if (cfg == null)
       return "";
 
-    // Get the key's value
-    String val = cfg.getString(key.toString()).formatted(formatArgs);
-
-    // Key not found
+    // Key unknown
+    Object val = cfg.get(key.toString());
     if (val == null)
       return "";
 
+    String value;
+
+    // Is a list
+    Class<?> valC = val.getClass();
+    if (List.class.isAssignableFrom(valC))
+      value = String.join("\n", (List<String>) val);
+
+    // Is a scalar
+    else
+      value = val.toString();
+
     // Translate color codes before returning
-    return ChatColor.translateAlternateColorCodes('&', val);
+    return ChatColor.translateAlternateColorCodes('&', value.formatted(formatArgs));
   }
 
   @Override
@@ -110,7 +122,16 @@ public class Config implements IConfig, IAutoConstructed {
     for (ConfigKey key : ConfigKey.values()) {
       // Only set the key when it's missing
       if (!cfg.contains(key.toString())) {
-        cfg.set(key.toString(), key.getDefaultValue());
+        String def = key.getDefaultValue();
+
+        // Set string list
+        if (def.contains("\n"))
+          cfg.set(key.toString(), Arrays.asList(def.split("\n")));
+
+        // Set scalar string
+        else
+          cfg.set(key.toString(), def);
+
         diffs = true;
       }
     }

@@ -48,7 +48,7 @@ public class ServerListPacketModifier implements IPacketModifier {
   }
 
   //=========================================================================//
-  //                                   API                                   //
+  //                                Modifiers                                //
   //=========================================================================//
 
   @Override
@@ -68,7 +68,7 @@ public class ServerListPacketModifier implements IPacketModifier {
           // Set the text
           refl.setFieldByType(
             sp, "IChatBaseComponent",
-            new ChatMessage(cfg.get(ConfigKey.PLAYERLIST_LINE1) + "\n" + cfg.get(ConfigKey.PLAYERLIST_LINE2))
+            new ChatMessage(cfg.get(ConfigKey.PLAYERLIST_TEXT))
           );
 
           // Modify the icon base64 string value

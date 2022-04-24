@@ -19,12 +19,26 @@ public enum ConfigKey {
   LOGGING_PREFIX_ERROR("logging_prefix.error", "&4"),
 
   //=========================================================================//
+  //                                 Tablist                                 //
+  //=========================================================================//
+
+  TABLIST_HEADER("tablist.header", "&cMy header"),
+  TABLIST_FOOTER("tablist.footer", "&bMy footer"),
+
+  //=========================================================================//
   //                                Playerlist                               //
   //=========================================================================//
 
-  PLAYERLIST_LINE1("playerlist.line1", "&7» &8❘ &e&lDevelopment Server"),
-  PLAYERLIST_LINE2("playerlist.line2", "&7» &8❘ ➟ &aYour &8× &dAdvertisement &8× &6Placed &8× &9Here"),
-  PLAYERLIST_HOVER("playerlist.hover", "&bThis server has an\n&bawesome hover applied!"),
+  PLAYERLIST_TEXT(
+    "playerlist.text",
+    "&7» &8❘ &e&lDevelopment Server",
+    "&7» &8❘ ➟ &aYour &8× &dAdvertisement &8× &6Placed &8× &9Here"
+  ),
+  PLAYERLIST_HOVER(
+    "playerlist.hover",
+    "&bThis server has an",
+    "&bawesome hover applied!"
+  ),
   PLAYERLIST_ONLINE("playerlist.online", "&c5&7/&c12 &7(&dHello World&7)"),
 
   //=========================================================================//
@@ -79,11 +93,12 @@ public enum ConfigKey {
   ERR_NOT_A_PLAYER("errors.not_a_player", "&cDieser Befehl ist nur für Spieler zugänglich!"),
   ;
 
-  private final String key, prefix;
+  private final String key;
+  private final String value;
 
-  ConfigKey(final String key, final String prefix) {
+  ConfigKey(final String key, final String ...prefix) {
     this.key = key;
-    this.prefix = prefix;
+    this.value = String.join("\n", prefix);
   }
 
   @Override
@@ -92,6 +107,6 @@ public enum ConfigKey {
   }
 
   public String getDefaultValue() {
-    return this.prefix;
+    return this.value;
   }
 }

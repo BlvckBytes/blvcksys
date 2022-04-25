@@ -7,8 +7,8 @@ public class Main extends JavaPlugin {
 
   @Override
   public void onEnable() {
-    // Create all resources within the root package
-    AutoConstructer.execute(this, "me.blvckbytes.blvcksys");
+    // Create all resources within this package
+    AutoConstructer.execute(this, getClass().getPackageName());
   }
 
   @Override

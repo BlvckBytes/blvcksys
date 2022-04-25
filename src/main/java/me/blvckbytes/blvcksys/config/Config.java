@@ -10,6 +10,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 @AutoConstruct
 public class Config implements IConfig, IAutoConstructed {
@@ -56,6 +57,28 @@ public class Config implements IConfig, IAutoConstructed {
 
     // Translate color codes before returning
     return ChatColor.translateAlternateColorCodes('&', value.formatted(formatArgs));
+  }
+
+  @Override
+  @SuppressWarnings("unchecked")
+  public Optional<List<String>> getL(ConfigKey key) {
+    // Key unknown
+    Object val = cfg.get(key.toString());
+    if (val == null)
+      return Optional.empty();
+
+    // Is a list
+    Class<?> valC = val.getClass();
+    if (List.class.isAssignableFrom(valC))
+      return Optional.of(
+        ((List<String>) val).stream()
+          // Translate color codes
+          .map(l -> ChatColor.translateAlternateColorCodes('&', l))
+          .toList()
+      );
+
+    // Not a list
+    return Optional.empty();
   }
 
   @Override

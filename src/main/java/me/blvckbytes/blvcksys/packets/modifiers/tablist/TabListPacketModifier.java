@@ -34,7 +34,7 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
   private final MCReflect refl;
 
   // Known groups
-  private final List<TabListGroup> groups;
+  private List<TabListGroup> groups;
 
   // Members per group
   private final Map<TabListGroup, List<Player>> members;
@@ -51,13 +51,9 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
     this.refl = refl;
     this.members = new HashMap<>();
     this.createdGroups = new HashMap<>();
+    this.groups = new ArrayList<>();
 
-    // For now, this will be hardcoded...
-    this.groups = Arrays.asList(
-      createGroup("Admin", "§cAdmin §8❘ §c", 0),
-      createGroup("Spieler", "§bSpieler §8❘ §b", 1)
-    );
-
+    this.loadGroups();
     interceptor.register(this);
   }
 
@@ -156,6 +152,24 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
   //=========================================================================//
   //                                  Groups                                 //
   //=========================================================================//
+
+  private void loadGroups() {
+    // Fetch a list of prefixes from config
+    Optional<List<String>> prefixesData = cfg.getL(ConfigKey.TABLIST_PREFIXES);
+    if (prefixesData.isPresent()) {
+      for (int i = 0; i < prefixesData.get().size(); i++) {
+        // Split CSV values
+        String[] prefixData = prefixesData.get().get(i).split(";");
+
+        // Malformed entry
+        if (prefixData.length != 2)
+          continue;
+
+        // Add group with priority as it occurred in the config
+        this.groups.add(createGroup(prefixData[0], prefixData[1], i));
+      }
+    }
+  }
 
   /**
    * Shorthand to create a tablist group by it's important parameters

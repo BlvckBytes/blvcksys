@@ -24,6 +24,11 @@ public enum ConfigKey {
 
   TABLIST_HEADER("tablist.header", "&cMy header"),
   TABLIST_FOOTER("tablist.footer", "&bMy footer"),
+  TABLIST_PREFIXES(
+    "tablist.prefixes",
+    "Admin;&cAdmin &8| &c",
+    "Spieler;&2Spieler &8| &2"
+  ),
 
   //=========================================================================//
   //                                Playerlist                               //

@@ -13,6 +13,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.permissions.PermissibleBase;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -20,10 +21,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 @AutoConstruct
@@ -31,8 +29,13 @@ public class PermissionListener implements Listener, IAutoConstructed {
 
   private final MCReflect refl;
   private final JavaPlugin plugin;
-  private final Map<Player, Object> vanillaRefs;
   private final ITabGroupManager gm;
+
+  // Vanilla references of the proxied field for every player
+  private final Map<Player, Object> vanillaRefs;
+
+  // The previous permission list (last permission change call) for every player
+  private final Map<Player, List<String>> previousPermissions;
 
   public PermissionListener(
     @AutoInject MCReflect refl,
@@ -43,6 +46,7 @@ public class PermissionListener implements Listener, IAutoConstructed {
     this.plugin = plugin;
     this.gm = gm;
     this.vanillaRefs = new HashMap<>();
+    this.previousPermissions = new HashMap<>();
   }
 
   //=========================================================================//
@@ -73,21 +77,49 @@ public class PermissionListener implements Listener, IAutoConstructed {
     proxyPermissions(e.getPlayer());
   }
 
+  @EventHandler(priority = EventPriority.LOWEST)
+  public void onQuit(PlayerQuitEvent e) {
+    // Unproxy on quit
+    unproxyPermissions(e.getPlayer());
+  }
+
   //=========================================================================//
   //                                Utilities                                //
   //=========================================================================//
 
   /**
-   * Permission change handler, called whenever a player's permissions change
+   * Fire the {@link PlayerPermissionsChangedEvent} after diffing the player's permission list
    * @param p Target player
    * @param permissions List of currently active permissions
    */
-  private void onPermissionChange(Player p, List<String> permissions) {
-    List<String> currGroups = permissions.stream()
-      .filter(perm -> perm.startsWith("group."))
-      .map(perm -> perm.substring(perm.indexOf('.') + 1))
-      .toList();
+  private void fireEvent(Player p, List<String> permissions) {
+    List<String> added = new ArrayList<>();
+    List<String> removed = new ArrayList<>();
+    List<String> previous = previousPermissions.getOrDefault(p, new ArrayList<>());
 
+    for (String prev : previous) {
+      // This permission was owned previously but is missing now
+      if (!permissions.contains(prev))
+        removed.add(prev);
+    }
+
+    for (String curr : permissions) {
+      // This permission wasn't owned previously and thus has been added
+      if (!previous.contains(curr))
+        added.add(curr);
+    }
+
+    Bukkit.getPluginManager().callEvent(
+      new PlayerPermissionsChangedEvent(p, permissions, added, removed)
+    );
+  }
+
+  /**
+   * Decide the displayed group of a player based on their meta-permissions and apply it
+   * @param p Target player
+   * @param permissions List of active permissions
+   */
+  private void decideDisplayGroup(Player p, List<String> permissions) {
     // Decide the group that will be displayed (lowest priority -> most important)
     TabListGroup displayGroup = null;
     for (String permission : permissions) {
@@ -112,9 +144,27 @@ public class PermissionListener implements Listener, IAutoConstructed {
     if (displayGroup == null)
       gm.resetPlayerGroup(p);
 
-    // Set the player's group
+      // Set the player's group
     else
       gm.setPlayerGroup(displayGroup, p);
+  }
+
+  /**
+   * Permission change handler, called whenever a player's permissions change
+   * @param p Target player
+   * @param permissions List of currently active permissions
+   * @param isInitial Whether or not this is the initial call
+   */
+  private void onPermissionChange(Player p, List<String> permissions, boolean isInitial) {
+    decideDisplayGroup(p, permissions);
+
+    // Only fire events on occurring changes
+    // Also only fire events as long as the proxy is still active
+    if (!isInitial && vanillaRefs.containsKey(p))
+      fireEvent(p, permissions);
+
+    // Save these permissions as the previous state
+    previousPermissions.put(p, permissions);
   }
 
   /**
@@ -205,7 +255,7 @@ public class PermissionListener implements Listener, IAutoConstructed {
 
           // Create a new debounce task
           debounceTask = Bukkit.getScheduler().scheduleSyncDelayedTask(
-            plugin, () -> onPermissionChange(p, getPermissions(permissions)), 10
+            plugin, () -> onPermissionChange(p, getPermissions(permissions), false), 10
           );
 
           // Done with operations, unlock
@@ -225,8 +275,8 @@ public class PermissionListener implements Listener, IAutoConstructed {
    * @param permissions Vanilla permission map
    */
   private void proxyPermissions(Player p, PermissibleBase pb, Map<String, PermissionAttachmentInfo> permissions) {
-    // Call initially
-    onPermissionChange(p, getPermissions(permissions));
+    // Call initially after joins, as pex already added it's permissions (see priority low)
+    onPermissionChange(p, getPermissions(permissions), true);
 
     // Set field to to the proxy reference
     if (refl.setFieldByName(pb, "permissions", createPermissionProxy(p, permissions)))

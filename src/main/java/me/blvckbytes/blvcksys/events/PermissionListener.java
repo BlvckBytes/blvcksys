@@ -186,6 +186,14 @@ public class PermissionListener implements Listener, IAutoConstructed {
 
         @Override
         public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+          // Only act on modifying requests
+          if (!(
+            method.getName().equals("put") ||
+            method.getName().equals("putAll") ||
+            method.getName().equals("remove")
+          ))
+            return method.invoke(permissions, args);
+
           // Lock while operating on the map
           lock.lock();
 
@@ -203,7 +211,6 @@ public class PermissionListener implements Listener, IAutoConstructed {
           // Done with operations, unlock
           lock.unlock();
 
-          // Route to the vanilla map, since this is a read-only proxy
           return method.invoke(permissions, args);
         }
       }

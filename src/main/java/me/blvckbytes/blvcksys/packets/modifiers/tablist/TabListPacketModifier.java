@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.packets.modifiers.tablist;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.events.PlayerPermissionsChangedEvent;
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
 import me.blvckbytes.blvcksys.util.MCReflect;
@@ -28,7 +29,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import java.util.*;
 
 @AutoConstruct
-public class TabListPacketModifier implements IPacketModifier, Listener, IAutoConstructed, ITabGroupManager {
+public class TabListPacketModifier implements IPacketModifier, Listener, IAutoConstructed {
 
   private final IConfig cfg;
   private final MCReflect refl;
@@ -92,8 +93,75 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
       refl.sendPacket(t, generateTabHeaderFooter(t));
   }
 
-  @Override
-  public void resetPlayerGroup(Player p) {
+  //=========================================================================//
+  //                                Listeners                                //
+  //=========================================================================//
+
+  @EventHandler(priority = EventPriority.HIGHEST)
+  public void onJoin(PlayerJoinEvent e) {
+    // Create all currently known groups for the first time for this client
+    createGroups(e.getPlayer());
+
+    // Send out the header and footer packet
+    refl.sendPacket(e.getPlayer(), generateTabHeaderFooter(e.getPlayer()));
+  }
+
+  @EventHandler
+  public void onQuit(PlayerQuitEvent e) {
+    // Remove offline players from their group
+    resetPlayerGroup(e.getPlayer());
+  }
+
+  @EventHandler
+  public void onPermissionsChanged(PlayerPermissionsChangedEvent e) {
+    decideDisplayGroup(e.getPlayer(), e.getActive());
+  }
+
+  //=========================================================================//
+  //                                  Groups                                 //
+  //=========================================================================//
+
+  /**
+   * Decide the displayed group of a player based on their meta-permissions and apply it
+   * @param p Target player
+   * @param permissions List of active permissions
+   */
+  private void decideDisplayGroup(Player p, List<String> permissions) {
+    // Decide the group that will be displayed (lowest priority -> most important)
+    TabListGroup displayGroup = null;
+    for (String permission : permissions) {
+      // Only search for group meta-permissions
+      if (!permission.startsWith("group."))
+        continue;
+
+      // Get the group by it's name
+      String groupName = permission.substring(permission.indexOf('.') + 1);
+      Optional<TabListGroup> tg = getGroup(groupName);
+
+      // Unknown group
+      if (tg.isEmpty())
+        continue;
+
+      // Update the dispalygroup initially and for every group of higher importance
+      if (displayGroup == null || displayGroup.priority() > tg.get().priority())
+        displayGroup = tg.get();
+    }
+
+    // In no known group, reset back to default
+    if (displayGroup == null)
+      resetPlayerGroup(p);
+
+      // Set the player's group
+    else
+      setPlayerGroup(displayGroup, p);
+  }
+
+
+  /**
+   * Remove a player from their current group
+   * @param p Player to remove
+   */
+  private void resetPlayerGroup(Player p) {
     // Remove the player from all teams
     for (Map.Entry<TabListGroup, List<Player>> team : members.entrySet()) {
       // Send out packets
@@ -102,8 +170,12 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
     }
   }
 
-  @Override
-  public void setPlayerGroup(TabListGroup group, Player p) {
+  /**
+   * Set a player's group membership
+   * @param group Target group
+   * @param p Player to add to that group
+   */
+  private void setPlayerGroup(TabListGroup group, Player p) {
     // Remove from any previous group
     resetPlayerGroup(p);
 
@@ -129,36 +201,21 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
       broadcastGroupState(group, p, true);
   }
 
-  @Override
-  public Optional<TabListGroup> getGroup(String name) {
+  /**
+   * Get a group by it's name (ignores casing)
+   * @param name Name of the group
+   * @return Target group
+   */
+  private Optional<TabListGroup> getGroup(String name) {
     return groups.stream()
       .filter(currName -> name.equalsIgnoreCase(currName.groupName()))
       .findFirst();
   }
 
-  //=========================================================================//
-  //                                Listeners                                //
-  //=========================================================================//
-
-  @EventHandler(priority = EventPriority.HIGHEST)
-  public void onJoin(PlayerJoinEvent e) {
-    // Create all currently known groups for the first time for this client
-    createGroups(e.getPlayer());
-
-    // Send out the header and footer packet
-    refl.sendPacket(e.getPlayer(), generateTabHeaderFooter(e.getPlayer()));
-  }
-
-  @EventHandler
-  public void onQuit(PlayerQuitEvent e) {
-    // Remove offline players from their group
-    resetPlayerGroup(e.getPlayer());
-  }
-
-  //=========================================================================//
-  //                                  Groups                                 //
-  //=========================================================================//
-
+  /**
+   * Load all existing groups from the config, by the corresponding prefix maps
+   * Format: List of <GroupName>;<Prefix> where the order dictates the priority
+   */
   private void loadGroups() {
     // Fetch a list of prefixes from config
     List<String> prefixesData = cfg.get(ConfigKey.TABLIST_PREFIXES).asList();

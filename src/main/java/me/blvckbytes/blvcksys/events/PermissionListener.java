@@ -1,6 +1,5 @@
 package me.blvckbytes.blvcksys.events;
 
-import me.blvckbytes.blvcksys.packets.modifiers.tablist.ITabGroupManager;
 import me.blvckbytes.blvcksys.packets.modifiers.tablist.TabListGroup;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
@@ -29,7 +28,6 @@ public class PermissionListener implements Listener, IAutoConstructed {
 
   private final MCReflect refl;
   private final JavaPlugin plugin;
-  private final ITabGroupManager gm;
 
   // Vanilla references of the proxied field for every player
   private final Map<Player, Object> vanillaRefs;
@@ -39,12 +37,11 @@ public class PermissionListener implements Listener, IAutoConstructed {
 
   public PermissionListener(
     @AutoInject MCReflect refl,
-    @AutoInject JavaPlugin plugin,
-    @AutoInject ITabGroupManager gm
+    @AutoInject JavaPlugin plugin
   ) {
     this.refl = refl;
     this.plugin = plugin;
-    this.gm = gm;
+
     this.vanillaRefs = new HashMap<>();
     this.previousPermissions = new HashMap<>();
   }
@@ -64,7 +61,7 @@ public class PermissionListener implements Listener, IAutoConstructed {
   public void initialize() {
     // Proxy all players on load
     for (Player t : Bukkit.getOnlinePlayers())
-      proxyPermissions(t);
+      proxyPermissions(t, false);
   }
 
   //=========================================================================//
@@ -74,7 +71,7 @@ public class PermissionListener implements Listener, IAutoConstructed {
   @EventHandler(priority = EventPriority.LOWEST)
   public void onJoin(PlayerJoinEvent e) {
     // Proxy on join
-    proxyPermissions(e.getPlayer());
+    proxyPermissions(e.getPlayer(), true);
   }
 
   @EventHandler(priority = EventPriority.LOWEST)
@@ -115,53 +112,13 @@ public class PermissionListener implements Listener, IAutoConstructed {
   }
 
   /**
-   * Decide the displayed group of a player based on their meta-permissions and apply it
-   * @param p Target player
-   * @param permissions List of active permissions
-   */
-  private void decideDisplayGroup(Player p, List<String> permissions) {
-    // Decide the group that will be displayed (lowest priority -> most important)
-    TabListGroup displayGroup = null;
-    for (String permission : permissions) {
-      // Only search for group meta-permissions
-      if (!permission.startsWith("group."))
-        continue;
-
-      // Get the group by it's name
-      String groupName = permission.substring(permission.indexOf('.') + 1);
-      Optional<TabListGroup> tg = gm.getGroup(groupName);
-
-      // Unknown group
-      if (tg.isEmpty())
-        continue;
-
-      // Update the dispalygroup initially and for every group of higher importance
-      if (displayGroup == null || displayGroup.priority() > tg.get().priority())
-        displayGroup = tg.get();
-    }
-
-    // In no known group, reset back to default
-    if (displayGroup == null)
-      gm.resetPlayerGroup(p);
-
-      // Set the player's group
-    else
-      gm.setPlayerGroup(displayGroup, p);
-  }
-
-  /**
    * Permission change handler, called whenever a player's permissions change
    * @param p Target player
    * @param permissions List of currently active permissions
-   * @param isInitial Whether or not this is the initial call
    */
-  private void onPermissionChange(Player p, List<String> permissions, boolean isInitial) {
-    decideDisplayGroup(p, permissions);
-
-    // Only fire events on occurring changes
-    // Also only fire events as long as the proxy is still active
-    if (!isInitial && vanillaRefs.containsKey(p))
-      fireEvent(p, permissions);
+  private void onPermissionChange(Player p, List<String> permissions) {
+    // Handle firing the delta event
+    fireEvent(p, permissions);
 
     // Save these permissions as the previous state
     previousPermissions.put(p, permissions);
@@ -182,22 +139,6 @@ public class PermissionListener implements Listener, IAutoConstructed {
     refl.getCraftPlayer(p)
       .flatMap(cp -> refl.getFieldByType(cp, PermissibleBase.class))
       .ifPresent(pb -> refl.setFieldByName(pb, "permissions", vanillaRef));
-  }
-
-  /**
-   * Proxy the permissions field of a given player by setting a
-   * read-only (non-modifying) proxy on the permissions map
-   * @param p Target player
-   */
-  @SuppressWarnings("unchecked")
-  private void proxyPermissions(Player p) {
-    refl.getCraftPlayer(p)
-      .flatMap(cp -> refl.getFieldByType(cp, PermissibleBase.class))
-      .flatMap(pb ->
-        refl.getFieldByName(pb, "permissions")
-          .map(permissions -> new Tuple<>((PermissibleBase) pb, (Map<?, ?>) permissions))
-      )
-      .ifPresent(tuple -> proxyPermissions(p, tuple.a(), (Map<String, PermissionAttachmentInfo>) tuple.b()));
   }
 
   /**
@@ -255,7 +196,7 @@ public class PermissionListener implements Listener, IAutoConstructed {
 
           // Create a new debounce task
           debounceTask = Bukkit.getScheduler().scheduleSyncDelayedTask(
-            plugin, () -> onPermissionChange(p, getPermissions(permissions), false), 10
+            plugin, () -> onPermissionChange(p, getPermissions(permissions)), 10
           );
 
           // Done with operations, unlock
@@ -271,16 +212,30 @@ public class PermissionListener implements Listener, IAutoConstructed {
    * Proxy the permissions field of a given player by setting a
    * read-only (non-modifying) proxy on the permissions map
    * @param p Target player
-   * @param pb PermissibleBase of this player
-   * @param permissions Vanilla permission map
+   * @param hasJustJoined Whether or not the player has just joined the server
    */
-  private void proxyPermissions(Player p, PermissibleBase pb, Map<String, PermissionAttachmentInfo> permissions) {
-    // Call initially after joins, as pex already added it's permissions (see priority low)
-    onPermissionChange(p, getPermissions(permissions), true);
+  @SuppressWarnings("unchecked")
+  private void proxyPermissions(
+    Player p,
+    boolean hasJustJoined
+  ) {
+    refl.getCraftPlayer(p)
+      .flatMap(cp -> refl.getFieldByType(cp, PermissibleBase.class))
+      .flatMap(pb ->
+        refl.getFieldByName(pb, "permissions")
+          .map(permissions -> new Tuple<>((PermissibleBase) pb, (Map<?, ?>) permissions))
+      )
+      .ifPresent(tuple -> {
+        Map<String, PermissionAttachmentInfo> permissions = (Map<String, PermissionAttachmentInfo>) tuple.b();
 
-    // Set field to to the proxy reference
-    if (refl.setFieldByName(pb, "permissions", createPermissionProxy(p, permissions)))
-      // Save the vanilla reference
-      this.vanillaRefs.put(p, permissions);
+        // Call initially after joins, as pex already added it's permissions (see priority low)
+        if (hasJustJoined)
+          onPermissionChange(p, getPermissions(permissions));
+
+        // Set field to to the proxy reference
+        if (refl.setFieldByName(tuple.a(), "permissions", createPermissionProxy(p, permissions)))
+          // Save the vanilla reference
+          this.vanillaRefs.put(p, permissions);
+      });
   }
 }

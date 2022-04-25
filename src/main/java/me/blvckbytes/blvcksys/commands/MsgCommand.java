@@ -78,7 +78,11 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener 
 
     // Cannot send yourself messages
     if (recipient == p)
-      return customError(cfg.getP(ConfigKey.MSG_SELF));
+      return customError(
+        cfg.get(ConfigKey.MSG_SELF)
+          .withPrefix()
+          .asScalar()
+      );
 
     // Get the message
     String message = argvar(args, 1);
@@ -104,8 +108,21 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener 
 
   @Override
   public void sendMessage(Player sender, Player receiver, String message) {
-    receiver.sendMessage(cfg.get(ConfigKey.MSG_RECEIVER, sender.getDisplayName(), message));
-    sender.sendMessage(cfg.get(ConfigKey.MSG_SENDER, receiver.getDisplayName(), message));
+    receiver.sendMessage(
+      cfg.get(ConfigKey.MSG_RECEIVER)
+        .withPrefix()
+        .withVariable("sender", sender.getDisplayName())
+        .withVariable("message", message)
+        .asScalar()
+    );
+
+    receiver.sendMessage(
+      cfg.get(ConfigKey.MSG_SENDER)
+        .withPrefix()
+        .withVariable("receiver", receiver.getDisplayName())
+        .withVariable("message", message)
+        .asScalar()
+    );
   }
 
   //=========================================================================//

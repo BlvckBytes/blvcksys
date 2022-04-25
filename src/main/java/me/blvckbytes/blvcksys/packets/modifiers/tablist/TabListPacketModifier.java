@@ -34,7 +34,7 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
   private final MCReflect refl;
 
   // Known groups
-  private List<TabListGroup> groups;
+  private final List<TabListGroup> groups;
 
   // Members per group
   private final Map<TabListGroup, List<Player>> members;
@@ -161,19 +161,17 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
 
   private void loadGroups() {
     // Fetch a list of prefixes from config
-    Optional<List<String>> prefixesData = cfg.getL(ConfigKey.TABLIST_PREFIXES);
-    if (prefixesData.isPresent()) {
-      for (int i = 0; i < prefixesData.get().size(); i++) {
-        // Split CSV values
-        String[] prefixData = prefixesData.get().get(i).split(";");
+    List<String> prefixesData = cfg.get(ConfigKey.TABLIST_PREFIXES).asList();
+    for (int i = 0; i < prefixesData.size(); i++) {
+      // Split CSV values
+      String[] prefixData = prefixesData.get(i).split(";");
 
-        // Malformed entry
-        if (prefixData.length != 2)
-          continue;
+      // Malformed entry
+      if (prefixData.length != 2)
+        continue;
 
-        // Add group with priority as it occurred in the config
-        this.groups.add(createGroup(prefixData[0], prefixData[1], i));
-      }
+      // Add group with priority as it occurred in the config
+      this.groups.add(createGroup(prefixData[0], prefixData[1], i));
     }
   }
 
@@ -365,8 +363,8 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
    */
   private Packet<?> generateTabHeaderFooter(Player p) {
     return new PacketPlayOutPlayerListHeaderFooter(
-      new ChatComponentText(cfg.get(ConfigKey.TABLIST_HEADER)),
-      new ChatComponentText(cfg.get(ConfigKey.TABLIST_FOOTER))
+      new ChatComponentText(cfg.get(ConfigKey.TABLIST_HEADER).asScalar()),
+      new ChatComponentText(cfg.get(ConfigKey.TABLIST_FOOTER).asScalar())
     );
   }
 }

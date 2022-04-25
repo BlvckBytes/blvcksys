@@ -124,7 +124,12 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
       try {
         dir = PacketDirection.valueOf(dirStr);
       } catch (IllegalArgumentException e) {
-        return customError(cfg.getP(ConfigKey.INJECT_INVALID_DIR, dirStr));
+        return customError(
+          cfg.get(ConfigKey.INJECT_INVALID_DIR)
+            .withPrefix()
+            .withVariable("direction", dirStr)
+            .asScalar()
+        );
       }
     }
 
@@ -148,21 +153,39 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
       try {
         regex = Pattern.compile(regStr);
       } catch (PatternSyntaxException e) {
-        return customError(cfg.getP(ConfigKey.INJECT_INVALID_REGEX, regStr));
+        return customError(
+          cfg.get(ConfigKey.INJECT_INVALID_REGEX)
+            .withPrefix()
+            .withVariable("regex", regStr)
+            .asScalar()
+        );
       }
     }
 
     // Already injected, uninject
     if (this.interceptor.isRegisteredSpecific(target, this)) {
       this.interceptor.unregisterSpecific(target, this);
-      p.sendMessage(cfg.getP(ConfigKey.INJECT_UNINJECTED, target.getDisplayName()));
+
+      p.sendMessage(
+        cfg.get(ConfigKey.INJECT_UNINJECTED)
+          .withPrefix()
+          .withVariable("target", target.getDisplayName())
+          .asScalar()
+      );
+
       return success();
     }
 
     // Create a new injection and store the request locally
     this.requests.put(target, new InterceptionRequest(dir, depth.intValue(), regex));
     this.interceptor.registerSpecific(target, this);
-    p.sendMessage(cfg.getP(ConfigKey.INJECT_INJECTED, target.getDisplayName()));
+
+    p.sendMessage(
+      cfg.get(ConfigKey.INJECT_INJECTED)
+        .withPrefix()
+        .withVariable("target", target.getDisplayName())
+        .asScalar()
+    );
     return success();
   }
 
@@ -220,10 +243,11 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
    */
   private void logEvent(String dir, Object msg, int depth) {
     // Log this event as an info message
-    logger.logInfo(cfg.get(
-      ConfigKey.INJECT_EVENT,
-      dir,
-      ostr.stringifyObject(msg, depth)
-    ));
+    logger.logInfo(
+      cfg.get(ConfigKey.INJECT_EVENT)
+        .withVariable("direction", dir)
+        .withVariable("object", ostr.stringifyObject(msg, depth))
+        .asScalar()
+    );
   }
 }

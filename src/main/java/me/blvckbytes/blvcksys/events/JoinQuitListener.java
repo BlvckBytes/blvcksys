@@ -22,11 +22,21 @@ public class JoinQuitListener implements Listener {
 
   @EventHandler
   public void onJoin(PlayerJoinEvent e) {
-    e.setJoinMessage(cfg.getP(ConfigKey.GENERIC_JOINED, e.getPlayer().getDisplayName()));
+    e.setJoinMessage(
+      cfg.get(ConfigKey.GENERIC_JOINED)
+        .withPrefix()
+        .withVariable("name", e.getPlayer().getDisplayName())
+        .asScalar()
+    );
   }
 
   @EventHandler
   public void onQuit(PlayerQuitEvent e) {
-    e.setQuitMessage(cfg.getP(ConfigKey.GENERIC_QUIT, e.getPlayer().getDisplayName()));
+    e.setQuitMessage(
+      cfg.get(ConfigKey.GENERIC_QUIT)
+        .withPrefix()
+        .withVariable("name", e.getPlayer().getDisplayName())
+        .asScalar()
+    );
   }
 }

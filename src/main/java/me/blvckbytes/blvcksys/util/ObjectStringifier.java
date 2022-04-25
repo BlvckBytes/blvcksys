@@ -67,8 +67,8 @@ public class ObjectStringifier {
 
     Class<?> c = o.getClass();
 
-    String otherColor = cfg.get(ConfigKey.INJECT_EVENT_COLOR_OTHER);
-    String valueColor = cfg.get(ConfigKey.INJECT_EVENT_COLOR_VALUES);
+    String otherColor = cfg.get(ConfigKey.INJECT_EVENT_COLOR_OTHER).asScalar();
+    String valueColor = cfg.get(ConfigKey.INJECT_EVENT_COLOR_VALUES).asScalar();
 
     // Return the string wrapped in quotes
     // Add the value color after the actual value to account for colored strings
@@ -168,8 +168,8 @@ public class ObjectStringifier {
 
     StringBuilder props = new StringBuilder();
 
-    String otherColor = cfg.get(ConfigKey.INJECT_EVENT_COLOR_OTHER);
-    String valueColor = cfg.get(ConfigKey.INJECT_EVENT_COLOR_VALUES);
+    String otherColor = cfg.get(ConfigKey.INJECT_EVENT_COLOR_OTHER).asScalar();
+    String valueColor = cfg.get(ConfigKey.INJECT_EVENT_COLOR_VALUES).asScalar();
 
     try {
       Class<?> cl = o.getClass();

@@ -129,7 +129,7 @@ public abstract class APlayerCommand extends Command {
   public boolean execute(CommandSender cs, String label, String[] args) {
     // Not a player
     if (!(cs instanceof Player)) {
-      cs.sendMessage(cfg.getP(ConfigKey.ERR_NOT_A_PLAYER));
+      cs.sendMessage(cfg.get(ConfigKey.ERR_NOT_A_PLAYER).asScalar());
       return false;
     }
 
@@ -142,17 +142,37 @@ public abstract class APlayerCommand extends Command {
 
     // Decide on error-response
     switch (res.error()) {
-      case PLAYER_NOT_ONLINE -> cs.sendMessage(cfg.getP(ConfigKey.ERR_NOT_ONLINE, res.args()));
+      case PLAYER_NOT_ONLINE -> cs.sendMessage(
+        cfg.get(ConfigKey.ERR_NOT_ONLINE)
+          .withPrefix()
+          .withVariable("player", res.text())
+          .asScalar()
+      );
 
-      case USAGE_MISMATCH -> cs.spigot().sendMessage(buildAdvancedUsage(cfg.getP(ConfigKey.ERR_USAGE)));
+      case USAGE_MISMATCH -> cs.spigot().sendMessage(
+        buildAdvancedUsage(
+          cfg.get(ConfigKey.ERR_USAGE)
+            .withPrefix()
+            .asScalar()
+        )
+      );
 
-      // Custom error with custom format, [0] is the message and [1]..[n] are the args to format the message
-      case CUSTOM_ERROR -> cs.sendMessage(res.args()[0].toString().formatted(Arrays.copyOfRange(res.args(), 1, res.args().length)));
+      // Custom error string, send as is
+      case CUSTOM_ERROR -> cs.sendMessage(res.text());
 
       // Unparsable integer
-      case INT_UNPARSEABLE -> cs.sendMessage(cfg.getP(ConfigKey.ERR_INTPARSE, res.args()));
+      case INT_UNPARSEABLE -> cs.sendMessage(
+        cfg.get(ConfigKey.ERR_INTPARSE)
+          .withPrefix()
+          .withVariable("number", res.text())
+          .asScalar()
+      );
 
-      default -> cs.sendMessage(cfg.getP(ConfigKey.ERR_INTERNAL));
+      default -> cs.sendMessage(
+        cfg.get(ConfigKey.ERR_INTERNAL)
+          .withPrefix()
+          .asScalar()
+      );
     }
 
     return false;
@@ -199,7 +219,7 @@ public abstract class APlayerCommand extends Command {
    */
   protected TextComponent[] buildAdvancedUsage(String prefix) {
     List<TextComponent> components = new ArrayList<>();
-    String cOth = cfg.get(ConfigKey.ERR_USAGE_COLOR_OTHER);
+    String cOth = cfg.get(ConfigKey.ERR_USAGE_COLOR_OTHER).asScalar();
 
     // Add a prefix, if provided
     if (prefix != null)
@@ -222,10 +242,10 @@ public abstract class APlayerCommand extends Command {
    */
   public String colorizeUsage(String vanilla) {
     // Usage formatting colors
-    String cMan = cfg.get(ConfigKey.ERR_USAGE_COLOR_MANDATORY);
-    String cOpt = cfg.get(ConfigKey.ERR_USAGE_COLOR_OPTIONAL);
-    String cBra = cfg.get(ConfigKey.ERR_USAGE_COLOR_BRACKETS);
-    String cOth = cfg.get(ConfigKey.ERR_USAGE_COLOR_OTHER);
+    String cMan = cfg.get(ConfigKey.ERR_USAGE_COLOR_MANDATORY).asScalar();
+    String cOpt = cfg.get(ConfigKey.ERR_USAGE_COLOR_OPTIONAL).asScalar();
+    String cBra = cfg.get(ConfigKey.ERR_USAGE_COLOR_BRACKETS).asScalar();
+    String cOth = cfg.get(ConfigKey.ERR_USAGE_COLOR_OTHER).asScalar();
 
     // Start out by coloring other
     StringBuilder colorized = new StringBuilder(cOth);
@@ -299,14 +319,14 @@ public abstract class APlayerCommand extends Command {
    * Generate a success result
    */
   protected CommandResult success() {
-    return new CommandResult(CommandError.NONE);
+    return new CommandResult(CommandError.NONE, null);
   }
 
   /**
    * Generate a usage-mismatch result
    */
   protected CommandResult usageMismatch() {
-    return new CommandResult(CommandError.USAGE_MISMATCH);
+    return new CommandResult(CommandError.USAGE_MISMATCH, null);
   }
 
   /**
@@ -319,12 +339,8 @@ public abstract class APlayerCommand extends Command {
   /**
    * Generate a custom error result
    */
-  protected CommandResult customError(String message, Object ...args) {
-    // Create a copy of args with message as the first element
-    Object[] totalArgs = new Object[args.length + 1];
-    totalArgs[0] = message;
-    System.arraycopy(args, 0, totalArgs, 1, args.length);
-    return new CommandResult(CommandError.CUSTOM_ERROR, totalArgs);
+  protected CommandResult customError(String message) {
+    return new CommandResult(CommandError.CUSTOM_ERROR, message);
   }
 
   /**

@@ -50,7 +50,11 @@ public class RCommand extends APlayerCommand {
     // Ensure there's an active partner on the other end
     Player partner = this.msgC.getPartner(p);
     if (partner == null)
-      return customError(cfg.getP(ConfigKey.MSG_NO_PARTNER));
+      return customError(
+        cfg.get(ConfigKey.MSG_NO_PARTNER)
+          .withPrefix()
+          .asScalar()
+      );
 
     // Send out the messages
     String message = argvar(args, 0);

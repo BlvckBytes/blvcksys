@@ -3,14 +3,12 @@ package me.blvckbytes.blvcksys.config;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
-import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 @AutoConstruct
 public class Config implements IConfig, IAutoConstructed {
@@ -19,12 +17,19 @@ public class Config implements IConfig, IAutoConstructed {
   private YamlConfiguration cfg = null;
   private File yf = null;
 
+  // Global prefix string, load ahead of time as it's used quite often
+  private String prefix;
+
   private final JavaPlugin plugin;
 
   public Config(
     @AutoInject JavaPlugin plugin
   ) {
     this.plugin = plugin;
+
+    // Build a fallback for the prefix
+    this.prefix = "[" + plugin.getDescription().getName() + "] ";
+
     this.load();
   }
 
@@ -34,56 +39,24 @@ public class Config implements IConfig, IAutoConstructed {
 
   @Override
   @SuppressWarnings("unchecked")
-  public String get(ConfigKey key, Object... formatArgs) {
+  public ConfigValue get(ConfigKey key) {
     // Config is not yet loaded
     if (cfg == null)
-      return "";
+      return ConfigValue.EMPTY;
 
     // Key unknown
     Object val = cfg.get(key.toString());
     if (val == null)
-      return "";
-
-    String value;
+      return ConfigValue.EMPTY;
 
     // Is a list
     Class<?> valC = val.getClass();
     if (List.class.isAssignableFrom(valC))
-      value = String.join("\n", (List<String>) val);
+      return new ConfigValue((List<String>) val, prefix);
 
     // Is a scalar
     else
-      value = val.toString();
-
-    // Translate color codes before returning
-    return ChatColor.translateAlternateColorCodes('&', value.formatted(formatArgs));
-  }
-
-  @Override
-  @SuppressWarnings("unchecked")
-  public Optional<List<String>> getL(ConfigKey key) {
-    // Key unknown
-    Object val = cfg.get(key.toString());
-    if (val == null)
-      return Optional.empty();
-
-    // Is a list
-    Class<?> valC = val.getClass();
-    if (List.class.isAssignableFrom(valC))
-      return Optional.of(
-        ((List<String>) val).stream()
-          // Translate color codes
-          .map(l -> ChatColor.translateAlternateColorCodes('&', l))
-          .toList()
-      );
-
-    // Not a list
-    return Optional.empty();
-  }
-
-  @Override
-  public String getP(ConfigKey key, Object... formatArgs) {
-    return get(ConfigKey.PREFIX) + get(key, formatArgs);
+      return new ConfigValue(val.toString(), prefix);
   }
 
   @Override
@@ -95,7 +68,6 @@ public class Config implements IConfig, IAutoConstructed {
   public void initialize() {
     // Nothing to do here (yet)
   }
-
 
   //=========================================================================//
   //                               Utilities                                 //
@@ -127,6 +99,12 @@ public class Config implements IConfig, IAutoConstructed {
       // Save on diffs
       if (ensureEntries())
         save();
+
+      // Load the prefix ahead of time
+      // Use the config value builder to transform the string (to keep it centralized)
+      this.prefix = new ConfigValue(
+        cfg.getString(ConfigKey.PREFIX.toString()), ""
+      ).asScalar();
     } catch (Exception e) {
       e.printStackTrace();
     }

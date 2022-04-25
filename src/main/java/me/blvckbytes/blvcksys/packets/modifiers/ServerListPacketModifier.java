@@ -20,7 +20,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.UUID;
 
@@ -70,7 +69,7 @@ public class ServerListPacketModifier implements IPacketModifier {
           // Set the text
           refl.setFieldByType(
             sp, IChatBaseComponent.class,
-            new ChatMessage(cfg.get(ConfigKey.PLAYERLIST_TEXT))
+            new ChatMessage(cfg.get(ConfigKey.PLAYERLIST_TEXT).asScalar())
           );
 
           // Modify the icon base64 string value
@@ -78,7 +77,7 @@ public class ServerListPacketModifier implements IPacketModifier {
             refl.setFieldByType(sp, String.class, encodedIcon);
 
           // Modify the player-sample by overriding online players with fake players
-          String online = cfg.get(ConfigKey.PLAYERLIST_ONLINE);
+          String online = cfg.get(ConfigKey.PLAYERLIST_ONLINE).asScalar();
           if (!online.isEmpty()) {
             refl.getFieldByType(sp, ServerPing.ServerData.class)
               .ifPresent(sd -> {
@@ -91,11 +90,11 @@ public class ServerListPacketModifier implements IPacketModifier {
           refl.getFieldByType(sp, ServerPing.ServerPingPlayerSample.class)
             .ifPresent(ps -> {
               // Map individual hover lines to gameprofiles with random UUIDs
-              GameProfile[] profiles = Arrays.stream(
-                cfg.get(ConfigKey.PLAYERLIST_HOVER).split("\n")
-              )
-                .map(line -> new GameProfile(UUID.randomUUID(), line))
-                .toArray(GameProfile[]::new);
+              GameProfile[] profiles =
+                cfg.get(ConfigKey.PLAYERLIST_HOVER)
+                  .asStream()
+                  .map(line -> new GameProfile(UUID.randomUUID(), line))
+                  .toArray(GameProfile[]::new);
 
               refl.setArrayFieldByType(ps, "GameProfile", profiles);
             });

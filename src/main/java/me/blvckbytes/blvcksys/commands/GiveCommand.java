@@ -77,7 +77,12 @@ public class GiveCommand extends APlayerCommand {
 
     // Unknown material requested, provide proper help
     if (mat == null)
-      return customError(cfg.getP(ConfigKey.GIVE_INVALID_ITEM, matstr));
+      return customError(
+        cfg.get(ConfigKey.GIVE_INVALID_ITEM)
+          .withPrefix()
+          .withVariable("material", matstr)
+          .asScalar()
+      );
 
     // Try to parse the amount
     MutableInt amount = new MutableInt(0);
@@ -100,7 +105,10 @@ public class GiveCommand extends APlayerCommand {
 
     // Hand out the items
     int dropped = giveItems(target, mat, amount.intValue());
-    String dropMsg = cfg.getP(ConfigKey.GIVE_DROPPED, dropped);
+    String dropMsg = cfg.get(ConfigKey.GIVE_DROPPED)
+      .withPrefix()
+      .withVariable("num_dropped", dropped)
+      .asScalar();
 
     // Notify the executor about the drop
     if (dropped > 0)
@@ -108,8 +116,23 @@ public class GiveCommand extends APlayerCommand {
 
     // Notify about giveaway
     if (target != p) {
-      p.sendMessage(cfg.getP(ConfigKey.GIVE_SENDER, target.getDisplayName(), amount.intValue(), mat.toString()));
-      target.sendMessage(cfg.getP(ConfigKey.GIVE_RECEIVER, p.getDisplayName(), amount.intValue(), mat.toString()));
+      p.sendMessage(
+        cfg.get(ConfigKey.GIVE_SENDER)
+          .withPrefix()
+          .withVariable("target", target.getDisplayName())
+          .withVariable("amount", amount)
+          .withVariable("material", mat)
+          .asScalar()
+      );
+
+      target.sendMessage(
+        cfg.get(ConfigKey.GIVE_RECEIVER)
+          .withPrefix()
+          .withVariable("executor", p.getDisplayName())
+          .withVariable("amount", amount)
+          .withVariable("material", mat)
+          .asScalar()
+      );
 
       // Notify the target about the drop
       if (dropped > 0)
@@ -118,7 +141,13 @@ public class GiveCommand extends APlayerCommand {
 
     // Notify self give
     else
-      p.sendMessage(cfg.getP(ConfigKey.GIVE_SELF, amount.intValue(), mat.toString()));
+      p.sendMessage(
+        cfg.get(ConfigKey.GIVE_SELF)
+          .withPrefix()
+          .withVariable("amount", amount)
+          .withVariable("material", mat)
+          .asScalar()
+      );
 
     return success();
   }

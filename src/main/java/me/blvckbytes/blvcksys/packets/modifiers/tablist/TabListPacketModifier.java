@@ -57,7 +57,6 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
     interceptor.register(this);
   }
 
-
   //=========================================================================//
   //                                Modifiers                                //
   //=========================================================================//
@@ -87,7 +86,11 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
   }
 
   @Override
-  public void initialize() {}
+  public void initialize() {
+    // Send the tab header and footer to all players
+    for (Player t : Bukkit.getOnlinePlayers())
+      refl.sendPacket(t, generateTabHeaderFooter(t));
+  }
 
   @Override
   public void resetPlayerGroup(Player p) {
@@ -141,6 +144,9 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
   public void onJoin(PlayerJoinEvent e) {
     // Create all currently known groups for the first time for this client
     createGroups(e.getPlayer());
+
+    // Send out the header and footer packet
+    refl.sendPacket(e.getPlayer(), generateTabHeaderFooter(e.getPlayer()));
   }
 
   @EventHandler

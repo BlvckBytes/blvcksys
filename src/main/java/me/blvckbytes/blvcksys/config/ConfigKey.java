@@ -30,17 +30,20 @@ public enum ConfigKey {
   SIDEBAR_LINES(
     "sidebar.lines",
     " ",
-    "Spieler",
+    "Spieler:",
     "&d{{num_online}}&7/&d{{num_slots}}",
     " ",
-    "Onlinezeit",
+    "Onlinezeit:",
     "&cSoon",
     " ",
-    "Münzen",
+    "Münzen:",
     "&cSoon",
     " ",
-    "Freunde",
-    "&cSoon"
+    "Freunde:",
+    "&cSoon",
+    " ",
+    "Dein Name:",
+    "&d{{name}}"
   ),
 
   //=========================================================================//

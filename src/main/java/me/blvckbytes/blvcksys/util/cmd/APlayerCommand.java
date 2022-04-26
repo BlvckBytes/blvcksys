@@ -194,6 +194,7 @@ public abstract class APlayerCommand extends Command {
    * Suggest an enum's values as autocompletion, used with {@link #onTabCompletion}
    * @param args Already typed out arguments
    * @param currArg Currently focused argument
+   * @param enumClass Class of the target enum
    * @param exclude Enum values to exclude
    * @return Stream of suggestions
    */
@@ -206,6 +207,7 @@ public abstract class APlayerCommand extends Command {
    * Suggest an enum's values as autocompletion, used with {@link #onTabCompletion}
    * @param args Already typed out arguments
    * @param currArg Currently focused argument
+   * @param enumClass Class of the target enum
    * @param exclude Enum values to exclude
    * @return Stream of suggestions
    */

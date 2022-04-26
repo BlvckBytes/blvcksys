@@ -303,6 +303,66 @@ public class MCReflect {
   }
 
   /**
+   * Find an enum constant by a value of it's fields
+   * @param enumClass Class of the target enum
+   * @param fieldClass Class of the target field within that enum's class
+   * @param v Value the field needs to equal to
+   * @return Enum constant matching requirements
+   */
+  public<T extends Enum<T>> Optional<T> getEnumByField(Class<T> enumClass, Class<?> fieldClass, Object v) {
+    return getEnumByField(enumClass, fieldClass, v, 0);
+  }
+
+  /**
+   * Find an enum constant by a value of it's fields
+   * @param enumClass Class of the target enum
+   * @param fieldClass Class of the target field within that enum's class
+   * @param v Value the field needs to equal to
+   * @param skip Number if fields to skip of that type
+   * @return Enum constant matching requirements
+   */
+  public<T extends Enum<T>> Optional<T> getEnumByField(Class<T> enumClass, Class<?> fieldClass, Object v, int skip) {
+    try {
+      // Find the target field inside the enum class
+      Field f = findFieldByType(enumClass, fieldClass, skip).orElseThrow();
+
+      // Loop all enum constants
+      for (T eC : enumClass.getEnumConstants()) {
+        // Check if the field value of this constant matches
+        if (!f.get(eC).equals(v))
+          continue;
+
+        // Match
+        return Optional.of(eC);
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    // Could not find field
+    return Optional.empty();
+  }
+
+  /**
+   * Find an enum constant by it's numeric index
+   * @param enumClass Class of the target enum
+   * @param n Numeric index
+   * @return Enum constant matching requirements
+   */
+  public<T extends Enum<T>> Optional<T> getEnumNth(Class<T> enumClass, int n) {
+    try {
+      return Arrays.stream(enumClass.getEnumConstants())
+        .skip(n)
+        .findFirst();
+    } catch (Exception e) {
+      logger.logError(e);
+    }
+
+    // Could not resolve the constant
+    return Optional.empty();
+  }
+
+  /**
    * Try to set a class' member field's value by it's type, choose the first occurrence
    * @param o Object to manipulate in
    * @param fieldClass Target field's class
@@ -551,7 +611,7 @@ public class MCReflect {
    * @param p Player to send the packet to
    * @param packet Packet to send
    */
-  public void sendPacket(Player p, Packet<?> packet) {
+  public void sendPacket(Player p, Object packet) {
     getNetworkManager(p).ifPresent(nm -> {
       findMethodByArgsOnly(nm.getClass(), Packet.class).ifPresent(sendM -> {
         invokeMethod(sendM, nm, packet);

@@ -3,6 +3,7 @@ package me.blvckbytes.blvcksys.config;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -10,8 +11,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
 public class ConfigValue {
-
-  public static final ConfigValue EMPTY = new ConfigValue("", "");
 
   // What marks a variable within the config file?
   private static final String varMakerS = "{{";
@@ -85,6 +84,23 @@ public class ConfigValue {
   }
 
   /**
+   * Apply an external map of variables all at once
+   * @param variables Map of variables
+   */
+  public ConfigValue withVariables(Map<Pattern, String> variables) {
+    this.vars.putAll(variables);
+    return this;
+  }
+
+  /**
+   * Export all currently known variables
+   * @return Map of variables
+   */
+  public Map<Pattern, String> exportVariables() {
+    return Collections.unmodifiableMap(this.vars);
+  }
+
+  /**
    * Build as a scalar value using newlines for line separation
    * @return String value
    */
@@ -108,8 +124,11 @@ public class ConfigValue {
         result.append(prefix);
 
       // Separate lines
-      if (i != 0)
+      if (i != 0) {
+        // Reset colors between lines
+        result.append("§r");
         result.append(sep);
+      }
 
       // Append the actual line after transformation
       result.append(transformLine(line));
@@ -181,5 +200,12 @@ public class ConfigValue {
   @Override
   public String toString() {
     return asScalar();
+  }
+
+  /**
+   * Make a new empty instance
+   */
+  public static ConfigValue makeEmpty() {
+    return new ConfigValue("", "");
   }
 }

@@ -237,8 +237,8 @@ public class AutoConstructer {
    * @param vanillaC Vanilla class (unresolved interface for example) of this object
    */
   private static void onInstantiation(JavaPlugin plugin, Object instance, Class<?> vanillaC) {
-    String name = instance.getClass().getName();
-    logDebug("Created @AutoConstruct resource: " + name);
+    String name = instance.getClass().getSimpleName();
+    logDebug("@AutoConstruct: " + name);
 
     // Check for lateinits that need this type
     List<Tuple<Object, Field>> receivers = lateinits.remove(vanillaC);
@@ -250,7 +250,7 @@ public class AutoConstructer {
           f.setAccessible(true);
           f.set(fr.a(), instance);
 
-          logDebug("Injected lateinit dependency " + name + " into " + fr.a().getClass().getName());
+          logDebug("Lateinit " + name + " (" + fr.a().getClass().getSimpleName() + ")");
         }
       } catch (Exception e) {
         e.printStackTrace();
@@ -260,7 +260,7 @@ public class AutoConstructer {
     // Also register events if the listener interface has been implemented
     if (instance instanceof Listener l) {
       plugin.getServer().getPluginManager().registerEvents(l, plugin);
-      logDebug("Registered event-listener using handler: " + name);
+      logDebug("EventListener: " + name);
     }
   }
 

@@ -60,7 +60,7 @@ public class PermissionListener implements Listener, IAutoConstructed {
   public void initialize() {
     // Proxy all players on load
     for (Player t : Bukkit.getOnlinePlayers())
-      proxyPermissions(t, false);
+      proxyPermissions(t);
   }
 
   //=========================================================================//
@@ -70,7 +70,7 @@ public class PermissionListener implements Listener, IAutoConstructed {
   @EventHandler(priority = EventPriority.LOWEST)
   public void onJoin(PlayerJoinEvent e) {
     // Proxy on join
-    proxyPermissions(e.getPlayer(), true);
+    proxyPermissions(e.getPlayer());
   }
 
   @EventHandler(priority = EventPriority.LOWEST)
@@ -211,13 +211,9 @@ public class PermissionListener implements Listener, IAutoConstructed {
    * Proxy the permissions field of a given player by setting a
    * read-only (non-modifying) proxy on the permissions map
    * @param p Target player
-   * @param hasJustJoined Whether or not the player has just joined the server
    */
   @SuppressWarnings("unchecked")
-  private void proxyPermissions(
-    Player p,
-    boolean hasJustJoined
-  ) {
+  private void proxyPermissions(Player p) {
     refl.getCraftPlayer(p)
       .flatMap(cp -> refl.getFieldByType(cp, PermissibleBase.class))
       .flatMap(pb ->
@@ -227,9 +223,8 @@ public class PermissionListener implements Listener, IAutoConstructed {
       .ifPresent(tuple -> {
         Map<String, PermissionAttachmentInfo> permissions = (Map<String, PermissionAttachmentInfo>) tuple.b();
 
-        // Call initially after joins, as pex already added it's permissions (see priority low)
-        if (hasJustJoined)
-          onPermissionChange(p, getPermissions(permissions));
+        // Call initially
+        onPermissionChange(p, getPermissions(permissions));
 
         // Set field to to the proxy reference
         if (refl.setFieldByName(tuple.a(), "permissions", createPermissionProxy(p, permissions)))

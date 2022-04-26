@@ -4,9 +4,9 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.cmd.APlayerCommand;
+import me.blvckbytes.blvcksys.util.cmd.exception.CommandException;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
-import me.blvckbytes.blvcksys.util.cmd.CommandResult;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -43,14 +43,14 @@ public class RCommand extends APlayerCommand {
   //=========================================================================//
 
   @Override
-  public CommandResult onInvocation(Player p, String label, String[] args) {
+  public void invoke(Player p, String label, String[] args) throws CommandException {
     if (args.length == 0)
-      return usageMismatch();
+      usageMismatch();
 
     // Ensure there's an active partner on the other end
     Player partner = this.msgC.getPartner(p);
     if (partner == null)
-      return customError(
+      customError(
         cfg.get(ConfigKey.MSG_NO_PARTNER)
           .withPrefix()
           .asScalar()
@@ -59,8 +59,6 @@ public class RCommand extends APlayerCommand {
     // Send out the messages
     String message = argvar(args, 0);
     this.msgC.sendMessage(p, partner, message);
-
-    return success();
   }
 
   @Override

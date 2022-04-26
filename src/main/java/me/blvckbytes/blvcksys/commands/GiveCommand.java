@@ -4,11 +4,10 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.cmd.APlayerCommand;
-import me.blvckbytes.blvcksys.util.cmd.CommandResult;
+import me.blvckbytes.blvcksys.util.cmd.exception.CommandException;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
-import org.apache.commons.lang.mutable.MutableInt;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -67,9 +66,9 @@ public class GiveCommand extends APlayerCommand {
   }
 
   @Override
-  protected CommandResult onInvocation(Player p, String label, String[] args) {
+  protected void invoke(Player p, String label, String[] args) throws CommandException {
     if (args.length < 2 || args.length > 3)
-      return usageMismatch();
+      usageMismatch();
 
     // Try to parse the material
     String matstr = args[0].toUpperCase();
@@ -77,7 +76,7 @@ public class GiveCommand extends APlayerCommand {
 
     // Unknown material requested, provide proper help
     if (mat == null)
-      return customError(
+      customError(
         cfg.get(ConfigKey.GIVE_INVALID_ITEM)
           .withPrefix()
           .withVariable("material", matstr)
@@ -85,26 +84,17 @@ public class GiveCommand extends APlayerCommand {
       );
 
     // Try to parse the amount
-    MutableInt amount = new MutableInt(0);
-    CommandResult res = parseInt(args[1], amount);
-
-    // Not an integer
-    if (res != null)
-      return res;
+    int amount = parseInt(args[1]);
 
     // Assume the target to be the dispatcher
     Player target = p;
 
     // Use the optional player argument if it's provided
     if (args.length == 3)
-      target = Bukkit.getPlayer(args[2]);
-
-    // Player not online
-    if (target == null)
-      return playerOffline(args[2]);
+      target = onlinePlayer(args[2]);
 
     // Hand out the items
-    int dropped = giveItems(target, mat, amount.intValue());
+    int dropped = giveItems(target, mat, amount);
     String dropMsg = cfg.get(ConfigKey.GIVE_DROPPED)
       .withPrefix()
       .withVariable("num_dropped", dropped)
@@ -148,8 +138,6 @@ public class GiveCommand extends APlayerCommand {
           .withVariable("material", mat)
           .asScalar()
       );
-
-    return success();
   }
 
   //=========================================================================//

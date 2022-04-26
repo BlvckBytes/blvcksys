@@ -7,13 +7,12 @@ import me.blvckbytes.blvcksys.packets.IPacketModifier;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.ObjectStringifier;
 import me.blvckbytes.blvcksys.util.cmd.APlayerCommand;
-import me.blvckbytes.blvcksys.util.cmd.CommandResult;
+import me.blvckbytes.blvcksys.util.cmd.exception.CommandException;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.protocol.Packet;
-import org.apache.commons.lang.mutable.MutableInt;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
@@ -105,14 +104,12 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
   }
 
   @Override
-  protected CommandResult onInvocation(Player p, String label, String[] args) {
+  protected void invoke(Player p, String label, String[] args) throws CommandException {
     if (args.length < 1)
-      return usageMismatch();
+      usageMismatch();
 
     // Get the target player
-    Player target = Bukkit.getPlayer(args[0]);
-    if (target == null)
-      return playerOffline(args[0]);
+    Player target = onlinePlayer(args[0]);
 
     // The default direction is in and out
     PacketDirection dir = PacketDirection.IN_OUT;
@@ -124,7 +121,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
       try {
         dir = PacketDirection.valueOf(dirStr);
       } catch (IllegalArgumentException e) {
-        return customError(
+        customError(
           cfg.get(ConfigKey.INJECT_INVALID_DIR)
             .withPrefix()
             .withVariable("direction", dirStr)
@@ -133,15 +130,10 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
       }
     }
 
-    // Try to parse the depth, fallback to zero if not provided
-    MutableInt depth = new MutableInt(0);
-    if (args.length >= 3) {
-      CommandResult res = parseInt(args[2], depth);
-
-      // Not an integer
-      if (res != null)
-        return res;
-    }
+    // Try to parse the depth, fallback to one if not provided
+    int depth = 1;
+    if (args.length >= 3)
+      depth = parseInt(args[2]);
 
     // The default regex is null (match everything)
     Pattern regex = null;
@@ -153,7 +145,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
       try {
         regex = Pattern.compile(regStr);
       } catch (PatternSyntaxException e) {
-        return customError(
+        customError(
           cfg.get(ConfigKey.INJECT_INVALID_REGEX)
             .withPrefix()
             .withVariable("regex", regStr)
@@ -173,11 +165,11 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
           .asScalar()
       );
 
-      return success();
+      return;
     }
 
     // Create a new injection and store the request locally
-    this.requests.put(target, new InterceptionRequest(dir, depth.intValue(), regex));
+    this.requests.put(target, new InterceptionRequest(dir, depth, regex));
     this.interceptor.registerSpecific(target, this);
 
     p.sendMessage(
@@ -186,7 +178,6 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
         .withVariable("target", target.getDisplayName())
         .asScalar()
     );
-    return success();
   }
 
   //=========================================================================//

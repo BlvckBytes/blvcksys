@@ -4,8 +4,8 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.cmd.APlayerCommand;
+import me.blvckbytes.blvcksys.util.cmd.exception.CommandException;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
-import me.blvckbytes.blvcksys.util.cmd.CommandResult;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.Bukkit;
@@ -67,18 +67,16 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener 
   }
 
   @Override
-  public CommandResult onInvocation(Player p, String label, String[] args) {
+  public void invoke(Player p, String label, String[] args) throws CommandException {
     if (args.length < 2)
-      return usageMismatch();
+      usageMismatch();
 
     // Get the recipient from the first argument
-    Player recipient = Bukkit.getPlayer(args[0]);
-    if (recipient == null)
-      return playerOffline(args[0]);
+    Player recipient = onlinePlayer(args[0]);
 
     // Cannot send yourself messages
     if (recipient == p)
-      return customError(
+      customError(
         cfg.get(ConfigKey.MSG_SELF)
           .withPrefix()
           .asScalar()
@@ -93,8 +91,6 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener 
     // Append them as partners
     this.partners.put(p, recipient);
     this.partners.put(recipient, p);
-
-    return success();
   }
 
   //=========================================================================//

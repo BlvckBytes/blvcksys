@@ -3,18 +3,21 @@ package me.blvckbytes.blvcksys.util.cmd;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.util.MCReflect;
+import me.blvckbytes.blvcksys.util.cmd.exception.CommandException;
+import me.blvckbytes.blvcksys.util.cmd.exception.InvalidIntegerException;
+import me.blvckbytes.blvcksys.util.cmd.exception.OfflineTargetException;
+import me.blvckbytes.blvcksys.util.cmd.exception.UsageMismatchException;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
-import org.apache.commons.lang.mutable.MutableInt;
+import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.stream.Stream;
 
@@ -95,8 +98,9 @@ public abstract class APlayerCommand extends Command {
    * @param p Executing player
    * @param label Label of the command, either name or an alias
    * @param args Args passed with the command
+   * @throws CommandException An exception during the invocation of this command
    */
-  protected abstract CommandResult onInvocation(Player p, String label, String[] args);
+  protected abstract void invoke(Player p, String label, String[] args) throws CommandException;
 
   /**
    * Callback method for command autocompletion (tab)
@@ -128,54 +132,20 @@ public abstract class APlayerCommand extends Command {
   @Override
   public boolean execute(CommandSender cs, String label, String[] args) {
     // Not a player
-    if (!(cs instanceof Player)) {
+    if (!(cs instanceof Player p)) {
       cs.sendMessage(cfg.get(ConfigKey.ERR_NOT_A_PLAYER).asScalar());
       return false;
     }
 
-    // Relay handling, send the usage if exec was not successful
-    CommandResult res = onInvocation((Player) cs, label, args);
-
-    // No error occurred
-    if (res.error() == CommandError.NONE)
+    try {
+      // Relay handling
+      invoke(p, label, args);
       return true;
-
-    // Decide on error-response
-    switch (res.error()) {
-      case PLAYER_NOT_ONLINE -> cs.sendMessage(
-        cfg.get(ConfigKey.ERR_NOT_ONLINE)
-          .withPrefix()
-          .withVariable("player", res.text())
-          .asScalar()
-      );
-
-      case USAGE_MISMATCH -> cs.spigot().sendMessage(
-        buildAdvancedUsage(
-          cfg.get(ConfigKey.ERR_USAGE)
-            .withPrefix()
-            .asScalar()
-        )
-      );
-
-      // Custom error string, send as is
-      case CUSTOM_ERROR -> cs.sendMessage(res.text());
-
-      // Unparsable integer
-      case INT_UNPARSEABLE -> cs.sendMessage(
-        cfg.get(ConfigKey.ERR_INTPARSE)
-          .withPrefix()
-          .withVariable("number", res.text())
-          .asScalar()
-      );
-
-      default -> cs.sendMessage(
-        cfg.get(ConfigKey.ERR_INTERNAL)
-          .withPrefix()
-          .asScalar()
-      );
+    } catch (CommandException e) {
+      // Send the exceptions text to the executor
+      p.spigot().sendMessage(e.getText());
+      return false;
     }
-
-    return false;
   }
 
   //=========================================================================//
@@ -215,24 +185,19 @@ public abstract class APlayerCommand extends Command {
 
   /**
    * Build the usage-string in advanced mode, which supports hover tooltips
-   * @param prefix Prepended text, can be null if not needed
    */
-  protected TextComponent[] buildAdvancedUsage(String prefix) {
-    List<TextComponent> components = new ArrayList<>();
+  protected BaseComponent buildAdvancedUsage() {
+    BaseComponent head = new TextComponent();
     String cOth = cfg.get(ConfigKey.ERR_USAGE_COLOR_OTHER).asScalar();
 
-    // Add a prefix, if provided
-    if (prefix != null)
-      components.add(new TextComponent(prefix));
-
     // Add /command with it's description as a tooltip
-    components.add(buildHoverable(cOth + "/" + getName(), cOth + getDescription()));
+    head.addExtra(buildHoverable(cOth + "/" + getName(), cOth + getDescription()));
 
     // Add all it's arguments with their descriptive text as hover-tooltips
     for (String[] desc : this.argDescs)
-      components.add(buildHoverable(" " + colorizeUsage(desc[0]), cOth + desc[1]));
+      head.addExtra(buildHoverable(" " + colorizeUsage(desc[0]), cOth + desc[1]));
 
-    return components.toArray(TextComponent[]::new);
+    return head;
   }
 
   /**
@@ -316,45 +281,44 @@ public abstract class APlayerCommand extends Command {
   }
 
   /**
-   * Generate a success result
-   */
-  protected CommandResult success() {
-    return new CommandResult(CommandError.NONE, null);
-  }
-
-  /**
    * Generate a usage-mismatch result
    */
-  protected CommandResult usageMismatch() {
-    return new CommandResult(CommandError.USAGE_MISMATCH, null);
+  protected void usageMismatch() throws CommandException {
+    throw new UsageMismatchException(cfg, buildAdvancedUsage());
   }
 
   /**
-   * Generate a player-is-offline result
+   * Get an online player by their name
+   * @param name Name of the online player
    */
-  protected CommandResult playerOffline(String name) {
-    return new CommandResult(CommandError.PLAYER_NOT_ONLINE, name);
+  protected Player onlinePlayer(String name) throws CommandException {
+    Player target = Bukkit.getPlayerExact(name);
+
+    // The target player is not online at the moment
+    if (target == null)
+      throw new OfflineTargetException(cfg, name);
+
+    return target;
   }
 
   /**
    * Generate a custom error result
+   * @param message Message to send to the player
    */
-  protected CommandResult customError(String message) {
-    return new CommandResult(CommandError.CUSTOM_ERROR, message);
+  protected void customError(String message) throws CommandException {
+    throw new CommandException(message);
   }
 
   /**
    * Try to parse an integer value from a string
    * @param value String to parse
-   * @param out Output buffer
-   * @return CommandResult containing the error or null on success
+   * @return Parsed integer
    */
-  protected CommandResult parseInt(String value, MutableInt out) {
+  protected int parseInt(String value) throws CommandException {
     try {
-      out.setValue(Integer.parseInt(value));
-      return null;
+      return Integer.parseInt(value);
     } catch (Exception e) {
-      return new CommandResult(CommandError.INT_UNPARSEABLE, value);
+      throw new InvalidIntegerException(cfg, value);
     }
   }
 

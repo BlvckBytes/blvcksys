@@ -1,6 +1,5 @@
 package me.blvckbytes.blvcksys.events;
 
-import me.blvckbytes.blvcksys.packets.modifiers.tablist.TabListGroup;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;

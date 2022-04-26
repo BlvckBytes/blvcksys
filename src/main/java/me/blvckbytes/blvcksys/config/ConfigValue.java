@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.config;
 
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
 
 import java.util.HashMap;
@@ -115,6 +116,23 @@ public class ConfigValue {
     }
 
     return result.toString();
+  }
+
+  /**
+   * Build as a component using a custom string for line separation
+   * @param sep Custom line separator
+   * @return Component value
+   */
+  public TextComponent asComponent(String sep) {
+    return new TextComponent(asScalar(sep));
+  }
+
+  /**
+   * Build as a component using newlines for line separation
+   * @return Component value
+   */
+  public TextComponent asComponent() {
+    return asComponent("\n");
   }
 
   /**

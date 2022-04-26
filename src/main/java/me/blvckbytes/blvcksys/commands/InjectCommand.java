@@ -107,9 +107,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
     PacketDirection dir = parseEnum(PacketDirection.class, args, 1, PacketDirection.IN_OUT);
 
     // Try to parse the depth, fallback to one if not provided
-    int depth = 1;
-    if (args.length >= 3)
-      depth = parseInt(args[2]);
+    int depth = parseInt(args, 2, 1);
 
     // The default regex is null (match everything)
     Pattern regex = null;

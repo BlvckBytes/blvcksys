@@ -322,6 +322,23 @@ public abstract class APlayerCommand extends Command {
     }
   }
 
+
+  /**
+   * Try to parse an integer value from a string and provide a fallback
+   * @param args Arguments of the command
+   * @param index Index within the arguments to use
+   * @param argcFallback Fallback value to use
+   * @return Parsed integer
+   */
+  protected int parseInt(String[] args, int index, int argcFallback) throws CommandException {
+    // Index out of range, provide fallback
+    if (index >= args.length)
+      return argcFallback;
+
+    // Relay parsing
+    return parseInt(args[index]);
+  }
+
   /**
    * Parse an enum's value from a plain string (ignores casing)
    * @param enumClass Class of the target enum

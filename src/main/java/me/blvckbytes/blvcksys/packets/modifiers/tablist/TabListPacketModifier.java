@@ -88,7 +88,7 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
   public Packet<?> modifyOutgoing(Player receiver, NetworkManager nm, Packet<?> outgoing) {
     // Override header and footer packets
     if (outgoing instanceof PacketPlayOutPlayerListHeaderFooter)
-      return generateTabHeaderFooter(receiver);
+      return generateTabHeaderFooter(receiver, false);
     return outgoing;
   }
 
@@ -99,8 +99,13 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
   @Override
   public void cleanup() {
     // Remove all groups to start over from a known state on next load
-    for (Player t : Bukkit.getOnlinePlayers())
+    for (Player t : Bukkit.getOnlinePlayers()) {
+      // Reset the tab header and footer
+      refl.sendPacket(t, generateTabHeaderFooter(t, true));
+
+      // Remove all previously created groups
       removeAllGroups(t);
+    }
 
     // Kill the repeating task
     Bukkit.getScheduler().cancelTask(taskHandle);
@@ -112,7 +117,7 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
     taskHandle = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
       // Send the tab header and footer to all players
       for (Player t : Bukkit.getOnlinePlayers())
-        refl.sendPacket(t, generateTabHeaderFooter(t));
+        refl.sendPacket(t, generateTabHeaderFooter(t, false));
     }, 0L, 20L);
   }
 
@@ -138,7 +143,7 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
     createGroups(e.getPlayer());
 
     // Send out the header and footer packet
-    refl.sendPacket(e.getPlayer(), generateTabHeaderFooter(e.getPlayer()));
+    refl.sendPacket(e.getPlayer(), generateTabHeaderFooter(e.getPlayer(), false));
   }
 
   @EventHandler
@@ -450,9 +455,16 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
   /**
    * Generate a player-specific tablist header and footer packet
    * @param p Receiving player
+   * @param clear Whether or not to return a cleared packet
    * @return Custom generated packet
    */
-  private Packet<?> generateTabHeaderFooter(Player p) {
+  private Packet<?> generateTabHeaderFooter(Player p, boolean clear) {
+    // Return a cleared packet for resetting the header and footer
+    if (clear)
+      return new PacketPlayOutPlayerListHeaderFooter(
+        new ChatComponentText(""), new ChatComponentText("")
+      );
+
     Map<Pattern, String> vars = ConfigValue.makeEmpty()
       .withVariable("player", p.getName())
       .withVariable("num_online", Bukkit.getOnlinePlayers().size())

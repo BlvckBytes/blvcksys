@@ -20,14 +20,6 @@
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot</artifactId>
             <version>1.18.2-R0.1-SNAPSHOT</version>
-            <scope>provided</scope>
-        </dependency>
-
-        <!-- Used to query packages for their member-classes -->
-        <dependency>
-            <groupId>io.github.classgraph</groupId>
-            <artifactId>classgraph</artifactId>
-            <version>4.8.143</version>
         </dependency>
 
         <!-- Lombok annotation library to reduce boilerplate code -->
@@ -35,7 +27,6 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.24</version>
-            <scope>provided</scope>
         </dependency>
 
         <!-- JetBrains annotations library, as used by bukkit internally too -->
@@ -59,33 +50,14 @@
                 </configuration>
             </plugin>
 
-            <!-- Shade dependencies into the jar -->
+            <!-- Specifes where to put the built jar -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-shade-plugin</artifactId>
-                <version>3.3.0</version>
-                <executions>
-                    <execution>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>shade</goal>
-                        </goals>
-                    </execution>
-                </executions>
+                <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.2</version>
                 <configuration>
                     <!-- Output straight into the server's plugin folder -->
-                    <outputFile>/Users/blvckbytes/Documents/Projects/MCServer/plugins/${project.artifactId}-${project.version}.jar</outputFile>
-
-                    <!-- Ignore (probably) colliding meta information of dependencies -->
-                    <filters>
-                        <filter>
-                            <artifact>*:*</artifact>
-                            <excludes>
-                                <exclude>*META-INF*</exclude>
-                                <exclude>META-INF/**</exclude>
-                            </excludes>
-                        </filter>
-                    </filters>
+                    <outputDirectory>/Users/blvckbytes/Documents/Projects/MCServer/plugins</outputDirectory>
                 </configuration>
             </plugin>
         </plugins>

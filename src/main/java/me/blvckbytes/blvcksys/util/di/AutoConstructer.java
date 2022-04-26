@@ -1,13 +1,11 @@
 package me.blvckbytes.blvcksys.util.di;
 
-import io.github.classgraph.ClassGraph;
-import io.github.classgraph.ScanResult;
-import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.util.Tuple;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Parameter;
@@ -15,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.JarFile;
 
 public class AutoConstructer {
 
@@ -49,33 +48,68 @@ public class AutoConstructer {
   }
 
   /**
+   * Find all classes within the provided package that make use of {@link AutoConstruct}
+   *
+   * @param plugin JavaPlugin reference
+   * @param pkg Package to search for targets in
+   */
+  private static List<Class<?>> findAnnotatedClasses(JavaPlugin plugin, String pkg) {
+    List<Class<?>> classes = new ArrayList<>();
+
+    try {
+      // Get the executing jar's file path
+      String fpath = new File(
+        plugin.getClass().getProtectionDomain().getCodeSource().getLocation().toURI()
+      ).getPath();
+
+      // Transform the default package notation into a path
+      String pathPkg = pkg.replace(".", "/");
+
+      // Load the jar file by it's path
+      JarFile jf = new JarFile(fpath);
+
+      // Loop all of it's entries (packages, classes, files, ...)
+      jf.entries().asIterator().forEachRemaining(je -> {
+        String name = je.getName();
+
+        // Not a class within the target package
+        if (!(name.startsWith(pathPkg) && name.endsWith(".class")))
+          return;
+
+        // Try loading the class (should succeed every time) and add it to the local list
+        try {
+          classes.add(Class.forName(
+            // Transform the path back into package notation and strip off .class
+            name.substring(0, name.lastIndexOf('.')).replace("/", ".")
+          ));
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      });
+
+      jf.close();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    // Only return classes that have the matching annotation applied
+    return classes
+      .stream()
+      .filter(c -> c.isAnnotationPresent(AutoConstruct.class))
+      .toList();
+  }
+
+  /**
    * Execute the auto-constructor and thus instantiate all available
    * classes within the specified package that are annotated by @AutoConstruct
    *
+   * @param plugin JavaPlugin reference
    * @param pkg Package to search for targets in
    */
   public static void execute(JavaPlugin plugin, String pkg) {
-    // Scan all classes in the target package and auto-close the scanner
-    try (
-      ScanResult result = new ClassGraph()
-        .enableClassInfo()
-        .enableAnnotationInfo()
-        .acceptPackages(pkg)
-        .scan()
-    ) {
-      // List of all target classes that require auto-construction
-      List<? extends Class<?>> classes = result
-        .getAllClasses()
-        .filter(ci -> ci.hasAnnotation(AutoConstruct.class))
-        .stream()
-        .map(c -> {
-          try {
-            return Class.forName(c.getName());
-          } catch (ClassNotFoundException e) {
-            throw new RuntimeException("Could not load @AutoConstruct class %s".formatted(c.getName()));
-          }
-        })
-        .toList();
+    try {
+      // Find all classes in the target package
+      List<Class<?>> classes = findAnnotatedClasses(plugin, pkg);
 
       // Mapping classes to a chosen constructor, which either has no deps or only @AutoInject dep parameters
       Map<Class<?>, Constructor<?>> ctorMap = selectConstructors(classes);
@@ -90,7 +124,6 @@ public class AutoConstructer {
         if (o instanceof IAutoConstructed a)
           a.initialize();
       }
-
     } catch (Exception e) {
       e.printStackTrace();
     }

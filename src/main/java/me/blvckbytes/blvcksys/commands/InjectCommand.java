@@ -2,11 +2,13 @@ package me.blvckbytes.blvcksys.commands;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.ObjectStringifier;
 import me.blvckbytes.blvcksys.util.cmd.APlayerCommand;
+import me.blvckbytes.blvcksys.util.cmd.CommandArgument;
 import me.blvckbytes.blvcksys.util.cmd.exception.CommandException;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
@@ -62,12 +64,11 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
       plugin, logger, cfg, refl,
       "inject",
       "Inject an interceptor to monitor a player's packets",
-      new String[][] {
-        { "<player>", "Player to capture" },
-        { "[direction]", "Direction of packets" },
-        { "[depth]", "Recursion depth for stringification" },
-        { "[regex]", "Regex pattern matching packet names" }
-      }
+      PlayerPermission.COMMAND_INJECT,
+      new CommandArgument("<player>", "Player to capture"),
+      new CommandArgument("[direction]", "Direction of packets"),
+      new CommandArgument("[depth]", "Recursion depth for stringification"),
+      new CommandArgument("[regex]", "Regex pattern matching packet names")
     );
 
     this.ostr = ostr;

@@ -2,8 +2,10 @@ package me.blvckbytes.blvcksys.commands;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.cmd.APlayerCommand;
+import me.blvckbytes.blvcksys.util.cmd.CommandArgument;
 import me.blvckbytes.blvcksys.util.cmd.exception.CommandException;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
@@ -32,11 +34,10 @@ public class GiveCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "give",
       "Give a certain amount of an item to yourself or others",
-      new String[][] {
-        { "<item>", "Material of the item" },
-        { "<amount>", "Number of items" },
-        { "[player]", "The receiving player" }
-      }
+      PlayerPermission.COMMAND_GIVE,
+      new CommandArgument("<item>", "Material of the item"),
+      new CommandArgument("<amount>", "Number of items"),
+      new CommandArgument("[player]", "The receiving player", PlayerPermission.COMMAND_FLY_OTHERS)
     );
   }
 

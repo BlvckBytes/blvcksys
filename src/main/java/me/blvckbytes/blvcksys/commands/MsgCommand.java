@@ -4,6 +4,7 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.cmd.APlayerCommand;
+import me.blvckbytes.blvcksys.util.cmd.CommandArgument;
 import me.blvckbytes.blvcksys.util.cmd.exception.CommandException;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
@@ -35,10 +36,9 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener 
       plugin, logger, cfg, refl,
       "msg",
       "Send a message to someone",
-      new String[][] {
-        { "<recipient>", "Message receiver" },
-        { "<message>", "Message to send" }
-      }
+      null,
+      new CommandArgument("<recipient>", "Message receiver"),
+      new CommandArgument("<message>", "Message to send")
     );
 
     this.partners = new HashMap<>();

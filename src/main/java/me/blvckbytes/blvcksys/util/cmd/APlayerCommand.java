@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.util.cmd;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.cmd.exception.*;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
@@ -31,8 +32,8 @@ import java.util.stream.Stream;
  */
 public abstract class APlayerCommand extends Command {
 
-  // Argument placeholder to description map
-  private final String[][] argDescs;
+  // Arguments this command may be invoked with
+  private final CommandArgument[] cmdArgs;
 
   // Mapping command names to their dispatchers
   private static final Map<String, APlayerCommand> registeredCommands;
@@ -43,6 +44,9 @@ public abstract class APlayerCommand extends Command {
   protected final IConfig cfg;
   protected final MCReflect refl;
 
+  // The top level permission of this command
+  private final PlayerPermission permission;
+
   static {
     registeredCommands = new HashMap<>();
   }
@@ -50,8 +54,7 @@ public abstract class APlayerCommand extends Command {
   /**
    * @param name Name of the command
    * @param description Description of the command
-   * @param argDescs Mapping
-   * @param aliases Aliases the command can also be called by
+   * @param cmdArgs List of available arguments
    */
   public APlayerCommand(
     JavaPlugin plugin,
@@ -60,26 +63,30 @@ public abstract class APlayerCommand extends Command {
     MCReflect refl,
     String name,
     String description,
-    String[][] argDescs,
-    String ...aliases
+    PlayerPermission permission,
+    CommandArgument... cmdArgs
   ) {
     super(
-      name,
+      // Get the name from the first entry of the comma separated list
+      name.split(",")[0],
       description,
 
       // Generate a usage string from all first tuple items of the args-map
-      Arrays.stream(argDescs)
-        .map(strings -> strings[0])
+      Arrays.stream(cmdArgs)
+        .map(CommandArgument::getName)
         .reduce("/" + name, (acc, curr) -> acc + " " + curr),
 
-      Arrays.asList(aliases)
+      // Get aliases by the comma separated list "name"
+      // Example: <main>,<alias 1>,<alias 2>
+      Arrays.stream(name.split(",")).skip(1).map(String::trim).toList()
     );
 
-    this.argDescs = argDescs;
+    this.cmdArgs = cmdArgs;
     this.plugin = plugin;
     this.logger = logger;
     this.cfg = cfg;
     this.refl = refl;
+    this.permission = permission;
 
     // Register this command within the server's command map
     refl.registerCommand(plugin.getDescription().getName(), this);
@@ -124,11 +131,21 @@ public abstract class APlayerCommand extends Command {
     @NotNull String[] args
   ) throws IllegalArgumentException {
     // Don't serve non-players
-    if (!(sender instanceof Player))
+    if (!(sender instanceof Player p))
+      return new ArrayList<>();
+
+    // Calculate the arg index
+    int currArg = Math.max(0, args.length - 1);
+
+    // Get it's connected permission
+    PlayerPermission argPerm = cmdArgs[Math.max(currArg, cmdArgs.length - 1)].getPermission();
+
+    // Doesn't have permission for this arg, don't invoke the completion callback
+    if (argPerm != null && !argPerm.has(p))
       return new ArrayList<>();
 
     // Call tab completion handler and limit the results to 10 items
-    return onTabCompletion((Player) sender, args, Math.max(0, args.length - 1))
+    return onTabCompletion(p, args, currArg)
       .limit(10)
       .toList();
   }
@@ -146,6 +163,17 @@ public abstract class APlayerCommand extends Command {
     }
 
     try {
+      // Check for the top level permission
+      if (permission != null && !permission.has(p))
+        throw new MissingPermissionException(cfg, permission);
+
+      // Check for all permissions regarding arguments
+      for (int i = 0; i < args.length; i++) {
+        PlayerPermission argPerm = cmdArgs[Math.max(i, cmdArgs.length - 1)].getPermission();
+        if (argPerm != null && !argPerm.has(p))
+          throw new MissingPermissionException(cfg, argPerm);
+      }
+
       // Relay handling
       invoke(p, label, args);
       return true;
@@ -222,7 +250,7 @@ public abstract class APlayerCommand extends Command {
    * @return Placeholder value
    */
   protected String getArgumentPlaceholder(int argId) {
-    return argDescs[Math.min(argId, argDescs.length - 1)][0];
+    return cmdArgs[Math.min(argId, cmdArgs.length - 1)].getName();
   }
 
   /**
@@ -238,12 +266,12 @@ public abstract class APlayerCommand extends Command {
     head.addExtra(buildHoverable(cOth + "/" + getName(), cOth + getDescription()));
 
     // Add all it's arguments with their descriptive text as hover-tooltips
-    for (int i = 0; i < this.argDescs.length; i++) {
-      String[] desc = this.argDescs[i];
+    for (int i = 0; i < this.cmdArgs.length; i++) {
+      CommandArgument arg = this.cmdArgs[i];
 
       // Decide whether to colorize the argument using normal
       // colors or using the focus color based on it's positional index
-      head.addExtra(buildHoverable(" " + colorizeUsage(desc[0], (focusedArgument != null && focusedArgument == i)), cOth + desc[1]));
+      head.addExtra(buildHoverable(" " + colorizeUsage(arg.getName(), (focusedArgument != null && focusedArgument == i)), cOth + arg.getDescription()));
     }
 
     return head;
@@ -456,7 +484,7 @@ public abstract class APlayerCommand extends Command {
    * @return Description value
    */
   public String getArgumentDescripton(int argId) {
-    return argDescs[Math.min(argId, argDescs.length - 1)][1];
+    return cmdArgs[Math.min(argId, cmdArgs.length - 1)].getDescription();
   }
 
   /**

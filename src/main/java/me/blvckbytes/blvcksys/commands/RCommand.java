@@ -4,6 +4,7 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.cmd.APlayerCommand;
+import me.blvckbytes.blvcksys.util.cmd.CommandArgument;
 import me.blvckbytes.blvcksys.util.cmd.exception.CommandException;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
@@ -29,10 +30,8 @@ public class RCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "r",
       "Respond to the last message",
-      new String[][] {
-        { "<message>", "Message to send" }
-      },
-      "reply"
+      null,
+      new CommandArgument("<message>", "Message to send")
     );
 
     this.msgC = msgC;

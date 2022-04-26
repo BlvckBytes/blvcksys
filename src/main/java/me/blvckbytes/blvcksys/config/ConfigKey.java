@@ -20,8 +20,14 @@ public enum ConfigKey {
   //                                 Tablist                                 //
   //=========================================================================//
 
-  TABLIST_HEADER("tablist.header", "&cMy header"),
-  TABLIST_FOOTER("tablist.footer", "&bMy footer"),
+  TABLIST_HEADER(
+    "tablist.header",
+    "&cMy header"
+  ),
+  TABLIST_FOOTER(
+    "tablist.footer",
+    "&bMy footer"
+  ),
   TABLIST_PREFIXES(
     "tablist.prefixes",
     "Admin;&cAdmin &8| &c",
@@ -52,6 +58,14 @@ public enum ConfigKey {
   MSG_RECEIVER("msg.receiver", "&8(&6{{sender}}&8 -> &6Dir&8)&7: {{message}}"),
   MSG_NO_PARTNER("msg.no_partner", "&cDu hast keinen aktiven Nachrichten-Partner!"),
   MSG_SELF("msg.self", "&cDu kannst dir selbst keine Nachrichten schreiben!"),
+
+  //=========================================================================//
+  //                               FLY Command                               //
+  //=========================================================================//
+
+  FLY_ENABLED("fly.enabled", "&7Du kannst &dnun &7fliegen!"),
+  FLY_DISABLED("fly.disabled", "&7Du kannst &dnicht mehr &7fliegen!"),
+  FLY_REVOKED("fly.revoked", "&7Du hast soeben deine &cFlugrechte &7verloren!"),
 
   //=========================================================================//
   //                               GIVE Command                              //
@@ -86,6 +100,7 @@ public enum ConfigKey {
 
   ERR_INTERNAL("errors.internal", "&4Es trat ein interner Fehler auf!"),
   ERR_INTPARSE("errors.intparse", "&cDie Eingabe &4{{number}} &cist keine Ganzzahl!"),
+  ERR_PERMISSION("errors.permission", "&cDir fehlt das Recht &4{{permission}} &cum diesen Befehl ausführen zu können!"),
   ERR_OPTIONPARSE("errors.optionparse", "&cDie Eingabe &4{{option}} &cist keine gültige Wahl!"),
   ERR_NOT_ONLINE("errors.not_online", "&cDer Spieler &4{{player}} &cist nicht online!"),
   ERR_USAGE_PREFIX("errors.usage_prefix", "&7Benutzung: "),

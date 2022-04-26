@@ -17,16 +17,31 @@ public enum ConfigKey {
   LOGGING_PREFIX_ERROR("logging_prefix.error", "&4"),
 
   //=========================================================================//
+  //                                   Chat                                  //
+  //=========================================================================//
+
+  CHAT_FORMAT("chat_format", "{{prefix}}{{name}}&7: {{message}}"),
+
+  //=========================================================================//
   //                                 Tablist                                 //
   //=========================================================================//
 
   TABLIST_HEADER(
     "tablist.header",
-    "&cMy header"
+    " ",
+    "&5&lBlvckBytes.DEV",
+    "&7Willkommen, &d{{player}}&7!",
+    " ",
+    "&8&m──────────────────────────────",
+    " "
   ),
   TABLIST_FOOTER(
     "tablist.footer",
-    "&bMy footer"
+    " ",
+    "&8&m──────────────────────────────",
+    " ",
+    "&d✦ &7Online: &d{{num_online}}&7/&d{{num_slots}} &8| &d⇄ &7Ping: &d{{ping}}ms &8| &d⌚ &7Uhrzeit: &d{{time}}",
+    " "
   ),
   TABLIST_PREFIXES(
     "tablist.prefixes",

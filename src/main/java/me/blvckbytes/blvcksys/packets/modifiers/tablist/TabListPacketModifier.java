@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.packets.modifiers.tablist;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.events.PlayerPermissionsChangedEvent;
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
@@ -25,14 +26,24 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.plugin.java.JavaPlugin;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.regex.Pattern;
 
 @AutoConstruct
-public class TabListPacketModifier implements IPacketModifier, Listener, IAutoConstructed {
+public class TabListPacketModifier implements IPacketModifier, Listener, IAutoConstructed, ITabListModifier {
+
+  private static final SimpleDateFormat df;
+
+  static {
+    df = new SimpleDateFormat("HH:mm:ss");
+  }
 
   private final IConfig cfg;
   private final MCReflect refl;
+  private final JavaPlugin plugin;
 
   // Known groups
   private final List<TabListGroup> groups;
@@ -43,13 +54,19 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
   // Created groups per player (each group has to be created once per client)
   private final Map<Player, List<TabListGroup>> createdGroups;
 
+  // Handle of the repeating task that takes care of periodically
+  // sending out tablist header and footers (for live variables)
+  private int taskHandle;
+
   public TabListPacketModifier(
     @AutoInject IPacketInterceptor interceptor,
     @AutoInject IConfig cfg,
-    @AutoInject MCReflect refl
+    @AutoInject MCReflect refl,
+    @AutoInject JavaPlugin plugin
   ) {
     this.cfg = cfg;
     this.refl = refl;
+    this.plugin = plugin;
     this.members = new HashMap<>();
     this.createdGroups = new HashMap<>();
     this.groups = new ArrayList<>();
@@ -84,13 +101,31 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
     // Remove all groups to start over from a known state on next load
     for (Player t : Bukkit.getOnlinePlayers())
       removeAllGroups(t);
+
+    // Kill the repeating task
+    Bukkit.getScheduler().cancelTask(taskHandle);
   }
 
   @Override
   public void initialize() {
-    // Send the tab header and footer to all players
-    for (Player t : Bukkit.getOnlinePlayers())
-      refl.sendPacket(t, generateTabHeaderFooter(t));
+    // Send out header and footer packets every second to keep variables up to date
+    taskHandle = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
+      // Send the tab header and footer to all players
+      for (Player t : Bukkit.getOnlinePlayers())
+        refl.sendPacket(t, generateTabHeaderFooter(t));
+    }, 0L, 20L);
+  }
+
+  @Override
+  public Optional<TabListGroup> getPlayerGroup(Player p) {
+    // Search through all groups to find the one where the player is a member
+    for (Map.Entry<TabListGroup, List<Player>> group : members.entrySet()) {
+      if (group.getValue().contains(p))
+        return Optional.of(group.getKey());
+    }
+
+    // Player is not member of any groups
+    return Optional.empty();
   }
 
   //=========================================================================//
@@ -184,7 +219,6 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
     if (!members.containsKey(group)) {
       members.put(group, new ArrayList<>());
       isNew = true;
-
     }
 
     // Add the member
@@ -419,9 +453,25 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
    * @return Custom generated packet
    */
   private Packet<?> generateTabHeaderFooter(Player p) {
+    Map<Pattern, String> vars = ConfigValue.makeEmpty()
+      .withVariable("player", p.getName())
+      .withVariable("num_online", Bukkit.getOnlinePlayers().size())
+      .withVariable("num_slots", plugin.getServer().getMaxPlayers())
+      .withVariable("ping", p.getPing())
+      .withVariable("time", df.format(new Date()))
+      .exportVariables();
+
     return new PacketPlayOutPlayerListHeaderFooter(
-      new ChatComponentText(cfg.get(ConfigKey.TABLIST_HEADER).asScalar()),
-      new ChatComponentText(cfg.get(ConfigKey.TABLIST_FOOTER).asScalar())
+      new ChatComponentText(
+        cfg.get(ConfigKey.TABLIST_HEADER)
+          .withVariables(vars)
+          .asScalar()
+      ),
+      new ChatComponentText(
+        cfg.get(ConfigKey.TABLIST_FOOTER)
+          .withVariables(vars)
+          .asScalar()
+      )
     );
   }
 }

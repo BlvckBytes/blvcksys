@@ -42,12 +42,12 @@ public class Config implements IConfig, IAutoConstructed {
   public ConfigValue get(ConfigKey key) {
     // Config is not yet loaded
     if (cfg == null)
-      return ConfigValue.EMPTY;
+      return ConfigValue.makeEmpty();
 
     // Key unknown
     Object val = cfg.get(key.toString());
     if (val == null)
-      return ConfigValue.EMPTY;
+      return ConfigValue.makeEmpty();
 
     // Is a list
     Class<?> valC = val.getClass();

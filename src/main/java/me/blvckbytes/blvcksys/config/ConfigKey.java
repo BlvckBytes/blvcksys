@@ -72,7 +72,6 @@ public enum ConfigKey {
   INJECT_EVENT("inject.event", "&5{{direction}}&8 -> &r{{object}}"),
   INJECT_EVENT_COLOR_OTHER("inject.event_color.other", "&7"),
   INJECT_EVENT_COLOR_VALUES("inject.event_color.values", "&d"),
-  INJECT_INVALID_DIR("inject.invalid_dir", "&cDie Richtung {{direction}} existiert nicht!"),
   INJECT_INVALID_REGEX("inject.invalid_regex", "&cDas Regex \"{{regex}}\" ist ungültig!"),
 
   //=========================================================================//
@@ -87,6 +86,7 @@ public enum ConfigKey {
 
   ERR_INTERNAL("errors.internal", "&4Es trat ein interner Fehler auf!"),
   ERR_INTPARSE("errors.intparse", "&cDie Eingabe &4{{number}} &cist keine Ganzzahl!"),
+  ERR_OPTIONPARSE("errors.optionparse", "&cDie Eingabe &4{{option}} &cist keine gültige Wahl!"),
   ERR_NOT_ONLINE("errors.not_online", "&cDer Spieler &4{{player}} &cist nicht online!"),
   ERR_USAGE_PREFIX("errors.usage_prefix", "&7Benutzung: "),
   ERR_USAGE_COLOR_MANDATORY("errors.usage_color.mandatory", "&d"),

@@ -70,20 +70,10 @@ public class GiveCommand extends APlayerCommand {
     if (args.length < 2 || args.length > 3)
       usageMismatch();
 
-    // Try to parse the material
-    String matstr = args[0].toUpperCase();
-    Material mat = Material.getMaterial(matstr);
+    // Parse the material
+    Material mat = parseEnum(Material.class, args[0]);
 
-    // Unknown material requested, provide proper help
-    if (mat == null)
-      customError(
-        cfg.get(ConfigKey.GIVE_INVALID_ITEM)
-          .withPrefix()
-          .withVariable("material", matstr)
-          .asScalar()
-      );
-
-    // Try to parse the amount
+    // Parse the amount
     int amount = parseInt(args[1]);
 
     // Assume the target to be the dispatcher

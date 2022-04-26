@@ -114,21 +114,9 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
     // The default direction is in and out
     PacketDirection dir = PacketDirection.IN_OUT;
 
-    // Try to parse the packet direction
-    if (args.length >= 2) {
-      String dirStr = args[1].toUpperCase();
-
-      try {
-        dir = PacketDirection.valueOf(dirStr);
-      } catch (IllegalArgumentException e) {
-        customError(
-          cfg.get(ConfigKey.INJECT_INVALID_DIR)
-            .withPrefix()
-            .withVariable("direction", dirStr)
-            .asScalar()
-        );
-      }
-    }
+    // Parse the packet direction
+    if (args.length >= 2)
+      dir = parseEnum(PacketDirection.class, args[1]);
 
     // Try to parse the depth, fallback to one if not provided
     int depth = 1;

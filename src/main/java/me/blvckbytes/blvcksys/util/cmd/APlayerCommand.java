@@ -3,10 +3,7 @@ package me.blvckbytes.blvcksys.util.cmd;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.util.MCReflect;
-import me.blvckbytes.blvcksys.util.cmd.exception.CommandException;
-import me.blvckbytes.blvcksys.util.cmd.exception.InvalidIntegerException;
-import me.blvckbytes.blvcksys.util.cmd.exception.OfflineTargetException;
-import me.blvckbytes.blvcksys.util.cmd.exception.UsageMismatchException;
+import me.blvckbytes.blvcksys.util.cmd.exception.*;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -17,6 +14,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -118,7 +116,12 @@ public abstract class APlayerCommand extends Command {
   //=========================================================================//
 
   @Override
-  public List<String> tabComplete(CommandSender sender, String alias, String[] args) throws IllegalArgumentException {
+  @NotNull
+  public List<String> tabComplete(
+    @NotNull CommandSender sender,
+    @NotNull String alias,
+    @NotNull String[] args
+  ) throws IllegalArgumentException {
     // Don't serve non-players
     if (!(sender instanceof Player))
       return new ArrayList<>();
@@ -130,7 +133,11 @@ public abstract class APlayerCommand extends Command {
   }
 
   @Override
-  public boolean execute(CommandSender cs, String label, String[] args) {
+  public boolean execute(
+    @NotNull CommandSender cs,
+    @NotNull String label,
+    @NotNull String[] args
+  ) {
     // Not a player
     if (!(cs instanceof Player p)) {
       cs.sendMessage(cfg.get(ConfigKey.ERR_NOT_A_PLAYER).asScalar());
@@ -149,7 +156,7 @@ public abstract class APlayerCommand extends Command {
   }
 
   //=========================================================================//
-  //                                Utilities                                //
+  //                            Internal Utilities                           //
   //=========================================================================//
 
   /**
@@ -159,15 +166,6 @@ public abstract class APlayerCommand extends Command {
    */
   protected String getArgumentPlaceholder(int argId) {
     return argDescs[Math.min(argId, argDescs.length - 1)][0];
-  }
-
-  /**
-   * Get an argument's description by it's argument id (zero based index)
-   * @param argId Argument id
-   * @return Description value
-   */
-  public String getArgumentDescripton(int argId) {
-    return argDescs[Math.min(argId, argDescs.length - 1)][1];
   }
 
   /**
@@ -198,59 +196,6 @@ public abstract class APlayerCommand extends Command {
       head.addExtra(buildHoverable(" " + colorizeUsage(desc[0]), cOth + desc[1]));
 
     return head;
-  }
-
-  /**
-   * Colorize the usage string based on the colors specified inside the config
-   * @param vanilla Vanilla usage string
-   * @return Colorized usage string
-   */
-  public String colorizeUsage(String vanilla) {
-    // Usage formatting colors
-    String cMan = cfg.get(ConfigKey.ERR_USAGE_COLOR_MANDATORY).asScalar();
-    String cOpt = cfg.get(ConfigKey.ERR_USAGE_COLOR_OPTIONAL).asScalar();
-    String cBra = cfg.get(ConfigKey.ERR_USAGE_COLOR_BRACKETS).asScalar();
-    String cOth = cfg.get(ConfigKey.ERR_USAGE_COLOR_OTHER).asScalar();
-
-    // Start out by coloring other
-    StringBuilder colorized = new StringBuilder(cOth);
-
-    /*
-      - <...> = ... Mandatory
-      - [...] = ... is Optional
-      - <>[]  = Brackets
-      - remaining = other
-     */
-
-    // Loop individual chars
-    for (char c : vanilla.toCharArray()) {
-      // Colorize bracket
-      if (c == '<' || c == '>' || c == '[' || c == ']') {
-        colorized.append(cBra);
-        colorized.append(c);
-      }
-
-      // Begin of mandatory
-      if (c == '<') {
-        colorized.append(cMan);
-      }
-
-      // Begin of optional
-      else if (c == '[') {
-        colorized.append(cOpt);
-      }
-
-      // End of brackets, go back to other color
-      else if (c == '>' || c == ']') {
-        colorized.append(cOth);
-      }
-
-      // No bracket, normal text chars
-      else
-        colorized.append(c);
-    }
-
-    return colorized.toString();
   }
 
   /**
@@ -321,6 +266,103 @@ public abstract class APlayerCommand extends Command {
       throw new InvalidIntegerException(cfg, value);
     }
   }
+
+  /**
+   * Parse an enum's value from a plain string
+   * @param enumClass Class of the target enum
+   * @param value String to parse
+   * @param ignoreCase Whether or not to ignore casing
+   * @return Parsed enum value
+   */
+  protected<T extends Enum<T>> T parseEnum(Class<T> enumClass, String value, boolean ignoreCase) throws CommandException {
+    // Find the enum constant by it's name
+    for (T constant : enumClass.getEnumConstants())
+      if (ignoreCase && constant.name().equalsIgnoreCase(value) || constant.name().equals(value))
+        return constant;
+
+    // Could not find any matching constants
+    throw new InvalidOptionException(cfg, value);
+  }
+
+  /**
+   * Parse an enum's value from a plain string (ignores casing)
+   * @param enumClass Class of the target enum
+   * @param value String to parse
+   * @return Parsed enum value
+   */
+  protected<T extends Enum<T>> T parseEnum(Class<T> enumClass, String value) throws CommandException {
+    return parseEnum(enumClass, value, true);
+  }
+
+  //=========================================================================//
+  //                             Public Utilities                            //
+  //=========================================================================//
+
+  /**
+   * Get an argument's description by it's argument id (zero based index)
+   * @param argId Argument id
+   * @return Description value
+   */
+  public String getArgumentDescripton(int argId) {
+    return argDescs[Math.min(argId, argDescs.length - 1)][1];
+  }
+
+  /**
+   * Colorize the usage string based on the colors specified inside the config
+   * @param vanilla Vanilla usage string
+   * @return Colorized usage string
+   */
+  public String colorizeUsage(String vanilla) {
+    // Usage formatting colors
+    String cMan = cfg.get(ConfigKey.ERR_USAGE_COLOR_MANDATORY).asScalar();
+    String cOpt = cfg.get(ConfigKey.ERR_USAGE_COLOR_OPTIONAL).asScalar();
+    String cBra = cfg.get(ConfigKey.ERR_USAGE_COLOR_BRACKETS).asScalar();
+    String cOth = cfg.get(ConfigKey.ERR_USAGE_COLOR_OTHER).asScalar();
+
+    // Start out by coloring other
+    StringBuilder colorized = new StringBuilder(cOth);
+
+    /*
+      - <...> = ... Mandatory
+      - [...] = ... is Optional
+      - <>[]  = Brackets
+      - remaining = other
+     */
+
+    // Loop individual chars
+    for (char c : vanilla.toCharArray()) {
+      // Colorize bracket
+      if (c == '<' || c == '>' || c == '[' || c == ']') {
+        colorized.append(cBra);
+        colorized.append(c);
+      }
+
+      // Begin of mandatory
+      if (c == '<') {
+        colorized.append(cMan);
+      }
+
+      // Begin of optional
+      else if (c == '[') {
+        colorized.append(cOpt);
+      }
+
+      // End of brackets, go back to other color
+      else if (c == '>' || c == ']') {
+        colorized.append(cOth);
+      }
+
+      // No bracket, normal text chars
+      else
+        colorized.append(c);
+    }
+
+    return colorized.toString();
+  }
+
+  //=========================================================================//
+  //                             Static Utilities                            //
+  //=========================================================================//
 
   /**
    * Get a command by it's command name string

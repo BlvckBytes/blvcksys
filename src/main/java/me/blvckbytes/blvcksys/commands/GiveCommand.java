@@ -63,21 +63,14 @@ public class GiveCommand extends APlayerCommand {
 
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
-    if (args.length < 2 || args.length > 3)
-      usageMismatch();
-
     // Parse the material
-    Material mat = parseEnum(Material.class, args[0], true, BANNED_MATERIALS);
+    Material mat = parseEnum(Material.class, args, 0, BANNED_MATERIALS);
 
     // Parse the amount
-    int amount = parseInt(args[1]);
+    int amount = parseInt(args, 1);
 
     // Assume the target to be the dispatcher
-    Player target = p;
-
-    // Use the optional player argument if it's provided
-    if (args.length == 3)
-      target = onlinePlayer(args[2]);
+    Player target = onlinePlayer(args, 2, p);
 
     // Hand out the items
     int dropped = giveItems(target, mat, amount);

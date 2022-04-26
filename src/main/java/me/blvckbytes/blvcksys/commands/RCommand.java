@@ -44,9 +44,6 @@ public class RCommand extends APlayerCommand {
 
   @Override
   public void invoke(Player p, String label, String[] args) throws CommandException {
-    if (args.length == 0)
-      usageMismatch();
-
     // Ensure there's an active partner on the other end
     Player partner = this.msgC.getPartner(p);
     if (partner == null)

@@ -48,8 +48,8 @@ public enum ConfigKey {
   //                              MSG, R Command                             //
   //=========================================================================//
 
-  MSG_SENDER("msg.sender", "&8[&6Nachrichten&8] &8(&6Du &7-> &6{{receiver}}&8)&7: {{message}}"),
-  MSG_RECEIVER("msg.receiver", "&8[&6Nachrichten&8] &8(&6{{sender}}&8 -> &6Dir&8)&7: {{message}}"),
+  MSG_SENDER("msg.sender", "&8(&6Du &7-> &6{{receiver}}&8)&7: {{message}}"),
+  MSG_RECEIVER("msg.receiver", "&8(&6{{sender}}&8 -> &6Dir&8)&7: {{message}}"),
   MSG_NO_PARTNER("msg.no_partner", "&cDu hast keinen aktiven Nachrichten-Partner!"),
   MSG_SELF("msg.self", "&cDu kannst dir selbst keine Nachrichten schreiben!"),
 
@@ -93,6 +93,7 @@ public enum ConfigKey {
   ERR_USAGE_COLOR_OPTIONAL("errors.usage_color.optional", "&b"),
   ERR_USAGE_COLOR_BRACKETS("errors.usage_color.brackets", "&8"),
   ERR_USAGE_COLOR_OTHER("errors.usage_color.other", "&7"),
+  ERR_USAGE_COLOR_FOCUS("errors.usage_color.focus", "&4&l"),
   ERR_NOT_A_PLAYER("errors.not_a_player", "&cDieser Befehl ist nur für &4Spieler &czugänglich!"),
   ;
 

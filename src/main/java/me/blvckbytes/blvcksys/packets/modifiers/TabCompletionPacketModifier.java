@@ -98,7 +98,7 @@ public class TabCompletionPacketModifier implements IPacketModifier {
                 return false;
 
               // Color in placeholder
-              refl.setFieldByName(suggestion, "text", cmd.get().colorizeUsage(text));
+              refl.setFieldByName(suggestion, "text", cmd.get().colorizeUsage(text, false));
 
               // Set the argument description as a hover-tooltip
               // Decide on the index through the present number of spaces

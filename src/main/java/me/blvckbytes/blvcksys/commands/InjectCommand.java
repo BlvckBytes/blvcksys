@@ -13,12 +13,10 @@ import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.protocol.Packet;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -97,11 +95,8 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
 
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
-    if (args.length < 1)
-      usageMismatch();
-
     // Get the target player
-    Player target = onlinePlayer(args[0]);
+    Player target = onlinePlayer(args, 0);
 
     // The default direction is in and out
     PacketDirection dir = parseEnum(PacketDirection.class, args, 1, PacketDirection.IN_OUT);

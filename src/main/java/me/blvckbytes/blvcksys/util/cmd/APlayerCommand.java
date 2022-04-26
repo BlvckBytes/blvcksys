@@ -1,6 +1,5 @@
 package me.blvckbytes.blvcksys.util.cmd;
 
-import com.google.common.collect.Lists;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.util.MCReflect;
@@ -11,7 +10,6 @@ import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -162,14 +160,7 @@ public abstract class APlayerCommand extends Command {
   //                            Internal Utilities                           //
   //=========================================================================//
 
-  /**
-   * Get an argument's placeholder by it's argument id (zero based index)
-   * @param argId Argument id
-   * @return Placeholder value
-   */
-  protected String getArgumentPlaceholder(int argId) {
-    return argDescs[Math.min(argId, argDescs.length - 1)][0];
-  }
+  /////////////////////////////// Suggestions //////////////////////////////////
 
   /**
    * Suggest an enum's values as autocompletion, used with {@link #onTabCompletion}
@@ -223,6 +214,41 @@ public abstract class APlayerCommand extends Command {
     return suggestOnlinePlayers(args, currArg, List.of(exclude));
   }
 
+  ///////////////////////////////// Usage ////////////////////////////////////
+
+  /**
+   * Get an argument's placeholder by it's argument id (zero based index)
+   * @param argId Argument id
+   * @return Placeholder value
+   */
+  protected String getArgumentPlaceholder(int argId) {
+    return argDescs[Math.min(argId, argDescs.length - 1)][0];
+  }
+
+  /**
+   * Build the usage-string in advanced mode, which supports hover tooltips
+   * @param focusedArgument The argument that should be focused using the focus color
+   */
+  protected BaseComponent buildAdvancedUsage(@Nullable Integer focusedArgument) {
+    BaseComponent head = new TextComponent();
+    String cOth = cfg.get(ConfigKey.ERR_USAGE_COLOR_OTHER).asScalar();
+    String cFoc = cfg.get(ConfigKey.ERR_USAGE_COLOR_FOCUS).asScalar();
+
+    // Add /command with it's description as a tooltip
+    head.addExtra(buildHoverable(cOth + "/" + getName(), cOth + getDescription()));
+
+    // Add all it's arguments with their descriptive text as hover-tooltips
+    for (int i = 0; i < this.argDescs.length; i++) {
+      String[] desc = this.argDescs[i];
+
+      // Decide whether to colorize the argument using normal
+      // colors or using the focus color based on it's positional index
+      head.addExtra(buildHoverable(" " + colorizeUsage(desc[0], (focusedArgument != null && focusedArgument == i)), cOth + desc[1]));
+    }
+
+    return head;
+  }
+
   /**
    * Build a hoverable message
    * @param text Message to send
@@ -236,22 +262,155 @@ public abstract class APlayerCommand extends Command {
     return tc;
   }
 
+  ////////////////////////////// Custom Error ////////////////////////////////
+
   /**
-   * Build the usage-string in advanced mode, which supports hover tooltips
+   * Generate a custom error result
+   * @param message Message to send to the player
    */
-  protected BaseComponent buildAdvancedUsage() {
-    BaseComponent head = new TextComponent();
-    String cOth = cfg.get(ConfigKey.ERR_USAGE_COLOR_OTHER).asScalar();
-
-    // Add /command with it's description as a tooltip
-    head.addExtra(buildHoverable(cOth + "/" + getName(), cOth + getDescription()));
-
-    // Add all it's arguments with their descriptive text as hover-tooltips
-    for (String[] desc : this.argDescs)
-      head.addExtra(buildHoverable(" " + colorizeUsage(desc[0]), cOth + desc[1]));
-
-    return head;
+  protected void customError(String message) throws CommandException {
+    throw new CommandException(message);
   }
+
+  ///////////////////////////// Parsing: Player ///////////////////////////////
+
+  /**
+   * Get an online player by their name
+   * @param args Arguments of the command
+   * @param index Index within the arguments to use
+   */
+  protected Player onlinePlayer(String[] args, int index) throws CommandException {
+    return onlinePlayer(args, index, null);
+  }
+
+  /**
+   * Get an online player by their name and provide a fallback
+   * @param args Arguments of the command
+   * @param index Index within the arguments to use
+   */
+  protected Player onlinePlayer(String[] args, int index, @Nullable Player argcFallback) throws CommandException {
+    // Index out of range
+    if (index >= args.length) {
+      // Fallback provided
+      if (argcFallback != null)
+        return argcFallback;
+
+      // Focus arg
+      throw new UsageMismatchException(cfg, buildAdvancedUsage(index));
+    }
+
+    Player target = Bukkit.getPlayerExact(args[index]);
+
+    // The target player is not online at the moment
+    if (target == null)
+      throw new OfflineTargetException(cfg, args[index]);
+
+    return target;
+  }
+
+  ///////////////////////////// Parsing: Integer ///////////////////////////////
+
+  /**
+   * Try to parse an integer value from a string and provide a fallback
+   * @param args Arguments of the command
+   * @param index Index within the arguments to use
+   * @return Parsed integer
+   */
+  protected int parseInt(String[] args, int index) throws CommandException {
+    return parseInt(args, index, null);
+  }
+
+  /**
+   * Try to parse an integer value from a string and provide a fallback
+   * @param args Arguments of the command
+   * @param index Index within the arguments to use
+   * @param argcFallback Fallback value to use
+   * @return Parsed integer
+   */
+  protected int parseInt(String[] args, int index, @Nullable Integer argcFallback) throws CommandException {
+    if (index >= args.length) {
+      if (argcFallback != null)
+        return argcFallback;
+      throw new UsageMismatchException(cfg, buildAdvancedUsage(index));
+    }
+
+    try {
+      return Integer.parseInt(args[index]);
+    } catch (NumberFormatException e) {
+      throw new InvalidIntegerException(cfg, args[index]);
+    }
+  }
+
+  ////////////////////////////// Parsing: Enum ////////////////////////////////
+
+  /**
+   * Parse an enum's value from a plain string (ignores casing)
+   * @param enumClass Class of the target enum
+   * @param args Arguments of the command
+   * @param index Index within the arguments to use
+   * @return Parsed enum value
+   */
+  protected<T extends Enum<T>> T parseEnum(Class<T> enumClass, String[] args, int index) throws CommandException {
+    return parseEnum(enumClass, args, index, null, new ArrayList<>());
+  }
+
+  /**
+   * Parse an enum's value from a plain string (ignores casing) and provide a fallback
+   * in case the argument count isn't sufficient to fetch the required argument
+   * @param enumClass Class of the target enum
+   * @param args Arguments of the command
+   * @param index Index within the arguments to use
+   * @param argcFallback Fallback value to use
+   * @return Parsed enum value
+   */
+  protected<T extends Enum<T>> T parseEnum(Class<T> enumClass, String[] args, int index, T argcFallback) throws CommandException {
+    return parseEnum(enumClass, args, index, argcFallback, new ArrayList<>());
+  }
+
+  /**
+   * Parse an enum's value from a plain string (ignores casing)
+   * @param enumClass Class of the target enum
+   * @param args Arguments of the command
+   * @param index Index within the arguments to use
+   * @param exclude Items to exclude from being valid
+   * @return Parsed enum value
+   */
+  protected<T extends Enum<T>> T parseEnum(Class<T> enumClass, String[] args, int index, List<T> exclude) throws CommandException {
+    return parseEnum(enumClass, args, index, null, exclude);
+  }
+
+  /**
+   * Parse an enum's value from a plain string (ignores casing) and provide a fallback
+   * in case the argument count isn't sufficient to fetch the required argument
+   * @param enumClass Class of the target enum
+   * @param args Arguments of the command
+   * @param index Index within the arguments to use
+   * @param argcFallback Fallback value to use
+   * @param exclude Items to exclude from being valid
+   * @return Parsed enum value
+   */
+  protected<T extends Enum<T>> T parseEnum(Class<T> enumClass, String[] args, int index, T argcFallback, List<T> exclude) throws CommandException {
+    if (index >= args.length) {
+      if (argcFallback != null)
+        return argcFallback;
+      throw new UsageMismatchException(cfg, buildAdvancedUsage(index));
+    }
+
+    // Find the enum constant by it's name
+    for (T constant : enumClass.getEnumConstants()) {
+      // This constant is excluded from being valid
+      if (exclude.contains(constant))
+        continue;
+
+      if (constant.name().equalsIgnoreCase(args[index]))
+        return constant;
+    }
+
+    // Could not find any matching constants
+    throw new InvalidOptionException(cfg, args[index]);
+  }
+
+  /////////////////////////// Parsing: Argument spans /////////////////////////////
 
   /**
    * Collect a string that spans over multiple arguments
@@ -260,7 +419,13 @@ public abstract class APlayerCommand extends Command {
    * @param to Ending index
    * @return String containing space separated, joined arguments
    */
-  protected String argspan(String[] args, int from, int to) {
+  protected String argspan(String[] args, int from, int to) throws CommandException {
+    if (from >= args.length)
+      throw new UsageMismatchException(cfg, buildAdvancedUsage(from));
+
+    if (to >= args.length)
+      throw new UsageMismatchException(cfg, buildAdvancedUsage(to));
+
     StringBuilder message = new StringBuilder();
 
     // Loop from - to (including), append spaces to separate as needed
@@ -276,146 +441,10 @@ public abstract class APlayerCommand extends Command {
    * @param from Starting index
    * @return String containing space separated, joined arguments
    */
-  protected String argvar(String[] args, int from) {
+  protected String argvar(String[] args, int from) throws CommandException {
     return argspan(args, from, args.length - 1);
   }
 
-  /**
-   * Generate a usage-mismatch result
-   */
-  protected void usageMismatch() throws CommandException {
-    throw new UsageMismatchException(cfg, buildAdvancedUsage());
-  }
-
-  /**
-   * Get an online player by their name
-   * @param name Name of the online player
-   */
-  protected Player onlinePlayer(String name) throws CommandException {
-    Player target = Bukkit.getPlayerExact(name);
-
-    // The target player is not online at the moment
-    if (target == null)
-      throw new OfflineTargetException(cfg, name);
-
-    return target;
-  }
-
-  /**
-   * Generate a custom error result
-   * @param message Message to send to the player
-   */
-  protected void customError(String message) throws CommandException {
-    throw new CommandException(message);
-  }
-
-  /**
-   * Try to parse an integer value from a string
-   * @param value String to parse
-   * @return Parsed integer
-   */
-  protected int parseInt(String value) throws CommandException {
-    try {
-      return Integer.parseInt(value);
-    } catch (Exception e) {
-      throw new InvalidIntegerException(cfg, value);
-    }
-  }
-
-
-  /**
-   * Try to parse an integer value from a string and provide a fallback
-   * @param args Arguments of the command
-   * @param index Index within the arguments to use
-   * @param argcFallback Fallback value to use
-   * @return Parsed integer
-   */
-  protected int parseInt(String[] args, int index, int argcFallback) throws CommandException {
-    // Index out of range, provide fallback
-    if (index >= args.length)
-      return argcFallback;
-
-    // Relay parsing
-    return parseInt(args[index]);
-  }
-
-  /**
-   * Parse an enum's value from a plain string (ignores casing)
-   * @param enumClass Class of the target enum
-   * @param value String to parse
-   * @return Parsed enum value
-   */
-  protected<T extends Enum<T>> T parseEnum(Class<T> enumClass, String value) throws CommandException {
-    return parseEnum(enumClass, value, true);
-  }
-
-  /**
-   * Parse an enum's value from a plain string
-   * @param enumClass Class of the target enum
-   * @param value String to parse
-   * @param ignoreCase Whether or not to ignore casing
-   * @return Parsed enum value
-   */
-  protected<T extends Enum<T>> T parseEnum(Class<T> enumClass, String value, boolean ignoreCase) throws CommandException {
-    return parseEnum(enumClass, value, ignoreCase, new ArrayList<>());
-  }
-
-  /**
-   * Parse an enum's value from a plain string
-   * @param enumClass Class of the target enum
-   * @param value String to parse
-   * @param ignoreCase Whether or not to ignore casing
-   * @param exclude Items to exclude from being valid
-   * @return Parsed enum value
-   */
-  protected<T extends Enum<T>> T parseEnum(Class<T> enumClass, String value, boolean ignoreCase, List<T> exclude) throws CommandException {
-    // Find the enum constant by it's name
-    for (T constant : enumClass.getEnumConstants()) {
-      // This constant is excluded from being valid
-      if (exclude.contains(constant))
-        continue;
-
-      // Parse with ignore casing as requested by the flag
-      if (ignoreCase && constant.name().equalsIgnoreCase(value) || constant.name().equals(value))
-        return constant;
-    }
-
-    // Could not find any matching constants
-    throw new InvalidOptionException(cfg, value);
-  }
-
-  /**
-   * Parse an enum's value from a plain string (ignores casing) and provide a fallback
-   * in case the argument count isn't sufficient to fetch the required argument
-   * @param enumClass Class of the target enum
-   * @param args Arguments of the command
-   * @param index Index within the arguments to use
-   * @param argcFallback Fallback value to use
-   * @return Parsed enum value
-   */
-  protected<T extends Enum<T>> T parseEnum(Class<T> enumClass, String[] args, int index, T argcFallback) throws CommandException {
-    return parseEnum(enumClass, args, index, true, argcFallback, new ArrayList<>());
-  }
-
-  /**
-   * Parse an enum's value from a plain string and provide a fallback
-   * in case the argument count isn't sufficient to fetch the required argument
-   * @param enumClass Class of the target enum
-   * @param args Arguments of the command
-   * @param index Index within the arguments to use
-   * @param ignoreCase Whether or not to ignore casing
-   * @param argcFallback Fallback value to use
-   * @param exclude Items to exclude from being valid
-   * @return Parsed enum value
-   */
-  protected<T extends Enum<T>> T parseEnum(Class<T> enumClass, String[] args, int index, boolean ignoreCase, T argcFallback, List<T> exclude) throws CommandException {
-    // Index out of range, provide fallback
-    if (index >= args.length)
-      return argcFallback;
-
-    // Relay parsing
-    return parseEnum(enumClass, args[index], ignoreCase, exclude);
-  }
 
   //=========================================================================//
   //                             Public Utilities                            //
@@ -433,14 +462,19 @@ public abstract class APlayerCommand extends Command {
   /**
    * Colorize the usage string based on the colors specified inside the config
    * @param vanilla Vanilla usage string
+   * @param focus Whether or not to use the focus color on arguments
    * @return Colorized usage string
    */
-  public String colorizeUsage(String vanilla) {
+  public String colorizeUsage(String vanilla, boolean focus) {
     // Usage formatting colors
     String cMan = cfg.get(ConfigKey.ERR_USAGE_COLOR_MANDATORY).asScalar();
     String cOpt = cfg.get(ConfigKey.ERR_USAGE_COLOR_OPTIONAL).asScalar();
     String cBra = cfg.get(ConfigKey.ERR_USAGE_COLOR_BRACKETS).asScalar();
     String cOth = cfg.get(ConfigKey.ERR_USAGE_COLOR_OTHER).asScalar();
+
+    // Focus arguments in focus mode
+    if (focus)
+      cMan = cOpt = cfg.get(ConfigKey.ERR_USAGE_COLOR_FOCUS).asScalar();
 
     // Start out by coloring other
     StringBuilder colorized = new StringBuilder(cOth);

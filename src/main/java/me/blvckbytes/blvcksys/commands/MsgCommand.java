@@ -8,7 +8,6 @@ import me.blvckbytes.blvcksys.util.cmd.exception.CommandException;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -64,11 +63,8 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener 
 
   @Override
   public void invoke(Player p, String label, String[] args) throws CommandException {
-    if (args.length < 2)
-      usageMismatch();
-
     // Get the recipient from the first argument
-    Player recipient = onlinePlayer(args[0]);
+    Player recipient = onlinePlayer(args, 0);
 
     // Cannot send yourself messages
     if (recipient == p)
@@ -108,7 +104,7 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener 
         .asScalar()
     );
 
-    receiver.sendMessage(
+    sender.sendMessage(
       cfg.get(ConfigKey.MSG_SENDER)
         .withPrefix()
         .withVariable("receiver", receiver.getDisplayName())

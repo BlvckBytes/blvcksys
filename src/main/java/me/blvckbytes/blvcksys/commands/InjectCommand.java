@@ -85,22 +85,14 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
     // First argument - provide all online players
     if (currArg == 0)
-      return Bukkit.getOnlinePlayers()
-        .stream()
-        .map(Player::getDisplayName)
-        .filter(n -> n.toLowerCase().contains(args[currArg].toLowerCase()));
+      return suggestOnlinePlayers(args, currArg);
 
     // Second argument - provide all PacketDirection values
     if (currArg == 1)
-      return Arrays.stream(PacketDirection.values())
-        .map(Enum::toString)
-        .filter(pd -> pd.toLowerCase().contains(args[currArg].toLowerCase()));
+      return suggestEnum(args, currArg, PacketDirection.class);
 
     // Provide remaining args as placeholders (regex is variadic)
-    if (currArg >= 2)
-      return Stream.of(getArgumentPlaceholder(currArg));
-
-    return super.onTabCompletion(p, args, currArg);
+    return Stream.of(getArgumentPlaceholder(currArg));
   }
 
   @Override
@@ -112,11 +104,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
     Player target = onlinePlayer(args[0]);
 
     // The default direction is in and out
-    PacketDirection dir = PacketDirection.IN_OUT;
-
-    // Parse the packet direction
-    if (args.length >= 2)
-      dir = parseEnum(PacketDirection.class, args[1]);
+    PacketDirection dir = parseEnum(PacketDirection.class, args, 1, PacketDirection.IN_OUT);
 
     // Try to parse the depth, fallback to one if not provided
     int depth = 1;

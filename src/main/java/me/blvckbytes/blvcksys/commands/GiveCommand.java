@@ -8,18 +8,19 @@ import me.blvckbytes.blvcksys.util.cmd.exception.CommandException;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
-import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Stream;
 
 @AutoConstruct
 public class GiveCommand extends APlayerCommand {
+
+  private static final List<Material> BANNED_MATERIALS = List.of(Material.AIR);
 
   public GiveCommand(
     @AutoInject JavaPlugin plugin,
@@ -45,11 +46,9 @@ public class GiveCommand extends APlayerCommand {
 
   @Override
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
-    // First argument - provide all material enum values
+    // First argument - provide all material enum values (excluding air)
     if (currArg == 0)
-      return Arrays.stream(Material.values())
-        .map(Enum::toString)
-        .filter(m -> m.toLowerCase().contains(args[currArg].toLowerCase()));
+      return suggestEnum(args, currArg, Material.class, BANNED_MATERIALS);
 
     // Provide placeholder for the amount
     else if (currArg == 1)
@@ -57,10 +56,7 @@ public class GiveCommand extends APlayerCommand {
 
       // Third argument - provide all online players
     else if (currArg == 2)
-      return Bukkit.getOnlinePlayers()
-        .stream()
-        .map(Player::getDisplayName)
-        .filter(n -> n.toLowerCase().contains(args[currArg].toLowerCase()));
+      return suggestOnlinePlayers(args, currArg);
 
     return super.onTabCompletion(p, args, currArg);
   }
@@ -71,7 +67,7 @@ public class GiveCommand extends APlayerCommand {
       usageMismatch();
 
     // Parse the material
-    Material mat = parseEnum(Material.class, args[0]);
+    Material mat = parseEnum(Material.class, args[0], true, BANNED_MATERIALS);
 
     // Parse the amount
     int amount = parseInt(args[1]);

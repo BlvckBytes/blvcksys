@@ -2,6 +2,12 @@ package me.blvckbytes.blvcksys.commands;
 
 import org.bukkit.entity.Player;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/22/2022
+
+  Public interfaces which the msg command provides to other consumers.
+*/
 public interface IMsgCommand {
 
   /**

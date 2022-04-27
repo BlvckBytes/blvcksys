@@ -19,6 +19,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/22/2022
+
+  Send a private message to another player and keep track of the
+  last player that the executor had a conversation with (message-partner).
+  Remove this partnership if one of the two players leaves the server.
+*/
 @AutoConstruct
 public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener {
 

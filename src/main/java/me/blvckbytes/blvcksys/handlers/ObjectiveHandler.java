@@ -2,10 +2,10 @@ package me.blvckbytes.blvcksys.handlers;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
-import me.blvckbytes.blvcksys.packets.communicators.IObjectiveCommunicator;
-import me.blvckbytes.blvcksys.packets.communicators.ObjectiveMode;
-import me.blvckbytes.blvcksys.packets.communicators.ObjectivePosition;
-import me.blvckbytes.blvcksys.packets.communicators.ObjectiveUnit;
+import me.blvckbytes.blvcksys.packets.communicators.objective.IObjectiveCommunicator;
+import me.blvckbytes.blvcksys.packets.communicators.objective.ObjectiveMode;
+import me.blvckbytes.blvcksys.packets.communicators.objective.ObjectivePosition;
+import me.blvckbytes.blvcksys.packets.communicators.objective.ObjectiveUnit;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
@@ -59,7 +59,7 @@ public class ObjectiveHandler implements Listener, IAutoConstructed {
 
   private final JavaPlugin plugin;
   private final IConfig cfg;
-  private final IObjectiveCommunicator sbComm;
+  private final IObjectiveCommunicator oComm;
 
   // Previous sidebar lines, used for diffing and thus obsolete score deletion
   private final Map<Player, List<String>> prevSidebarLines;
@@ -73,7 +73,7 @@ public class ObjectiveHandler implements Listener, IAutoConstructed {
   public ObjectiveHandler(
     @AutoInject JavaPlugin plugin,
     @AutoInject IConfig cfg,
-    @AutoInject IObjectiveCommunicator sbComm
+    @AutoInject IObjectiveCommunicator oComm
   ) {
     this.prevSidebarLines = new HashMap<>();
     this.knownBelowNames = new HashMap<>();
@@ -81,7 +81,7 @@ public class ObjectiveHandler implements Listener, IAutoConstructed {
 
     this.plugin = plugin;
     this.cfg = cfg;
-    this.sbComm = sbComm;
+    this.oComm = oComm;
   }
 
   //=========================================================================//
@@ -245,7 +245,7 @@ public class ObjectiveHandler implements Listener, IAutoConstructed {
    */
   private void clearObjectives(Player t) {
     // Remove the sidebar
-    sbComm.sendObjective(t, NAME_SIDEBAR, ObjectiveMode.REMOVE, null, null);
+    oComm.sendObjective(t, NAME_SIDEBAR, ObjectiveMode.REMOVE, null, null);
 
     // Clear all below name objectives
     if (knownBelowNames.containsKey(t)) {
@@ -263,18 +263,18 @@ public class ObjectiveHandler implements Listener, IAutoConstructed {
    */
   private void createSidebarObjective(Player t) {
     // Create the sidebar objective
-    sbComm.sendObjective(
+    if (oComm.sendObjective(
       t, NAME_SIDEBAR,
       ObjectiveMode.CREATE,
       cfg.get(ConfigKey.SIDEBAR_TITLE).asScalar(),
       ObjectiveUnit.INTEGER
-    );
+    )) {
+      // Display the sidebar objective
+      oComm.displayObjective(t, NAME_SIDEBAR, ObjectivePosition.SIDEBAR);
 
-    // Display the sidebar objective
-    sbComm.displayObjective(t, NAME_SIDEBAR, ObjectivePosition.SIDEBAR);
-
-    // Display the initial values
-    updateSidebar(t);
+      // Display the initial values
+      updateSidebar(t);
+    }
   }
 
   /**
@@ -288,23 +288,24 @@ public class ObjectiveHandler implements Listener, IAutoConstructed {
         continue;
 
       // Create the below name objective
-      sbComm.sendObjective(
+      if (oComm.sendObjective(
         t,
         NAME_BELOW_NAME.formatted(who.getName()),
         ObjectiveMode.CREATE,
         buildBelowNameText(who.getHealth()),
         ObjectiveUnit.INTEGER
-      );
+      )) {
 
-      // Display the below name objective
-      sbComm.displayObjective(t, NAME_BELOW_NAME.formatted(who.getName()), ObjectivePosition.BELOW_NAME);
+        // Display the below name objective
+        oComm.displayObjective(t, NAME_BELOW_NAME.formatted(who.getName()), ObjectivePosition.BELOW_NAME);
 
-      // Create initial empty list
-      if (!this.knownBelowNames.containsKey(t))
-        this.knownBelowNames.put(t, new ArrayList<>());
+        // Create initial empty list
+        if (!this.knownBelowNames.containsKey(t))
+          this.knownBelowNames.put(t, new ArrayList<>());
 
-      // Register this below name holder
-      this.knownBelowNames.get(t).add(who);
+        // Register this below name holder
+        this.knownBelowNames.get(t).add(who);
+      }
     }
 
     // Display the initial values
@@ -324,7 +325,7 @@ public class ObjectiveHandler implements Listener, IAutoConstructed {
       return;
 
     // Send remove request
-    sbComm.sendObjective(
+    oComm.sendObjective(
       t,
       NAME_BELOW_NAME.formatted(who.getName()),
       ObjectiveMode.REMOVE,
@@ -393,7 +394,7 @@ public class ObjectiveHandler implements Listener, IAutoConstructed {
     // Remove all previous lines that are not in the current score list
     for (String prev : prevSidebarLines.getOrDefault(t, new ArrayList<>())) {
       if (!scores.contains(prev))
-        sbComm.updateScore(t, NAME_SIDEBAR, prev, true, null);
+        oComm.updateScore(t, NAME_SIDEBAR, prev, true, null);
     }
 
     // Set previous lines cache
@@ -401,7 +402,7 @@ public class ObjectiveHandler implements Listener, IAutoConstructed {
 
     // Update all scores and set their inverse score (since the board is ordered descending)
     for (int i = 0; i < scores.size(); i++)
-      sbComm.updateScore(t, NAME_SIDEBAR, scores.get(i), false, scores.size() - 1 - i);
+      oComm.updateScore(t, NAME_SIDEBAR, scores.get(i), false, scores.size() - 1 - i);
   }
 
   /**
@@ -427,22 +428,23 @@ public class ObjectiveHandler implements Listener, IAutoConstructed {
         continue;
 
       // Update the health score
-      sbComm.updateScore(
+      if (oComm.updateScore(
         t,
         NAME_BELOW_NAME.formatted(who.getName()),
         who.getName(),
         false,
         level
-      );
+      )) {
 
-      // Update the below name objective
-      sbComm.sendObjective(
-        t,
-        NAME_BELOW_NAME.formatted(who.getName()),
-        ObjectiveMode.MODIFY_TEXT,
-        buildBelowNameText(health),
-        ObjectiveUnit.INTEGER
-      );
+        // Update the below name objective
+        oComm.sendObjective(
+          t,
+          NAME_BELOW_NAME.formatted(who.getName()),
+          ObjectiveMode.MODIFY_TEXT,
+          buildBelowNameText(health),
+          ObjectiveUnit.INTEGER
+        );
+      }
     }
   }
 }

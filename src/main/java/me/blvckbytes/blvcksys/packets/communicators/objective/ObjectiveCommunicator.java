@@ -31,15 +31,15 @@ public class ObjectiveCommunicator implements IObjectiveCommunicator {
   }
 
   @Override
-  public void sendObjective(
+  public boolean sendObjective(
     Player p,
     String identifier,
     ObjectiveMode mode,
     @Nullable String display,
     @Nullable ObjectiveUnit unit
   ) {
-    refl.createGarbageInstance(PacketPlayOutScoreboardObjective.class)
-      .ifPresent(sop -> {
+    return refl.createGarbageInstance(PacketPlayOutScoreboardObjective.class)
+      .map(sop -> {
 
         // Unique identifier for this objective
         refl.setFieldByType(sop, String.class, identifier);
@@ -67,14 +67,15 @@ public class ObjectiveCommunicator implements IObjectiveCommunicator {
         // Packet mode (0=create, 1=remove, 2=update text)
         refl.setFieldByType(sop, int.class, mode.getMode());
 
-        refl.sendPacket(p, sop);
-      });
+        return refl.sendPacket(p, sop);
+      })
+      .orElse(false);
   }
 
   @Override
-  public void displayObjective(Player p, String identifier, ObjectivePosition pos) {
-    refl.createGarbageInstance(PacketPlayOutScoreboardDisplayObjective.class)
-      .ifPresent(dop -> {
+  public boolean displayObjective(Player p, String identifier, ObjectivePosition pos) {
+    return refl.createGarbageInstance(PacketPlayOutScoreboardDisplayObjective.class)
+      .map(dop -> {
 
         // Unique identifier for the objective
         refl.setFieldByType(dop, String.class, identifier);
@@ -82,20 +83,21 @@ public class ObjectiveCommunicator implements IObjectiveCommunicator {
         // Position within the HUD
         refl.setFieldByType(dop, int.class, pos.getPosition());
 
-        refl.sendPacket(p, dop);
-      });
+        return refl.sendPacket(p, dop);
+      })
+      .orElse(false);
   }
 
   @Override
-  public void updateScore(
+  public boolean updateScore(
     Player p,
     String identifier,
     String name,
     boolean delete,
     @Nullable Integer score
   ) {
-    refl.createGarbageInstance(PacketPlayOutScoreboardScore.class)
-      .ifPresent(ssp -> {
+    return refl.createGarbageInstance(PacketPlayOutScoreboardScore.class)
+      .map(ssp -> {
 
         // Name of the objective's member (score holder)
         refl.setFieldByType(ssp, String.class, name, 0);
@@ -114,7 +116,8 @@ public class ObjectiveCommunicator implements IObjectiveCommunicator {
               refl.setFieldByType(ssp, ssaC, action);
             });
 
-        refl.sendPacket(p, ssp);
-      });
+        return refl.sendPacket(p, ssp);
+      })
+      .orElse(false);
   }
 }

@@ -1,4 +1,4 @@
-package me.blvckbytes.blvcksys.packets.modifiers.tablist;
+package me.blvckbytes.blvcksys.packets.communicators.team;
 
 import org.bukkit.ChatColor;
 
@@ -10,7 +10,7 @@ import org.bukkit.ChatColor;
  * @param nameColor Color of the name itself
  * @param priority Priority, 0 means highest
  */
-public record TabListGroup(
+public record TeamGroup(
   String groupName,
   String prefix,
   String suffix,

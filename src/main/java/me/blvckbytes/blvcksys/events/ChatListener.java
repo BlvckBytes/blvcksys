@@ -3,8 +3,8 @@ package me.blvckbytes.blvcksys.events;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
-import me.blvckbytes.blvcksys.packets.modifiers.tablist.ITabListModifier;
-import me.blvckbytes.blvcksys.packets.modifiers.tablist.TabListGroup;
+import me.blvckbytes.blvcksys.handlers.ITeamHandler;
+import me.blvckbytes.blvcksys.packets.communicators.team.TeamGroup;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import org.bukkit.ChatColor;
@@ -28,14 +28,14 @@ import java.util.Optional;
 public class ChatListener implements Listener {
 
   private final IConfig cfg;
-  private final ITabListModifier tab;
+  private final ITeamHandler teams;
 
   public ChatListener(
     @AutoInject IConfig cfg,
-    @AutoInject ITabListModifier tab
+    @AutoInject ITeamHandler teams
   ) {
     this.cfg = cfg;
-    this.tab = tab;
+    this.teams = teams;
   }
 
   //=========================================================================//
@@ -49,8 +49,8 @@ public class ChatListener implements Listener {
     // Cancel the vanilla event
     e.setCancelled(true);
 
-    Optional<TabListGroup> tg = tab.getPlayerGroup(p);
-    String prefix = tg.map(TabListGroup::prefix).orElse("§r");
+    Optional<TeamGroup> tg = teams.getPlayerGroup(p);
+    String prefix = tg.map(TeamGroup::prefix).orElse("§r");
 
     for(Player recv : e.getRecipients()) {
       // Override the default message

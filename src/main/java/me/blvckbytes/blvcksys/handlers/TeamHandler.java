@@ -1,23 +1,19 @@
-package me.blvckbytes.blvcksys.packets.modifiers.tablist;
+package me.blvckbytes.blvcksys.handlers;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.events.PlayerPermissionsChangedEvent;
-import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
-import me.blvckbytes.blvcksys.packets.IPacketModifier;
+import me.blvckbytes.blvcksys.packets.communicators.team.ITeamCommunicator;
+import me.blvckbytes.blvcksys.packets.communicators.team.TeamAction;
+import me.blvckbytes.blvcksys.packets.communicators.team.TeamGroup;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
-import net.minecraft.EnumChatFormat;
-import net.minecraft.network.NetworkManager;
 import net.minecraft.network.chat.ChatComponentText;
-import net.minecraft.network.chat.ChatMessage;
-import net.minecraft.network.chat.IChatBaseComponent;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.PacketPlayOutPlayerListHeaderFooter;
-import net.minecraft.network.protocol.game.PacketPlayOutScoreboardTeam;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -32,63 +28,45 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 @AutoConstruct
-public class TabListPacketModifier implements IPacketModifier, Listener, IAutoConstructed, ITabListModifier {
+public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
 
-  private static final SimpleDateFormat df;
-
-  static {
-    df = new SimpleDateFormat("HH:mm:ss");
-  }
+  // Used to format the current date's time for displaying purposes
+  private static final SimpleDateFormat df = new SimpleDateFormat("HH:mm:ss");
 
   private final IConfig cfg;
   private final MCReflect refl;
   private final JavaPlugin plugin;
+  private final ITeamCommunicator teamComm;
 
   // Known groups
-  private final List<TabListGroup> groups;
+  private final List<TeamGroup> groups;
 
   // Members per group
-  private final Map<TabListGroup, List<Player>> members;
+  private final Map<TeamGroup, List<Player>> members;
 
   // Created groups per player (each group has to be created once per client)
-  private final Map<Player, List<TabListGroup>> createdGroups;
+  private final Map<Player, List<TeamGroup>> createdGroups;
 
   // Handle of the repeating task that takes care of periodically
   // sending out tablist header and footers (for live variables)
   private int taskHandle;
 
-  public TabListPacketModifier(
-    @AutoInject IPacketInterceptor interceptor,
+  public TeamHandler(
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
+    @AutoInject ITeamCommunicator teamComm,
     @AutoInject JavaPlugin plugin
   ) {
     this.cfg = cfg;
     this.refl = refl;
+    this.teamComm = teamComm;
     this.plugin = plugin;
+
     this.members = new HashMap<>();
     this.createdGroups = new HashMap<>();
     this.groups = new ArrayList<>();
 
     this.loadGroups();
-    interceptor.register(this);
-  }
-
-  //=========================================================================//
-  //                                Modifiers                                //
-  //=========================================================================//
-
-  @Override
-  public Packet<?> modifyIncoming(UUID sender, NetworkManager nm, Packet<?> incoming) {
-    return incoming;
-  }
-
-  @Override
-  public Packet<?> modifyOutgoing(UUID receiver, NetworkManager nm, Packet<?> outgoing) {
-    // Override header and footer packets
-    if (outgoing instanceof PacketPlayOutPlayerListHeaderFooter)
-      return generateTabHeaderFooter(Bukkit.getPlayer(receiver), false);
-    return outgoing;
   }
 
   //=========================================================================//
@@ -121,9 +99,9 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
   }
 
   @Override
-  public Optional<TabListGroup> getPlayerGroup(Player p) {
+  public Optional<TeamGroup> getPlayerGroup(Player p) {
     // Search through all groups to find the one where the player is a member
-    for (Map.Entry<TabListGroup, List<Player>> group : members.entrySet()) {
+    for (Map.Entry<TeamGroup, List<Player>> group : members.entrySet()) {
       if (group.getValue().contains(p))
         return Optional.of(group.getKey());
     }
@@ -167,7 +145,7 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
    */
   private void decideDisplayGroup(Player p, List<String> permissions) {
     // Decide the group that will be displayed (lowest priority -> most important)
-    TabListGroup displayGroup = null;
+    TeamGroup displayGroup = null;
     for (String permission : permissions) {
       // Only search for group meta-permissions
       if (!permission.startsWith("group."))
@@ -175,7 +153,7 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
 
       // Get the group by it's name
       String groupName = permission.substring(permission.indexOf('.') + 1);
-      Optional<TabListGroup> tg = getGroup(groupName);
+      Optional<TeamGroup> tg = getGroup(groupName);
 
       // Unknown group
       if (tg.isEmpty())
@@ -202,7 +180,7 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
    */
   private void resetPlayerGroup(Player p) {
     // Remove the player from all teams
-    for (Map.Entry<TabListGroup, List<Player>> team : members.entrySet()) {
+    for (Map.Entry<TeamGroup, List<Player>> team : members.entrySet()) {
       // Send out packets
       if (team.getValue().remove(p))
         broadcastGroupState(team.getKey(), p, false);
@@ -214,7 +192,7 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
    * @param group Target group
    * @param p Player to add to that group
    */
-  private void setPlayerGroup(TabListGroup group, Player p) {
+  private void setPlayerGroup(TeamGroup group, Player p) {
     // Remove from any previous group
     resetPlayerGroup(p);
 
@@ -244,7 +222,7 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
    * @param name Name of the group
    * @return Target group
    */
-  private Optional<TabListGroup> getGroup(String name) {
+  private Optional<TeamGroup> getGroup(String name) {
     return groups.stream()
       .filter(currName -> name.equalsIgnoreCase(currName.groupName()))
       .findFirst();
@@ -277,7 +255,7 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
    * @param priority Priority for tab-sorting
    * @return Created group
    */
-  private TabListGroup createGroup(String name, String prefix, int priority) {
+  private TeamGroup createGroup(String name, String prefix, int priority) {
     ChatColor nameColor = ChatColor.GRAY;
 
     // Loop through prefix backwards
@@ -297,7 +275,7 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
       }
     }
 
-    return new TabListGroup(name, prefix, "", nameColor, priority);
+    return new TeamGroup(name, prefix, "", nameColor, priority);
   }
 
   /**
@@ -306,18 +284,18 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
    */
   private void removeAllGroups(Player t) {
     // Player is not yet registered
-    List<TabListGroup> groups = createdGroups.remove(t);
+    List<TeamGroup> groups = createdGroups.remove(t);
     if (groups == null)
       return;
 
     // For all previously registered groups
-    for (TabListGroup group : groups) {
+    for (TeamGroup group : groups) {
       // Remove this group
-      generateScoreboardTeam(
-        group,
-        TabListAction.REMOVE,
+      teamComm.sendScoreboardTeam(
+        t, group,
+        TeamAction.REMOVE,
         null
-      ).ifPresent(p -> refl.sendPacket(t, p));
+      );
     }
   }
 
@@ -327,7 +305,7 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
    * @param delta The change that occurred
    * @param added Whether or not the player has been added
    */
-  private void broadcastGroupState(TabListGroup group, Player delta, boolean added) {
+  private void broadcastGroupState(TeamGroup group, Player delta, boolean added) {
     for (Player t : Bukkit.getOnlinePlayers())
       applyGroupState(group, t, delta, added);
   }
@@ -339,12 +317,12 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
    * @param delta The change that occurred
    * @param added Whether or not the player has been added
    */
-  private void applyGroupState(TabListGroup group, Player t, Player delta, boolean added) {
-    generateScoreboardTeam(
-      group,
-      added ? TabListAction.ADD_MEMBERS : TabListAction.REMOVE_MEMBERS,
+  private void applyGroupState(TeamGroup group, Player t, Player delta, boolean added) {
+    teamComm.sendScoreboardTeam(
+      t, group,
+      added ? TeamAction.ADD_MEMBERS : TeamAction.REMOVE_MEMBERS,
       List.of(delta)
-    ).ifPresent(p -> refl.sendPacket(t, p));
+    );
   }
 
   /**
@@ -353,19 +331,19 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
    * @param members Initial group members
    * @param t Packet receiver
    */
-  private void createGroup(TabListGroup group, List<Player> members, Player t) {
-    generateScoreboardTeam(
-      group,
-      TabListAction.CREATE,
+  private void createGroup(TeamGroup group, List<Player> members, Player t) {
+    // Create the new team
+    if (teamComm.sendScoreboardTeam(
+      t, group,
+      TeamAction.CREATE,
       members
-    ).ifPresent(p -> {
-      refl.sendPacket(t, p);
+    )) {
 
       // Remember that this client now knows this group
       if (!createdGroups.containsKey(t))
         createdGroups.put(t, new ArrayList<>());
       createdGroups.get(t).add(group);
-    });
+    }
   }
 
   /**
@@ -373,78 +351,8 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
    * @param t Packet receiver
    */
   private void createGroups(Player t) {
-    for (Map.Entry<TabListGroup, List<Player>> group : members.entrySet())
+    for (Map.Entry<TeamGroup, List<Player>> group : members.entrySet())
       createGroup(group.getKey(), group.getValue(), t);
-  }
-
-  /**
-   * Get a EnumChatFormat by it's color character
-   * @param color Color character
-   * @return Result or empty on errors
-   */
-  private Optional<EnumChatFormat> chatFormatFromColor(char color) {
-    // Loop all enum values
-    for (EnumChatFormat cf : EnumChatFormat.values()) {
-      Optional<Object> colorCode = refl.getFieldByType(cf, char.class);
-
-      // Could not get the color code of this enum entry
-      if (colorCode.isEmpty())
-        continue;
-
-      // Color char matches
-      if (((char) colorCode.get()) == color)
-        return Optional.of(cf);
-    }
-
-    // Not found
-    return Optional.empty();
-  }
-
-  /**
-   * Generate a parameterized scoreboard packet form internal datatypes
-   * @param group Target group
-   * @param action Packet action
-   * @param members List of members, can be null
-   * @return Generated packet, empty on success
-   */
-  private Optional<Packet<?>> generateScoreboardTeam(
-    TabListGroup group,
-    TabListAction action,
-    Collection<? extends Player> members
-  ) {
-    // Provide a fallback to allow for null-values
-    // Null-values are used when just the team itself is modified
-    if (members == null)
-      members = new ArrayList<>();
-
-    // Create a list of member names
-    final List<String> memberNames = members.stream().map(Player::getName).toList();
-
-    // Create the scoreboard team packet's inner data model
-    return refl.createGarbageInstance(PacketPlayOutScoreboardTeam.b.class)
-      .flatMap(b -> {
-
-        refl.setFieldByType(b, IChatBaseComponent.class, new ChatMessage(group.groupName()), 0);
-        refl.setFieldByType(b, IChatBaseComponent.class, new ChatMessage(group.prefix()), 1);
-        refl.setFieldByType(b, IChatBaseComponent.class, new ChatMessage(group.suffix()), 2);
-        refl.setFieldByType(b, String.class, "always", 0); // Name tag visibility: always, hideForOtherTeams, hideForOwnTeam, never
-        refl.setFieldByType(b, String.class, "pushOwnTeam", 1); // Collision rule: always, pushOtherTeams, pushOwnTeam, never
-
-        chatFormatFromColor(group.nameColor().getChar()).ifPresent(ecf -> {
-          refl.setFieldByType(b, EnumChatFormat.class, ecf, 0); // Player name color
-        });
-
-        refl.setFieldByType(b, int.class, 0x00, 0); // Bit mask. 0x01: Allow friendly fire, 0x02: can see invisible players on same team.
-
-        // Create the packet itself using all initialized parameters
-        return refl.invokeConstructor(
-          PacketPlayOutScoreboardTeam.class,
-          group.priority() + group.groupName(), // Unique team name
-          action.getMode(),     // Mode (0=create, 1=remove, 2=update, 3=add entites, 4=remove entities)
-          Optional.of(b),       // Optional team (not needed for (1 | 3 | 4), I guess?)
-          memberNames           // Names of all team members
-        ).map(o -> (Packet<?>) o);
-      });
   }
 
   //=========================================================================//

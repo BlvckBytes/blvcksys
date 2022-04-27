@@ -1,9 +1,9 @@
-package me.blvckbytes.blvcksys.packets.modifiers.tablist;
+package me.blvckbytes.blvcksys.packets.communicators.team;
 
 /**
  * Represents the mode field of a tablist-team packet
  */
-public enum TabListAction {
+public enum TeamAction {
 
   // Create team
   CREATE(0),
@@ -22,7 +22,7 @@ public enum TabListAction {
 
   private final int mode;
 
-  TabListAction(int mode) {
+  TeamAction(int mode) {
     this.mode = mode;
   }
 

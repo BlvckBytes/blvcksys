@@ -12,14 +12,15 @@ import org.jetbrains.annotations.Nullable;
 public interface IObjectiveCommunicator {
 
   /**
-   * Create and send a new objective packet
+   * Send an objective creation/update/removal request
    * @param p Target player
    * @param identifier Unique identifier string for this objective
    * @param mode Packet mode
    * @param display Displayed name of this objective
    * @param unit Unit of scores
+   * @return Success state
    */
-  void sendObjective(
+  boolean sendObjective(
     Player p,
     String identifier,
     ObjectiveMode mode,
@@ -32,8 +33,9 @@ public interface IObjectiveCommunicator {
    * @param p Target player
    * @param identifier Unique identifier string of the objective
    * @param pos Position of the objective on the HUD
+   * @return Success state
    */
-  void displayObjective(Player p, String identifier, ObjectivePosition pos);
+  boolean displayObjective(Player p, String identifier, ObjectivePosition pos);
 
   /**
    * Update the score of an objective's member
@@ -42,8 +44,9 @@ public interface IObjectiveCommunicator {
    * @param name Name of the member who's score is going to be updated
    * @param delete Whether or not to delete this entry
    * @param score Actual score value
+   * @return Success state
    */
-  void updateScore(
+  boolean updateScore(
     Player p,
     String identifier,
     String name,

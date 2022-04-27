@@ -4,11 +4,14 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import net.md_5.bungee.api.chat.BaseComponent;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/26/2022
+
+  This command was not invoked in a way that was conform to it's usage
+*/
 public class UsageMismatchException extends CommandException {
 
-  /**
-   * This command was not invoked in a way that was conform to it's usage
-   */
   public UsageMismatchException(IConfig cfg, BaseComponent advancedUsage) {
     super(
       // Prepend the advanced usage by the usage prefix

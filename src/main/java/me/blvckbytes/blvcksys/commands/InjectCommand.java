@@ -166,7 +166,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
       (req.dir == PacketDirection.IN || req.dir == PacketDirection.IN_OUT) &&
 
         // Pattern matches
-        (req.regex == null || req.regex.matcher(incoming.getClass().getSimpleName()).find())
+        (req.regex == null || req.regex.matcher(incoming.getClass().getSimpleName()).matches())
     )
       logEvent("INBOUND", incoming, req.depth);
 
@@ -185,7 +185,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
       (req.dir == PacketDirection.OUT || req.dir == PacketDirection.IN_OUT) &&
 
         // Pattern matches
-        (req.regex == null || req.regex.matcher(outgoing.getClass().getSimpleName()).find())
+        (req.regex == null || req.regex.matcher(outgoing.getClass().getSimpleName()).matches())
     )
       logEvent("OUTBOUND", outgoing, req.depth);
 

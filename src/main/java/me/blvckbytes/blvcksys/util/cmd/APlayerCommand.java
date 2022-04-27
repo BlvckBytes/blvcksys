@@ -138,7 +138,7 @@ public abstract class APlayerCommand extends Command {
     int currArg = Math.max(0, args.length - 1);
 
     // Get it's connected permission
-    PlayerPermission argPerm = cmdArgs[Math.max(currArg, cmdArgs.length - 1)].getPermission();
+    PlayerPermission argPerm = cmdArgs[Math.min(currArg, cmdArgs.length - 1)].getPermission();
 
     // Doesn't have permission for this arg, don't invoke the completion callback
     if (argPerm != null && !argPerm.has(p))

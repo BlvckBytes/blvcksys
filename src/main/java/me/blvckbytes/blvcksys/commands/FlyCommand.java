@@ -103,6 +103,10 @@ public class FlyCommand extends APlayerCommand implements Listener {
     target.setAllowFlight(newState);
   }
 
+  //=========================================================================//
+  //                                 Listeners                               //
+  //=========================================================================//
+
   @EventHandler
   public void onPermissionsChanged(PlayerPermissionsChangedEvent e) {
     Player p = e.getPlayer();

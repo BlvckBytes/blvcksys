@@ -598,12 +598,15 @@ public class MCReflect {
    * @param m Method to invoke
    * @param o Object to invoke on
    * @param args Arguments to that method
+   * @return Success of invocation
    */
-  public void invokeMethod(Method m, Object o, Object ...args) {
+  public boolean invokeMethod(Method m, Object o, Object ...args) {
     try {
       m.invoke(o, args);
+      return true;
     } catch (Exception e) {
       logger.logError(e);
+      return false;
     }
   }
 
@@ -611,13 +614,13 @@ public class MCReflect {
    * Send a packet to a specific player
    * @param p Player to send the packet to
    * @param packet Packet to send
+   * @return Success state
    */
-  public void sendPacket(Player p, Object packet) {
-    getNetworkManager(p).ifPresent(nm -> {
-      findMethodByArgsOnly(nm.getClass(), Packet.class).ifPresent(sendM -> {
-        invokeMethod(sendM, nm, packet);
-      });
-    });
+  public boolean sendPacket(Player p, Object packet) {
+    return getNetworkManager(p)
+      .flatMap(nm -> findMethodByArgsOnly(nm.getClass(), Packet.class))
+      .map(sendM -> invokeMethod(sendM, packet))
+      .orElse(false);
   }
 
   /**

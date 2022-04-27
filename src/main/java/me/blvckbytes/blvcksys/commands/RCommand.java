@@ -14,6 +14,13 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.stream.Stream;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/22/2022
+
+  Send a private message to the executor's current message-partner,
+  specified by either the last sent or the last received message.
+*/
 @AutoConstruct
 public class RCommand extends APlayerCommand {
 

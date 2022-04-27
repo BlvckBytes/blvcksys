@@ -3,6 +3,12 @@ package me.blvckbytes.blvcksys.packets.communicators;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/27/2022
+
+  Communicates creating/updating/removing scoreboard objectives to a client.
+*/
 public interface IScoreBoardCommunicator {
 
   /**

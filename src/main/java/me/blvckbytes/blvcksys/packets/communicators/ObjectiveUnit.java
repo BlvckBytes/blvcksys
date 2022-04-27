@@ -2,9 +2,12 @@ package me.blvckbytes.blvcksys.packets.communicators;
 
 import lombok.Getter;
 
-/**
- * Represents the unit an objective "counts" scores in
- */
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/27/2022
+
+  Represents the unit of metric of an objective packet.
+*/
 public enum ObjectiveUnit {
   // Count using hearts
   HEARTS("hearts"),

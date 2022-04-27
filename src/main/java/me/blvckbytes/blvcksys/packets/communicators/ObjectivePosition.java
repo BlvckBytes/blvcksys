@@ -2,9 +2,12 @@ package me.blvckbytes.blvcksys.packets.communicators;
 
 import lombok.Getter;
 
-/**
- * Represents the position of a scoreboard objective within the HUD
- */
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/27/2022
+
+  Represents the display position of an objective packet.
+*/
 public enum ObjectivePosition {
   // Within the tab bar (next to the ping indicator)
   TAB(0),

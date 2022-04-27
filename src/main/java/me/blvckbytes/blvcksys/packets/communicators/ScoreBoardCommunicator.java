@@ -13,6 +13,12 @@ import net.minecraft.world.scores.criteria.IScoreboardCriteria;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/27/2022
+
+  Creates all packets in regards to creating/updating/removing scoreboard objectives.
+*/
 @AutoConstruct
 public class ScoreBoardCommunicator implements IScoreBoardCommunicator {
 

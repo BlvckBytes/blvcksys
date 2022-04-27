@@ -21,6 +21,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.text.SimpleDateFormat;
@@ -33,6 +34,9 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
   // Used to format the current date's time for displaying purposes
   private static final SimpleDateFormat df = new SimpleDateFormat("HH:mm:ss");
 
+  // Suffix for auto-generated group clones that are grayed
+  private static final String GRAYED_SUFFIX = "_G";
+
   private final IConfig cfg;
   private final MCReflect refl;
   private final JavaPlugin plugin;
@@ -43,6 +47,9 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
 
   // Members per group
   private final Map<TeamGroup, List<Player>> members;
+
+  // Players that have been grayed
+  private final List<Player> grayed;
 
   // Created groups per player (each group has to be created once per client)
   private final Map<Player, List<TeamGroup>> createdGroups;
@@ -65,6 +72,7 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
     this.members = new HashMap<>();
     this.createdGroups = new HashMap<>();
     this.groups = new ArrayList<>();
+    this.grayed = new ArrayList<>();
 
     this.loadGroups();
   }
@@ -110,6 +118,29 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
     return Optional.empty();
   }
 
+  @Override
+  public void setGrayed(Player p, boolean state) {
+    // Add/remove from/to the list
+    if (state)
+      this.grayed.add(p);
+    else
+      this.grayed.remove(p);
+
+    // Re-decide on the group
+    decideDisplayGroup(
+      p,
+      p.getEffectivePermissions()
+        .stream()
+        .map(PermissionAttachmentInfo::getPermission)
+        .toList()
+    );
+  }
+
+  @Override
+  public boolean getGrayed(Player p) {
+    return grayed.contains(p);
+  }
+
   //=========================================================================//
   //                                Listeners                                //
   //=========================================================================//
@@ -151,8 +182,14 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
       if (!permission.startsWith("group."))
         continue;
 
-      // Get the group by it's name
+      // Get the group name from the meta-permission
       String groupName = permission.substring(permission.indexOf('.') + 1);
+
+      // Switch to the grayed version of this group
+      if (grayed.contains(p))
+        groupName += GRAYED_SUFFIX;
+
+      // Get the group by it's name
       Optional<TeamGroup> tg = getGroup(groupName);
 
       // Unknown group
@@ -172,7 +209,6 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
     else
       setPlayerGroup(displayGroup, p);
   }
-
 
   /**
    * Remove a player from their current group
@@ -244,8 +280,32 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
         continue;
 
       // Add group with priority as it occurred in the config
-      this.groups.add(createGroup(prefixData[0], prefixData[1], i));
+      TeamGroup group = createGroup(prefixData[0], prefixData[1], i);
+      this.groups.add(group);
+
+      // Add a version of this group that's grayed and has the biggest priority (=last in tab)
+      this.groups.add(cloneGroupGrayed(group, prefixesData.size()));
     }
+  }
+
+  /**
+   * Make a grayed clone of a normal group and add a suffix to it's name
+   * @param group Group to clone
+   * @param priority Priority of this new group
+   * @return Cloned grayed result
+   */
+  private TeamGroup cloneGroupGrayed(TeamGroup group, int priority) {
+    return new TeamGroup(
+      // Add name suffix
+      group.groupName() + GRAYED_SUFFIX,
+      // Remove all color and make it gray
+      ChatColor.GRAY + ChatColor.stripColor(group.prefix()),
+      "",
+      // Gray username
+      ChatColor.GRAY,
+      //
+      priority
+    );
   }
 
   /**

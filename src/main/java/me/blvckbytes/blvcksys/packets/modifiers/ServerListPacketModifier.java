@@ -15,7 +15,6 @@ import net.minecraft.network.chat.IChatBaseComponent;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.status.PacketStatusOutServerInfo;
 import net.minecraft.network.protocol.status.ServerPing;
-import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -53,12 +52,12 @@ public class ServerListPacketModifier implements IPacketModifier {
   //=========================================================================//
 
   @Override
-  public Packet<?> modifyIncoming(Player sender, NetworkManager nm, Packet<?> incoming) {
+  public Packet<?> modifyIncoming(UUID sender, NetworkManager nm, Packet<?> incoming) {
     return incoming;
   }
 
   @Override
-  public Packet<?> modifyOutgoing(Player receiver, NetworkManager nm, Packet<?> outgoing) {
+  public Packet<?> modifyOutgoing(UUID receiver, NetworkManager nm, Packet<?> outgoing) {
     // Playerbound packet, not interested
     if (receiver != null)
       return outgoing;

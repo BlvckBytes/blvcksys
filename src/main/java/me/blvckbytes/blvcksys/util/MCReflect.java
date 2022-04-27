@@ -27,10 +27,6 @@ import java.util.function.Function;
 @AutoConstruct
 public class MCReflect {
 
-  // Empty buffer used to create packets by their serializer constructor
-  // Creating this once (all zeros) and using it for all future constructors
-  private static final ByteBuf EMPTY_BUFFER = Unpooled.wrappedBuffer(new byte[1024]);
-
   private final JavaPlugin plugin;
   private final ILogger logger;
   private final String ver;
@@ -814,7 +810,7 @@ public class MCReflect {
    */
   public Optional<Object> createGarbageInstance(Class<?> c) {
     return invokeConstructor(
-      c, new PacketDataSerializer(EMPTY_BUFFER)
+      c, new PacketDataSerializer(Unpooled.wrappedBuffer(new byte[1024]))
     );
   }
 }

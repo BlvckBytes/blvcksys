@@ -156,6 +156,7 @@ public enum ConfigKey {
   ERR_PERMISSION("errors.permission", "&cDir fehlt das Recht &4{{permission}} &cum diesen Befehl ausführen zu können!"),
   ERR_OPTIONPARSE("errors.optionparse", "&cDie Eingabe &4{{option}} &cist keine gültige Wahl!"),
   ERR_NOT_ONLINE("errors.not_online", "&cDer Spieler &4{{player}} &cist nicht online!"),
+  ERR_PLAYER_UNKNOWN("errors.player_unknown", "&cDer Spieler &4{{player}} &cist nicht Teil des Servers!"),
   ERR_USAGE_PREFIX("errors.usage_prefix", "&7Benutzung: "),
   ERR_USAGE_COLOR_MANDATORY("errors.usage_color.mandatory", "&d"),
   ERR_USAGE_COLOR_OPTIONAL("errors.usage_color.optional", "&b"),

@@ -1,6 +1,6 @@
 package me.blvckbytes.blvcksys.packets;
 
-import org.bukkit.entity.Player;
+import org.bukkit.OfflinePlayer;
 
 public interface IPacketInterceptor {
 
@@ -28,14 +28,14 @@ public interface IPacketInterceptor {
    * @param target Player to target with this modifier
    * @param modifier Packet modifier to register
    */
-  void registerSpecific(Player target, IPacketModifier modifier);
+  void registerSpecific(OfflinePlayer target, IPacketModifier modifier);
 
   /**
    * Unegister an existing modifier for a specific player
    * @param target Player targetted with this modifier
    * @param modifier Packet modifier to unregister
    */
-  void unregisterSpecific(Player target, IPacketModifier modifier);
+  void unregisterSpecific(OfflinePlayer target, IPacketModifier modifier);
 
   /**
    * Check if a specific modifier is already registered
@@ -43,5 +43,5 @@ public interface IPacketInterceptor {
    * @param modifier Modifier to check
    * @return True if registered, false otherwise
    */
-  boolean isRegisteredSpecific(Player target, IPacketModifier modifier);
+  boolean isRegisteredSpecific(OfflinePlayer target, IPacketModifier modifier);
 }

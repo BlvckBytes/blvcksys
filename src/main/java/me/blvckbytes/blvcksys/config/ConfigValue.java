@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.config;
 
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -74,11 +75,11 @@ public class ConfigValue {
    * @param name Name of the variable
    * @param value Value of the variable
    */
-  public ConfigValue withVariable(String name, Object value) {
+  public ConfigValue withVariable(String name, @Nullable Object value) {
     int flags = Pattern.LITERAL | (ignoreVarCasing ? Pattern.CASE_INSENSITIVE : 0);
     this.vars.put(
       Pattern.compile(varMakerS + name + varMakerE, flags),
-      value.toString()
+      value == null ? "null" : value.toString()
     );
     return this;
   }

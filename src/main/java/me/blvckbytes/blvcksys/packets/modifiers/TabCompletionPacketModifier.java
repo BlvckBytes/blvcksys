@@ -13,18 +13,18 @@ import net.minecraft.network.chat.ChatMessage;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.PacketPlayInTabComplete;
 import net.minecraft.network.protocol.game.PacketPlayOutTabComplete;
-import org.bukkit.entity.Player;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @AutoConstruct
 public class TabCompletionPacketModifier implements IPacketModifier {
 
   // Mapping the last completion requests to their players
-  private final Map<Player, String> lastCompletions;
+  private final Map<UUID, String> lastCompletions;
   private final MCReflect refl;
 
   public TabCompletionPacketModifier(
@@ -37,7 +37,7 @@ public class TabCompletionPacketModifier implements IPacketModifier {
   }
 
   @Override
-  public Packet<?> modifyIncoming(Player sender, NetworkManager nm, Packet<?> incoming) {
+  public Packet<?> modifyIncoming(UUID sender, NetworkManager nm, Packet<?> incoming) {
     // Not an active player packet
     if (sender == null)
       return incoming;
@@ -51,7 +51,7 @@ public class TabCompletionPacketModifier implements IPacketModifier {
   }
 
   @Override
-  public Packet<?> modifyOutgoing(Player receiver, NetworkManager nm, Packet<?> outgoing) {
+  public Packet<?> modifyOutgoing(UUID receiver, NetworkManager nm, Packet<?> outgoing) {
     // Not an active player packet
     if (receiver == null)
       return outgoing;

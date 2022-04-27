@@ -10,17 +10,17 @@ import net.minecraft.network.NetworkManager;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.network.ServerConnection;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.server.ServerListPingEvent;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @AutoConstruct
 public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoConstructed {
@@ -32,7 +32,8 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
   private final List<IPacketModifier> globalModifiers;
 
   // List of per-player registered modifiers
-  private final Map<Player, ArrayList<IPacketModifier>> specificModifiers;
+  // Use UUIDs here to allow persistence accross re-joins
+  private final Map<UUID, ArrayList<IPacketModifier>> specificModifiers;
 
   private final ILogger logger;
   private final MCReflect refl;
@@ -67,33 +68,33 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
   }
 
   @Override
-  public void registerSpecific(Player target, IPacketModifier modifier) {
+  public void registerSpecific(OfflinePlayer target, IPacketModifier modifier) {
     // Create empty list to add to
-    if (!this.specificModifiers.containsKey(target))
-      this.specificModifiers.put(target, new ArrayList<>());
+    if (!this.specificModifiers.containsKey(target.getUniqueId()))
+      this.specificModifiers.put(target.getUniqueId(), new ArrayList<>());
 
     // Add modifier to list
-    this.specificModifiers.get(target).add(modifier);
+    this.specificModifiers.get(target.getUniqueId()).add(modifier);
   }
 
   @Override
-  public void unregisterSpecific(Player target, IPacketModifier modifier) {
+  public void unregisterSpecific(OfflinePlayer target, IPacketModifier modifier) {
     // Player not even known yet
-    if (!this.specificModifiers.containsKey(target))
+    if (!this.specificModifiers.containsKey(target.getUniqueId()))
       return;
 
     // Remove modifier from list
-    List<IPacketModifier> modifiers = this.specificModifiers.get(target);
+    List<IPacketModifier> modifiers = this.specificModifiers.get(target.getUniqueId());
     modifiers.remove(modifier);
 
     // Remove from map when no more modifiers remain
     if (modifiers.size() == 0)
-      this.specificModifiers.remove(target);
+      this.specificModifiers.remove(target.getUniqueId());
   }
 
   @Override
-  public boolean isRegisteredSpecific(Player target, IPacketModifier modifier) {
-    return this.specificModifiers.getOrDefault(target, new ArrayList<>()).contains(modifier);
+  public boolean isRegisteredSpecific(OfflinePlayer target, IPacketModifier modifier) {
+    return this.specificModifiers.getOrDefault(target.getUniqueId(), new ArrayList<>()).contains(modifier);
   }
 
   @Override
@@ -104,11 +105,13 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
       this.unregister(this.globalModifiers.get(i));
 
     // Unregister all specifics
-    for (Map.Entry<Player, ArrayList<IPacketModifier>> entry : specificModifiers.entrySet()) {
+    for (Map.Entry<UUID, ArrayList<IPacketModifier>> entry : specificModifiers.entrySet()) {
+      OfflinePlayer target = Bukkit.getOfflinePlayer(entry.getKey());
+
       // Loop in reverse to avoid concurrent modifications
       List<IPacketModifier> modifiers = entry.getValue();
       for (int i = modifiers.size() - 1; i >= 0; i--)
-        this.unregisterSpecific(entry.getKey(), modifiers.get(i));
+        this.unregisterSpecific(target, modifiers.get(i));
     }
 
     // Uninject all players before a reload
@@ -127,7 +130,7 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
   //                                Listeners                                //
   //=========================================================================//
 
-  @EventHandler
+  @EventHandler(priority = EventPriority.LOWEST)
   public void onJoin(PlayerJoinEvent e) {
     injectPlayer(e.getPlayer());
   }
@@ -169,10 +172,13 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
    * @param nm NetworkManager instance corresponding to the player, optional (null means not yet connected)
    * @param p Target player, optional (null means not yet connected)
    */
-  private void injectChannel(Player p, NetworkManager nm, ChannelPipeline pipe) {
+  private void injectChannel(@Nullable Player p, NetworkManager nm, ChannelPipeline pipe) {
     // Already registered in the pipeline
     if (pipe.names().contains(handlerName))
       return;
+
+    // UUID is null for non-player-bound packets
+    UUID u = p == null ? null : p.getUniqueId();
 
     // Create a new channel handler that overrides R/W to intercept
     // This handler gets created in this closure to provide player context
@@ -190,7 +196,7 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
         try {
           // Run through all global modifiers
           for (IPacketModifier modifier : globalModifiers) {
-            packet = modifier.modifyIncoming(p, nm, packet);
+            packet = modifier.modifyIncoming(u, nm, packet);
 
             // Packet has been terminated
             if (packet == null)
@@ -198,10 +204,10 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
           }
 
           // Run through all specific modifiers
-          ArrayList<IPacketModifier> specifics = specificModifiers.get(p);
+          ArrayList<IPacketModifier> specifics = specificModifiers.get(u);
           if (specifics != null) {
             for (IPacketModifier modifier : specifics) {
-              packet = modifier.modifyIncoming(p, nm, packet);
+              packet = modifier.modifyIncoming(u, nm, packet);
 
               // Packet has been terminated
               if (packet == null)
@@ -228,7 +234,7 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
         try {
           // Run through all global modifiers
           for (IPacketModifier modifier : globalModifiers) {
-            packet = modifier.modifyOutgoing(p, nm, packet);
+            packet = modifier.modifyOutgoing(u, nm, packet);
 
             // Packet has been terminated
             if (packet == null)
@@ -236,10 +242,10 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
           }
 
           // Run through all specific modifiers
-          ArrayList<IPacketModifier> specifics = specificModifiers.get(p);
+          ArrayList<IPacketModifier> specifics = specificModifiers.get(u);
           if (specifics != null) {
             for (IPacketModifier modifier : specifics) {
-              packet = modifier.modifyOutgoing(p, nm, packet);
+              packet = modifier.modifyOutgoing(u, nm, packet);
 
               // Packet has been terminated
               if (packet == null)

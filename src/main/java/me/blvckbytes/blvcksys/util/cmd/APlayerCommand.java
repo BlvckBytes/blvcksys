@@ -11,6 +11,7 @@ import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -225,12 +226,8 @@ public abstract class APlayerCommand extends Command {
    * @param exclude Players to exclude from the suggestion
    * @return Stream of suggestions
    */
-  protected Stream<String> suggestOnlinePlayers(String[] args, int currArg, List<Player> exclude) {
-    return Bukkit.getOnlinePlayers()
-      .stream()
-      .filter(n -> !exclude.contains(n))
-      .map(Player::getDisplayName)
-      .filter(n -> n.toLowerCase().contains(args[currArg].toLowerCase()));
+  protected Stream<String> suggestOnlinePlayers(String[] args, int currArg, Player... exclude) {
+    return suggestOnlinePlayers(args, currArg, List.of(exclude));
   }
 
   /**
@@ -240,8 +237,38 @@ public abstract class APlayerCommand extends Command {
    * @param exclude Players to exclude from the suggestion
    * @return Stream of suggestions
    */
-  protected Stream<String> suggestOnlinePlayers(String[] args, int currArg, Player... exclude) {
-    return suggestOnlinePlayers(args, currArg, List.of(exclude));
+  protected Stream<String> suggestOnlinePlayers(String[] args, int currArg, List<Player> exclude) {
+    return Bukkit.getOnlinePlayers()
+      .stream()
+      .filter(n -> !exclude.contains(n))
+      .map(Player::getDisplayName)
+      .filter(n -> n.toLowerCase().contains(args[currArg].toLowerCase()));
+  }
+
+  /**
+   * Suggest all players that have ever played on this server
+   * @param args Already typed out arguments
+   * @param currArg Currently focused argument
+   * @return Stream of suggestions
+   */
+  protected Stream<String> suggestOfflinePlayers(String[] args, int currArg) {
+    return suggestOfflinePlayers(args, currArg, new ArrayList<>());
+  }
+
+  /**
+   * Suggest all players that have ever played on this server, except the exclusion
+   * @param args Already typed out arguments
+   * @param currArg Currently focused argument
+   * @param exclude Players to exclude from the suggestion
+   * @return Stream of suggestions
+   */
+  protected Stream<String> suggestOfflinePlayers(String[] args, int currArg, List<OfflinePlayer> exclude) {
+    return Arrays.stream(Bukkit.getOfflinePlayers())
+      .filter(p -> !exclude.contains(p))
+      .filter(OfflinePlayer::hasPlayedBefore)
+      .map(OfflinePlayer::getName)
+      .filter(Objects::nonNull)
+      .filter(n -> n.toLowerCase().contains(args[currArg].toLowerCase()));
   }
 
   ///////////////////////////////// Usage ////////////////////////////////////
@@ -336,6 +363,31 @@ public abstract class APlayerCommand extends Command {
       throw new OfflineTargetException(cfg, args[index]);
 
     return target;
+  }
+
+  /**
+   * Get a player that has played before by their name
+   * @param args Arguments of the command
+   * @param index Index within the arguments to use
+   */
+  protected OfflinePlayer offlinePlayer(String[] args, int index) throws CommandException {
+    // Index out of range
+    if (index >= args.length) {
+      // Focus arg
+      throw new UsageMismatchException(cfg, buildAdvancedUsage(index));
+    }
+
+    // Find the first player that played before and has this name
+    Optional<OfflinePlayer> res = Arrays.stream(Bukkit.getOfflinePlayers())
+      .filter(OfflinePlayer::hasPlayedBefore)
+      .filter(n -> n.getName() != null && n.getName().equals(args[index]))
+      .findFirst();
+
+    // That player has never played before
+    if (res.isEmpty())
+      throw new UnknownTargetException(cfg, args[index]);
+
+    return res.get();
   }
 
   ///////////////////////////// Parsing: Integer ///////////////////////////////

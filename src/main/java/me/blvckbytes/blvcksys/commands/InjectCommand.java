@@ -15,12 +15,13 @@ import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.protocol.Packet;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
-import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Stream;
@@ -36,7 +37,7 @@ import java.util.stream.Stream;
   to a certain specified depth of recursion and apply the configured color-scheme.
  */
 @AutoConstruct
-public class InjectCommand extends APlayerCommand implements Listener, IPacketModifier {
+public class InjectCommand extends APlayerCommand implements IPacketModifier {
 
   /**
    * Describes the direction a intercepted packet can travel
@@ -57,7 +58,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
   ) {}
 
   // Map assigning intercepting handlers to players
-  private final Map<Player, InterceptionRequest> requests;
+  private final Map<UUID, InterceptionRequest> requests;
 
   private final IPacketInterceptor interceptor;
   private final ObjectStringifier ostr;
@@ -92,9 +93,9 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
 
   @Override
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
-    // First argument - provide all online players
+    // First argument - provide all known players
     if (currArg == 0)
-      return suggestOnlinePlayers(args, currArg);
+      return suggestOfflinePlayers(args, currArg);
 
     // Second argument - provide all PacketDirection values
     if (currArg == 1)
@@ -107,7 +108,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     // Get the target player
-    Player target = onlinePlayer(args, 0);
+    OfflinePlayer target = offlinePlayer(args, 0);
 
     // The default direction is in and out
     PacketDirection dir = parseEnum(PacketDirection.class, args, 1, PacketDirection.IN_OUT);
@@ -141,7 +142,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
       p.sendMessage(
         cfg.get(ConfigKey.INJECT_UNINJECTED)
           .withPrefix()
-          .withVariable("target", target.getDisplayName())
+          .withVariable("target", target.getName())
           .asScalar()
       );
 
@@ -149,13 +150,13 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
     }
 
     // Create a new injection and store the request locally
-    this.requests.put(target, new InterceptionRequest(dir, depth, regex));
+    this.requests.put(target.getUniqueId(), new InterceptionRequest(dir, depth, regex));
     this.interceptor.registerSpecific(target, this);
 
     p.sendMessage(
       cfg.get(ConfigKey.INJECT_INJECTED)
         .withPrefix()
-        .withVariable("target", target.getDisplayName())
+        .withVariable("target", target.getName())
         .asScalar()
     );
   }
@@ -165,7 +166,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
   //=========================================================================//
 
   @Override
-  public Packet<?> modifyIncoming(Player sender, NetworkManager nm, Packet<?> incoming) {
+  public Packet<?> modifyIncoming(UUID sender, NetworkManager nm, Packet<?> incoming) {
     // No request present yet
     InterceptionRequest req = requests.get(sender);
     if (req == null)
@@ -176,7 +177,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
       (req.dir == PacketDirection.IN || req.dir == PacketDirection.IN_OUT) &&
 
         // Pattern matches
-        (req.regex == null || req.regex.matcher(incoming.getClass().getSimpleName()).matches())
+        (req.regex == null || req.regex.matcher(incoming.getClass().getSimpleName()).find())
     )
       logEvent("INBOUND", incoming, req.depth);
 
@@ -184,7 +185,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
   }
 
   @Override
-  public Packet<?> modifyOutgoing(Player receiver, NetworkManager nm, Packet<?> outgoing) {
+  public Packet<?> modifyOutgoing(UUID receiver, NetworkManager nm, Packet<?> outgoing) {
     // No request present yet
     InterceptionRequest req = requests.get(receiver);
     if (req == null)
@@ -195,7 +196,7 @@ public class InjectCommand extends APlayerCommand implements Listener, IPacketMo
       (req.dir == PacketDirection.OUT || req.dir == PacketDirection.IN_OUT) &&
 
         // Pattern matches
-        (req.regex == null || req.regex.matcher(outgoing.getClass().getSimpleName()).matches())
+        (req.regex == null || req.regex.matcher(outgoing.getClass().getSimpleName()).find())
     )
       logEvent("OUTBOUND", outgoing, req.depth);
 

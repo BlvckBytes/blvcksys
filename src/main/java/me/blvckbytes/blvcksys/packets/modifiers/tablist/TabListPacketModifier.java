@@ -22,7 +22,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -80,15 +79,15 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
   //=========================================================================//
 
   @Override
-  public Packet<?> modifyIncoming(Player sender, NetworkManager nm, Packet<?> incoming) {
+  public Packet<?> modifyIncoming(UUID sender, NetworkManager nm, Packet<?> incoming) {
     return incoming;
   }
 
   @Override
-  public Packet<?> modifyOutgoing(Player receiver, NetworkManager nm, Packet<?> outgoing) {
+  public Packet<?> modifyOutgoing(UUID receiver, NetworkManager nm, Packet<?> outgoing) {
     // Override header and footer packets
     if (outgoing instanceof PacketPlayOutPlayerListHeaderFooter)
-      return generateTabHeaderFooter(receiver, false);
+      return generateTabHeaderFooter(Bukkit.getPlayer(receiver), false);
     return outgoing;
   }
 
@@ -137,7 +136,7 @@ public class TabListPacketModifier implements IPacketModifier, Listener, IAutoCo
   //                                Listeners                                //
   //=========================================================================//
 
-  @EventHandler(priority = EventPriority.HIGHEST)
+  @EventHandler
   public void onJoin(PlayerJoinEvent e) {
     // Create all currently known groups for the first time for this client
     createGroups(e.getPlayer());

@@ -19,9 +19,20 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.List;
 import java.util.stream.Stream;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/22/2022
+
+  Give a certain amount of a specified material either to the executor
+  or another target. Items are added directly into the inventory and
+  stacked with other compatible items as efficiently as possible. Whenever
+  the inventory doesn't provide enough space for the new items, they
+  will be dropped at the player's head-location.
+ */
 @AutoConstruct
 public class GiveCommand extends APlayerCommand {
 
+  // Which of the materials cannot be chosen from the enum's constants
   private static final List<Material> BANNED_MATERIALS = List.of(Material.AIR);
 
   public GiveCommand(

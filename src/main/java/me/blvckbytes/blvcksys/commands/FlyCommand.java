@@ -22,6 +22,16 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/26/2022
+
+  Toggles the flight feature for either the executor or a specific target.
+  Whenever permissions are being revoked from a flying player, flight will
+  be disabled instantly. If they're in survival mode, the next occurrence of
+  fall damage within a specified timeout will be cancelled. The same is true
+  for players that get their active flight mode disabled by somebody else.
+ */
 @AutoConstruct
 public class FlyCommand extends APlayerCommand implements Listener {
 
@@ -69,13 +79,30 @@ public class FlyCommand extends APlayerCommand implements Listener {
 
     // Toggle flight allow state
     boolean newState = !target.getAllowFlight();
-    p.setAllowFlight(newState);
 
-    p.sendMessage(
+    // Inform about the player that just got toggled
+    if (target != p) {
+      p.sendMessage(
+        cfg.get(newState ? ConfigKey.FLY_ENABLED_OTHER : ConfigKey.FLY_DISABLED_OTHER)
+          .withPrefix()
+          .withVariable("name", target.getName())
+          .asScalar()
+      );
+
+      // Protect on disabling
+      if (!newState)
+        fallProtectPlayer(target);
+    }
+
+    // Inform the target
+    target.sendMessage(
       cfg.get(newState ? ConfigKey.FLY_ENABLED : ConfigKey.FLY_DISABLED)
         .withPrefix()
         .asScalar()
     );
+
+    // Apply flight state
+    target.setAllowFlight(newState);
   }
 
   @EventHandler
@@ -92,14 +119,9 @@ public class FlyCommand extends APlayerCommand implements Listener {
 
     // Revoked flight
     if (!PlayerPermission.COMMAND_FLY.has(p)) {
-      // Schedule a task to timeout this protection
-      int taskHandle = Bukkit.getScheduler().scheduleSyncDelayedTask(
-        plugin, () -> justRevoked.remove(p),
-        20L * PROTECTION_TIMEOUT
-      );
+      fallProtectPlayer(p);
 
       // Disable flight
-      justRevoked.put(p, taskHandle);
       p.setAllowFlight(false);
 
       // Inform
@@ -129,5 +151,24 @@ public class FlyCommand extends APlayerCommand implements Listener {
     int taskHandle = justRevoked.remove(p);
     Bukkit.getScheduler().cancelTask(taskHandle);
     e.setCancelled(true);
+  }
+
+  /**
+   * Protects a player from their first fall-damage within the specified timeout
+   * @param p Player to protect
+   */
+  private void fallProtectPlayer(Player p) {
+    // Remove a previous timeout, if present
+    if (justRevoked.containsKey(p))
+      Bukkit.getScheduler().cancelTask(justRevoked.remove(p));
+
+    // Schedule a task to timeout this protection
+    int taskHandle = Bukkit.getScheduler().scheduleSyncDelayedTask(
+      plugin, () -> justRevoked.remove(p),
+      20L * PROTECTION_TIMEOUT
+    );
+
+    // Add to map
+    justRevoked.put(p, taskHandle);
   }
 }

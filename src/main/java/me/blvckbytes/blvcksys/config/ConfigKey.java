@@ -114,7 +114,9 @@ public enum ConfigKey {
   //                               FLY Command                               //
   //=========================================================================//
 
-  FLY_ENABLED("fly.enabled", "&7Du kannst &dnun &7fliegen!"),
+  FLY_ENABLED_OTHER("fly.enabled_other", "&d{{name}} &7kann &dnun &7fliegen!"),
+  FLY_DISABLED_OTHER("fly.disabled_other", "&d{{name}} &7kann &dnicht mehr &7fliegen!"),
+  FLY_ENABLED("fly.enabled", "&7Du kannst &dnum &7fliegen!"),
   FLY_DISABLED("fly.disabled", "&7Du kannst &dnicht mehr &7fliegen!"),
   FLY_REVOKED("fly.revoked", "&7Du hast soeben deine &cFlugrechte &7verloren!"),
 

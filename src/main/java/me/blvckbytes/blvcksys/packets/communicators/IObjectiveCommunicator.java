@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
   Communicates creating/updating/removing scoreboard objectives to a client.
 */
-public interface IScoreBoardCommunicator {
+public interface IObjectiveCommunicator {
 
   /**
    * Create and send a new objective packet

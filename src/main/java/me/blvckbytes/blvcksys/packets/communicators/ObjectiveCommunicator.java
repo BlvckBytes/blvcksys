@@ -20,11 +20,11 @@ import org.jetbrains.annotations.Nullable;
   Creates all packets in regards to creating/updating/removing scoreboard objectives.
 */
 @AutoConstruct
-public class ScoreBoardCommunicator implements IScoreBoardCommunicator {
+public class ObjectiveCommunicator implements IObjectiveCommunicator {
 
   private final MCReflect refl;
 
-  public ScoreBoardCommunicator(
+  public ObjectiveCommunicator(
     @AutoInject MCReflect refl
   ) {
     this.refl = refl;

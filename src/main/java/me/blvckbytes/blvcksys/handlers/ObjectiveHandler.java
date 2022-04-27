@@ -2,7 +2,7 @@ package me.blvckbytes.blvcksys.handlers;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
-import me.blvckbytes.blvcksys.packets.communicators.IScoreBoardCommunicator;
+import me.blvckbytes.blvcksys.packets.communicators.IObjectiveCommunicator;
 import me.blvckbytes.blvcksys.packets.communicators.ObjectiveMode;
 import me.blvckbytes.blvcksys.packets.communicators.ObjectivePosition;
 import me.blvckbytes.blvcksys.packets.communicators.ObjectiveUnit;
@@ -45,7 +45,7 @@ import java.util.Map;
   that affect those metrics. The sidebar is also only refreshed on changes.
 */
 @AutoConstruct
-public class ScoreBoardHandler implements Listener, IAutoConstructed {
+public class ObjectiveHandler implements Listener, IAutoConstructed {
 
   // Name of the sidebar objective
   private static final String NAME_SIDEBAR = "side";
@@ -59,7 +59,7 @@ public class ScoreBoardHandler implements Listener, IAutoConstructed {
 
   private final JavaPlugin plugin;
   private final IConfig cfg;
-  private final IScoreBoardCommunicator sbComm;
+  private final IObjectiveCommunicator sbComm;
 
   // Previous sidebar lines, used for diffing and thus obsolete score deletion
   private final Map<Player, List<String>> prevSidebarLines;
@@ -70,10 +70,10 @@ public class ScoreBoardHandler implements Listener, IAutoConstructed {
   // Map of each player to their previous levels, used to check for level delta when leveling up
   private final Map<Player, Integer> prevLevels;
 
-  public ScoreBoardHandler(
+  public ObjectiveHandler(
     @AutoInject JavaPlugin plugin,
     @AutoInject IConfig cfg,
-    @AutoInject IScoreBoardCommunicator sbComm
+    @AutoInject IObjectiveCommunicator sbComm
   ) {
     this.prevSidebarLines = new HashMap<>();
     this.knownBelowNames = new HashMap<>();

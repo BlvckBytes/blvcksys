@@ -3,6 +3,12 @@ package me.blvckbytes.blvcksys.config;
 import lombok.Getter;
 import org.bukkit.entity.Player;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/26/2022
+
+  All known permissions which features can use to check for authorization
+*/
 public enum PlayerPermission {
 
   //=========================================================================//

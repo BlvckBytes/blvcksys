@@ -1,5 +1,11 @@
 package me.blvckbytes.blvcksys.config;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/23/2022
+
+  Public interfaces which the Configuration provides to other consumers.
+*/
 public interface IConfig {
 
   /**

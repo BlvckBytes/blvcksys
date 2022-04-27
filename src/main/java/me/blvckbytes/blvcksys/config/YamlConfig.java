@@ -10,8 +10,16 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/22/2022
+
+  Load a yaml configuration from it's file into memory and initialize all
+  known config keys from the ConfigKey enum, then save to file again.
+  Allows for quick access of Strings and Lists of Strings by using ConfigValue.
+*/
 @AutoConstruct
-public class Config implements IConfig, IAutoConstructed {
+public class YamlConfig implements IConfig, IAutoConstructed {
 
   // Loaded configuration and it's corresponding file handle
   private YamlConfiguration cfg = null;
@@ -22,7 +30,7 @@ public class Config implements IConfig, IAutoConstructed {
 
   private final JavaPlugin plugin;
 
-  public Config(
+  public YamlConfig(
     @AutoInject JavaPlugin plugin
   ) {
     this.plugin = plugin;

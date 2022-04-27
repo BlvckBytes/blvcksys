@@ -11,6 +11,18 @@ import java.util.Map;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/25/2022
+
+  Represents a configuration value that can either be retrieved as a
+  scalar String or as a List of Strings, where each String represents a
+  line of the value. The main prefix can be added to each line, to the
+  first line or to no lines at all. Templated values may be interpolated
+  with a map of variables. These maps can be imported and exported for
+  use accross multiple values. For convenience, the Stream and the
+  TextComponent representations are also offered to the consumer.
+*/
 public class ConfigValue {
 
   // What marks a variable within the config file?

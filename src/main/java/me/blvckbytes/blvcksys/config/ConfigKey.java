@@ -1,5 +1,13 @@
 package me.blvckbytes.blvcksys.config;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/22/2022
+
+  All known keys which the configuration file needs to implement. Enum
+  constants each have their own key as well as a value, which can consist of
+  multiple strings that will be newline-separated automatically
+*/
 public enum ConfigKey {
 
   //=========================================================================//

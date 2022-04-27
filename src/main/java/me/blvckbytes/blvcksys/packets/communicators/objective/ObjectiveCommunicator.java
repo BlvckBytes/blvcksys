@@ -1,4 +1,4 @@
-package me.blvckbytes.blvcksys.packets.communicators;
+package me.blvckbytes.blvcksys.packets.communicators.objective;
 
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;

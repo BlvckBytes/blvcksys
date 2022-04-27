@@ -1,4 +1,4 @@
-package me.blvckbytes.blvcksys.packets.communicators;
+package me.blvckbytes.blvcksys.packets.communicators.objective;
 
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;

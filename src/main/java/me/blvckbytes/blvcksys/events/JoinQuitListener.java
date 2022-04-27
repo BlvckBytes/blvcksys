@@ -9,6 +9,12 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/23/2022
+
+  Overrides the vanilla join- and quit messages by config values.
+*/
 @AutoConstruct
 public class JoinQuitListener implements Listener {
 

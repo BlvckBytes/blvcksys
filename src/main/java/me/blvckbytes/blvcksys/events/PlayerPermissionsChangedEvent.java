@@ -7,6 +7,13 @@ import org.bukkit.event.HandlerList;
 
 import java.util.List;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/26/2022
+
+  Represents a change in a player's permissions, offering both added and
+  removed nodes, as well as the absolute list of active permissions.
+*/
 public class PlayerPermissionsChangedEvent extends Event {
 
   private static final HandlerList HANDLERS = new HandlerList();

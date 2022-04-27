@@ -15,6 +15,15 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 import java.util.Optional;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/26/2022
+
+  Cancels vanilla chat packets and performs a custom broadcast
+  to all recipients using a custom format specified in the config.
+  Prefixes are loaded from the tab-list, colors are translated
+  based on the messenger's permissions.
+*/
 @AutoConstruct
 public class ChatListener implements Listener {
 

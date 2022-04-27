@@ -22,8 +22,21 @@ import java.lang.reflect.Proxy;
 import java.util.*;
 import java.util.concurrent.locks.ReentrantLock;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/25/2022
+
+  Proxies modifying calls to the CraftPlayer's PermissibleBase's HashMap field
+  called "permissions" in a non-modifying way, debounces those calls and then
+  invokes a local handler routine. Permissions are diffed into separate added and
+  removed lists for convenient access, which will be contained in the emitted
+  PlayerPermissionsChangedEvent, which also offers all currently active permissions.
+*/
 @AutoConstruct
 public class PermissionListener implements Listener, IAutoConstructed {
+
+  // Ticks that need to elapse until the last modifying call is actually routed
+  private static final long DEBOUNCE_TICKS = 10;
 
   private final MCReflect refl;
   private final JavaPlugin plugin;
@@ -195,7 +208,7 @@ public class PermissionListener implements Listener, IAutoConstructed {
 
           // Create a new debounce task
           debounceTask = Bukkit.getScheduler().scheduleSyncDelayedTask(
-            plugin, () -> onPermissionChange(p, getPermissions(permissions)), 10
+            plugin, () -> onPermissionChange(p, getPermissions(permissions)), DEBOUNCE_TICKS
           );
 
           // Done with operations, unlock

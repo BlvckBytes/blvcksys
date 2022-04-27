@@ -15,6 +15,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.jar.JarFile;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/22/2022
+
+  Scans all children of a package for classes which are annotated by the
+  target annotation to be auto-constructed. Those classes may have multiple
+  dependencies within their constructor, so the constructer generates a
+  dependency graph and resolves it through creating one dependency after the other.
+  Dependencies can be concrete classes or interfaces, where in the later case
+  only one class is allowed to implement this interface within the package, an
+  exception will be generated otherwise. In order to break up circular
+  dependencies, injected dependencies can be marked as lateinit. A lateinit
+  parameter always needs to have a corresponding class member field of the
+  same type, into which the value gets injected as soon as it's available,
+  where the constructor will be passed a null-value for it in the mean time.
+*/
 public class AutoConstructer {
 
   // Cache for already constructed classes (singletons)

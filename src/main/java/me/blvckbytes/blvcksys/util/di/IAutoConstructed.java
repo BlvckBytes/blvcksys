@@ -1,8 +1,11 @@
 package me.blvckbytes.blvcksys.util.di;
 
-/**
- * Represents an @AutoConstruct'ed resource
- */
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/23/2022
+
+  Represents an @AutoConstruct'ed resource which provides a lifecycle API.
+*/
 public interface IAutoConstructed {
 
   /**

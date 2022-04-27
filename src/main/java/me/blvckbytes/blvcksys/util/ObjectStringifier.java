@@ -12,6 +12,13 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/24/2022
+
+  Stringify all declared fields of an object to make it easily logable in
+  a recursive fashion while limiting the maximum depth.
+*/
 @AutoConstruct
 public class ObjectStringifier {
 
@@ -26,32 +33,9 @@ public class ObjectStringifier {
     this.logger = logger;
   }
 
-  /**
-   * Strip all escape sequences from a string
-   * @param input Input string
-   * @return String without escape sequences
-   */
-  private String stripEscapeSequences(String input) {
-    StringBuilder sb = new StringBuilder();
-
-    // Filter characters
-    for (char c : input.toCharArray()) {
-      if (c == '\n')
-        sb.append("§r<nl>");
-
-      if (c == '\t')
-        sb.append("§r<tab>");
-
-      // Strip escape sequences
-      if (c < 32)
-        continue;
-
-      // Append this char to the result
-      sb.append(c);
-    }
-
-    return sb.toString();
-  }
+  //=========================================================================//
+  //                                   API                                   //
+  //=========================================================================//
 
   /**
    * Turn an object into a human readable string, if possible
@@ -158,6 +142,10 @@ public class ObjectStringifier {
     ) : "<%s>".formatted(c.getSimpleName());
   }
 
+  //=========================================================================//
+  //                                Utilities                                //
+  //=========================================================================//
+
   /**
    * Stringify an object's properties into a comma separated list
    * @param o Object to query
@@ -241,5 +229,32 @@ public class ObjectStringifier {
 
     // Re-set the colors at the end
     return props + "§r";
+  }
+
+  /**
+   * Strip all escape sequences from a string
+   * @param input Input string
+   * @return String without escape sequences
+   */
+  private String stripEscapeSequences(String input) {
+    StringBuilder sb = new StringBuilder();
+
+    // Filter characters
+    for (char c : input.toCharArray()) {
+      if (c == '\n')
+        sb.append("§r<nl>");
+
+      if (c == '\t')
+        sb.append("§r<tab>");
+
+      // Strip escape sequences
+      if (c < 32)
+        continue;
+
+      // Append this char to the result
+      sb.append(c);
+    }
+
+    return sb.toString();
   }
 }

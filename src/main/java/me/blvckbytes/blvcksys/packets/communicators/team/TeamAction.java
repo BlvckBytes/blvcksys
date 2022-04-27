@@ -1,8 +1,11 @@
 package me.blvckbytes.blvcksys.packets.communicators.team;
 
-/**
- * Represents the mode field of a tablist-team packet
- */
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/27/2022
+
+  Represents the mode field of a tablist-team packet
+*/
 public enum TeamAction {
 
   // Create team

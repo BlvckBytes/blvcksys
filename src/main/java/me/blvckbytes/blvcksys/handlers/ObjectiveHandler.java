@@ -90,15 +90,26 @@ public class ObjectiveHandler implements Listener, IAutoConstructed {
 
   @EventHandler
   public void onJoin(PlayerJoinEvent e) {
-    createSidebarObjective(e.getPlayer());
+    Player p = e.getPlayer();
+
+    // Create the sidebar for the joined player
+    createSidebarObjective(p);
 
     // Update the sidebar for all other players
-    for (Player t : Bukkit.getOnlinePlayers())
-      if (t != e.getPlayer())
-        updateSidebar(t);
+    for (Player t : Bukkit.getOnlinePlayers()) {
+      // Skip self
+      if (t == p)
+        continue;
 
-    // Create below name objectives for that player on all other players
-    createBelowNameObjective(e.getPlayer());
+      // Update the sidebar for all other players
+      updateSidebar(t);
+
+      // Create a below name objective for the joined player on all other clients
+      createBelowNameObjective(t, e.getPlayer());
+
+      // Create a below name objective on all other clients for the joined player
+      createBelowNameObjective(p, t);
+    }
   }
 
   @EventHandler
@@ -115,7 +126,7 @@ public class ObjectiveHandler implements Listener, IAutoConstructed {
         // Update all online player's sidebar
         updateSidebar(t);
       }
-    }, 10);
+    }, EVENT_DELAY);
   }
 
   @EventHandler
@@ -203,9 +214,19 @@ public class ObjectiveHandler implements Listener, IAutoConstructed {
 
   @Override
   public void initialize() {
+    // Loop all online players
     for (Player t : Bukkit.getOnlinePlayers()) {
       createSidebarObjective(t);
-      createBelowNameObjective(t);
+
+      // Loop all other players relative to t
+      for (Player t2 : Bukkit.getOnlinePlayers()) {
+        // Skip self
+        if (t2 == t)
+          continue;
+
+        // Create the below name objective for client t for all other players
+        createBelowNameObjective(t, t2);
+      }
     }
   }
 
@@ -279,33 +300,33 @@ public class ObjectiveHandler implements Listener, IAutoConstructed {
 
   /**
    * Create a below-name objective for further use for a player
+   * @param t Player to create the objective for
    * @param who Who owns this text
    */
-  private void createBelowNameObjective(Player who) {
-    for (Player t : Bukkit.getOnlinePlayers()) {
-      // Skip self
-      if (t == who)
-        continue;
+  private void createBelowNameObjective(Player t, Player who) {
+    // Create initial empty list
+    if (!this.knownBelowNames.containsKey(t))
+      this.knownBelowNames.put(t, new ArrayList<>());
 
-      // Create the below name objective
-      if (oComm.sendObjective(
-        t,
-        NAME_BELOW_NAME.formatted(who.getName()),
-        ObjectiveMode.CREATE,
-        buildBelowNameText(who.getHealth()),
-        ObjectiveUnit.INTEGER
-      )) {
+    // Don't re-create out already known objectives
+    List<Player> known = knownBelowNames.get(t);
+    if (known.contains(who))
+      return;
 
-        // Display the below name objective
-        oComm.displayObjective(t, NAME_BELOW_NAME.formatted(who.getName()), ObjectivePosition.BELOW_NAME);
+    // Create the below name objective
+    if (oComm.sendObjective(
+      t,
+      NAME_BELOW_NAME.formatted(who.getName()),
+      ObjectiveMode.CREATE,
+      buildBelowNameText(who.getHealth()),
+      ObjectiveUnit.INTEGER
+    )) {
 
-        // Create initial empty list
-        if (!this.knownBelowNames.containsKey(t))
-          this.knownBelowNames.put(t, new ArrayList<>());
+      // Display the below name objective
+      oComm.displayObjective(t, NAME_BELOW_NAME.formatted(who.getName()), ObjectivePosition.BELOW_NAME);
 
-        // Register this below name holder
-        this.knownBelowNames.get(t).add(who);
-      }
+      // Register this below name holder
+      known.add(who);
     }
 
     // Display the initial values
@@ -416,7 +437,8 @@ public class ObjectiveHandler implements Listener, IAutoConstructed {
   }
 
   /**
-   * Update the below name objective regarding a player
+   * Update the below name objective regarding a player who's stats are displayed on it
+   * and send the update to all other online players
    * @param who Player to update the text for
    * @param health Health of who
    * @param level Level of who
@@ -436,7 +458,7 @@ public class ObjectiveHandler implements Listener, IAutoConstructed {
         level
       )) {
 
-        // Update the below name objective
+        // Update the below name objective's text
         oComm.sendObjective(
           t,
           NAME_BELOW_NAME.formatted(who.getName()),

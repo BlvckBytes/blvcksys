@@ -21,6 +21,7 @@ import org.bukkit.event.server.ServerListPingEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.locks.ReentrantLock;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -53,8 +54,8 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
     @AutoInject ILogger logger,
     @AutoInject MCReflect refl
     ) {
-    this.globalModifiers = new ArrayList<>();
-    this.specificModifiers = new HashMap<>();
+    this.globalModifiers = Collections.synchronizedList(new ArrayList<>());
+    this.specificModifiers = Collections.synchronizedMap(new HashMap<>());
     this.logger = logger;
     this.refl = refl;
   }

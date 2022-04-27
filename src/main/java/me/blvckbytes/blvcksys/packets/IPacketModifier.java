@@ -5,10 +5,13 @@ import net.minecraft.network.protocol.Packet;
 
 import java.util.UUID;
 
-/**
- * Represents a class that can modify in- and outgoing packets
- * and will be registered within a chain of modifiers
- */
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/23/2022
+
+  Represents a class that can modify in- and outgoing packets
+  and will be registered within a chain of modifiers
+*/
 public interface IPacketModifier {
 
   /**

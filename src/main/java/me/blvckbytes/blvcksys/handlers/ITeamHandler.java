@@ -5,6 +5,12 @@ import org.bukkit.entity.Player;
 
 import java.util.Optional;
 
+/*
+ Author: BlvckBytes <blvckbytes@gmail.com>
+ Created On: 04/27/2022
+
+ Public interfaces which the team handler provides to other consumers.
+ */
 public interface ITeamHandler {
 
   /**

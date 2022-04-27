@@ -22,6 +22,14 @@ import java.nio.file.Files;
 import java.util.Base64;
 import java.util.UUID;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/24/2022
+
+  Modifies outgoing serverlist packets to set the icon, the text, override
+  the currently online player-hover with custom text and optionally override
+  the player sample (online/slots) with a custom text as well.
+*/
 @AutoConstruct
 public class ServerListPacketModifier implements IPacketModifier {
 
@@ -29,6 +37,8 @@ public class ServerListPacketModifier implements IPacketModifier {
   private final IConfig cfg;
   private final JavaPlugin plugin;
   private final ILogger logger;
+
+  // Serverlist-Icon base64, preloaded for use with all requests
   private String encodedIcon;
 
   public ServerListPacketModifier(

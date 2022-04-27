@@ -2,6 +2,12 @@ package me.blvckbytes.blvcksys.packets;
 
 import org.bukkit.OfflinePlayer;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/23/2022
+
+  Public interfaces to handle the registration process of a packet modifier.
+*/
 public interface IPacketInterceptor {
 
   /**

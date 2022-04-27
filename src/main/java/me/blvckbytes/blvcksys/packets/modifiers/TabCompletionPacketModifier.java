@@ -20,6 +20,14 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/23/2022
+
+  Reads incoming tab completion request packets and then responds with
+  suggestions based on the registered commands within the command class map.
+  Placeholders are rendered colorful without shadow-text above the chat-bar.
+*/
 @AutoConstruct
 public class TabCompletionPacketModifier implements IPacketModifier {
 

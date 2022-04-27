@@ -22,6 +22,17 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/23/2022
+
+  Registers a duplex channel handler for every player on the server
+  at all times and allows external modifiers to register within a list of either
+  global modifiers (for all players) or player-specifc modifiers. The ping packet,
+  which does not correspond to an online player, is also caught. Player injections
+  are released on leaving the server, while all injections are undone at the end
+  of this module's lifecycle.
+*/
 @AutoConstruct
 public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoConstructed {
 

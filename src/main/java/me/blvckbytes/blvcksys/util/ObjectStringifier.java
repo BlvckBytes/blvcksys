@@ -96,8 +96,15 @@ public class ObjectStringifier {
     if (c.isArray() || isList) {
       StringBuilder sb = new StringBuilder(otherColor + "[");
 
+      // Try to get into the "iterable"
+      List<?> list;
+      try {
+        list = (List<?>) (isList ? o : Arrays.asList((Object[]) o));
+      } catch (Exception e) {
+        list = List.of("<error>");
+      }
+
       // Iterate list or list from array
-      List<?> list = (List<?>) (isList ? o : Arrays.asList((Object[]) o));
       for (int i = 0; i < list.size(); i++) {
         Object curr = list.get(i);
         Object res = stringifyObject(curr, depth);

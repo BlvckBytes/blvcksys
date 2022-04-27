@@ -25,6 +25,16 @@ import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 import java.util.stream.Stream;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/23/2022
+
+  Inject a packet logger into a player's communication channel to monitor
+  packets travelling in a specific direction. The simple class name of a
+  packet can be filtered using regular expressions. When logging packets,
+  the object stringifier will stringify all of the packet's declared fields
+  to a certain specified depth of recursion and apply the configured color-scheme.
+ */
 @AutoConstruct
 public class InjectCommand extends APlayerCommand implements Listener, IPacketModifier {
 

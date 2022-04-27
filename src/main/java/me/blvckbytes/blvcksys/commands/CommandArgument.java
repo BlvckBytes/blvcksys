@@ -1,4 +1,4 @@
-package me.blvckbytes.blvcksys.util.cmd;
+package me.blvckbytes.blvcksys.commands;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

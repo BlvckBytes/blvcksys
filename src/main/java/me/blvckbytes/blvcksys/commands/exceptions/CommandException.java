@@ -1,4 +1,4 @@
-package me.blvckbytes.blvcksys.util.cmd.exception;
+package me.blvckbytes.blvcksys.commands.exceptions;
 
 import lombok.Getter;
 import net.md_5.bungee.api.chat.BaseComponent;

@@ -1,4 +1,4 @@
-package me.blvckbytes.blvcksys.util.cmd.exception;
+package me.blvckbytes.blvcksys.commands.exceptions;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;

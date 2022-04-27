@@ -5,7 +5,7 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
 import me.blvckbytes.blvcksys.util.MCReflect;
-import me.blvckbytes.blvcksys.util.cmd.APlayerCommand;
+import me.blvckbytes.blvcksys.commands.APlayerCommand;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import net.minecraft.network.NetworkManager;

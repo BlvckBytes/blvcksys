@@ -1,5 +1,6 @@
-package me.blvckbytes.blvcksys.util.cmd;
+package me.blvckbytes.blvcksys.commands;
 
+import me.blvckbytes.blvcksys.commands.exceptions.*;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;

@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.util;
 
 import com.google.common.primitives.Primitives;
+import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
@@ -25,6 +26,10 @@ import java.util.function.Function;
 
 @AutoConstruct
 public class MCReflect {
+
+  // Empty buffer used to create packets by their serializer constructor
+  // Creating this once (all zeros) and using it for all future constructors
+  private static final ByteBuf EMPTY_BUFFER = Unpooled.wrappedBuffer(new byte[1024]);
 
   private final JavaPlugin plugin;
   private final ILogger logger;
@@ -809,12 +814,7 @@ public class MCReflect {
    */
   public Optional<Object> createGarbageInstance(Class<?> c) {
     return invokeConstructor(
-      c,
-
-      // Create a packet serializer from an empty array of bytes (all zeros)
-      // This way, the packet will just read garbage in it's constructor (which is
-      // fine, as values are later reflected into the object anyways)
-      new PacketDataSerializer(Unpooled.wrappedBuffer(new byte[1024]))
+      c, new PacketDataSerializer(EMPTY_BUFFER)
     );
   }
 }

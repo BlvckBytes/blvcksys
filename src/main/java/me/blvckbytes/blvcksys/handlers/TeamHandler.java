@@ -300,7 +300,8 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
       group.groupName() + GRAYED_SUFFIX,
       // Remove all color and make it gray
       ChatColor.GRAY + ChatColor.stripColor(group.prefix()),
-      "",
+      // Use the suffix from config
+      cfg.get(ConfigKey.AFK_SUFFIX).asScalar(),
       // Gray username
       ChatColor.GRAY,
       //

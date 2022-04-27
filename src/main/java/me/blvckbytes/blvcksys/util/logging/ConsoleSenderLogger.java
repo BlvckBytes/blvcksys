@@ -10,6 +10,13 @@ import org.bukkit.Bukkit;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/22/2022
+
+  Logs all events to the server's console and automatically prepends
+  the level's configured prefix
+*/
 @AutoConstruct
 public class ConsoleSenderLogger implements ILogger {
 

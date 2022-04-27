@@ -15,7 +15,6 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.enchantment.EnchantItemEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -35,6 +34,16 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/26/2022
+
+  Handles both the sidebar scoreboard as well as the scoreboard below a player's
+  name above their avatar for all players. All created objectives are destroyed
+  before the end of this module's lifecycle. Levels and hearts below the name are
+  only updated on an actual numeric delta by listening to all corresponding events
+  that affect those metrics. The sidebar is also only refreshed on changes.
+*/
 @AutoConstruct
 public class ScoreBoardHandler implements Listener, IAutoConstructed {
 

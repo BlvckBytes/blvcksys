@@ -3,7 +3,13 @@ package me.blvckbytes.blvcksys;
 import me.blvckbytes.blvcksys.util.di.AutoConstructer;
 import org.bukkit.plugin.java.JavaPlugin;
 
-public class Main extends JavaPlugin {
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/22/2022
+
+  Main class of this plugin which bootstraps all other modules
+*/
+public class BlvckSysPlugin extends JavaPlugin {
 
   @Override
   public void onEnable() {

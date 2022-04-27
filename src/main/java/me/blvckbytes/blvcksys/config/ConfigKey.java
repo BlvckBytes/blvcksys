@@ -17,6 +17,7 @@ public enum ConfigKey {
   AFK_WENT("afk.went", "&7Der Spieler &d{{name}} &7ist &dnun abwesend&7!"),
   AFK_RESUMED("afk.resumed", "&7Der Spieler &d{{name}} &7ist &dwieder anwesend&7!"),
   AFK_SUFFIX("afk.suffix", " &8&lAFK"),
+  AFK_ALREADY("afk.already", "&7Du bist &cbereits AFK&7!"),
 
   //=========================================================================//
   //                               Global Prefix                             //

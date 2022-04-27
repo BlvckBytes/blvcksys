@@ -99,13 +99,17 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
   @Override
   public void cleanup() {
     // Unregister all globals
+    // Loop in reverse to avoid concurrent modifications
     for (int i = this.globalModifiers.size() - 1; i >= 0; i--)
       this.unregister(this.globalModifiers.get(i));
 
     // Unregister all specifics
-    for (Map.Entry<Player, ArrayList<IPacketModifier>> entry : specificModifiers.entrySet())
-      for (IPacketModifier modifier : entry.getValue())
-        this.unregisterSpecific(entry.getKey(), modifier);
+    for (Map.Entry<Player, ArrayList<IPacketModifier>> entry : specificModifiers.entrySet()) {
+      // Loop in reverse to avoid concurrent modifications
+      List<IPacketModifier> modifiers = entry.getValue();
+      for (int i = modifiers.size() - 1; i >= 0; i--)
+        this.unregisterSpecific(entry.getKey(), modifiers.get(i));
+    }
 
     // Uninject all players before a reload
     for (Player p : Bukkit.getOnlinePlayers())
@@ -182,25 +186,30 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
           return;
         }
 
-        // Run through all global modifiers
-        for (IPacketModifier modifier : globalModifiers) {
-          packet = modifier.modifyIncoming(p, nm, packet);
-
-          // Packet has been terminated
-          if (packet == null)
-            return;
-        }
-
-        // Run through all specific modifiers
-        ArrayList<IPacketModifier> specifics = specificModifiers.get(p);
-        if (specifics != null) {
-          for (IPacketModifier modifier : specifics) {
+        // Ensure exceptions don't ruin the pipe
+        try {
+          // Run through all global modifiers
+          for (IPacketModifier modifier : globalModifiers) {
             packet = modifier.modifyIncoming(p, nm, packet);
 
             // Packet has been terminated
             if (packet == null)
               return;
           }
+
+          // Run through all specific modifiers
+          ArrayList<IPacketModifier> specifics = specificModifiers.get(p);
+          if (specifics != null) {
+            for (IPacketModifier modifier : specifics) {
+              packet = modifier.modifyIncoming(p, nm, packet);
+
+              // Packet has been terminated
+              if (packet == null)
+                return;
+            }
+          }
+        } catch (Exception e) {
+          logger.logError(e);
         }
 
         // Relay modified packet
@@ -215,25 +224,30 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
           return;
         }
 
-        // Run through all global modifiers
-        for (IPacketModifier modifier : globalModifiers) {
-          packet = modifier.modifyOutgoing(p, nm, packet);
-
-          // Packet has been terminated
-          if (packet == null)
-            return;
-        }
-
-        // Run through all specific modifiers
-        ArrayList<IPacketModifier> specifics = specificModifiers.get(p);
-        if (specifics != null) {
-          for (IPacketModifier modifier : specifics) {
+        // Ensure exceptions don't ruin the pipe
+        try {
+          // Run through all global modifiers
+          for (IPacketModifier modifier : globalModifiers) {
             packet = modifier.modifyOutgoing(p, nm, packet);
 
             // Packet has been terminated
             if (packet == null)
               return;
           }
+
+          // Run through all specific modifiers
+          ArrayList<IPacketModifier> specifics = specificModifiers.get(p);
+          if (specifics != null) {
+            for (IPacketModifier modifier : specifics) {
+              packet = modifier.modifyOutgoing(p, nm, packet);
+
+              // Packet has been terminated
+              if (packet == null)
+                return;
+            }
+          }
+        } catch (Exception e) {
+          logger.logError(e);
         }
 
         // Relay modified packet

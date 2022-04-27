@@ -618,8 +618,10 @@ public class MCReflect {
    */
   public boolean sendPacket(Player p, Object packet) {
     return getNetworkManager(p)
-      .flatMap(nm -> findMethodByArgsOnly(nm.getClass(), Packet.class))
-      .map(sendM -> invokeMethod(sendM, packet))
+      .flatMap(nm ->
+        findMethodByArgsOnly(nm.getClass(), Packet.class)
+          .map(sendM -> invokeMethod(sendM, nm, packet))
+      )
       .orElse(false);
   }
 

@@ -25,7 +25,7 @@ import java.util.Map;
   a player is afk or not, then marks them grayed in the tablist accordingly.
  */
 @AutoConstruct
-public class AfkListener implements Listener, IAutoConstructed {
+public class AfkListener implements Listener, IAutoConstructed, IAfkListener {
 
   // Timeout in milliseconds for a player to be marked as AFK
   private static final int TIMEOUT_MS = 1000 * 60 * 10; // 10 minutes
@@ -71,6 +71,22 @@ public class AfkListener implements Listener, IAutoConstructed {
       reactivateTimeout(t);
   }
 
+  @Override
+  public boolean isAFK(Player p) {
+    long last = lastAction.getOrDefault(p, System.currentTimeMillis());
+    return System.currentTimeMillis() > last + TIMEOUT_MS;
+  }
+
+  @Override
+  public void setAFK(Player p) {
+    // Is already AFK
+    if (isAFK(p))
+      return;
+
+    // Mark as AFK
+    markAFK(p);
+  }
+
   //=========================================================================//
   //                                 Listeners                               //
   //=========================================================================//
@@ -106,6 +122,10 @@ public class AfkListener implements Listener, IAutoConstructed {
 
   @EventHandler
   public void onCommand(PlayerCommandPreprocessEvent e) {
+    // Ignore the AFK command to avoid flip-floping around
+    if (e.getMessage().toLowerCase().startsWith("/afk"))
+      return;
+
     reactivateTimeout(e.getPlayer());
   }
 
@@ -143,12 +163,10 @@ public class AfkListener implements Listener, IAutoConstructed {
    * @param p Target player
    */
   private void checkActions(Player p) {
-    long curr = System.currentTimeMillis();
-    long action = lastAction.getOrDefault(p, System.currentTimeMillis());
+    // Still active
+    if (!isAFK(p)) {
 
-    // Still considered active
-    if (curr < action + TIMEOUT_MS) {
-      // Not marked as active
+      // Not marked as AFK
       if (!teams.getGrayed(p))
         return;
 
@@ -167,9 +185,21 @@ public class AfkListener implements Listener, IAutoConstructed {
       return;
     }
 
+    markAFK(p);
+  }
+
+  /**
+   * Mark a player as AFK
+   * @param p Target player
+   */
+  private void markAFK(Player p) {
     // Already marked as afk
     if (teams.getGrayed(p))
       return;
+
+    // Just to make sure: set an action far enough in the past, since
+    // this procedure can also be called programmatically at any time
+    lastAction.put(p, System.currentTimeMillis() - TIMEOUT_MS);
 
     // Mark grayed
     teams.setGrayed(p, true);

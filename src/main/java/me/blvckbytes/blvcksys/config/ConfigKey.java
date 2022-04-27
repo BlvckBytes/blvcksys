@@ -47,6 +47,18 @@ public enum ConfigKey {
   ),
 
   //=========================================================================//
+  //                                 Below Name                              //
+  //=========================================================================//
+
+  // Since minecraft burdens us with limitations here, this text
+  // will always start with a white number of levels the player has.
+  // Then, go from there and specify the rest
+  BELOWNAME_TEXT(
+    "belowname_text",
+    "&a◎ &8| &r{{hearts}} &c❤"
+  ),
+
+  //=========================================================================//
   //                                 Tablist                                 //
   //=========================================================================//
 

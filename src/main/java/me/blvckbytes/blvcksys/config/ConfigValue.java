@@ -193,7 +193,9 @@ public class ConfigValue {
    */
   private String applyVariables(String input) {
     for (Map.Entry<Pattern, String> var : vars.entrySet())
-      input = var.getKey().matcher(input).replaceAll(var.getValue());
+      // Escape dollars before applying the regex replace, unescape afterwards
+      // This avoids illegal group reference exceptions
+      input = var.getKey().matcher(input).replaceAll(var.getValue().replace("$", "\\$")).replace("\\$", "$");
     return input;
   }
 

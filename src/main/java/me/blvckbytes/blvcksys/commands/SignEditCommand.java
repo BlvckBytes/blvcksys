@@ -76,14 +76,12 @@ public class SignEditCommand extends APlayerCommand {
 
     // Open a new sign editor and patch the sign's lines on submit
     signEditor.openSignEditor(p, currLines, lines -> {
-      Bukkit.getScheduler().runTask(plugin, () -> {
-        // Support a dynamic number of lines
-        for (int i = 0; i < Math.min(currLines.length, lines.length); i++)
-          s.setLine(i, lines[i]);
+      // Support a dynamic number of lines
+      for (int i = 0; i < Math.min(currLines.length, lines.length); i++)
+        s.setLine(i, lines[i]);
 
-        // Update the block and make changes visible
-        s.update();
-      });
+      // Update the block and make changes visible
+      s.update();
     });
   }
 }

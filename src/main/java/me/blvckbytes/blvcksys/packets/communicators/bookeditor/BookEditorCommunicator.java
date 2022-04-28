@@ -18,6 +18,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
@@ -153,6 +154,16 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
       return;
 
     // Undo this fake hand if the player decides to quit writing and open the inventory
+    if (bookeditRequests.containsKey(p))
+      undoFakeHand(p, true);
+  }
+
+  @EventHandler
+  public void onInvClick(InventoryClickEvent e) {
+    if (!(e.getWhoClicked() instanceof Player p))
+      return;
+
+    // Undo this fake hand if the player decides to quit writing and clicks in an inventory
     if (bookeditRequests.containsKey(p))
       undoFakeHand(p, true);
   }

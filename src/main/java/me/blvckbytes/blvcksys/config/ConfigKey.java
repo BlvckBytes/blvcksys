@@ -6,24 +6,42 @@ package me.blvckbytes.blvcksys.config;
 
   All known keys which the configuration file needs to implement. Enum
   constants each have their own key as well as a value, which can consist of
-  multiple strings that will be newline-separated automatically
+  multiple strings that will be newline-separated automatically.
 */
 public enum ConfigKey {
+
+  //=========================================================================//
+  //                              Color Palette                              //
+  //=========================================================================//
+
+  // This palette is accessible within all templates as $0 ... $9
+  PALETTE(
+    "palette",
+    /*
+       $0 Neutral
+       $1 Neutral Dark
+       $2 Main
+       $3 Secondary
+       $4 Error
+       $5 Error Dark
+    */
+    "78d5c4"
+  ),
 
   //=========================================================================//
   //                                   AFK                                   //
   //=========================================================================//
 
-  AFK_WENT("afk.went", "&7Der Spieler &d{{name}} &7ist &dnun abwesend&7!"),
-  AFK_RESUMED("afk.resumed", "&7Der Spieler &d{{name}} &7ist &dwieder anwesend&7!"),
-  AFK_SUFFIX("afk.suffix", " &8&lAFK"),
-  AFK_ALREADY("afk.already", "&7Du bist &cbereits AFK&7!"),
+  AFK_WENT("afk.went", "$0Der Spieler $2{{name}} $0ist $2nun abwesend$0!"),
+  AFK_RESUMED("afk.resumed", "$0Der Spieler $2{{name}} $0ist $2wieder anwesend$0!"),
+  AFK_SUFFIX("afk.suffix", " $1&lAFK"),
+  AFK_ALREADY("afk.already", "$0Du bist $4bereits AFK$0!"),
 
   //=========================================================================//
   //                               Global Prefix                             //
   //=========================================================================//
 
-  PREFIX("prefix", "&8[&5BVS&8]&r "),
+  PREFIX("prefix", "$1[$3BVS$1]$0 "),
 
   //=========================================================================//
   //                                 Logging                                 //
@@ -31,36 +49,36 @@ public enum ConfigKey {
 
   LOGGING_PREFIX_DEBUG("logging_prefix.debug", "&6"),
   LOGGING_PREFIX_INFO("logging_prefix.info", "&a"),
-  LOGGING_PREFIX_ERROR("logging_prefix.error", "&4"),
+  LOGGING_PREFIX_ERROR("logging_prefix.error", "$5"),
 
   //=========================================================================//
   //                                   Chat                                  //
   //=========================================================================//
 
-  CHAT_FORMAT("chat_format", "{{prefix}}{{name}}&7: {{message}}"),
+  CHAT_FORMAT("chat_format", "{{prefix}}{{name}}$0: {{message}}"),
 
   //=========================================================================//
   //                                  Sidebar                                //
   //=========================================================================//
 
-  SIDEBAR_TITLE("sidebar.title", "&5&lBlvckBytes.DEV"),
+  SIDEBAR_TITLE("sidebar.title", "$3&lBlvckBytes.DEV"),
   SIDEBAR_LINES(
     "sidebar.lines",
     " ",
     "Spieler:",
-    "&d{{num_online}}&7/&d{{num_slots}}",
+    "$2{{num_online}}$0/$2{{num_slots}}",
     " ",
     "Onlinezeit:",
-    "&cSoon",
+    "$4Soon",
     " ",
     "Münzen:",
-    "&cSoon",
+    "$4Soon",
     " ",
     "Freunde:",
-    "&cSoon",
+    "$4Soon",
     " ",
     "Dein Name:",
-    "&d{{name}}"
+    "$2{{name}}"
   ),
 
   //=========================================================================//
@@ -72,7 +90,7 @@ public enum ConfigKey {
   // Then, go from there and specify the rest
   BELOWNAME_TEXT(
     "belowname_text",
-    "&a◎ &8| &r{{hearts}} &c❤"
+    "&a◎ $1| &r{{hearts}} &c❤"
   ),
 
   //=========================================================================//
@@ -82,24 +100,24 @@ public enum ConfigKey {
   TABLIST_HEADER(
     "tablist.header",
     " ",
-    "&5&lBlvckBytes.DEV",
-    "&7Willkommen, &d{{player}}&7!",
+    "$3&lBlvckBytes.DEV",
+    "$0Willkommen, $2{{player}}$0!",
     " ",
-    "&8&m──────────────────────────────",
+    "$1&m──────────────────────────────",
     " "
   ),
   TABLIST_FOOTER(
     "tablist.footer",
     " ",
-    "&8&m──────────────────────────────",
+    "$1&m──────────────────────────────",
     " ",
-    "&d✦ &7Online: &d{{num_online}}&7/&d{{num_slots}} &8| &d⇄ &7Ping: &d{{ping}}ms &8| &d⌚ &7Uhrzeit: &d{{time}}",
+    "$2✦ $0Online: $2{{num_online}}$0/$2{{num_slots}} $1| $2⇄ $0Ping: $2{{ping}}ms $1| $2⌚ $0Uhrzeit: $2{{time}}",
     " "
   ),
   TABLIST_PREFIXES(
     "tablist.prefixes",
-    "Admin;&cAdmin &8| &c",
-    "Spieler;&2Spieler &8| &2"
+    "Admin;&cAdmin $1| &c",
+    "Spieler;&2Spieler $1| &2"
   ),
 
   //=========================================================================//
@@ -108,80 +126,80 @@ public enum ConfigKey {
 
   PLAYERLIST_TEXT(
     "playerlist.text",
-    "&7» &8❘ &e&lDevelopment Server",
-    "&7» &8❘ ➟ &aYour &8× &dAdvertisement &8× &6Placed &8× &9Here"
+    "$0» $1❘ &e&lDevelopment Server",
+    "$0» $1❘ ➟ &aYour $1× &dAdvertisement $1× &6Placed $1× &9Here"
   ),
   PLAYERLIST_HOVER(
     "playerlist.hover",
-    "&bThis server has an",
-    "&bawesome hover applied!"
+    "$2This server has an",
+    "$2awesome hover applied!"
   ),
-  PLAYERLIST_ONLINE("playerlist.online", "&c5&7/&c12 &7(&dHello World&7)"),
+  PLAYERLIST_ONLINE("playerlist.online", ""),
 
   //=========================================================================//
   //                              MSG, R Command                             //
   //=========================================================================//
 
-  MSG_SENDER("msg.sender", "&8(&6Du &7-> &6{{receiver}}&8)&7: {{message}}"),
-  MSG_RECEIVER("msg.receiver", "&8(&6{{sender}}&8 -> &6Dir&8)&7: {{message}}"),
-  MSG_NO_PARTNER("msg.no_partner", "&cDu hast keinen aktiven Nachrichten-Partner!"),
-  MSG_SELF("msg.self", "&cDu kannst dir selbst keine Nachrichten schreiben!"),
+  MSG_SENDER("msg.sender", "$1($2Du $0-> $2{{receiver}}$1)$0: {{message}}"),
+  MSG_RECEIVER("msg.receiver", "$1($2{{sender}}$1 -> $2Dir$1)$0: {{message}}"),
+  MSG_NO_PARTNER("msg.no_partner", "$4Du hast keinen aktiven Nachrichten-Partner!"),
+  MSG_SELF("msg.self", "$4Du kannst dir selbst keine Nachrichten schreiben!"),
 
   //=========================================================================//
   //                               FLY Command                               //
   //=========================================================================//
 
-  FLY_ENABLED_OTHER("fly.enabled_other", "&d{{name}} &7kann &dnun &7fliegen!"),
-  FLY_DISABLED_OTHER("fly.disabled_other", "&d{{name}} &7kann &dnicht mehr &7fliegen!"),
-  FLY_ENABLED("fly.enabled", "&7Du kannst &dnum &7fliegen!"),
-  FLY_DISABLED("fly.disabled", "&7Du kannst &dnicht mehr &7fliegen!"),
-  FLY_REVOKED("fly.revoked", "&7Du hast soeben deine &cFlugrechte &7verloren!"),
+  FLY_ENABLED_OTHER("fly.enabled_other", "$2{{name}} $0kann $2nun $0fliegen!"),
+  FLY_DISABLED_OTHER("fly.disabled_other", "$2{{name}} $0kann $2nicht mehr $0fliegen!"),
+  FLY_ENABLED("fly.enabled", "$0Du kannst $2num $0fliegen!"),
+  FLY_DISABLED("fly.disabled", "$0Du kannst $2nicht mehr $0fliegen!"),
+  FLY_REVOKED("fly.revoked", "$0Du hast soeben deine $4Flugrechte $0verloren!"),
 
   //=========================================================================//
   //                               GIVE Command                              //
   //=========================================================================//
 
-  GIVE_INVALID_ITEM("give.invalid_item", "&cDas Item {{material}} existiert nicht!"),
-  GIVE_SELF("give.self", "&7Du hast dir &d{{amount}}x {{material}} &7gegeben."),
-  GIVE_SENDER("give.sender", "&7Dem Spieler &d{{target}} &7wurden &d{{amount}}x {{material}} &7gegeben."),
-  GIVE_RECEIVER("give.receiver", "&7Dir wurden &d{{amount}}x {{material}} &7von &d{{executor}} &7gegeben."),
-  GIVE_DROPPED("give.dropped", "&cEs wurden {{num_dropped}} Items fallen gelassen!"),
+  GIVE_INVALID_ITEM("give.invalid_item", "$4Das Item {{material}} existiert nicht!"),
+  GIVE_SELF("give.self", "$0Du hast dir $2{{amount}}x {{material}} $0gegeben."),
+  GIVE_SENDER("give.sender", "$0Dem Spieler $2{{target}} $0wurden $2{{amount}}x {{material}} $0gegeben."),
+  GIVE_RECEIVER("give.receiver", "$0Dir wurden $2{{amount}}x {{material}} $0von $2{{executor}} $0gegeben."),
+  GIVE_DROPPED("give.dropped", "$4Es wurden {{num_dropped}} Items fallen gelassen!"),
 
   //=========================================================================//
   //                              INJECT Command                             //
   //=========================================================================//
 
-  INJECT_INJECTED("inject.injected", "&7Die Pakete von &d{{target}} &7werden &dnun &7abgefangen."),
-  INJECT_UNINJECTED("inject.uninjected", "&7Die Pakete von &d{{target}} &7werden nun &dnicht mehr &7abgefangen."),
-  INJECT_EVENT("inject.event", "&5{{direction}}&8 -> &r{{object}}"),
-  INJECT_EVENT_COLOR_OTHER("inject.event_color.other", "&7"),
-  INJECT_EVENT_COLOR_VALUES("inject.event_color.values", "&d"),
-  INJECT_INVALID_REGEX("inject.invalid_regex", "&cDas Regex \"{{regex}}\" ist ungültig!"),
+  INJECT_INJECTED("inject.injected", "$0Die Pakete von $2{{target}} $0werden $2nun $0abgefangen."),
+  INJECT_UNINJECTED("inject.uninjected", "$0Die Pakete von $2{{target}} $0werden nun $2nicht mehr $0abgefangen."),
+  INJECT_EVENT("inject.event", "$3{{direction}}$1 -> &r{{object}}"),
+  INJECT_EVENT_COLOR_OTHER("inject.event_color.other", "$0"),
+  INJECT_EVENT_COLOR_VALUES("inject.event_color.values", "$2"),
+  INJECT_INVALID_REGEX("inject.invalid_regex", "$4Das Regex \"{{regex}}\" ist ungültig!"),
 
   //=========================================================================//
   //                            Generic Messages                             //
   //=========================================================================//
-  GENERIC_JOINED("generic.joined", "&7Der Spieler &d{{name}} &7ist dem Server &dbeigetreten&7!"),
-  GENERIC_QUIT("generic.quit", "&7Der Spieler &d{{name}} &7hat den Server &dverlassen&7!"),
+  GENERIC_JOINED("generic.joined", "$0Der Spieler $2{{name}} $0ist dem Server $2beigetreten$0!"),
+  GENERIC_QUIT("generic.quit", "$0Der Spieler $2{{name}} $0hat den Server $2verlassen$0!"),
 
   //=========================================================================//
   //                              Error Messages                             //
   //=========================================================================//
 
-  ERR_INTERNAL("errors.internal", "&4Es trat ein interner Fehler auf!"),
-  ERR_INTPARSE("errors.intparse", "&cDie Eingabe &4{{number}} &cist keine Ganzzahl!"),
-  ERR_PERMISSION("errors.permission", "&cDir fehlt das Recht &4{{permission}} &cum diesen Befehl ausführen zu können!"),
-  ERR_OPTIONPARSE("errors.optionparse", "&cDie Eingabe &4{{option}} &cist keine gültige Wahl!"),
-  ERR_NOT_ONLINE("errors.not_online", "&cDer Spieler &4{{player}} &cist nicht online!"),
-  ERR_COOLDOWN("errors.cooldown", "&7Bitte warte noch &c{{duration}} &7bevor du diese Aktion erneut benutzt!"),
-  ERR_PLAYER_UNKNOWN("errors.player_unknown", "&cDer Spieler &4{{player}} &cist nicht Teil des Servers!"),
-  ERR_USAGE_PREFIX("errors.usage_prefix", "&7Benutzung: "),
-  ERR_USAGE_COLOR_MANDATORY("errors.usage_color.mandatory", "&d"),
+  ERR_INTERNAL("errors.internal", "$5Es trat ein interner Fehler auf!"),
+  ERR_INTPARSE("errors.intparse", "$4Die Eingabe $5{{number}} $4ist keine Ganzzahl!"),
+  ERR_PERMISSION("errors.permission", "$4Dir fehlt das Recht $5{{permission}} $4um diesen Befehl ausführen zu können!"),
+  ERR_OPTIONPARSE("errors.optionparse", "$4Die Eingabe $5{{option}} $4ist keine gültige Wahl!"),
+  ERR_NOT_ONLINE("errors.not_online", "$4Der Spieler $5{{player}} $4ist nicht online!"),
+  ERR_COOLDOWN("errors.cooldown", "$0Bitte warte noch $4{{duration}} $0bevor du diese Aktion erneut benutzt!"),
+  ERR_PLAYER_UNKNOWN("errors.player_unknown", "$4Der Spieler $5{{player}} $4ist nicht Teil des Servers!"),
+  ERR_USAGE_PREFIX("errors.usage_prefix", "$0Benutzung: "),
+  ERR_USAGE_COLOR_MANDATORY("errors.usage_color.mandatory", "$2"),
   ERR_USAGE_COLOR_OPTIONAL("errors.usage_color.optional", "&b"),
-  ERR_USAGE_COLOR_BRACKETS("errors.usage_color.brackets", "&8"),
-  ERR_USAGE_COLOR_OTHER("errors.usage_color.other", "&7"),
-  ERR_USAGE_COLOR_FOCUS("errors.usage_color.focus", "&4&l"),
-  ERR_NOT_A_PLAYER("errors.not_a_player", "&cDieser Befehl ist nur für &4Spieler &czugänglich!"),
+  ERR_USAGE_COLOR_BRACKETS("errors.usage_color.brackets", "$1"),
+  ERR_USAGE_COLOR_OTHER("errors.usage_color.other", "$0"),
+  ERR_USAGE_COLOR_FOCUS("errors.usage_color.focus", "$5&l"),
+  ERR_NOT_A_PLAYER("errors.not_a_player", "$4Dieser Befehl ist nur für $5Spieler $4zugänglich!"),
   ;
 
   private final String key;

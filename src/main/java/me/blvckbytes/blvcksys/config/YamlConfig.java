@@ -25,8 +25,8 @@ public class YamlConfig implements IConfig, IAutoConstructed {
   private YamlConfiguration cfg = null;
   private File yf = null;
 
-  // Global prefix string, load ahead of time as it's used quite often
-  private String prefix;
+  // Global prefix string, global palette, load ahead of time as it's used quite often
+  private String prefix, palette;
 
   private final JavaPlugin plugin;
 
@@ -37,6 +37,9 @@ public class YamlConfig implements IConfig, IAutoConstructed {
 
     // Build a fallback for the prefix
     this.prefix = "[" + plugin.getDescription().getName() + "] ";
+
+    // Palette fallback: no colors
+    this.palette = "";
 
     this.load();
   }
@@ -60,11 +63,11 @@ public class YamlConfig implements IConfig, IAutoConstructed {
     // Is a list
     Class<?> valC = val.getClass();
     if (List.class.isAssignableFrom(valC))
-      return new ConfigValue((List<String>) val, prefix);
+      return new ConfigValue((List<String>) val, prefix, palette);
 
     // Is a scalar
     else
-      return new ConfigValue(val.toString(), prefix);
+      return new ConfigValue(val.toString(), prefix, palette);
   }
 
   @Override
@@ -108,10 +111,16 @@ public class YamlConfig implements IConfig, IAutoConstructed {
       if (ensureEntries())
         save();
 
+      // Load the palette
+      // No variables or palettes will be available for interpolation
+      this.palette = new ConfigValue(
+        cfg.getString(ConfigKey.PALETTE.toString()), "", ""
+      ).asScalar();
+
       // Load the prefix ahead of time
-      // Use the config value builder to transform the string (to keep it centralized)
+      // Already supply the palette
       this.prefix = new ConfigValue(
-        cfg.getString(ConfigKey.PREFIX.toString()), ""
+        cfg.getString(ConfigKey.PREFIX.toString()), "", palette
       ).asScalar();
     } catch (Exception e) {
       e.printStackTrace();

@@ -21,7 +21,8 @@ import java.util.stream.Stream;
   first line or to no lines at all. Templated values may be interpolated
   with a map of variables. These maps can be imported and exported for
   use accross multiple values. For convenience, the Stream and the
-  TextComponent representations are also offered to the consumer.
+  TextComponent representations are also offered to the consumer. The color
+  palette can be accessed in templates by $0...$9
 */
 public class ConfigValue {
 
@@ -42,6 +43,9 @@ public class ConfigValue {
   // Global prefix value
   private final String prefix;
 
+  // Color palette
+  private final String palette;
+
   // Prefix mode, 'N' = none, 'F' = first line, 'A' = all lines
   private char prefixMode;
 
@@ -49,19 +53,22 @@ public class ConfigValue {
    * Create a new config value builder by a string value
    * @param str String value
    * @param prefix Prefix for optional appending
+   * @param palette Color palette characters
    */
-  public ConfigValue(String str, String prefix) {
-    this(List.of(str), prefix);
+  public ConfigValue(String str, String prefix, String palette) {
+    this(List.of(str), prefix, palette);
   }
 
   /**
    * Create a new config value builder by multiple lines
    * @param lines List of lines
    * @param prefix Prefix for optional appending
+   * @param palette Color palette characters
    */
-  public ConfigValue(List<String> lines, String prefix) {
+  public ConfigValue(List<String> lines, String prefix, String palette) {
     this.lines = lines;
     this.prefix = prefix;
+    this.palette = palette;
     this.prefixMode = 'N';
     this.vars = new HashMap<>();
   }
@@ -193,10 +200,52 @@ public class ConfigValue {
    * @return Transformed result
    */
   private String transformLine(String input) {
-    // Translate the color codes first, since no variables should ever introduce color
+    // Translate the color codes first, since no variables should ever introduce color.
+    // Then apply the palette and last but not least the variables, so they don't get transformed.
     return applyVariables(
-      ChatColor.translateAlternateColorCodes('&', input)
+      applyPalette(
+        ChatColor.translateAlternateColorCodes('&', input)
+      )
     );
+  }
+
+  /**
+   * Apply color palette placeholders ($0...$9)
+   * @param input Input string
+   * @return Transformed result
+   */
+  private String applyPalette(String input) {
+    StringBuilder res = new StringBuilder();
+
+    for (int i = 0; i < input.length(); i++) {
+      char curr = input.charAt(i);
+
+      // Not a possible palette notation
+      if (i == 0 || input.charAt(i - 1) != '$') {
+        res.append(curr);
+        continue;
+      }
+
+      // Not a number, reset color
+      if (curr < 48 || curr > 57)
+        curr = 'r';
+
+      int index = curr - 48;
+
+      // Palette character not found, reset color
+      if (index >= palette.length())
+        curr = 'r';
+
+      else
+        // Use palette character as color
+        curr = palette.charAt(index);
+
+      // Substitute with the corresponding color notation
+      res.append(curr);
+      res.setCharAt(i - 1, '§');
+    }
+
+    return res.toString();
   }
 
   /**
@@ -221,6 +270,6 @@ public class ConfigValue {
    * Make a new empty instance
    */
   public static ConfigValue makeEmpty() {
-    return new ConfigValue("", "");
+    return new ConfigValue("", "", "");
   }
 }

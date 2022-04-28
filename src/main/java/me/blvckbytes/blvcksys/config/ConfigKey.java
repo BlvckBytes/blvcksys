@@ -10,6 +10,8 @@ package me.blvckbytes.blvcksys.config;
 */
 public enum ConfigKey {
 
+  // TODO: Fully integrate the palette and get rid of color-only keys
+
   //=========================================================================//
   //                              Color Palette                              //
   //=========================================================================//
@@ -135,6 +137,13 @@ public enum ConfigKey {
     "$2awesome hover applied!"
   ),
   PLAYERLIST_ONLINE("playerlist.online", ""),
+
+  //=========================================================================//
+  //                            SignEdit Command                             //
+  //=========================================================================//
+
+  SIGNEDIT_NOSIGN("signedit.nosign", "$0Du hast aktuell $4kein $0Schild auf deinem $4Fadenkreuz$0!"),
+  SIGNEDIT_NOBUILD("signedit.nobuild", "$0Du kannst in diesem Gebiet $4nicht bauen$0!"),
 
   //=========================================================================//
   //                              Color Command                              //

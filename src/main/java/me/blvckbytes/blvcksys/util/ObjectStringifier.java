@@ -175,18 +175,17 @@ public class ObjectStringifier {
         // No fields yet
         fields.length == 0 &&
 
-          // Superclass available
-          cl.getSuperclass() != null
+        // Superclass available
+        cl.getSuperclass() != null
       ) {
         // Navigate into superclass and list it's fields
         cl = cl.getSuperclass();
-        fields = cl.getDeclaredFields();
-      }
 
-      // Skip static fields
-      fields = Arrays.stream(fields)
-        .filter(f -> !Modifier.isStatic(f.getModifiers()))
-        .toArray(Field[]::new);
+        // Skip static fields
+        fields = Arrays.stream(cl.getDeclaredFields())
+          .filter(f -> !Modifier.isStatic(f.getModifiers()))
+          .toArray(Field[]::new);
+      }
 
       // Loop all fields of this packet and add them to a comma separated list
       for (int i = 0; i < fields.length; i++) {

@@ -18,6 +18,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -566,8 +567,7 @@ public class MCReflect {
       .flatMap(nm ->
         findMethodByArgsOnly(nm.getClass(), Packet.class)
           .map(sendM -> invokeMethod(sendM, nm, packet))
-      )
-      .orElse(false);
+      ).isPresent();
   }
 
   /**
@@ -678,15 +678,19 @@ public class MCReflect {
    * @param m Method to invoke
    * @param o Object to invoke on
    * @param args Arguments to that method
-   * @return Success of invocation
+   * @return Method result
    */
-  public boolean invokeMethod(Method m, Object o, Object ...args) {
+  public Optional<Object> invokeMethod(Method m, Object o, Object ...args) {
     try {
-      m.invoke(o, args);
-      return true;
+      Object ret = m.invoke(o, args);
+
+      if (ret == null)
+        return Optional.empty();
+
+      return Optional.of(ret);
     } catch (Exception e) {
       logger.logError(e);
-      return false;
+      return Optional.empty();
     }
   }
 

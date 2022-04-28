@@ -10,4 +10,12 @@ import java.lang.annotation.*;
 */
 @Target({ ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AutoConstruct {}
+public @interface AutoConstruct {
+
+  /**
+   * Specify any plugin dependencies this module requires here,
+   * and the {@link AutoConstructer} will exit and quit if one of
+   * them is missing on instantiation
+   */
+  String[] pluginDependencies() default {};
+}

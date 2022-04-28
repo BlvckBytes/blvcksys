@@ -16,7 +16,7 @@ import java.lang.annotation.Target;
 public @interface AutoInject {
 
   /**
-   * Whether or not to init this dependency "late" (as soon as
+   * Whether to init this dependency "late" (as soon as
    * possible), which is used to break circular dependencies that
    * do not require to be instantly resolved. This mode does require
    * a local member field that has the exact same type as the

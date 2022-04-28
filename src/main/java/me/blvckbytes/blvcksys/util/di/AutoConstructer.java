@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.util.di;
 
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.util.Tuple;
+import org.bukkit.Bukkit;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -121,27 +122,24 @@ public class AutoConstructer {
    *
    * @param plugin JavaPlugin reference
    * @param pkg Package to search for targets in
+   * @throws Exception Errors during instantiation of modules
    */
-  public static void execute(JavaPlugin plugin, String pkg) {
-    try {
-      // Find all classes in the target package
-      List<Class<?>> classes = findAnnotatedClasses(plugin, pkg);
+  public static void execute(JavaPlugin plugin, String pkg) throws Exception {
+    // Find all classes in the target package
+    List<Class<?>> classes = findAnnotatedClasses(plugin, pkg);
 
-      // Mapping classes to a chosen constructor, which either has no deps or only @AutoInject dep parameters
-      Map<Class<?>, Constructor<?>> ctorMap = selectConstructors(classes);
+    // Mapping classes to a chosen constructor, which either has no deps or only @AutoInject dep parameters
+    Map<Class<?>, Constructor<?>> ctorMap = selectConstructors(classes);
 
-      // Resolve all dependencies recursively
-      List<Class<?>> seen = new ArrayList<>();
-      for (Map.Entry<Class<?>, Constructor<?>> e : ctorMap.entrySet())
-        createWithDependencies(plugin, ctorMap, e.getKey(), seen);
+    // Resolve all dependencies recursively
+    List<Class<?>> seen = new ArrayList<>();
+    for (Map.Entry<Class<?>, Constructor<?>> e : ctorMap.entrySet())
+      createWithDependencies(plugin, ctorMap, e.getKey(), seen);
 
-      // Call the init method on all resources
-      for (Object o : refs.values()) {
-        if (o instanceof IAutoConstructed a)
-          a.initialize();
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
+    // Call the init method on all resources
+    for (Object o : refs.values()) {
+      if (o instanceof IAutoConstructed a)
+        a.initialize();
     }
   }
 
@@ -303,6 +301,13 @@ public class AutoConstructer {
     // Already exists, return "singleton" object
     if (refs.containsKey(target))
       return refs.get(target);
+
+    // Check for required plugin dependencies
+    AutoConstruct ac = target.getAnnotation(AutoConstruct.class);
+    for (String pluginDep : ac.pluginDependencies()) {
+      if (Bukkit.getPluginManager().getPlugin(pluginDep) == null)
+        throw new RuntimeException("@AutoConstruct plugin dependency not loaded: %s".formatted(pluginDep));
+    }
 
     // Check for unknown dependencies
     Constructor<?> targetC = ctorMap.get(target);

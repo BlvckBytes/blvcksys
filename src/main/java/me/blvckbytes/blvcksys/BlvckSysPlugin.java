@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys;
 
 import me.blvckbytes.blvcksys.util.di.AutoConstructer;
+import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /*
@@ -13,8 +14,14 @@ public class BlvckSysPlugin extends JavaPlugin {
 
   @Override
   public void onEnable() {
-    // Create all resources within this package
-    AutoConstructer.execute(this, getClass().getPackageName());
+    try {
+      // Create all resources within this package
+      AutoConstructer.execute(this, getClass().getPackageName());
+    } catch (Exception e) {
+      e.printStackTrace();
+      // Disable this plugin if it didn't pass auto-construct
+      Bukkit.getPluginManager().disablePlugin(this);
+    }
   }
 
   @Override

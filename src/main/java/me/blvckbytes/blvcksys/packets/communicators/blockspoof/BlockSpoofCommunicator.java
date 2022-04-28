@@ -37,19 +37,15 @@ public class BlockSpoofCommunicator implements IBlockSpoofCommunicator {
       .map(pbc -> {
         // Set the position to the provided location
         BlockPosition pos = new BlockPosition(loc.getX(), loc.getY(), loc.getZ());
-        refl.setFieldByType(pbc, BlockPosition.class, pos);
+        refl.setFieldByType(pbc, BlockPosition.class, pos, 0);
 
-        try {
-          // Create a new block from scratch using the specified material
-          Class<?> cmnC = refl.getClassBKT("util.CraftMagicNumbers");
-          refl.findMethodByName(cmnC, "getBlock", Material.class)
-            .flatMap(m -> refl.invokeMethod(m, null, mat))
-            // Get block data
-            .flatMap(b -> refl.getFieldByType(b, IBlockData.class))
-            .ifPresent(bd -> refl.setFieldByType(pbc, IBlockData.class, bd));
-        } catch (Exception e) {
-          logger.logError(e);
-        }
+        // Create a new block from scratch using the specified material
+        refl.getClassBKT("util.CraftMagicNumbers")
+          .flatMap(cmnC -> refl.findMethodByName(cmnC, "getBlock", Material.class)
+          .flatMap(m -> refl.invokeMethod(m, null, mat))
+          // Get block data
+          .flatMap(b -> refl.getFieldByType(b, IBlockData.class)))
+          .ifPresent(bd -> refl.setFieldByType(pbc, IBlockData.class, bd, 0));
 
         return pbc;
       })

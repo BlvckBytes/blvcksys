@@ -139,7 +139,14 @@ public enum ConfigKey {
   PLAYERLIST_ONLINE("playerlist.online", ""),
 
   //=========================================================================//
-  //                            SignEdit Command                             //
+  //                             LongChat Command                            //
+  //=========================================================================//
+
+  LONGCHAT_INIT("longchat.init", "$0Schreibe den Text in das $3Buch $0und klicke auf $3Fertig$0!"),
+  LONGCHAT_CANCELLED("longchat.cancelled", "$0Du hast die Texteingabe $4abgebrochen$0!"),
+
+  //=========================================================================//
+  //                             SignEdit Command                            //
   //=========================================================================//
 
   SIGNEDIT_NOSIGN("signedit.nosign", "$0Du hast aktuell $4kein $0Schild auf deinem $4Fadenkreuz$0!"),

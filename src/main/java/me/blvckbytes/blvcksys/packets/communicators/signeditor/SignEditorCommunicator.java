@@ -57,14 +57,18 @@ public class SignEditorCommunicator implements ISignEditorCommunicator, IPacketM
   }
 
   @Override
-  public void openSignEditor(Player p, String[] lines, Consumer<String[]> submit) {
+  public boolean openSignEditor(Player p, String[] lines, Consumer<String[]> submit) {
     // Just spawn the fake sign somewhere below the player
     Location fs = p.getLocation().add(0, -5, 0);
 
     // Open a sign editor and set a sign-edit request with the
     // callback and the fake sign's location
-    if (sendSignEditor(p, lines, fs))
+    if (sendSignEditor(p, lines, fs)) {
       signeditRequests.put(p.getUniqueId(), new Tuple<>(submit, fs));
+      return true;
+    }
+
+    return false;
   }
 
   /**
@@ -101,9 +105,9 @@ public class SignEditorCommunicator implements ISignEditorCommunicator, IPacketM
               refl.invokeMethod(m, nbt, "z", loc.getZ());
             });
 
-        refl.setFieldByType(ped, BlockPosition.class, pos);
-        refl.setFieldByType(ped, NBTTagCompound.class, nbt);
-        refl.setFieldByType(ped, TileEntityTypes.class, TileEntityTypes.h);
+        refl.setFieldByType(ped, BlockPosition.class, pos, 0);
+        refl.setFieldByType(ped, NBTTagCompound.class, nbt, 0);
+        refl.setFieldByType(ped, TileEntityTypes.class, TileEntityTypes.h, 0);
         return ped;
       })
       .map(pse -> refl.sendPacket(p, pse))
@@ -114,7 +118,7 @@ public class SignEditorCommunicator implements ISignEditorCommunicator, IPacketM
     // Send out a sign editor open packet for the fake block
     return refl.createGarbageInstance(PacketPlayOutOpenSignEditor.class)
       .map(pse -> {
-        refl.setFieldByType(pse, BlockPosition.class, pos);
+        refl.setFieldByType(pse, BlockPosition.class, pos, 0);
         return refl.sendPacket(p, pse);
       })
       .orElse(false);
@@ -130,14 +134,14 @@ public class SignEditorCommunicator implements ISignEditorCommunicator, IPacketM
         return incoming;
 
       // Get the lines from the sign
-      refl.getArrayFieldByType(us, "String").ifPresent(v -> {
+      refl.getArrayFieldByType(us, String.class).ifPresent(v -> {
         // Update the fake block back to it's original state
         Player tar = Bukkit.getPlayer(sender);
         if (tar != null)
           tar.sendBlockChange(tuple.b(), tuple.b().getBlock().getBlockData());
 
         // Synchronize back with the main task
-        Bukkit.getScheduler().runTask(plugin, () -> tuple.a().accept((String[]) v));
+        Bukkit.getScheduler().runTask(plugin, () -> tuple.a().accept(v));
       });
     }
     return incoming;

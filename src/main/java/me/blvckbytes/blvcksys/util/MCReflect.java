@@ -18,7 +18,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -61,20 +60,13 @@ public class MCReflect {
    * Get a class within the bukkit package
    * @param name Name of the class
    * @return Loaded class
-   * @throws ClassNotFoundException Class could not be found
    */
-  public Class<?> getClassBKT(String name) throws ClassNotFoundException {
-    return Class.forName("org.bukkit.craftbukkit.%s.%s".formatted(ver, name));
-  }
-
-  /**
-   * Get a class within the net-minecraft-server package
-   * @param name Name of the class
-   * @return Loaded class
-   * @throws ClassNotFoundException Class could not be found
-   */
-  public Class<?> getClassNMS(String name) throws ClassNotFoundException {
-    return Class.forName("net.minecraft.server.%s.%s".formatted(ver, name));
+  public Optional<Class<?>> getClassBKT(String name) {
+    try {
+      return Optional.of(Class.forName("org.bukkit.craftbukkit.%s.%s".formatted(ver, name)));
+    } catch (Exception e) {
+      return Optional.empty();
+    }
   }
 
   /**
@@ -83,8 +75,7 @@ public class MCReflect {
   public Optional<Object> getCraftServer() {
     try {
       // Get the server instance and cast it to a CraftServer
-      Class<?> clazz = getClassBKT("CraftServer");
-      return Optional.of(clazz.cast(plugin.getServer()));
+      return getClassBKT("CraftServer").map(clazz -> clazz.cast(plugin.getServer()));
     } catch (Exception e) {
       logger.logError(e);
       return Optional.empty();
@@ -101,11 +92,14 @@ public class MCReflect {
     getCraftServer().ifPresent(cs -> {
       try {
         // Get the server's command map
-        Class<?> clazz = getClassBKT("CraftServer");
-        Object cmdMap = clazz.getMethod("getCommandMap").invoke(cs);
-
-        // Invoke the register method using the passed parameters
-        cmdMap.getClass().getMethod("register", String.class, Command.class).invoke(cmdMap, name, command);
+        getClassBKT("CraftServer")
+          .flatMap(clazz -> findMethodByName(clazz, "getCommandMap"))
+          .flatMap(m -> invokeMethod(m, cs))
+          .ifPresent(cmdMap ->
+            findMethodByName(cmdMap.getClass(), "register", String.class, Command.class)
+              // Invoke the register method using the passed parameters
+            .ifPresent(register -> invokeMethod(register, cmdMap, name, command))
+          );
       } catch (Exception e) {
         logger.logError(e);
       }
@@ -155,15 +149,31 @@ public class MCReflect {
   /**
    * Try to find a class' member array field by it's generic type
    * @param c Class to search in
-   * @param arrayType Name of the generic type
+   * @param arrayType Generic type
    * @return Optional field, no value on reflection errors
    */
-  public Optional<Field> findArrayFieldByType(Class<?> c, String arrayType) {
+  public<T> Optional<Field> findArrayFieldByType(Class<?> c, Class<T> arrayType) {
     return walkHierarchyToFind(c, cc ->
       Arrays.stream(cc.getDeclaredFields())
         .filter(it -> !Modifier.isStatic(it.getModifiers()))
         .filter(it -> it.getType().isArray())
-        .filter(it -> it.getGenericType().getTypeName().contains(arrayType))
+        .filter(it -> it.getGenericType().getTypeName().contains(arrayType.getTypeName()))
+        .findFirst()
+    );
+  }
+
+  /**
+   * Try to find a class' member Optional field by it's generic type
+   * @param c Class to search in
+   * @param arrayType Generic type
+   * @return Optional field, no value on reflection errors
+   */
+  public<T> Optional<Field> findOptionalFieldByType(Class<?> c, Class<T> arrayType) {
+    return walkHierarchyToFind(c, cc ->
+      Arrays.stream(cc.getDeclaredFields())
+        .filter(it -> !Modifier.isStatic(it.getModifiers()))
+        .filter(it -> Optional.class.isAssignableFrom(it.getType()))
+        .filter(it -> it.getGenericType().getTypeName().contains(arrayType.getTypeName()))
         .findFirst()
     );
   }
@@ -177,10 +187,11 @@ public class MCReflect {
   /**
    * Try to find a class' member array field's value by it's generic type
    * @param o Object to search in
-   * @param arrayType Name of the generic type
+   * @param arrayType Generic type
    * @return Optional field value, no value on reflection errors
    */
-  public Optional<Object> getArrayFieldByType(Object o, String arrayType) {
+  @SuppressWarnings("unchecked")
+  public<T> Optional<T[]> getArrayFieldByType(Object o, Class<T> arrayType) {
     try {
       // Try to get the field by it's type
       Optional<Field> f = findArrayFieldByType(o.getClass(), arrayType);
@@ -190,7 +201,62 @@ public class MCReflect {
 
       // Respond with the value of this field in reference to the provided object
       f.get().setAccessible(true);
-      return Optional.of(f.get().get(o));
+      return Optional.of((T[]) f.get().get(o));
+    } catch (Exception e) {
+      logger.logError(e);
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Try to find a class' member list field's value by it's generic type
+   * @param o Object to search in
+   * @param arrayType Name of the generic type
+   * @return Optional field value, no value on reflection errors
+   */
+  @SuppressWarnings("unchecked")
+  public<T> Optional<List<T>> getListFieldByType(Object o, Class<T> arrayType) {
+    try {
+      // Try to get the field by it's type
+      Optional<Field> f = findListFieldByType(o.getClass(), arrayType);
+
+      if (f.isEmpty())
+        return Optional.empty();
+
+      // Respond with the value of this field in reference to the provided object
+      f.get().setAccessible(true);
+      return Optional.of((List<T>) f.get().get(o));
+    } catch (Exception e) {
+      logger.logError(e);
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Try to find a class' member Optional field's value by it's generic type
+   * @param o Object to search in
+   * @param optionalType Generic type
+   * @return Optional Optional field value, no value on reflection errors
+   */
+  @SuppressWarnings("unchecked")
+  public<T> Optional<T> getOptionalFieldByType(Object o, Class<T> optionalType) {
+    try {
+      // Try to get the field by it's type
+      Optional<Field> f = findOptionalFieldByType(o.getClass(), optionalType);
+
+      if (f.isEmpty())
+        return Optional.empty();
+
+      // Respond with the value of this field in reference to the provided object
+      f.get().setAccessible(true);
+
+      // Holds no value
+      Optional<?> opt = (Optional<?>) f.get().get(o);
+      if (opt.isEmpty())
+        return Optional.empty();
+
+      // Re-wrap to avoid unsafe cast
+      return Optional.of((T) opt.get());
     } catch (Exception e) {
       logger.logError(e);
       return Optional.empty();
@@ -226,13 +292,13 @@ public class MCReflect {
    * @param listType Name of the generic type
    * @return Optional field, no value on reflection errors
    */
-  public Optional<Field> findListFieldByType(Class<?> c, String listType) {
+  public<T> Optional<Field> findListFieldByType(Class<?> c, Class<T> listType) {
     return walkHierarchyToFind(c, cc -> {
       try {
         return Arrays.stream(cc.getDeclaredFields())
           .filter(it -> !Modifier.isStatic(it.getModifiers()))
           .filter(it -> List.class.isAssignableFrom(it.getType()))
-          .filter(it -> it.getGenericType().getTypeName().contains(listType))
+          .filter(it -> it.getGenericType().getTypeName().contains(listType.getSimpleName()))
           .findFirst();
       } catch (Exception e) {
         logger.logError(e);
@@ -242,17 +308,6 @@ public class MCReflect {
   }
 
   ////////////////////////////////// Writing /////////////////////////////////////
-
-  /**
-   * Try to set a class' member field's value by it's type, choose the first occurrence
-   * @param o Object to manipulate in
-   * @param fieldClass Target field's class
-   * @param v Value to set
-   * @return Success state
-   */
-  public boolean setFieldByType(Object o, Class<?> fieldClass, Object v) {
-    return setFieldByType(o, fieldClass, v, 0);
-  }
 
   /**
    * Try to set a class' member field's value by it's type, choose the first occurrence
@@ -278,10 +333,10 @@ public class MCReflect {
   /**
    * Try to set a class' member array field's value by it's type, choose the first occurrence
    * @param o Object to manipulate in
-   * @param arrayType Name of the generic type
+   * @param arrayType Generic type
    * @param v Value to set
    */
-  public void setArrayFieldByType(Object o, String arrayType, Object v) {
+  public<T> void setArrayFieldByType(Object o, Class<T> arrayType, Object v) {
     findArrayFieldByType(o.getClass(), arrayType).ifPresent(f -> {
       try {
         f.setAccessible(true);
@@ -295,16 +350,6 @@ public class MCReflect {
   //=========================================================================//
   //                              Field By Name                              //
   //=========================================================================//
-
-  /**
-   * Try to find a class' member field by it's name
-   * @param c Class to search in
-   * @param name Name of the target field
-   * @return Optional field, no value on reflection errors
-   */
-  public Optional<Field> findFieldByName(Class<?> c, String name) {
-    return findFieldByName(c, name, 0);
-  }
 
   /**
    * Try to find a class' member field by it's name
@@ -423,17 +468,6 @@ public class MCReflect {
    * @param enumClass Class of the target enum
    * @param fieldClass Class of the target field within that enum's class
    * @param v Value the field needs to equal to
-   * @return Enum constant matching requirements
-   */
-  public<T extends Enum<T>> Optional<T> getEnumByField(Class<T> enumClass, Class<?> fieldClass, Object v) {
-    return getEnumByField(enumClass, fieldClass, v, 0);
-  }
-
-  /**
-   * Find an enum constant by a value of it's fields
-   * @param enumClass Class of the target enum
-   * @param fieldClass Class of the target field within that enum's class
-   * @param v Value the field needs to equal to
    * @param skip Number if fields to skip of that type
    * @return Enum constant matching requirements
    */
@@ -489,8 +523,7 @@ public class MCReflect {
    */
   public Optional<Object> getCraftPlayer(Player p) {
     try {
-      Class<?> cpC = getClassBKT("entity.CraftPlayer");
-      return Optional.of(cpC.cast(p));
+      return getClassBKT("entity.CraftPlayer").map(cpC -> cpC.cast(p));
     } catch (Exception e) {
       logger.logError(e);
       return Optional.empty();
@@ -625,7 +658,6 @@ public class MCReflect {
       try {
         return Optional.of(cc.getDeclaredMethod(name, args));
       } catch (Exception e) {
-        logger.logError(e);
         return Optional.empty();
       }
     });
@@ -715,8 +747,8 @@ public class MCReflect {
         // While there's still a superclass
         currC != null &&
 
-          // And there's not yet a result
-          res.isEmpty()
+        // And there's not yet a result
+        res.isEmpty()
       ) {
         // Try to find the target
         res = searcher.apply(currC);
@@ -724,6 +756,9 @@ public class MCReflect {
         // Walk into superclass
         currC = currC.getSuperclass();
       }
+
+      if (res.isEmpty())
+        throw new RuntimeException("Hierarchy walk didn't yield any results (" + c + ")!");
 
       return res;
     } catch (Exception e) {

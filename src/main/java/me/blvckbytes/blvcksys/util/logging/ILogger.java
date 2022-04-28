@@ -8,6 +8,8 @@ package me.blvckbytes.blvcksys.util.logging;
 */
 public interface ILogger {
 
+  // TODO: Remove formatting and just work with plain strings, as it causes more trouble than it helps
+
   /**
    * Log a message on the debug level
    * @param format Format of the message

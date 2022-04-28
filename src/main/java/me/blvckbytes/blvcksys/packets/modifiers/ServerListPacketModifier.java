@@ -78,20 +78,20 @@ public class ServerListPacketModifier implements IPacketModifier {
           // Set the text
           refl.setFieldByType(
             sp, IChatBaseComponent.class,
-            new ChatMessage(cfg.get(ConfigKey.PLAYERLIST_TEXT).asScalar())
+            new ChatMessage(cfg.get(ConfigKey.PLAYERLIST_TEXT).asScalar()), 0
           );
 
           // Modify the icon base64 string value
           if (this.encodedIcon != null)
-            refl.setFieldByType(sp, String.class, encodedIcon);
+            refl.setFieldByType(sp, String.class, encodedIcon, 0);
 
           // Modify the player-sample by overriding online players with fake players
           String online = cfg.get(ConfigKey.PLAYERLIST_ONLINE).asScalar();
           if (!online.isEmpty()) {
             refl.getFieldByType(sp, ServerPing.ServerData.class)
               .ifPresent(sd -> {
-                refl.setFieldByType(sd, String.class, online);
-                refl.setFieldByType(sd, int.class, 0);
+                refl.setFieldByType(sd, String.class, online, 0);
+                refl.setFieldByType(sd, int.class, 0, 0);
               });
           }
 
@@ -105,7 +105,7 @@ public class ServerListPacketModifier implements IPacketModifier {
                   .map(line -> new GameProfile(UUID.randomUUID(), line))
                   .toArray(GameProfile[]::new);
 
-              refl.setArrayFieldByType(ps, "GameProfile", profiles);
+              refl.setArrayFieldByType(ps, GameProfile.class, profiles);
             });
         });
     }

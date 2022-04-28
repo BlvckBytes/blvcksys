@@ -42,13 +42,13 @@ public class ObjectiveCommunicator implements IObjectiveCommunicator {
       .map(sop -> {
 
         // Unique identifier for this objective
-        refl.setFieldByType(sop, String.class, identifier);
+        refl.setFieldByType(sop, String.class, identifier, 0);
 
         // Objective's display-name
         if (display != null) {
           refl.setFieldByType(
             sop, IChatBaseComponent.class,
-            new ChatComponentText(display)
+            new ChatComponentText(display), 0
           );
         }
 
@@ -60,12 +60,12 @@ public class ObjectiveCommunicator implements IObjectiveCommunicator {
           refl.getEnumByField(ehdC, String.class, unit.getUnit(), 0)
             .ifPresent(eC -> {
               // Scoreboard health display type (integer/hearts)
-              refl.setFieldByType(sop, ehdC, eC);
+              refl.setFieldByType(sop, ehdC, eC, 0);
             });
         }
 
         // Packet mode (0=create, 1=remove, 2=update text)
-        refl.setFieldByType(sop, int.class, mode.getMode());
+        refl.setFieldByType(sop, int.class, mode.getMode(), 0);
 
         return refl.sendPacket(p, sop);
       })
@@ -78,10 +78,10 @@ public class ObjectiveCommunicator implements IObjectiveCommunicator {
       .map(dop -> {
 
         // Unique identifier for the objective
-        refl.setFieldByType(dop, String.class, identifier);
+        refl.setFieldByType(dop, String.class, identifier, 0);
 
         // Position within the HUD
-        refl.setFieldByType(dop, int.class, pos.getPosition());
+        refl.setFieldByType(dop, int.class, pos.getPosition(), 0);
 
         return refl.sendPacket(p, dop);
       })
@@ -107,13 +107,13 @@ public class ObjectiveCommunicator implements IObjectiveCommunicator {
 
         // Score value
         if (score != null)
-          refl.setFieldByType(ssp, int.class, score);
+          refl.setFieldByType(ssp, int.class, score, 0);
 
         // Packet action
         Class<ScoreboardServer.Action> ssaC = ScoreboardServer.Action.class;
         refl.getEnumNth(ssaC, delete ? 1 : 0)
             .ifPresent(action -> {
-              refl.setFieldByType(ssp, ssaC, action);
+              refl.setFieldByType(ssp, ssaC, action, 0);
             });
 
         return refl.sendPacket(p, ssp);

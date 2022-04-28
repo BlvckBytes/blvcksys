@@ -17,6 +17,7 @@ public interface ISignEditorCommunicator {
    * @param p Target player
    * @param lines Lines to be displayed initially
    * @param submit Lines after committing
+   * @return Success state
    */
-  void openSignEditor(Player p, String[] lines, Consumer<String[]> submit);
+  boolean openSignEditor(Player p, String[] lines, Consumer<String[]> submit);
 }

@@ -304,7 +304,7 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
         .flatMap(cs -> refl.getFieldByName(cs, "console"))
         .flatMap(console -> refl.getFieldByType(console, ServerConnection.class))
         .flatMap(sc ->
-          refl.findListFieldByType(sc.getClass(), "NetworkManager")
+          refl.findListFieldByType(sc.getClass(), NetworkManager.class)
             .flatMap(nmlf -> refl.getFieldValue(nmlf, sc))
         )
         .map(nml -> (List<?>) nml)

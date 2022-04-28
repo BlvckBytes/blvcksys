@@ -143,6 +143,13 @@ public enum ConfigKey {
   COLOR_LISTING("color_listing", "$0Verfügbare Farben: {{colors}}"),
 
   //=========================================================================//
+  //                             ClearChat Command                           //
+  //=========================================================================//
+
+  CLEARCHAT_SELF("clearchat.self", "$0Du hast deinen Chat $3geleert$0!"),
+  CLEARCHAT_GLOBAL("clearchat.global", "$0Der Spieler $3{{issuer}} $0hat den Chat $3geleert$0!"),
+
+  //=========================================================================//
   //                              MSG, R Command                             //
   //=========================================================================//
 

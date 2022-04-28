@@ -582,6 +582,36 @@ public abstract class APlayerCommand extends Command {
     return argspan(args, from, args.length - 1);
   }
 
+  /**
+   * Get an argument's value by index
+   * @param args Array of arguments
+   * @param index Index of the target argumetn
+   * @return Argument's value
+   */
+  protected String argval(String[] args, int index) {
+    return argval(args, index, null);
+  }
+
+  /**
+   * Get an argument's value by index
+   * @param args Array of arguments
+   * @param index Index of the target argumetn
+   * @param fallback Fallback string in case the argument is missing
+   * @return Argument's value
+   */
+  protected String argval(String[] args, int index, String fallback) {
+    if (index >= args.length) {
+      // Fallback provided
+      if (fallback != null)
+        return fallback;
+
+      // Highlight missing arg
+      throw new UsageMismatchException(cfg, buildAdvancedUsage(index));
+    }
+
+    return args[index];
+  }
+
 
   //=========================================================================//
   //                             Public Utilities                            //

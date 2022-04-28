@@ -11,6 +11,12 @@ import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  6reated On: 04/28/2022
+
+  Quickly display all available chat colors.
+ */
 @AutoConstruct
 public class ColorCommand extends APlayerCommand {
 

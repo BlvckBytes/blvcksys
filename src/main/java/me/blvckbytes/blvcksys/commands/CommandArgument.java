@@ -4,8 +4,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 
-/**
- * Represents an argument a command can be invoked with
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/26/2022
+
+  Represents an argument a command can be invoked with
  */
 @Getter
 @AllArgsConstructor

@@ -10,9 +10,7 @@ import net.minecraft.network.NetworkManager;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.PacketPlayInBEdit;
 import net.minecraft.network.protocol.game.PacketPlayInSetCreativeSlot;
-import net.minecraft.network.protocol.game.PacketPlayOutOpenBook;
 import net.minecraft.network.protocol.game.PacketPlayOutSetSlot;
-import net.minecraft.world.EnumHand;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -36,7 +34,7 @@ import java.util.function.Consumer;
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 04/28/2022
 
-  Creates all packets in regard to opening a book editor GUI and retrieving it's text.
+  Creates all packets in regard to managing a book editor GUI and retrieving it's text.
 */
 @AutoConstruct
 public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketModifier, Listener {
@@ -79,7 +77,10 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
   //=========================================================================//
 
   @Override
-  public boolean openBookEditor(Player p, List<String> pages, Consumer<List<String>> submit) {
+  public boolean initBookEditor(Player p, List<String> pages, Consumer<List<String>> submit) {
+    // Cancel any previous requests
+    undoFakeHand(p, true);
+
     // Create a new book to set at the player's selected slot
     ItemStack book = new ItemStack(Material.WRITABLE_BOOK, 1);
 
@@ -97,24 +98,9 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
     if (!setFakeSlot(p, book, slot))
       return false;
 
-    // Create book opening packet (opens item in hand)
-    return refl.createGarbageInstance(PacketPlayOutOpenBook.class)
-      .map(pob -> {
-        // Open in the first hand
-        refl.getEnumNth(EnumHand.class, 0)
-          .ifPresent(eh ->refl.setFieldByType(pob, EnumHand.class, eh, 0));
-        return pob;
-      })
-      .map(pack -> refl.sendPacket(p, pack))
-      .map(succ -> {
-
-        // Register the request on success
-        if (succ)
-          this.bookeditRequests.put(p, new BookEditRequest(book, slot, submit));
-
-        return succ;
-      })
-      .orElse(false);
+    // Register the request
+    this.bookeditRequests.put(p, new BookEditRequest(book, slot, submit));
+    return true;
   }
 
   //=========================================================================//

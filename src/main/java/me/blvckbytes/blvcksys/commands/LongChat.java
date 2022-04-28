@@ -13,8 +13,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -47,16 +45,8 @@ public class LongChat extends APlayerCommand {
 
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
-    List<String> pages = Arrays.asList("Page 1", "Page 2", "Page 3");
-
-    // Notify about how it works
-    p.sendMessage(
-      cfg.get(ConfigKey.LONGCHAT_INIT)
-        .withPrefix()
-        .asScalar()
-    );
-
-    bookEditor.openBookEditor(p, pages, writtenPages -> {
+    // Open a new empty book editor
+    if (bookEditor.initBookEditor(p, new ArrayList<>(), writtenPages -> {
 
       // Cancelled the request
       if (writtenPages == null) {
@@ -70,6 +60,13 @@ public class LongChat extends APlayerCommand {
 
       for (String page : writtenPages)
         p.sendMessage(page);
-    });
+    })) {
+      // Notify about how it works
+      p.sendMessage(
+        cfg.get(ConfigKey.LONGCHAT_INIT)
+          .withPrefix()
+          .asScalar()
+      );
+    }
   }
 }

@@ -31,6 +31,15 @@ public enum ConfigKey {
   ),
 
   //=========================================================================//
+  //                               Chat Buttons                              //
+  //=========================================================================//
+
+  CHATBUTTONS_EXPIRED("chatbuttons.expired", "$0Dieser Button ist bereits $4abgelaufen$0!"),
+  CHATBUTTONS_HOVER("chatbuttons.hover", "$0Klicken um auszuführen"),
+  CHATBUTTONS_YES("chatbuttons.yes", "$1[&aJa$1]"),
+  CHATBUTTONS_NO("chatbuttons.no", "$1[&cNein$1]"),
+
+  //=========================================================================//
   //                                   AFK                                   //
   //=========================================================================//
 

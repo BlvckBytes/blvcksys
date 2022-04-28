@@ -5,6 +5,7 @@ import me.blvckbytes.blvcksys.packets.IPacketModifier;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
+import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.protocol.Packet;
@@ -37,7 +38,7 @@ import java.util.function.Consumer;
   Creates all packets in regard to managing a book editor GUI and retrieving it's text.
 */
 @AutoConstruct
-public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketModifier, Listener {
+public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketModifier, Listener, IAutoConstructed {
 
   /**
    * Represents a book edit request's parameters
@@ -102,6 +103,17 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
     this.bookeditRequests.put(p, new BookEditRequest(book, slot, submit));
     return true;
   }
+
+  @Override
+  public void cleanup() {
+    // Cancel all open book requests on unload
+    for (Player p : this.bookeditRequests.keySet())
+      undoFakeHand(p, true);
+  }
+
+  @Override
+  public void initialize() {}
+
 
   //=========================================================================//
   //                                 Listener                                //

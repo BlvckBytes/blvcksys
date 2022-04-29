@@ -13,13 +13,13 @@ import net.md_5.bungee.api.chat.TextComponent;
 public class CommandException extends RuntimeException {
 
   @Getter
-  private final BaseComponent text;
+  private final BaseComponent[] text;
 
   public CommandException(String text) {
-    this.text = new TextComponent(text);
+    this.text = new BaseComponent[]{ new TextComponent(text) };
   }
 
-  public CommandException(BaseComponent text) {
+  public CommandException(BaseComponent[] text) {
     this.text = text;
   }
 }

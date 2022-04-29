@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.commands;
 
+import lombok.Getter;
 import me.blvckbytes.blvcksys.commands.exceptions.*;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
@@ -7,10 +8,12 @@ import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -46,7 +49,8 @@ public abstract class APlayerCommand extends Command {
   protected final MCReflect refl;
 
   // The top level permission of this command
-  private final PlayerPermission permission;
+  @Getter
+  private final PlayerPermission rootPerm;
 
   // Mapping a player to their map of named cooldowns
   private final Map<Player, Map<String, Long>> playerCooldowns;
@@ -67,7 +71,7 @@ public abstract class APlayerCommand extends Command {
     MCReflect refl,
     String name,
     String description,
-    PlayerPermission permission,
+    PlayerPermission rootPerm,
     CommandArgument... cmdArgs
   ) {
     super(
@@ -90,7 +94,7 @@ public abstract class APlayerCommand extends Command {
     this.logger = logger;
     this.cfg = cfg;
     this.refl = refl;
-    this.permission = permission;
+    this.rootPerm = rootPerm;
 
     this.playerCooldowns = new HashMap<>();
 
@@ -170,8 +174,8 @@ public abstract class APlayerCommand extends Command {
 
     try {
       // Check for the top level permission
-      if (permission != null && !permission.has(p))
-        throw new MissingPermissionException(cfg, permission);
+      if (rootPerm != null && !rootPerm.has(p))
+        throw new MissingPermissionException(cfg, rootPerm);
 
       // Check for all permissions regarding arguments
       for (int i = 0; i < args.length; i++) {
@@ -340,37 +344,93 @@ public abstract class APlayerCommand extends Command {
   /**
    * Build the usage-string in advanced mode, which supports hover tooltips
    * @param focusedArgument The argument that should be focused using the focus color
+   * @return Array of components, where each word and every space is a component
    */
-  protected BaseComponent buildAdvancedUsage(@Nullable Integer focusedArgument) {
-    BaseComponent head = new TextComponent();
+  protected BaseComponent[] buildAdvancedUsage(@Nullable Integer focusedArgument) {
+    return buildAdvancedUsage(focusedArgument, false);
+  }
+
+  /**
+   * Build the usage-string in advanced mode, which supports hover tooltips
+   * @param focusedArgument The argument that should be focused using the focus color
+   * @param asWords Whether each word and each space needs to be it's own component
+   * @return Array of components
+   */
+  protected BaseComponent[] buildAdvancedUsage(@Nullable Integer focusedArgument, boolean asWords) {
+    List<BaseComponent> components = new ArrayList<>();
     String cOth = cfg.get(ConfigKey.ERR_USAGE_COLOR_OTHER).asScalar();
-    String cFoc = cfg.get(ConfigKey.ERR_USAGE_COLOR_FOCUS).asScalar();
 
     // Add /command with it's description as a tooltip
-    head.addExtra(buildHoverable(cOth + "/" + getName(), cOth + getDescription()));
+    components.add(buildHoverable(cOth + "/" + getName(), cOth + getDescription(), true));
 
     // Add all it's arguments with their descriptive text as hover-tooltips
     for (int i = 0; i < this.cmdArgs.length; i++) {
       CommandArgument arg = this.cmdArgs[i];
 
+      // Space out args
+      components.add(new TextComponent(" "));
+
       // Decide whether to colorize the argument using normal
       // colors or using the focus color based on it's positional index
-      head.addExtra(buildHoverable(" " + colorizeUsage(arg.getName(), (focusedArgument != null && focusedArgument == i)), cOth + arg.getDescription()));
+      String usage = colorizeUsage(arg.getName(), (focusedArgument != null && focusedArgument == i));
+
+      // Doesn't need to be split up into words
+      if (!asWords) {
+        components.add(new TextComponent(buildHoverable(" " + usage, cOth + arg.getDescription(), false)));
+        continue;
+      }
+
+      StringBuilder innerModifier = new StringBuilder();
+      int nextPushBegin = 0;
+
+      // Loop through the usage char by char and push space-separated words
+      for (int j = 0; j < usage.length(); j++) {
+        char c = usage.charAt(j);
+
+        // c is a modify indicator and there hasn't been a push yet
+        if (j > 0 && usage.charAt(j - 1) == '§' && nextPushBegin == 0) {
+          // There's no modify before this one, reset
+          if (j >= 3 && usage.charAt(j - 3) != '§')
+            innerModifier.delete(0, innerModifier.length());
+          innerModifier.append("§").append(c);
+        }
+
+        // Space encountered (or EOL), push text and space separately
+        if (c == ' ' || j == usage.length() - 1) {
+          int lastChar = c == ' ' ? j - 1 : j;
+
+          components.add(buildHoverable(
+            innerModifier + usage.substring(nextPushBegin, lastChar + 1),
+            cOth + arg.getDescription(), false
+          ));
+
+          if (c == ' ')
+            components.add(new TextComponent(" "));
+
+          nextPushBegin = lastChar + 2;
+        }
+      }
     }
 
-    return head;
+    return components.toArray(BaseComponent[]::new);
   }
 
   /**
    * Build a hoverable message
    * @param text Message to send
    * @param hover Message to display on hover
+   * @param suggest Whether to suggest this text on click
    * @return Built component
    */
-  private TextComponent buildHoverable(String text, String hover) {
+  private TextComponent buildHoverable(String text, String hover, boolean suggest) {
     // Build the hoverable text-component and add it to the list
     TextComponent tc = new TextComponent(text);
     tc.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(hover)));
+
+    // Suggest this text on click with all colors stripped off
+    if (suggest)
+      tc.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, ChatColor.stripColor(text)));
+
     return tc;
   }
 
@@ -699,5 +759,12 @@ public abstract class APlayerCommand extends Command {
     }
 
     return Optional.empty();
+  }
+
+  /**
+   * Get all registered commands
+   */
+  public static Collection<APlayerCommand> getCommands() {
+    return registeredCommands.values();
   }
 }

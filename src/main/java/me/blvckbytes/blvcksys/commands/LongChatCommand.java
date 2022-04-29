@@ -27,7 +27,7 @@ import java.util.List;
   to type out all the text and then send it by closing the book.
 */
 @AutoConstruct
-public class LongChat extends APlayerCommand {
+public class LongChatCommand extends APlayerCommand {
 
   // Maximum length a long chat message is allowed to have
   private static final int MAX_LEN = 1024;
@@ -36,7 +36,7 @@ public class LongChat extends APlayerCommand {
   private final IChatListener chat;
   private final ChatUtil chatUtil;
 
-  public LongChat(
+  public LongChatCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,

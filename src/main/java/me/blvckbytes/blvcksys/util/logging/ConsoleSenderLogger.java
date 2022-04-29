@@ -5,6 +5,7 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.util.ObjectStringifier;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
+import me.blvckbytes.blvcksys.util.di.AutoInjectLate;
 import org.bukkit.Bukkit;
 
 import java.io.PrintWriter;
@@ -21,14 +22,14 @@ import java.io.StringWriter;
 public class ConsoleSenderLogger implements ILogger {
 
   private final IConfig cfg;
-  private final ObjectStringifier ostr;
+
+  @AutoInjectLate
+  private ObjectStringifier ostr;
 
   public ConsoleSenderLogger(
-    @AutoInject IConfig cfg,
-    @AutoInject(lateinit = true) ObjectStringifier ostr
+    @AutoInject IConfig cfg
   ) {
     this.cfg = cfg;
-    this.ostr = ostr;
   }
 
   private void log(String format, Object... args) {
@@ -44,6 +45,11 @@ public class ConsoleSenderLogger implements ILogger {
 
   @Override
   public void logDebug(Object o, int depth) {
+    if (ostr == null) {
+      logError("The object stringifier is not yet available! (%s, %d)", o.getClass().getName(), depth);
+      return;
+    }
+
     log(cfg.get(ConfigKey.LOGGING_PREFIX_DEBUG) + ostr.stringifyObject(o, depth));
   }
 

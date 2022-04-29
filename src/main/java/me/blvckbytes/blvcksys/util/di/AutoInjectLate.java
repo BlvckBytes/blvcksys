@@ -7,10 +7,11 @@ import java.lang.annotation.Target;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
-  Created On: 04/22/2022
+  Created On: 04/29/2022
 
-  Marks a constructor parameter to be a @AutoConstruct dependency.
+  Marks a class' field to be a @AutoConstruct dependency which is
+  injected later (as soon as it becomes available).
 */
-@Target({ ElementType.PARAMETER })
+@Target({ ElementType.FIELD })
 @Retention(RetentionPolicy.RUNTIME)
-public @interface AutoInject {}
+public @interface AutoInjectLate {}

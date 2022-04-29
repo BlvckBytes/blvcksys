@@ -250,11 +250,47 @@ public class AutoConstructer {
    * @param instance Created object
    * @param vanillaC Vanilla class (unresolved interface for example) of this object
    */
-  private static void onInstantiation(JavaPlugin plugin, Object instance, Class<?> vanillaC) {
+  private static void onInstantiation(
+    JavaPlugin plugin,
+    Object instance,
+    Class<?> vanillaC
+  ) throws Exception {
     String name = instance.getClass().getSimpleName();
     logDebug("@AutoConstruct: " + name);
 
-    // Check for lateinits that need this type
+    // Keep a list of fields within this class that need to be late-initialized
+    List<Field> lateinitFields = new ArrayList<>();
+    for (Field f : instance.getClass().getDeclaredFields()) {
+      AutoInjectLate late = f.getAnnotation(AutoInjectLate.class);
+
+      // Not a lateinit receiver
+      if (late == null)
+        continue;
+
+      // Dependency already exists, set ref
+      if (refs.containsKey(f.getType())) {
+        f.set(instance, refs.get(f.getType()));
+        logDebug("Lateinit " + f.getType().getSimpleName() + " (" + name + ")");
+        continue;
+      }
+
+      // Add to buffer
+      lateinitFields.add(f);
+    }
+
+    // Add all fields as a tuple with their instance
+    for (Field f : lateinitFields) {
+      Class<?> t = f.getType();
+
+      // Class not yet requested, create empty list
+      if (!lateinits.containsKey(vanillaC))
+        lateinits.put(t, new ArrayList<>());
+
+      // Add the newly created object's lateinit request
+      lateinits.get(t).add(new Tuple<>(instance, f));
+    }
+
+    // Check for lateinits that need this just created type
     List<Tuple<Object, Field>> receivers = lateinits.remove(vanillaC);
     if (receivers != null) {
       try {
@@ -328,9 +364,6 @@ public class AutoConstructer {
       return inst;
     }
 
-    // Keep a list of fields within this class that need to be late-initialized
-    List<Field> lateinitFields = new ArrayList<>();
-
     // Loop all parameters of this constructor and thus all dependencies
     Object[] args = new Object[params.length];
     for (int i = 0; i < params.length; i++) {
@@ -343,35 +376,6 @@ public class AutoConstructer {
         throw new RuntimeException(
           "Parameter %s of %s is not annotated by @AutoInject".formatted(p.getName(), target.getName())
         );
-
-      // This dependency can be late-inited
-      if (aia.lateinit()) {
-        // Already exists
-        if (refs.containsKey(target)) {
-          args[i] = refs.get(target);
-          continue;
-        }
-
-        // Search for a matching member field
-        Field f = null;
-        for (Field tf : target.getDeclaredFields()) {
-          if (!tf.getType().equals(p.getType()))
-            continue;
-
-          f = tf;
-          break;
-        }
-
-        // Lateinits need to have a corresponding member field (same type)
-        if (f == null)
-          throw new RuntimeException(
-            "Parameter %s of %s has no corresponding member field".formatted(p.getName(), target.getName())
-          );
-
-        // Add to buffer
-        lateinitFields.add(f);
-        continue;
-      }
 
       // Directly inject main at this point
       if (dep.isAssignableFrom(plugin.getClass())) {
@@ -394,18 +398,6 @@ public class AutoConstructer {
     // All constructor dependencies instantiated, now create the target itself
     // using all created dependencies
     Object inst = targetC.newInstance(args);
-
-    // Add all fields as a tuple with their instance
-    for (Field f : lateinitFields) {
-      Class<?> t = f.getType();
-
-      // Class not yet requested, create empty list
-      if (!lateinits.containsKey(vanillaC))
-        lateinits.put(t, new ArrayList<>());
-
-      // Add the newly created object's lateinit request
-      lateinits.get(t).add(new Tuple<>(inst, f));
-    }
 
     onInstantiation(plugin, inst, vanillaC);
     refs.put(target, inst);

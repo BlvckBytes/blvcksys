@@ -16,6 +16,7 @@ public enum PlayerPermission {
   //=========================================================================//
 
   LONGCHAT("bvs.longchat"),
+  LONGCHAT_LIMITLESS("bvs.longchat.limitless"),
 
   //=========================================================================//
   //                            ClearChat Command                            //

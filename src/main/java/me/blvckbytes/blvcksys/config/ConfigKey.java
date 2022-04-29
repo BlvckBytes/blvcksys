@@ -38,6 +38,8 @@ public enum ConfigKey {
   CHATBUTTONS_HOVER("chatbuttons.hover", "$0Klicken um auszuführen"),
   CHATBUTTONS_YES("chatbuttons.yes", "$1[&aJa$1]"),
   CHATBUTTONS_NO("chatbuttons.no", "$1[&cNein$1]"),
+  CHATBUTTONS_EDIT("chatbuttons.edit", "$1[&6Bearbeiten$1]"),
+  CHATBUTTONS_CANCEL("chatbuttons.cancel", "$1[&cAbbrechen$1]"),
 
   //=========================================================================//
   //                                   AFK                                   //
@@ -153,6 +155,13 @@ public enum ConfigKey {
 
   LONGCHAT_INIT("longchat.init", "$0Schreibe den Text in das $3Buch $0und klicke auf $3Fertig$0!"),
   LONGCHAT_CANCELLED("longchat.cancelled", "$0Du hast die Texteingabe $4abgebrochen$0!"),
+  LONGCHAT_LENGTH_EXCEEDED("longchat.length_exceeded", "$0Die Eingabe ist länger als $4{{max_len}}$0: "),
+  LONGCHAT_PREVIEW(
+    "longchat.preview",
+    "$3Vorschau $0der Nachricht:",
+    "$0{{message}}"
+  ),
+  LONGCHAT_CONFIRM("longchat.confirm", "$0Eingabe $3absenden$0? "),
 
   //=========================================================================//
   //                             SignEdit Command                            //

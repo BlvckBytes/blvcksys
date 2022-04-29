@@ -20,6 +20,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryOpenEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -124,9 +125,12 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
   public void onQuit(PlayerQuitEvent e) {
     Player p = e.getPlayer();
 
+    // No active request
+    if (!bookeditRequests.containsKey(p))
+      return;
+
     // Undo this fake hand if the player decides to leave the server
-    if (bookeditRequests.containsKey(p))
-      undoFakeHand(p, true);
+    undoFakeHand(p, true);
   }
 
   @EventHandler(priority = EventPriority.HIGHEST)
@@ -153,9 +157,12 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
     if (!(e.getPlayer() instanceof Player p))
       return;
 
+    // No active request
+    if (!bookeditRequests.containsKey(p))
+      return;
+
     // Undo this fake hand if the player decides to quit writing and open the inventory
-    if (bookeditRequests.containsKey(p))
-      undoFakeHand(p, true);
+    undoFakeHand(p, true);
   }
 
   @EventHandler
@@ -163,18 +170,42 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
     if (!(e.getWhoClicked() instanceof Player p))
       return;
 
-    // Undo this fake hand if the player decides to quit writing and clicks in an inventory
-    if (bookeditRequests.containsKey(p))
-      undoFakeHand(p, true);
+    // No active request
+    if (!bookeditRequests.containsKey(p))
+      return;
+
+    // Undo this fake hand if the player decides to quit writing and clicks in their inventory
+    undoFakeHand(p, true);
+
+    // Don't allow to get anything on the cursor
+    e.setCancelled(true);
   }
 
   @EventHandler
   public void onHotbarSelect(PlayerItemHeldEvent e) {
     Player p = e.getPlayer();
 
+    // No active request
+    if (!bookeditRequests.containsKey(p))
+      return;
+
     // Undo this fake hand if the player decides to quit writing and selects another slot
-    if (bookeditRequests.containsKey(p))
-      undoFakeHand(p, true);
+    undoFakeHand(p, true);
+  }
+
+  @EventHandler
+  public void onDrop(PlayerDropItemEvent e) {
+    Player p = e.getPlayer();
+
+    // No active request
+    if (!bookeditRequests.containsKey(p))
+      return;
+
+    // Undo this fake hand if the player decides to quit writing and drop the book
+    undoFakeHand(p, true);
+
+    // Don't actually drop anything
+    e.setCancelled(true);
   }
 
   //=========================================================================//

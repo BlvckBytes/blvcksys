@@ -17,7 +17,7 @@ public interface IBookEditorCommunicator {
    * Create a new book editor GUI request and retrieve it's pages after committing
    * @param p Target player
    * @param pages Initial pages to display
-   * @param submit Book pages after committing
+   * @param submit Book pages after committing, null on cancel
    * @return Success state
    */
   boolean initBookEditor(Player p, List<String> pages, Consumer<List<String>> submit);

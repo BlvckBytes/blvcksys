@@ -8,14 +8,11 @@ package me.blvckbytes.blvcksys.util.logging;
 */
 public interface ILogger {
 
-  // TODO: Remove formatting and just work with plain strings, as it causes more trouble than it helps
-
   /**
    * Log a message on the debug level
-   * @param format Format of the message
-   * @param args Arguments to apply to the format
+   * @param message Message to log
    */
-  void logDebug(String format, Object... args);
+  void logDebug(String message);
 
   /**
    * Log a stringified object on the debug level
@@ -26,10 +23,9 @@ public interface ILogger {
 
   /**
    * Log a message on the information level
-   * @param format Format of the message
-   * @param args Arguments to apply to the format
+   * @param message Message to log
    */
-  void logInfo(String format, Object... args);
+  void logInfo(String message);
 
   /**
    * Log an exception on the error level
@@ -39,8 +35,7 @@ public interface ILogger {
 
   /**
    * Log a message on the error level
-   * @param format Format of the message
-   * @param args Arguments to apply to the format
+   * @param message Message to log
    */
-  void logError(String format, Object... args);
+  void logError(String message);
 }

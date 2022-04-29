@@ -32,21 +32,21 @@ public class ConsoleSenderLogger implements ILogger {
     this.cfg = cfg;
   }
 
-  private void log(String format, Object... args) {
+  private void log(String message) {
     Bukkit.getConsoleSender().sendMessage(
-      cfg.get(ConfigKey.PREFIX) + format.formatted(args)
+      cfg.get(ConfigKey.PREFIX) + message
     );
   }
 
   @Override
-  public void logDebug(String format, Object... args) {
-    log(cfg.get(ConfigKey.LOGGING_PREFIX_DEBUG) + format.formatted(args));
+  public void logDebug(String message) {
+    log(cfg.get(ConfigKey.LOGGING_PREFIX_DEBUG) + message);
   }
 
   @Override
   public void logDebug(Object o, int depth) {
     if (ostr == null) {
-      logError("The object stringifier is not yet available! (%s, %d)", o.getClass().getName(), depth);
+      logError("The object stringifier is not yet available! (" + o + ", " + depth + ")");
       return;
     }
 
@@ -54,8 +54,8 @@ public class ConsoleSenderLogger implements ILogger {
   }
 
   @Override
-  public void logInfo(String format, Object... args) {
-    log(cfg.get(ConfigKey.LOGGING_PREFIX_INFO) + format.formatted(args));
+  public void logInfo(String message) {
+    log(cfg.get(ConfigKey.LOGGING_PREFIX_INFO) + message);
   }
 
   @Override
@@ -67,7 +67,7 @@ public class ConsoleSenderLogger implements ILogger {
   }
 
   @Override
-  public void logError(String format, Object... args) {
-    log(cfg.get(ConfigKey.LOGGING_PREFIX_ERROR) + format.formatted(args));
+  public void logError(String message) {
+    log(cfg.get(ConfigKey.LOGGING_PREFIX_ERROR) + message);
   }
 }

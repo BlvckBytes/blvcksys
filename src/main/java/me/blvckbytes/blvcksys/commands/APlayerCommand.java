@@ -97,7 +97,7 @@ public abstract class APlayerCommand extends Command {
     // Register this command within the server's command map
     refl.registerCommand(plugin.getDescription().getName(), this);
     registeredCommands.put(name, this);
-    logger.logDebug("Command /%s: %s", name, this.getClass().getSimpleName());
+    logger.logDebug("Command /" + name + ": " + this.getClass().getSimpleName());
   }
 
 

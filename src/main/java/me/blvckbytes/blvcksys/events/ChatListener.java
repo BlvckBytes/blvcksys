@@ -13,6 +13,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Optional;
 
 /*
@@ -25,7 +27,7 @@ import java.util.Optional;
   based on the messenger's permissions.
 */
 @AutoConstruct
-public class ChatListener implements Listener {
+public class ChatListener implements Listener, IChatListener {
 
   private final IConfig cfg;
   private final ITeamHandler teams;
@@ -39,6 +41,29 @@ public class ChatListener implements Listener {
   }
 
   //=========================================================================//
+  //                                   API                                  //
+  //=========================================================================//
+
+  @Override
+  public void sendChatMessage(Player sender, Collection<? extends Player> receivers, String message) {
+    // Get the sender's group
+    Optional<TeamGroup> tg = teams.getPlayerGroup(sender);
+    String prefix = tg.map(TeamGroup::prefix).orElse("§r");
+
+    // Broadcast to all receivers
+    for(Player receiver : receivers) {
+      // Override the default message
+      receiver.sendMessage(
+        cfg.get(ConfigKey.CHAT_FORMAT)
+          .withVariable("name", sender.getName())
+          .withVariable("message", translateColors(sender, message))
+          .withVariable("prefix", prefix)
+          .asScalar()
+      );
+    }
+  }
+
+  //=========================================================================//
   //                                Listeners                                //
   //=========================================================================//
 
@@ -49,19 +74,8 @@ public class ChatListener implements Listener {
     // Cancel the vanilla event
     e.setCancelled(true);
 
-    Optional<TeamGroup> tg = teams.getPlayerGroup(p);
-    String prefix = tg.map(TeamGroup::prefix).orElse("§r");
-
-    for(Player recv : e.getRecipients()) {
-      // Override the default message
-      recv.sendMessage(
-        cfg.get(ConfigKey.CHAT_FORMAT)
-          .withVariable("name", p.getName())
-          .withVariable("message", translateColors(p, e.getMessage()))
-          .withVariable("prefix", prefix)
-          .asScalar()
-      );
-    }
+    // Send using custom formatting
+    sendChatMessage(p, new ArrayList<>(e.getRecipients()), e.getMessage());
   }
 
   //=========================================================================//

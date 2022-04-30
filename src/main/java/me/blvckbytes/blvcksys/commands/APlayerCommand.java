@@ -376,7 +376,7 @@ public abstract class APlayerCommand extends Command {
 
       // Doesn't need to be split up into words
       if (!asWords) {
-        components.add(new TextComponent(buildHoverable(" " + usage, cOth + arg.getDescription(), false)));
+        components.add(new TextComponent(buildHoverable(usage, cOth + arg.getDescription(), false)));
         continue;
       }
 
@@ -442,6 +442,18 @@ public abstract class APlayerCommand extends Command {
    */
   protected void customError(String message) throws CommandException {
     throw new CommandException(message);
+  }
+
+  /////////////////////////// Ensure Permission /////////////////////////////
+
+  /**
+   * Ensure that the player has this permission, throw otherwise
+   * @param p Target player
+   * @param perm Permission to test for
+   */
+  protected void ensurePermission(Player p, PlayerPermission perm) throws CommandException {
+    if (!perm.has(p))
+      throw new MissingPermissionException(cfg, perm);
   }
 
   ///////////////////////////// Parsing: Player ///////////////////////////////

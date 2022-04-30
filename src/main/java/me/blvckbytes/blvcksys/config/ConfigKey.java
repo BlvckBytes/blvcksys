@@ -150,6 +150,16 @@ public enum ConfigKey {
   PLAYERLIST_ONLINE("playerlist.online", ""),
 
   //=========================================================================//
+  //                              Repair Command                             //
+  //=========================================================================//
+
+  REPAIR_HAND_SUCCESS("repair.repaired.hand.success", "$0Das Item in deiner Hand wurde $2repariert$0."),
+  REPAIR_HAND_NONE("repair.repaired.hand.none", "$0Das Item in deiner Hand konnte $4nicht $0repariert werden!"),
+  REPAIR_HAND_EMPTY("repair.repaired.hand.empty", "$0Du hältst $4kein $0Item in der Hand!"),
+  REPAIR_INV_SUCCESS("repair.repaired.inv.success", "$0Dein $3ganzes Inventar $0wurde repariert."),
+  REPAIR_INV_NONE("repair.repaired.inv.none", "$4Kein Item $0in deinem Inventar konnte $4repariert $0werden!"),
+
+  //=========================================================================//
   //                             GiveHand Command                            //
   //=========================================================================//
 

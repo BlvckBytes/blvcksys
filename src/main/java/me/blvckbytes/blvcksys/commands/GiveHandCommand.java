@@ -47,6 +47,10 @@ public class GiveHandCommand extends APlayerCommand {
     this.give = give;
   }
 
+  //=========================================================================//
+  //                                 Handler                                 //
+  //=========================================================================//
+
   @Override
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
     // Suggest online players or "all"
@@ -108,6 +112,10 @@ public class GiveHandCommand extends APlayerCommand {
         .asScalar()
     );
   }
+
+  //=========================================================================//
+  //                                Utilities                                //
+  //=========================================================================//
 
   /**
    * Give an item to a specific receiving player

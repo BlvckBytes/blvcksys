@@ -78,6 +78,15 @@ public class ChatButtons<T> {
   }
 
   /**
+   * Add a new button to the set of buttons
+   * @param key Key for the button's template
+   * @param action Action to run on click, without a context
+   */
+  public ChatButtons<T> addButton(ConfigKey key, Runnable action) {
+    return addButton(key, x -> action.run());
+  }
+
+  /**
    * Build a new component to be sent out to recipients
    * @return Built component
    */
@@ -133,5 +142,20 @@ public class ChatButtons<T> {
 
     // No button corresponds to this command
     return false;
+  }
+
+  /**
+   * Build an instance that contains YES/NO buttons
+   * @param prefix Prefix to prepend to the buttons
+   * @param plugin Plugin reference
+   * @param cfg Config reference
+   * @param yes Called when clicking YES
+   * @param no Called when clicking NO
+   * @return ChatButtons instance
+   */
+  public static ChatButtons<?> buildYesNo(String prefix, JavaPlugin plugin, IConfig cfg, Runnable yes, Runnable no) {
+    return new ChatButtons<>(prefix, true, plugin, cfg, null)
+      .addButton(ConfigKey.CHATBUTTONS_YES, yes)
+      .addButton(ConfigKey.CHATBUTTONS_NO, no);
   }
 }

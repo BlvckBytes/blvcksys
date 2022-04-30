@@ -38,6 +38,10 @@ public class ColorCommand extends APlayerCommand {
     buildColors();
   }
 
+  //=========================================================================//
+  //                                 Handler                                 //
+  //=========================================================================//
+
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     p.sendMessage(
@@ -47,6 +51,10 @@ public class ColorCommand extends APlayerCommand {
         .asScalar()
     );
   }
+
+  //=========================================================================//
+  //                                Utilities                                //
+  //=========================================================================//
 
   /**
    * Pre-build the string showcasing available colors

@@ -41,6 +41,10 @@ public class ClearChatCommand extends APlayerCommand {
     );
   }
 
+  //=========================================================================//
+  //                                 Handler                                 //
+  //=========================================================================//
+
   @Override
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
     if (currArg == 0)
@@ -58,6 +62,10 @@ public class ClearChatCommand extends APlayerCommand {
     else
       clearChat(p, p, false);
   }
+
+  //=========================================================================//
+  //                                Utilities                                //
+  //=========================================================================//
 
   /**
    * Clear the chat for a specific player

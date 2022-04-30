@@ -19,6 +19,13 @@ public enum PlayerPermission {
   LONGCHAT_LIMITLESS("bvs.longchat.limitless"),
 
   //=========================================================================//
+  //                         ClearInventory Command                          //
+  //=========================================================================//
+
+  CLEARINVENTORY_SELF("bvs.clearinventory"),
+  CLEARINVENTORY_OTHERS("bvs.clearinventory.others"),
+
+  //=========================================================================//
   //                            ClearChat Command                            //
   //=========================================================================//
 

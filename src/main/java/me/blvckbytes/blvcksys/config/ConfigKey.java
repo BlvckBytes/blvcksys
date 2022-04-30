@@ -247,6 +247,12 @@ public enum ConfigKey {
   CLEARINVENTORY_CANCELLED("clearinventory.cancelled", "$0Du hast die Leerung $4abgebrochen$0!"),
 
   //=========================================================================//
+  //                             Weather Command                             //
+  //=========================================================================//
+
+  WEATHER_SET("weather_set", "$0Der Spieler $3{{issuer}} $0hat das Wetter auf $3{{weather}} $0gesetzt."),
+
+  //=========================================================================//
   //                               Time Command                              //
   //=========================================================================//
 

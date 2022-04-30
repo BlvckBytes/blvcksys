@@ -38,6 +38,10 @@ public class DayNightCommand extends APlayerCommand {
     this.time = time;
   }
 
+  //=========================================================================//
+  //                                 Handler                                 //
+  //=========================================================================//
+
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     if (label.equals("day"))

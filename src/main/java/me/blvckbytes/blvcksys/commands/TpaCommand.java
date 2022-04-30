@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.commands;
 
+import lombok.AllArgsConstructor;
 import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
@@ -16,6 +17,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -31,17 +33,20 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
 
   // TODO: Animation and sounds while teleporting
 
-  /**
+  /*
    * Represents a teleportation request
-   * @param target Target player
-   * @param timeoutHandle Timeout task handle
-   * @param acceptPrompt Used to prompt the target to accept/deny
+   * target Target player
+   * timeoutHandle Timeout task handle
+   * acceptPrompt Used to prompt the target to accept/deny
+   * moveListener Move listener subscription ref
    */
-  private record TeleportRequest(
-    Player target,
-    int timeoutHandle,
-    ChatButtons acceptPrompt
-  ) {}
+  @AllArgsConstructor
+  private static class TeleportRequest {
+    Player target;
+    int timeoutHandle;
+    ChatButtons acceptPrompt;
+    @Nullable Runnable moveListener;
+  }
 
   // Timeout in ticks for a pending teleport request
   private static final long REQUEST_TIMEOUT = 20 * 60;
@@ -144,8 +149,8 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
         () -> denyRequest(p, target)
       );
 
-    // Register the new request
-    pendingRequests.get(p).add(new TeleportRequest(target, timeoutHandle, buttons));
+    // Register the new request (no move-listener at this point)
+    pendingRequests.get(p).add(new TeleportRequest(target, timeoutHandle, buttons, null));
 
     // Inform sender
     p.sendMessage(
@@ -182,7 +187,8 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
     // where the move listener will cancel the teleportation task on move and then
     // unregister itself
     TeleportRequest tReq = req.get();
-    createTeleportationTask(sender, target, tReq, cancelTeleportOnMove(sender, target, tReq));
+    tReq.moveListener = cancelTeleportOnMove(sender, target, tReq);
+    createTeleportationTask(sender, target, tReq);
 
     // Inform sender about accept
     sender.sendMessage(
@@ -304,11 +310,17 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
             .withVariable("sender", involved.getName())
             .asScalar()
         );
+
+        // Unsubscribe a possibly existing move-listener
+        if (req.moveListener != null)
+          move.unsubscribe(involved, req.moveListener);
       }
     }
 
     // Cancel all requests that were targetted at the involved player
     for (Map.Entry<Player, List<TeleportRequest>> requests : pendingRequests.entrySet()) {
+      Player sender = requests.getKey();
+
       // Find all requests that this player is involved in
       List<TeleportRequest> invReqs = requests.getValue()
         .stream()
@@ -331,9 +343,13 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
         );
 
         // Cancel any teleporting task the sender of this request may be in
-        Integer handle = teleportingTasks.remove(requests.getKey());
+        Integer handle = teleportingTasks.remove(sender);
         if (handle != null)
           Bukkit.getScheduler().cancelTask(handle);
+
+        // Unsubscribe a possibly existing move-listener
+        if (invReq.moveListener != null)
+          move.unsubscribe(sender, invReq.moveListener);
       }
     }
 
@@ -349,13 +365,12 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
    * @param sender Sender that's not allowed to move
    * @param target Target that the sender wants to teleport to
    * @param req Teleportation request ref
-   * @param moveListener Move listener runnable ref to unregister
    */
-  private void createTeleportationTask(Player sender, Player target, TeleportRequest req, Runnable moveListener) {
+  private void createTeleportationTask(Player sender, Player target, TeleportRequest req) {
     // Create a timeout to await non-movement in
     this.teleportingTasks.put(sender, Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
       // Stop listening to moves
-      move.unsubscribe(sender, moveListener);
+      move.unsubscribe(sender, req.moveListener);
 
       // Remove the finished task
       teleportingTasks.remove(sender);

@@ -8,6 +8,7 @@ import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
@@ -46,7 +47,7 @@ public class GiveCommand extends APlayerCommand implements IGiveCommand {
       PlayerPermission.COMMAND_GIVE,
       new CommandArgument("<item>", "Material of the item"),
       new CommandArgument("<amount>", "Number of items"),
-      new CommandArgument("[player]", "The receiving player", PlayerPermission.COMMAND_FLY_OTHERS)
+      new CommandArgument("[player/all]", "The receiving player", PlayerPermission.COMMAND_GIVE_OTHERS)
     );
   }
 
@@ -64,9 +65,9 @@ public class GiveCommand extends APlayerCommand implements IGiveCommand {
     else if (currArg == 1)
       return Stream.of(getArgumentPlaceholder(currArg));
 
-      // Third argument - provide all online players
+      // Third argument - provide all online players or "all"
     else if (currArg == 2)
-      return suggestOnlinePlayers(args, currArg);
+      return Stream.concat(Stream.of("all"), suggestOnlinePlayers(args, currArg));
 
     return super.onTabCompletion(p, args, currArg);
   }
@@ -79,22 +80,31 @@ public class GiveCommand extends APlayerCommand implements IGiveCommand {
     // Parse the amount
     int amount = parseInt(args, 1);
 
+    // Give to all players
+    if (argval(args, 2).equalsIgnoreCase("all")) {
+      ensurePermission(p, PlayerPermission.COMMAND_GIVE_ALL);
+
+      for (Player target : Bukkit.getOnlinePlayers())
+        // Skip self
+        if (target != p)
+          giveItem(p, target, mat, amount, true);
+
+      // Notify the dispatcher
+      p.sendMessage(
+        cfg.get(ConfigKey.GIVE_ALL_SENDER)
+          .withPrefix()
+          .withVariable("amount", amount)
+          .withVariable("material", mat)
+          .asScalar()
+      );
+      return;
+    }
+
     // Assume the target to be the dispatcher
     Player target = onlinePlayer(args, 2, p);
+    giveItem(p, target, mat, amount, false);
 
-    // Hand out the items
-    int dropped = giveItemsOrDrop(target, new ItemStack(mat, amount));
-    String dropMsg = cfg.get(ConfigKey.GIVE_DROPPED)
-      .withPrefix()
-      .withVariable("num_dropped", dropped)
-      .asScalar();
-
-    // Notify the executor about the drop
-    if (dropped > 0)
-      p.sendMessage(dropMsg);
-
-    // Notify about giveaway
-    if (target != p) {
+    if (target != p)
       p.sendMessage(
         cfg.get(ConfigKey.GIVE_SENDER)
           .withPrefix()
@@ -103,20 +113,6 @@ public class GiveCommand extends APlayerCommand implements IGiveCommand {
           .withVariable("material", mat)
           .asScalar()
       );
-
-      target.sendMessage(
-        cfg.get(ConfigKey.GIVE_RECEIVER)
-          .withPrefix()
-          .withVariable("executor", p.getDisplayName())
-          .withVariable("amount", amount)
-          .withVariable("material", mat)
-          .asScalar()
-      );
-
-      // Notify the target about the drop
-      if (dropped > 0)
-        target.sendMessage(dropMsg);
-    }
 
     // Notify self give
     else
@@ -132,6 +128,37 @@ public class GiveCommand extends APlayerCommand implements IGiveCommand {
   //=========================================================================//
   //                                Utilities                                //
   //=========================================================================//
+
+  private void giveItem(Player sender, Player receiver, Material mat, int amount, boolean isAll) {
+    // Hand out the items
+    int dropped = giveItemsOrDrop(receiver, new ItemStack(mat, amount));
+
+    String dropMsg = cfg.get(ConfigKey.GIVE_DROPPED)
+      .withPrefix()
+      .withVariable("num_dropped", dropped)
+      .asScalar();
+
+    // Notify the executor about the drop (if it's not an "all" giveaway)
+    if (dropped > 0 && !isAll)
+      sender.sendMessage(dropMsg);
+
+    // Notify about giveaway (not to self)
+    if (receiver != sender) {
+
+      receiver.sendMessage(
+        cfg.get(isAll ? ConfigKey.GIVE_ALL_RECEIVER : ConfigKey.GIVE_RECEIVER)
+          .withPrefix()
+          .withVariable("issuer", sender.getDisplayName())
+          .withVariable("amount", amount)
+          .withVariable("material", mat)
+          .asScalar()
+      );
+
+      // Notify the target about the drop
+      if (dropped > 0)
+        receiver.sendMessage(dropMsg);
+    }
+  }
 
   /**
    * Add the given items to a player's inventory as much as possible and

@@ -51,6 +51,7 @@ public enum PlayerPermission {
 
   COMMAND_GIVE("bvs.give"),
   COMMAND_GIVE_OTHERS("bvs.give.others"),
+  COMMAND_GIVE_ALL("bvs.give.all"),
 
   //=========================================================================//
   //                              INJECT Command                             //

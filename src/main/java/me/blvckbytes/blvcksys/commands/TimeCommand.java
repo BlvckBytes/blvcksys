@@ -8,8 +8,10 @@ import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.stream.Stream;
 
@@ -20,29 +22,7 @@ import java.util.stream.Stream;
   Change the time of the world you're currently in
 */
 @AutoConstruct
-public class TimeCommand extends APlayerCommand {
-
-  /**
-   * Represents shorthands used for setting the absolute time
-   */
-  private enum TimeShorthand {
-
-    // 06:00
-    MORNING(6 * 1000),
-
-    // 11:00
-    DAY(11 * 1000),
-
-    // 22:00
-    NIGHT(22 * 1000)
-    ;
-
-    private final int time;
-
-    TimeShorthand(int time) {
-      this.time = time;
-    }
-  }
+public class TimeCommand extends APlayerCommand implements ITimeCommand {
 
   public TimeCommand(
     @AutoInject JavaPlugin plugin,
@@ -73,15 +53,24 @@ public class TimeCommand extends APlayerCommand {
     TimeShorthand time = parseEnum(TimeShorthand.class, args, 0, TimeShorthand.DAY);
 
     // Set the time
-    p.getWorld().setTime(time.time);
+    setTime(p, p.getWorld(), time);
+
+  }
+
+  @Override
+  public void setTime(@Nullable Player dispatcher, World world, TimeShorthand shorthand) {
+    world.setTime(shorthand.getTime());
+
+    if (dispatcher == null)
+      return;
 
     // Notify all affected players
-    for (Player affected : p.getWorld().getPlayers())
+    for (Player affected : world.getPlayers())
       affected.sendMessage(
         cfg.get(ConfigKey.TIME_SET)
           .withPrefix()
-          .withVariable("issuer", p.getName())
-          .withVariable("time", time.toString())
+          .withVariable("issuer", dispatcher.getName())
+          .withVariable("time", shorthand.toString())
           .asScalar()
       );
   }

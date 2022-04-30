@@ -5,6 +5,8 @@ import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.events.IMoveListener;
+import me.blvckbytes.blvcksys.handlers.AnimationType;
+import me.blvckbytes.blvcksys.handlers.IAnimationHandler;
 import me.blvckbytes.blvcksys.util.ChatButtons;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.MCReflect;
@@ -31,10 +33,11 @@ import java.util.stream.Stream;
 @AutoConstruct
 public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener {
 
-  // TODO: Animation and sounds while teleporting
+  // TODO: Maybe show a teleport icon in the player's below name during teleportation?
 
   /*
    * Represents a teleportation request
+   *
    * target Target player
    * timeoutHandle Timeout task handle
    * acceptPrompt Used to prompt the target to accept/deny
@@ -54,6 +57,9 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
   // Timeout in ticks for how long not to move during a teleportation
   private static final long TELEPORT_TIMEOUT = 20 * 3;
 
+  // Which animation to play during teleportation
+  private static final AnimationType TELEPORT_ANIMATION = AnimationType.ROTATING_CONE;
+
   // Currently pending requests, mapping senders to requested targets
   // where each player may have multiple requests simultaneously
   private final Map<Player, List<TeleportRequest>> pendingRequests;
@@ -63,6 +69,7 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
 
   private final IMoveListener move;
   private final ChatUtil chat;
+  private final IAnimationHandler animation;
 
   public TpaCommand(
     @AutoInject JavaPlugin plugin,
@@ -70,7 +77,8 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
     @AutoInject IMoveListener move,
-    @AutoInject ChatUtil chat
+    @AutoInject ChatUtil chat,
+    @AutoInject IAnimationHandler animation
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -85,6 +93,7 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
 
     this.move = move;
     this.chat = chat;
+    this.animation = animation;
   }
 
   //=========================================================================//
@@ -367,6 +376,9 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
    * @param req Teleportation request ref
    */
   private void createTeleportationTask(Player sender, Player target, TeleportRequest req) {
+    // Start the animation
+    animation.startAnimation(sender, TELEPORT_ANIMATION);
+
     // Create a timeout to await non-movement in
     this.teleportingTasks.put(sender, Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
       // Stop listening to moves
@@ -377,6 +389,9 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
 
       // Delete request
       deleteRequest(sender, req);
+
+      // Stop the animation
+      animation.stopAnimation(sender, TELEPORT_ANIMATION);
 
       // Teleport
       sender.teleport(target);
@@ -415,6 +430,9 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
         Integer handle = teleportingTasks.remove(sender);
         if (handle != null)
           Bukkit.getScheduler().cancelTask(handle);
+
+        // Stop the animation
+        animation.stopAnimation(sender, TELEPORT_ANIMATION);
 
         // Delete request
         deleteRequest(sender, req);

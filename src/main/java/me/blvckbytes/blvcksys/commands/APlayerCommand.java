@@ -153,7 +153,7 @@ public abstract class APlayerCommand extends Command {
     int currArg = Math.max(0, args.length - 1);
 
     // Doesn't have permission to invoke this command
-    if (!rootPerm.has(p))
+    if (rootPerm != null && !rootPerm.has(p))
       return new ArrayList<>();
 
     // Get it's connected permission

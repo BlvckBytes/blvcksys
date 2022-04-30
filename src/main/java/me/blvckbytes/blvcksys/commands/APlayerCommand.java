@@ -71,7 +71,7 @@ public abstract class APlayerCommand extends Command {
     MCReflect refl,
     String name,
     String description,
-    PlayerPermission rootPerm,
+    @Nullable PlayerPermission rootPerm,
     CommandArgument... cmdArgs
   ) {
     super(
@@ -88,6 +88,11 @@ public abstract class APlayerCommand extends Command {
       // Example: <main>,<alias 1>,<alias 2>
       Arrays.stream(name.split(",")).skip(1).map(String::trim).toList()
     );
+
+    // Set the command's permission to disallow command completion for
+    // commands the player has no permission to execute
+    if (rootPerm != null)
+      setPermission(rootPerm.getValue());
 
     this.cmdArgs = cmdArgs;
     this.plugin = plugin;
@@ -147,10 +152,14 @@ public abstract class APlayerCommand extends Command {
     // Calculate the arg index
     int currArg = Math.max(0, args.length - 1);
 
+    // Doesn't have permission to invoke this command
+    if (!rootPerm.has(p))
+      return new ArrayList<>();
+
     // Get it's connected permission
     PlayerPermission argPerm = cmdArgs[Math.min(currArg, cmdArgs.length - 1)].getPermission();
 
-    // Doesn't have permission for this arg, don't invoke the completion callback
+    // Doesn't have permission for this arg
     if (argPerm != null && !argPerm.has(p))
       return new ArrayList<>();
 

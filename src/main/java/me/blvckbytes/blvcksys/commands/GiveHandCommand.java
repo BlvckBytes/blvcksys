@@ -128,6 +128,15 @@ public class GiveHandCommand extends APlayerCommand {
       );
 
     // Give away the actual item safely
-    give.giveItemsOrDrop(receiver, item);
+    int dropped = give.giveItemsOrDrop(receiver, item);
+
+    // Notify the receiver about the drop
+    if (dropped > 0)
+      receiver.sendMessage(
+        cfg.get(ConfigKey.GIVE_DROPPED)
+        .withPrefix()
+        .withVariable("num_dropped", dropped)
+        .asScalar()
+      );
   }
 }

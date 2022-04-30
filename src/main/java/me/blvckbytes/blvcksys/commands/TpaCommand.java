@@ -171,9 +171,6 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
     if (req.isEmpty())
       return false;
 
-    // Delete request
-    deleteRequest(sender, req.get());
-
     // Cancel a previous teleport that's still active
     Integer prevTask = this.teleportingTasks.remove(sender);
     if (prevTask != null) {
@@ -184,7 +181,8 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
     // Create a teleportation task that unregisters the move listener on success,
     // where the move listener will cancel the teleportation task on move and then
     // unregister itself
-    createTeleportationTask(sender, target, cancelTeleportOnMove(sender, target));
+    TeleportRequest tReq = req.get();
+    createTeleportationTask(sender, target, tReq, cancelTeleportOnMove(sender, target, tReq));
 
     // Inform sender about accept
     sender.sendMessage(
@@ -276,9 +274,7 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
 
   @EventHandler
   public void onQuit(PlayerQuitEvent e) {
-    // TODO: Delete all requests this player was involved with
-    // TODO: Also cancel active teleporting tasks
-    // ConfigKey.TPA_PARTNER_QUIT
+    deleteAllRequests(e.getPlayer());
   }
 
   //=========================================================================//
@@ -286,13 +282,76 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
   //=========================================================================//
 
   /**
+   * Delete all requests where this player is involved in and notify their partners
+   * @param involved Target player
+   */
+  private void deleteAllRequests(Player involved) {
+    // Cancel all their sent requests
+    List<TeleportRequest> sentRequests = pendingRequests.remove(involved);
+
+    if (sentRequests != null) {
+      for (TeleportRequest req : sentRequests) {
+        // Cancel teleport timeout
+        Bukkit.getScheduler().cancelTask(req.timeoutHandle);
+
+        // Invalidate the buttons that prompted the target
+        chat.removeButtons(req.target, req.acceptPrompt);
+
+        // Inform the target
+        req.target.sendMessage(
+          cfg.get(ConfigKey.TPA_SENDER_QUIT)
+            .withPrefix()
+            .withVariable("sender", involved.getName())
+            .asScalar()
+        );
+      }
+    }
+
+    // Cancel all requests that were targetted at the involved player
+    for (Map.Entry<Player, List<TeleportRequest>> requests : pendingRequests.entrySet()) {
+      // Find all requests that this player is involved in
+      List<TeleportRequest> invReqs = requests.getValue()
+        .stream()
+        .filter(x -> x.target.equals(involved))
+        .toList();
+
+      for (TeleportRequest invReq : invReqs) {
+        // Remove this request
+        requests.getValue().remove(invReq);
+
+        // Cancel teleport timeout
+        Bukkit.getScheduler().cancelTask(invReq.timeoutHandle);
+
+        // Inform the target
+        requests.getKey().sendMessage(
+          cfg.get(ConfigKey.TPA_RECEIVER_QUIT)
+            .withPrefix()
+            .withVariable("target", involved.getName())
+            .asScalar()
+        );
+
+        // Cancel any teleporting task the sender of this request may be in
+        Integer handle = teleportingTasks.remove(requests.getKey());
+        if (handle != null)
+          Bukkit.getScheduler().cancelTask(handle);
+      }
+    }
+
+    // Cancel any teleporting task
+    Integer handle = teleportingTasks.remove(involved);
+    if (handle != null)
+      Bukkit.getScheduler().cancelTask(handle);
+  }
+
+  /**
    * Create a teleportation task (timeout) to teleport the sender if they haven't
    * moved until the timeout elapsed, also unregisters the moveListener at that point
    * @param sender Sender that's not allowed to move
    * @param target Target that the sender wants to teleport to
+   * @param req Teleportation request ref
    * @param moveListener Move listener runnable ref to unregister
    */
-  private void createTeleportationTask(Player sender, Player target, Runnable moveListener) {
+  private void createTeleportationTask(Player sender, Player target, TeleportRequest req, Runnable moveListener) {
     // Create a timeout to await non-movement in
     this.teleportingTasks.put(sender, Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
       // Stop listening to moves
@@ -300,6 +359,9 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
 
       // Remove the finished task
       teleportingTasks.remove(sender);
+
+      // Delete request
+      deleteRequest(sender, req);
 
       // Teleport
       sender.teleport(target);
@@ -326,9 +388,10 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
    * Cancel a currently active teleport if the sender moves
    * @param sender Sender that's not allowed to move
    * @param target Target that the sender wants to teleport to
+   * @param req Teleportation request ref
    * @return Runnable used to register within {@link IMoveListener}
    */
-  private Runnable cancelTeleportOnMove(Player sender, Player target) {
+  private Runnable cancelTeleportOnMove(Player sender, Player target, TeleportRequest req) {
     return this.move.subscribe(sender, new Runnable() {
 
       @Override
@@ -337,6 +400,9 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
         Integer handle = teleportingTasks.remove(sender);
         if (handle != null)
           Bukkit.getScheduler().cancelTask(handle);
+
+        // Delete request
+        deleteRequest(sender, req);
 
         // Inform sender about cancel
         sender.sendMessage(

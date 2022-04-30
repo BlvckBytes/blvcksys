@@ -26,7 +26,7 @@ public class ChatUtil implements Listener {
   private static final Pattern UUID_PATTERN = Pattern.compile("[a-f\\d]{8}(?:-[a-f\\d]{4}){4}[a-f\\d]{8}");
 
   // A player can have multiple sessions of buttons to choose from
-  private final Map<Player, List<ChatButtons<?>>> buttonSessions;
+  private final Map<Player, List<ChatButtons>> buttonSessions;
 
   private final IConfig cfg;
 
@@ -42,7 +42,7 @@ public class ChatUtil implements Listener {
    * @param p Target player
    * @param btns Previously built set of buttons
    */
-  public void sendButtons(Player p, ChatButtons<?> btns) {
+  public void sendButtons(Player p, ChatButtons btns) {
     // Register this instance of buttons
     if (!buttonSessions.containsKey(p))
       buttonSessions.put(p, new ArrayList<>());
@@ -57,7 +57,7 @@ public class ChatUtil implements Listener {
    * @param p Target player
    * @param btns Previously added set of buttons
    */
-  public void removeButtons(Player p, ChatButtons<?> btns) {
+  public void removeButtons(Player p, ChatButtons btns) {
     // Player not even known
     if (!buttonSessions.containsKey(p))
       return;
@@ -92,14 +92,14 @@ public class ChatUtil implements Listener {
     // Cancel all commands that are UUIDs - they're only internal
     e.setCancelled(true);
 
-    List<ChatButtons<?>> sessions = buttonSessions.get(p);
+    List<ChatButtons> sessions = buttonSessions.get(p);
 
     // Player not even registered
     if (sessions == null)
       return;
 
     // Try to find the target button and dispatch it
-    for (ChatButtons<?> session : sessions) {
+    for (ChatButtons session : sessions) {
       if (session.processInvocation(command))
         return;
     }

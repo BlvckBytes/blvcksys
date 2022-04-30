@@ -105,17 +105,17 @@ public class LongChatCommand extends APlayerCommand {
     boolean canSend = message.length() <= MAX_LEN || PlayerPermission.LONGCHAT_LIMITLESS.has(p);
 
     // Send buttons to send, edit or cancel
-    ChatButtons<?> buttons = new ChatButtons<>(
+    ChatButtons buttons = new ChatButtons(
       cfg.get(canSend ? ConfigKey.LONGCHAT_CONFIRM : ConfigKey.LONGCHAT_LENGTH_EXCEEDED)
         .withPrefix()
         .withVariable("max_len", MAX_LEN)
         .asScalar(),
-      true, plugin, cfg, null
+      true, plugin, cfg
     );
 
     // Send this message
     if (canSend) {
-      buttons.addButton(ConfigKey.CHATBUTTONS_YES, x -> {
+      buttons.addButton(ConfigKey.CHATBUTTONS_YES, () -> {
         chat.sendChatMessage(p, Bukkit.getOnlinePlayers(), message);
       });
 
@@ -129,12 +129,12 @@ public class LongChatCommand extends APlayerCommand {
     }
 
     // Edit this message
-    buttons.addButton(ConfigKey.CHATBUTTONS_EDIT, x -> {
+    buttons.addButton(ConfigKey.CHATBUTTONS_EDIT, () -> {
       handleEditor(p, pages);
     });
 
       // Cancel sending
-    buttons.addButton(ConfigKey.CHATBUTTONS_CANCEL, x -> {
+    buttons.addButton(ConfigKey.CHATBUTTONS_CANCEL, () -> {
       p.sendMessage(
         cfg.get(ConfigKey.LONGCHAT_CANCELLED)
           .withPrefix()

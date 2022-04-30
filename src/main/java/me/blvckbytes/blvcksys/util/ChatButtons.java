@@ -9,10 +9,8 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.Consumer;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -23,17 +21,17 @@ import java.util.function.Consumer;
   to a player. Buttons can be invoked using their temporary command by a routine.
   Callback invocations are synchronized with the main thread.
 */
-public class ChatButtons<T> {
+public class ChatButtons {
 
   /**
    * Represents a button that can be clicked within the chat, which
    * executes it's assigned temporary command
    */
   @AllArgsConstructor
-  private class CommandButton {
+  private static class CommandButton {
     private String tempCommand;
     private String text;
-    private Consumer<T> action;
+    private Runnable action;
   }
 
   // Each player may have multiple buttons to choose from
@@ -43,7 +41,6 @@ public class ChatButtons<T> {
   private final boolean clickOnce;
   private final JavaPlugin plugin;
   private final String prefix;
-  private final T context;
 
   /**
    * Create a new button builder/handler
@@ -51,12 +48,11 @@ public class ChatButtons<T> {
    * @param cfg Config reference
    * @param clickOnce Whether to expire all buttons when one has been clicked
    */
-  public ChatButtons(String prefix, boolean clickOnce, JavaPlugin plugin, IConfig cfg, @Nullable T context) {
+  public ChatButtons(String prefix, boolean clickOnce, JavaPlugin plugin, IConfig cfg) {
     this.cfg = cfg;
     this.prefix = prefix;
     this.clickOnce = clickOnce;
     this.plugin = plugin;
-    this.context = context;
     this.buttons = new ArrayList<>();
   }
 
@@ -65,7 +61,7 @@ public class ChatButtons<T> {
    * @param key Key for the button's template
    * @param action Action to run on click
    */
-  public ChatButtons<T> addButton(ConfigKey key, Consumer<T> action) {
+  public ChatButtons addButton(ConfigKey key, Runnable action) {
     // Generate a new, random command name
     String tmpCmd = UUID.randomUUID().toString();
 
@@ -75,15 +71,6 @@ public class ChatButtons<T> {
     );
 
     return this;
-  }
-
-  /**
-   * Add a new button to the set of buttons
-   * @param key Key for the button's template
-   * @param action Action to run on click, without a context
-   */
-  public ChatButtons<T> addButton(ConfigKey key, Runnable action) {
-    return addButton(key, x -> action.run());
   }
 
   /**
@@ -129,7 +116,7 @@ public class ChatButtons<T> {
         continue;
 
       // Call the callback
-      Bukkit.getScheduler().runTask(this.plugin, () -> button.action.accept(this.context));
+      Bukkit.getScheduler().runTask(this.plugin, () -> button.action.run());
 
       // Remove the button or kill all buttons
       if (clickOnce)
@@ -153,8 +140,8 @@ public class ChatButtons<T> {
    * @param no Called when clicking NO
    * @return ChatButtons instance
    */
-  public static ChatButtons<?> buildYesNo(String prefix, JavaPlugin plugin, IConfig cfg, Runnable yes, Runnable no) {
-    return new ChatButtons<>(prefix, true, plugin, cfg, null)
+  public static ChatButtons buildYesNo(String prefix, JavaPlugin plugin, IConfig cfg, Runnable yes, Runnable no) {
+    return new ChatButtons(prefix, true, plugin, cfg)
       .addButton(ConfigKey.CHATBUTTONS_YES, yes)
       .addButton(ConfigKey.CHATBUTTONS_NO, no);
   }

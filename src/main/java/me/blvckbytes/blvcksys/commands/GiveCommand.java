@@ -28,7 +28,7 @@ import java.util.stream.Stream;
   will be dropped at the player's head-location.
  */
 @AutoConstruct
-public class GiveCommand extends APlayerCommand {
+public class GiveCommand extends APlayerCommand implements IGiveCommand {
 
   // Which of the materials cannot be chosen from the enum's constants
   private static final List<Material> BANNED_MATERIALS = List.of(Material.AIR);
@@ -83,7 +83,7 @@ public class GiveCommand extends APlayerCommand {
     Player target = onlinePlayer(args, 2, p);
 
     // Hand out the items
-    int dropped = giveItems(target, mat, amount);
+    int dropped = giveItemsOrDrop(target, new ItemStack(mat, amount));
     String dropMsg = cfg.get(ConfigKey.GIVE_DROPPED)
       .withPrefix()
       .withVariable("num_dropped", dropped)
@@ -133,10 +133,17 @@ public class GiveCommand extends APlayerCommand {
   //                                Utilities                                //
   //=========================================================================//
 
-  private int addToInventory(Player target, Material mat, int amount) {
+  /**
+   * Add the given items to a player's inventory as much as possible and
+   * return the count of items that didn't fit
+   * @param target Target player
+   * @param item Item to add
+   * @return Number of items that didn't fit
+   */
+  private int addToInventory(Player target, ItemStack item) {
     // This number will be decremented as space is found along the way
-    int remaining = amount;
-    int stackSize = mat.getMaxStackSize();
+    int remaining = item.getAmount();
+    int stackSize = item.getType().getMaxStackSize();
 
     // Iterate all slots
     ItemStack[] contents = target.getInventory().getStorageContents();
@@ -149,18 +156,22 @@ public class GiveCommand extends APlayerCommand {
 
       // Completely vacant slot
       if (stack == null || stack.getType() == Material.AIR) {
+        ItemStack remItems = item.clone();
+
         // Set as many items as possible or as many as remain
         int num = Math.min(remaining, stackSize);
-        target.getInventory().setItem(i, new ItemStack(mat, num));
+        remItems.setAmount(num);
+
+        target.getInventory().setItem(i, remItems);
         remaining -= num;
         continue;
       }
 
-      // Different type, ignore
-      if (stack.getType() != mat)
+      // Incompatible stacks, ignore
+      if (!stack.isSimilar(item))
         continue;
 
-      // Same type but no more room left
+      // Compatible stack but no more room left
       int usable = Math.max(0, stackSize - stack.getAmount());
       if (usable == 0)
         continue;
@@ -181,9 +192,10 @@ public class GiveCommand extends APlayerCommand {
     return remaining;
   }
 
-  private int giveItems(Player target, Material mat, int amount) {
+  @Override
+  public int giveItemsOrDrop(Player target, ItemStack stack) {
     // Add as much as possible into the inventory
-    int remaining = addToInventory(target, mat, amount);
+    int remaining = addToInventory(target, stack);
     int dropped = remaining;
 
     // Done, everything fit
@@ -196,9 +208,10 @@ public class GiveCommand extends APlayerCommand {
       return 0;
 
     // Drop all remaining items
-    int stackSize = mat.getMaxStackSize();
+    int stackSize = stack.getMaxStackSize();
     while (remaining > 0) {
-      ItemStack items = new ItemStack(mat, Math.min(remaining, stackSize));
+      ItemStack items = stack.clone();
+      items.setAmount(Math.min(remaining, stackSize));
       w.dropItemNaturally(target.getEyeLocation(), items);
       remaining -= items.getAmount();
     }

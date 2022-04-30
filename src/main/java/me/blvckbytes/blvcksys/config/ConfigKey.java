@@ -247,6 +247,12 @@ public enum ConfigKey {
   CLEARINVENTORY_CANCELLED("clearinventory.cancelled", "$0Du hast die Leerung $4abgebrochen$0!"),
 
   //=========================================================================//
+  //                               Time Command                              //
+  //=========================================================================//
+
+  TIME_SET("time_set", "$0Der Spieler $3{{issuer}} $0hat die Zeit auf $3{{time}} $0gesetzt."),
+
+  //=========================================================================//
   //                            Generic Messages                             //
   //=========================================================================//
   GENERIC_JOINED("generic.joined", "$0Der Spieler $2{{name}} $0ist dem Server $2beigetreten$0!"),

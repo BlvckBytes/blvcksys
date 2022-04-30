@@ -63,6 +63,12 @@ public class ChatListener implements Listener, IChatListener {
     }
   }
 
+  @Override
+  public void broadcastMessage(Collection<? extends Player> receivers, String message) {
+    for (Player t : receivers)
+      t.sendMessage(message);
+  }
+
   //=========================================================================//
   //                                Listeners                                //
   //=========================================================================//

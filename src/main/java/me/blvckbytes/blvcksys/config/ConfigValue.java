@@ -139,16 +139,16 @@ public class ConfigValue {
     for (int i = 0; i < lines.size(); i++) {
       String line = lines.get(i);
 
-      // Add prefix based on previous selection
-      if (prefixMode == 'F' && i == 0 || prefixMode == 'A')
-        result.append(prefix);
-
       // Separate lines
       if (i != 0) {
         // Reset colors between lines
         result.append("§r");
         result.append(sep);
       }
+
+      // Add prefix based on previous selection
+      if (prefixMode == 'F' && i == 0 || prefixMode == 'A')
+        result.append(prefix);
 
       // Append the actual line after transformation
       result.append(transformLine(line));

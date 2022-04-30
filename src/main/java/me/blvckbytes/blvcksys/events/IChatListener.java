@@ -20,4 +20,11 @@ public interface IChatListener {
    * @param message Message to send
    */
   void sendChatMessage(Player sender, Collection<? extends Player> receivers, String message);
+
+  /**
+   * Broadcast a message to all online players
+   * @param receivers List of message receivers
+   * @param message Message to send
+   */
+  void broadcastMessage(Collection<? extends Player> receivers, String message);
 }

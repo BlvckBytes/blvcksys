@@ -160,6 +160,34 @@ public enum ConfigKey {
   REPAIR_INV_NONE("repair.repaired.inv.none", "$4Kein Item $0in deinem Inventar konnte $4repariert $0werden!"),
 
   //=========================================================================//
+  //                               Kick Command                              //
+  //=========================================================================//
+
+  KICK_DEFAULT_REASON("kick.default_reason", "$0Es wurde $3kein Grund $0angegeben."),
+  KICK_TRIEDSELF("kick.tried_self", "$0Du kannst dich $4nicht selbst $0kicken!"),
+  KICK_UNKICKABLE("kick.unkickable", "$0Der Spieler $4{{target}} $0kann $4nicht $0gekickt werden!"),
+  KICK_KICKED_TARGET(
+    "kick.kicked.target",
+    "$0Der Spieler $3{{target}} $0wurde $0vom Server geworfen.",
+    "$0Ausführer: $3{{issuer}}",
+    "$0Grund: $3{{reason}}"
+  ),
+  KICK_KICKED_ALL(
+    "kick.kicked.all",
+    "$3Alle Spieler $0wurden vom Server geworfen.",
+    "$0Ausführer: $3{{issuer}}",
+    "$0Grund: $3{{reason}}"
+  ),
+  KICK_SCREEN(
+    "kick.screen",
+    "$3&lBlvckBytes.Dev",
+    "&6Du wurdest vom Server geworfen!",
+    " ",
+    "$2Grund: $0{{reason}}",
+    "$2Von: $0{{issuer}}"
+  ),
+
+  //=========================================================================//
   //                             GiveHand Command                            //
   //=========================================================================//
 

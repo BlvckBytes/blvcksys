@@ -45,6 +45,16 @@ public enum PlayerPermission {
   COMMAND_WEATHER("bvs.weather"),
 
   //=========================================================================//
+  //                              KICK Command                               //
+  //=========================================================================//
+
+  COMMAND_KICK("bvs.kick"),
+  COMMAND_KICK_ALL("bvs.kick.all"),
+  COMMAND_KICK_UNKICKABLE("bvs.kick.unkickable"),
+  COMMAND_KICK_UNKICKABLE_OVERRIDE("bvs.kick.unkickable.override"),
+  COMMAND_KICK_KICKALL_BYPASS("bvs.kick.kickall_bypass"),
+
+  //=========================================================================//
   //                             REPAIR Command                              //
   //=========================================================================//
 

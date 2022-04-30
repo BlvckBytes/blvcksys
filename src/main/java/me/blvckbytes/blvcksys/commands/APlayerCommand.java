@@ -188,7 +188,7 @@ public abstract class APlayerCommand extends Command {
 
       // Check for all permissions regarding arguments
       for (int i = 0; i < args.length; i++) {
-        PlayerPermission argPerm = cmdArgs[Math.max(i, cmdArgs.length - 1)].getPermission();
+        PlayerPermission argPerm = cmdArgs[Math.min(i, cmdArgs.length - 1)].getPermission();
         if (argPerm != null && !argPerm.has(p))
           throw new MissingPermissionException(cfg, argPerm);
       }
@@ -641,14 +641,21 @@ public abstract class APlayerCommand extends Command {
    * @param args Array of arguments
    * @param from Starting index
    * @param to Ending index
+   * @param argcFallback Fallback for when the arg-count isn't sufficient
    * @return String containing space separated, joined arguments
    */
-  protected String argspan(String[] args, int from, int to) throws CommandException {
-    if (from >= args.length)
+  protected String argspan(String[] args, int from, int to, @Nullable String argcFallback) throws CommandException {
+    if (from >= args.length) {
+      if (argcFallback != null)
+        return argcFallback;
       throw new UsageMismatchException(cfg, buildAdvancedUsage(from));
+    }
 
-    if (to >= args.length)
+    if (to >= args.length) {
+      if (argcFallback != null)
+        return argcFallback;
       throw new UsageMismatchException(cfg, buildAdvancedUsage(to));
+    }
 
     StringBuilder message = new StringBuilder();
 
@@ -666,7 +673,18 @@ public abstract class APlayerCommand extends Command {
    * @return String containing space separated, joined arguments
    */
   protected String argvar(String[] args, int from) throws CommandException {
-    return argspan(args, from, args.length - 1);
+    return argspan(args, from, args.length - 1, null);
+  }
+
+  /**
+   * Collect a string that spans over multiple arguments till the end
+   * @param args Array of arguments
+   * @param from Starting index
+   * @param argcFallback Fallback for when the arg-count isn't sufficient
+   * @return String containing space separated, joined arguments
+   */
+  protected String argvar(String[] args, int from, String argcFallback) throws CommandException {
+    return argspan(args, from, args.length - 1, argcFallback);
   }
 
   /**

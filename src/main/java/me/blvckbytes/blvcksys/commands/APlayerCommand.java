@@ -291,25 +291,31 @@ public abstract class APlayerCommand extends Command {
    * Suggest all currently online players, except the exclusion
    * @param args Already typed out arguments
    * @param currArg Currently focused argument
+   * @param suggestAll Whether to suggest "all" as an option
    * @param exclude Players to exclude from the suggestion
    * @return Stream of suggestions
    */
-  protected Stream<String> suggestOnlinePlayers(String[] args, int currArg, Player... exclude) {
-    return suggestOnlinePlayers(args, currArg, List.of(exclude));
+  protected Stream<String> suggestOnlinePlayers(String[] args, int currArg, boolean suggestAll, Player... exclude) {
+    return suggestOnlinePlayers(args, currArg, suggestAll, List.of(exclude));
   }
 
   /**
    * Suggest all currently online players, except the exclusion
    * @param args Already typed out arguments
    * @param currArg Currently focused argument
+   * @param suggestAll Whether to suggest "all" as an option
    * @param exclude Players to exclude from the suggestion
    * @return Stream of suggestions
    */
-  protected Stream<String> suggestOnlinePlayers(String[] args, int currArg, List<Player> exclude) {
-    return Bukkit.getOnlinePlayers()
+  protected Stream<String> suggestOnlinePlayers(String[] args, int currArg, boolean suggestAll, List<Player> exclude) {
+    Stream<String> players = Bukkit.getOnlinePlayers()
       .stream()
       .filter(n -> !exclude.contains(n))
-      .map(Player::getDisplayName)
+      .map(Player::getDisplayName);
+
+    return (
+      suggestAll ? Stream.concat(Stream.of("all"), players) : players
+    )
       .filter(n -> n.toLowerCase().contains(args[currArg].toLowerCase()));
   }
 

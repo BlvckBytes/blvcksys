@@ -66,7 +66,7 @@ public class FlyCommand extends APlayerCommand implements Listener {
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
     // First argument - provide all online players
     if (currArg == 0)
-      return suggestOnlinePlayers(args, currArg);
+      return suggestOnlinePlayers(args, currArg, false);
 
     return super.onTabCompletion(p, args, currArg);
   }

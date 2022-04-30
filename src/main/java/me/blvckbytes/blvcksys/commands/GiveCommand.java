@@ -67,7 +67,7 @@ public class GiveCommand extends APlayerCommand implements IGiveCommand {
 
       // Third argument - provide all online players or "all"
     else if (currArg == 2)
-      return Stream.concat(Stream.of("all"), suggestOnlinePlayers(args, currArg));
+      return suggestOnlinePlayers(args, currArg, true);
 
     return super.onTabCompletion(p, args, currArg);
   }

@@ -58,7 +58,7 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener 
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
     // First argument - provide all online players but the sender
     if (currArg == 0)
-      return suggestOnlinePlayers(args, currArg, p);
+      return suggestOnlinePlayers(args, currArg, false, p);
 
     // Provide remaining args as placeholders (message is variadic)
     if (currArg >= 1)

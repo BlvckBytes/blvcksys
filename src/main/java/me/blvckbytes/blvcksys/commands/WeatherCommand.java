@@ -69,6 +69,10 @@ public class WeatherCommand extends APlayerCommand {
     setWeather(p, p.getWorld(), weather, duration);
   }
 
+  //=========================================================================//
+  //                                Utilities                                //
+  //=========================================================================//
+
   /**
    * Set the weather in a given world to a given type and notify all affected players
    * @param dispatcher Dispatcher of this action

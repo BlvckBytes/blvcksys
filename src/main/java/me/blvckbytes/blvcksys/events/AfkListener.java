@@ -7,7 +7,6 @@ import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
@@ -40,16 +39,19 @@ public class AfkListener implements Listener, IAutoConstructed, IAfkListener {
   private final IConfig cfg;
   private final JavaPlugin plugin;
   private final ITeamHandler teams;
+  private final IMoveListener move;
 
   public AfkListener(
     @AutoInject ITeamHandler teams,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IConfig cfg
+    @AutoInject IConfig cfg,
+    @AutoInject IMoveListener move
   ) {
     this.teams = teams;
     this.plugin = plugin;
     this.cfg = cfg;
 
+    this.move = move;
     this.lastAction = new HashMap<>();
   }
 
@@ -95,25 +97,15 @@ public class AfkListener implements Listener, IAutoConstructed, IAfkListener {
   @EventHandler
   public void onJoin(PlayerJoinEvent e) {
     reactivateTimeout(e.getPlayer());
+
+    // Reactivate timeouts on movement
+    this.move.subscribe(e.getPlayer(), () -> reactivateTimeout(e.getPlayer()));
   }
+
 
   @EventHandler
   public void onQuit(PlayerQuitEvent e) {
     lastAction.remove(e.getPlayer());
-  }
-
-  @EventHandler
-  public void onMove(PlayerMoveEvent e) {
-    // Didn't move
-    if (e.getTo() == null)
-      return;
-
-    // Only looked around, didn't move
-    // Don't use looking around as it's really heavy on performance
-    if (calculateTotalAbsDelta(e.getFrom(), e.getTo()) == 0)
-      return;
-
-    reactivateTimeout(e.getPlayer());
   }
 
   @EventHandler(ignoreCancelled = true)
@@ -213,19 +205,5 @@ public class AfkListener implements Listener, IAutoConstructed, IAfkListener {
           .withVariable("name", p.getName())
           .asScalar()
       );
-  }
-
-  /**
-   * Calculate the total (dx + dy + dz) absolute (|d|) coordinate delta of a and b
-   * @param a Location a
-   * @param b Location b
-   * @return Absolute delta added from all three axis
-   */
-  private double calculateTotalAbsDelta(Location a, Location b) {
-    return (
-      Math.abs(a.getX() - b.getX()) +
-      Math.abs(a.getY() - b.getY()) +
-      Math.abs(a.getZ() - b.getZ())
-    );
   }
 }

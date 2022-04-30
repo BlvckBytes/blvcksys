@@ -25,7 +25,7 @@ public class CooldownException extends CommandException {
   public CooldownException(IConfig cfg, long expiry) {
     super(
       cfg.get(ConfigKey.ERR_COOLDOWN)
-        .withVariable("duration", formatDuration(cfg, expiry - System.currentTimeMillis()))
+        .withVariable("duration", formatDuration(expiry - System.currentTimeMillis()))
         .withPrefix()
         .asScalar()
     );
@@ -34,11 +34,10 @@ public class CooldownException extends CommandException {
   /**
    * Format a duration in milliseconds to a time string
    * containing months, weeks, days, hours, minutes and seconds
-   * @param cfg Configuration to retrieve color values from
    * @param duration Duration in milliseconds
    * @return Formatted duration string
    */
-  private static String formatDuration(IConfig cfg, long duration) {
+  private static String formatDuration(long duration) {
     StringBuilder sb = new StringBuilder();
     long durS = duration / 1000;
 

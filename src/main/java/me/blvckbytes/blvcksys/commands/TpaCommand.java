@@ -1,0 +1,401 @@
+package me.blvckbytes.blvcksys.commands;
+
+import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
+import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.events.IMoveListener;
+import me.blvckbytes.blvcksys.util.ChatButtons;
+import me.blvckbytes.blvcksys.util.ChatUtil;
+import me.blvckbytes.blvcksys.util.MCReflect;
+import me.blvckbytes.blvcksys.util.di.AutoConstruct;
+import me.blvckbytes.blvcksys.util.di.AutoInject;
+import me.blvckbytes.blvcksys.util.logging.ILogger;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.*;
+import java.util.stream.Stream;
+
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 04/30/2022
+
+  Send a teleport request to a given player.
+*/
+@AutoConstruct
+public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener {
+
+  // TODO: Expire buttons on cancel from sender
+  // TODO: Animation and sounds while teleporting
+
+  /**
+   * Represents a teleportation request
+   * @param target Target player
+   * @param timeoutHandle Timeout task handle
+   */
+  private record TeleportRequest(
+    Player target,
+    int timeoutHandle
+  ) {}
+
+  // Timeout in ticks for a pending teleport request
+  private static final long REQUEST_TIMEOUT = 20 * 60;
+
+  // Timeout in ticks for how long not to move during a teleportation
+  private static final long TELEPORT_TIMEOUT = 20 * 3;
+
+  // Currently pending requests, mapping senders to requested targets
+  // where each player may have multiple requests simultaneously
+  private final Map<Player, List<TeleportRequest>> pendingRequests;
+
+  // Each Player and their teleporting task
+  private final Map<Player, Integer> teleportingTasks;
+
+  private final IMoveListener move;
+  private final ChatUtil chat;
+
+  public TpaCommand(
+    @AutoInject JavaPlugin plugin,
+    @AutoInject ILogger logger,
+    @AutoInject IConfig cfg,
+    @AutoInject MCReflect refl,
+    @AutoInject IMoveListener move,
+    @AutoInject ChatUtil chat
+  ) {
+    super(
+      plugin, logger, cfg, refl,
+      "tpa",
+      "Send a teleport request",
+      null,
+      new CommandArgument("<player>", "Request recipient")
+    );
+
+    this.pendingRequests = new HashMap<>();
+    this.teleportingTasks = new HashMap<>();
+
+    this.move = move;
+    this.chat = chat;
+  }
+
+  //=========================================================================//
+  //                                 Handler                                 //
+  //=========================================================================//
+
+  @Override
+  protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
+    if (currArg == 0)
+      return suggestOnlinePlayers(args, currArg, false);
+    return super.onTabCompletion(p, args, currArg);
+  }
+
+  @Override
+  protected void invoke(Player p, String label, String[] args) throws CommandException {
+    Player target = onlinePlayer(args, 0);
+
+    // Cannot send yourself requests
+    if (target.equals(p)) {
+      p.sendMessage(
+        cfg.get(ConfigKey.TPA_SELF)
+          .withPrefix()
+          .asScalar()
+      );
+      return;
+    }
+
+    // Doesn't have a request map entry yet
+    if (!pendingRequests.containsKey(p))
+      pendingRequests.put(p, new ArrayList<>());
+
+    // Already requested this target
+    if (findRequest(p, target).isPresent()) {
+      p.sendMessage(
+        cfg.get(ConfigKey.TPA_STILL_PENDING)
+          .withPrefix()
+          .withVariable("target", target.getName())
+          .asScalar()
+      );
+      return;
+    }
+
+    // Create a timeout to let this request expire automatically
+    int timeoutHandle = Bukkit.getScheduler().scheduleSyncDelayedTask(
+      plugin,
+      () -> expireRequest(p, target),
+      REQUEST_TIMEOUT
+    );
+
+    // Register the new request
+    pendingRequests.get(p).add(new TeleportRequest(target, timeoutHandle));
+
+    // Inform sender
+    p.sendMessage(
+      cfg.get(ConfigKey.TPA_SENT)
+        .withPrefix()
+        .withVariable("target", target.getName())
+        .asScalar()
+    );
+
+    // Display action screen to the target
+    this.chat.sendButtons(target,
+      ChatButtons.buildYesNo(
+        cfg.get(ConfigKey.TPA_RECEIVED_PREFIX)
+          .withPrefix()
+          .withVariable("sender", p.getName())
+          .asScalar(),
+        plugin, cfg,
+
+        // Yes
+        () -> acceptRequest(p, target),
+
+        // No
+        () -> denyRequest(p, target)
+      )
+    );
+  }
+
+  //=========================================================================//
+  //                                   API                                   //
+  //=========================================================================//
+
+  @Override
+  public boolean acceptRequest(Player sender, Player target) {
+    Optional<TeleportRequest> req = findRequest(sender, target);
+
+    // Request not existing
+    if (req.isEmpty())
+      return false;
+
+    // Delete request
+    deleteRequest(sender, req.get());
+
+    // Subscribe to movements of the sender
+    Runnable moveL = this.move.subscribe(sender, new Runnable() {
+
+      @Override
+      public void run() {
+        // Cancel the teleporting task
+        Integer handle = teleportingTasks.remove(sender);
+        if (handle != null)
+          Bukkit.getScheduler().cancelTask(handle);
+
+        // Inform sender about cancel
+        sender.sendMessage(
+          cfg.get(ConfigKey.TPA_MOVED_SENDER)
+            .withPrefix()
+            .withVariable("target", target.getName())
+            .asScalar()
+        );
+
+        // Inform target about cancel
+        target.sendMessage(
+          cfg.get(ConfigKey.TPA_MOVED_RECEIVER)
+            .withPrefix()
+            .withVariable("sender", sender.getName())
+            .asScalar()
+        );
+
+        // Stop subscribing to movement
+        move.unsubscribe(sender, this);
+      }
+    });
+
+    // Cancel a previous teleport that's still active
+    Integer prevTask = this.teleportingTasks.remove(sender);
+    if (prevTask != null) {
+      cancelRequest(sender, target);
+      Bukkit.getScheduler().cancelTask(prevTask);
+    }
+
+    // Create a timeout to await non-movement in
+    this.teleportingTasks.put(sender, Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+      // Stop listening to moves
+      move.unsubscribe(sender, moveL);
+
+      // Remove the finished task
+      teleportingTasks.remove(sender);
+
+      // Teleport
+      sender.teleport(target);
+
+      // Inform sender about teleport
+      sender.sendMessage(
+        cfg.get(ConfigKey.TPA_TELEPORTED_SENDER)
+          .withPrefix()
+          .withVariable("target", target.getName())
+          .asScalar()
+      );
+
+      // Inform target about teleport
+      target.sendMessage(
+        cfg.get(ConfigKey.TPA_TELEPORTED_RECEIVER)
+          .withPrefix()
+          .withVariable("sender", sender.getName())
+          .asScalar()
+      );
+    }, TELEPORT_TIMEOUT));
+
+    // Inform sender about accept
+    sender.sendMessage(
+      cfg.get(ConfigKey.TPA_ACCEPTED_SENDER)
+        .withPrefix()
+        .withVariable("target", target.getName())
+        .withVariable("seconds", TELEPORT_TIMEOUT / 20)
+        .asScalar()
+    );
+
+    // Inform target about accept
+    target.sendMessage(
+      cfg.get(ConfigKey.TPA_ACCEPTED_RECEIVER)
+        .withPrefix()
+        .withVariable("sender", sender.getName())
+        .asScalar()
+    );
+
+    return true;
+  }
+
+  @Override
+  public boolean denyRequest(Player sender, Player target) {
+    Optional<TeleportRequest> req = findRequest(sender, target);
+
+    // Request not existing
+    if (req.isEmpty())
+      return false;
+
+    // Delete request
+    deleteRequest(sender, req.get());
+
+    // Inform sender about deny
+    sender.sendMessage(
+      cfg.get(ConfigKey.TPA_DENIED_SENDER)
+        .withPrefix()
+        .withVariable("target", target.getName())
+        .asScalar()
+    );
+
+    // Inform target about deny
+    target.sendMessage(
+      cfg.get(ConfigKey.TPA_DENIED_RECEIVER)
+        .withPrefix()
+        .withVariable("sender", sender.getName())
+        .asScalar()
+    );
+
+    return true;
+  }
+
+  @Override
+  public boolean cancelRequest(Player sender, Player target) {
+    Optional<TeleportRequest> req = findRequest(sender, target);
+
+    // Request not existing
+    if (req.isEmpty())
+      return false;
+
+    // Delete request
+    deleteRequest(sender, req.get());
+
+    // Inform sender about cancel
+    sender.sendMessage(
+      cfg.get(ConfigKey.TPA_CANCELLED_SENDER)
+        .withPrefix()
+        .withVariable("target", target.getName())
+        .asScalar()
+    );
+
+    // Inform target about cancel
+    target.sendMessage(
+      cfg.get(ConfigKey.TPA_CANCELLED_RECEIVER)
+        .withPrefix()
+        .withVariable("sender", sender.getName())
+        .asScalar()
+    );
+
+    return true;
+  }
+
+  //=========================================================================//
+  //                                Listeners                                //
+  //=========================================================================//
+
+  @EventHandler
+  public void onQuit(PlayerQuitEvent e) {
+    // TODO: Expire all requests this player was involved with
+    // TODO: Also cancel active teleporting tasks
+    // ConfigKey.TPA_PARTNER_QUIT
+  }
+
+  //=========================================================================//
+  //                                Utilities                                //
+  //=========================================================================//
+
+  /**
+   * Find an active request by sender and target
+   * @param sender Sending player
+   * @param target Target player
+   * @return Optional request
+   */
+  private Optional<TeleportRequest> findRequest(Player sender, Player target) {
+    List<TeleportRequest> requests = pendingRequests.get(sender);
+
+    // No requests from sender exist
+    if (requests == null)
+      return Optional.empty();
+
+    // Return a matching request if existing
+    return requests
+      .stream()
+      .filter(tr -> tr.target.equals(target))
+      .findFirst();
+  }
+
+  /**
+   * Delete a pending request
+   * @param sender Sender of the request
+   * @param req Request to delete
+   */
+  private void deleteRequest(Player sender, TeleportRequest req) {
+    List<TeleportRequest> requests = pendingRequests.get(sender);
+    if (requests == null)
+      return;
+
+    // Remove this request and cancel it's timeout task
+    requests.remove(req);
+    Bukkit.getScheduler().cancelTask(req.timeoutHandle);
+  }
+
+  /**
+   * Expire a request by deleting it and informing the participants
+   * @param sender Player that has sent the request
+   * @param target Player that the request was pointed towards
+   */
+  private void expireRequest(Player sender, Player target) {
+    Optional<TeleportRequest> request = findRequest(sender, target);
+
+    // Request not existing anymore
+    if (request.isEmpty())
+      return;
+
+    // Inform the sender about expiration
+    sender.sendMessage(
+      cfg.get(ConfigKey.TPA_EXPIRED_SENDER)
+        .withPrefix()
+        .withVariable("target", target.getName())
+        .asScalar()
+    );
+
+    // Inform the receiver about expiration
+    sender.sendMessage(
+      cfg.get(ConfigKey.TPA_EXPIRED_RECEIVER)
+        .withPrefix()
+        .withVariable("sender", sender.getName())
+        .asScalar()
+    );
+
+    deleteRequest(sender, request.get());
+  }
+}

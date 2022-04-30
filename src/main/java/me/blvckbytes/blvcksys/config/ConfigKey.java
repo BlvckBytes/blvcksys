@@ -11,6 +11,7 @@ package me.blvckbytes.blvcksys.config;
 public enum ConfigKey {
 
   // TODO: Fully integrate the palette and get rid of color-only keys
+  // TODO: Move all command description texts into the config
 
   //=========================================================================//
   //                              Color Palette                              //
@@ -148,6 +149,34 @@ public enum ConfigKey {
     "$2awesome hover applied!"
   ),
   PLAYERLIST_ONLINE("playerlist.online", ""),
+
+  //=========================================================================//
+  //                                TPA Command                              //
+  //=========================================================================//
+
+  TPA_STILL_PENDING("tpa.still_pending", "$0Es steht bereits eine $4aktive Teleport-Anfrage $0für $4{{target}} $0aus!"),
+  TPA_EXPIRED_SENDER("tpa.expired.sender", "$0Deine $4ausgehende $0Teleport-Anfrage an $4{{target}} $0ist abgelaufen!"),
+  TPA_EXPIRED_RECEIVER("tpa.expired.receiver", "$0Eine $4eingehende $0Teleport-Anfrage von $4{{sender}} $0ist abgelaufen!"),
+  TPA_CANCELLED_SENDER("tpa.cancelled.sender", "$0Deine Anfrage an $4{{target}} $0wurde $4abgebrochen$0!"),
+  TPA_CANCELLED_RECEIVER("tpa.cancelled.receiver", "$0Die Anfrage von $4{{sender}} $0wurde $4abgebrochen$0!"),
+  TPA_DENIED_SENDER("tpa.denied.sender", "$0Deine Anfrage an $4{{target}} $0wurde $4abgelehnt$0!"),
+  TPA_DENIED_RECEIVER("tpa.denied.receiver", "$0Die Anfrage von $4{{sender}} $0wurde $4abgelehnt$0!"),
+  TPA_MOVED_SENDER("tpa.moved.sender", "$0Du hast dich $4bewegt$0, deine Anfrage an $4{{target}} $0wurde abgebrochen!"),
+  TPA_MOVED_RECEIVER("tpa.moved.receiver", "$4{{sender}} $0hat sich bewegt, die Anfrage wurde $4abgebrochen$0!"),
+  TPA_TELEPORTED_SENDER("tpa.teleported.sender", "$0Du wurdest zu $2{{target}} $0teleportiert."),
+  TPA_TELEPORTED_RECEIVER("tpa.teleported.receiver", "$2{{sender}} $0wurde zu dir teleportiert."),
+  TPA_PARTNER_QUIT("tpa.partner_quit", "$0Der Sender $4{{sender}} $0einer ausstehenden Teleport-Anfrage hat den Server $4verlassen$0!"),
+  TPA_SENT("tpa.sent", "$0Deine Anfrage an $2{{target}} $0wurde versendet!"),
+  TPA_SELF("tpa.self", "$0Du kannst $4dir selbst $0keine Anfragen senden!"),
+  TPA_NONE_RECEIVED("tpa.none.received", "$0Du hast $4keine $0aktive Anfrage von $4{{sender}}$0!"),
+  TPA_NONE_SENT("tpa.none.sent", "$0Du hast noch keine Anfrage an $4{{target}} $0versendet!"),
+  TPA_ACCEPTED_SENDER(
+    "tpa.accepted.sender",
+    "$0Deine Anfrage an $4{{target}} $0wurde $2angenommen$0!",
+    "$0Bewege dich für $2{{seconds}}s $0nicht, um $2teleportiert $0zu werden."
+  ),
+  TPA_ACCEPTED_RECEIVER("tpa.accepted.receiver", "$0Die Anfrage von $4{{sender}} $0wurde $2angenommen$0!"),
+  TPA_RECEIVED_PREFIX("tpa.received_prefix", "$2{{sender}} $0möchte sich zu dir teleportieren: "),
 
   //=========================================================================//
   //                              Repair Command                             //

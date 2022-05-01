@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.packets.communicators.objective;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /*
@@ -8,6 +9,7 @@ import lombok.Getter;
 
   Represents the unit of metric of an objective packet.
 */
+@AllArgsConstructor
 public enum ObjectiveUnit {
   // Count using hearts
   HEARTS("hearts"),
@@ -17,8 +19,4 @@ public enum ObjectiveUnit {
 
   @Getter
   private final String unit;
-
-  ObjectiveUnit(String unit) {
-    this.unit = unit;
-  }
 }

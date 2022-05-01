@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.packets.communicators.objective;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /*
@@ -8,6 +9,7 @@ import lombok.Getter;
 
   Represents the operation mode of an objective packet.
 */
+@AllArgsConstructor
 public enum ObjectiveMode {
   // Create a new objective
   CREATE(0),
@@ -20,8 +22,4 @@ public enum ObjectiveMode {
 
   @Getter
   private final int mode;
-
-  ObjectiveMode(int mode) {
-    this.mode = mode;
-  }
 }

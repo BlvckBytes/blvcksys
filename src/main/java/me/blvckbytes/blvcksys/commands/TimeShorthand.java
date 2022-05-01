@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.commands;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /*
@@ -8,6 +9,7 @@ import lombok.Getter;
 
   Shorthand for settable times.
 */
+@AllArgsConstructor
 public enum TimeShorthand {
 
   // 1:00
@@ -19,8 +21,4 @@ public enum TimeShorthand {
 
   @Getter
   private final int time;
-
-  TimeShorthand(int time) {
-    this.time = time;
-  }
 }

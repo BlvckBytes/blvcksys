@@ -1,11 +1,15 @@
 package me.blvckbytes.blvcksys.packets.communicators.team;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 04/27/2022
 
   Represents the mode field of a tablist-team packet
 */
+@AllArgsConstructor
 public enum TeamAction {
 
   // Create team
@@ -23,16 +27,6 @@ public enum TeamAction {
   // Remove members from a team
   REMOVE_MEMBERS(4);
 
+  @Getter
   private final int mode;
-
-  TeamAction(int mode) {
-    this.mode = mode;
-  }
-
-  /**
-   * Mode as it's used in the corresponding packet's field
-   */
-  public int getMode() {
-    return mode;
-  }
 }

@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.packets.communicators.objective;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 /*
@@ -8,6 +9,7 @@ import lombok.Getter;
 
   Represents the display position of an objective packet.
 */
+@AllArgsConstructor
 public enum ObjectivePosition {
   // Within the tab bar (next to the ping indicator)
   TAB(0),
@@ -20,8 +22,4 @@ public enum ObjectivePosition {
 
   @Getter
   private final int position;
-
-  ObjectivePosition(int position) {
-    this.position = position;
-  }
 }

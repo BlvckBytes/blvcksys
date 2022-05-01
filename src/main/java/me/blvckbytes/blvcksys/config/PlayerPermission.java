@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.config;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.bukkit.entity.Player;
 
@@ -9,6 +10,7 @@ import org.bukkit.entity.Player;
 
   All known permissions which features can use to check for authorization
 */
+@AllArgsConstructor
 public enum PlayerPermission {
 
   //=========================================================================//
@@ -105,10 +107,6 @@ public enum PlayerPermission {
 
   @Getter
   private final String value;
-
-  PlayerPermission(String value) {
-    this.value = value;
-  }
 
   /**
    * Checks whether or not this player has the permission

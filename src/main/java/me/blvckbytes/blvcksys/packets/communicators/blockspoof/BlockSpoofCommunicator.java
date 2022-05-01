@@ -44,7 +44,7 @@ public class BlockSpoofCommunicator implements IBlockSpoofCommunicator {
           .flatMap(cmnC -> refl.findMethodByName(cmnC, "getBlock", Material.class)
           .flatMap(m -> refl.invokeMethod(m, null, mat))
           // Get block data
-          .flatMap(b -> refl.getFieldByType(b, IBlockData.class)))
+          .flatMap(b -> refl.getFieldByType(b, IBlockData.class, 0)))
           .ifPresent(bd -> refl.setFieldByType(pbc, IBlockData.class, bd, 0));
 
         return pbc;

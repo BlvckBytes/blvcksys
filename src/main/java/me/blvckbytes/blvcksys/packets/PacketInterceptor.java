@@ -1,6 +1,9 @@
 package me.blvckbytes.blvcksys.packets;
 
-import io.netty.channel.*;
+import io.netty.channel.ChannelDuplexHandler;
+import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.ChannelPipeline;
+import io.netty.channel.ChannelPromise;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
@@ -10,18 +13,17 @@ import net.minecraft.network.NetworkManager;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.network.ServerConnection;
 import org.bukkit.Bukkit;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.event.server.ServerListPingEvent;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Proxy;
 import java.util.*;
-import java.util.concurrent.locks.ReentrantLock;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -47,17 +49,24 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
   // Use UUIDs here to allow persistence accross re-joins
   private final Map<UUID, ArrayList<IPacketModifier>> specificModifiers;
 
+  // Vanilla network manager list before proxying, used for restoring
+  @Nullable private Object vanillaNML;
+
   private final ILogger logger;
   private final MCReflect refl;
+  private final JavaPlugin plugin;
 
   public PacketInterceptor(
     @AutoInject ILogger logger,
-    @AutoInject MCReflect refl
-    ) {
+    @AutoInject MCReflect refl,
+    @AutoInject JavaPlugin plugin
+  ) {
     this.globalModifiers = Collections.synchronizedList(new ArrayList<>());
     this.specificModifiers = Collections.synchronizedMap(new HashMap<>());
+
     this.logger = logger;
     this.refl = refl;
+    this.plugin = plugin;
   }
 
   //=========================================================================//
@@ -111,6 +120,9 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
 
   @Override
   public void cleanup() {
+    // Unproxy the network manager list
+    unproxyNetworkList();
+
     // Unregister all globals
     // Loop in reverse to avoid concurrent modifications
     for (int i = this.globalModifiers.size() - 1; i >= 0; i--)
@@ -132,6 +144,9 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
 
   @Override
   public void initialize() {
+    // Proxy the network manager list
+    proxyNetworkList();
+
     // Inject all players after a reload
     for (Player p : Bukkit.getOnlinePlayers())
       injectPlayer(p);
@@ -149,11 +164,6 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
   @EventHandler
   public void onQuit(PlayerQuitEvent e) {
     uninjectPlayer(e.getPlayer());
-  }
-
-  @EventHandler
-  public void onPing(ServerListPingEvent e) {
-    this.injectAllConnections();
   }
 
   //=========================================================================//
@@ -184,9 +194,12 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
    * @param p Target player, optional (null means not yet connected)
    */
   private void injectChannel(@Nullable Player p, NetworkManager nm, ChannelPipeline pipe) {
-    // Already registered in the pipeline
+    // Already registered in the pipeline, remove the old listener
+    // This may happen when a player has already been injected by the NetworkManager-list proxy,
+    // and now joined. Just remove the early handler and register a new one, which now knows
+    // the player ref which the previous handler couldn't know.
     if (pipe.names().contains(handlerName))
-      return;
+      pipe.remove(handlerName);
 
     // UUID is null for non-player-bound packets
     UUID u = p == null ? null : p.getUniqueId();
@@ -294,29 +307,104 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
   }
 
   /**
-   * Inject the local handler into all connections that still are missing it
+   * Undo a previously injected NML field proxy by restoring
+   * back to the vanilla field ref
    */
-  private void injectAllConnections() {
-    try {
-      // Find all network managers inside the ServerConnection
-      List<?> nmans = refl.getCraftServer()
-        .flatMap(cs -> refl.getFieldByName(cs, "console"))
-        .flatMap(console -> refl.getFieldByType(console, ServerConnection.class))
-        .flatMap(sc ->
-          refl.findListFieldByType(sc.getClass(), NetworkManager.class)
-            .flatMap(nmlf -> refl.getFieldValue(nmlf, sc))
-        )
-        .map(nml -> (List<?>) nml)
-        .orElse(new ArrayList<>());
+  private void unproxyNetworkList() {
+    // Not yet proxied
+    if (vanillaNML == null)
+      return;
 
-      // Call inject on all of them, as it will only register absent handlers
-      for (Object nm : nmans) {
-        refl.getNetworkChannel(nm).ifPresent(ch -> {
-          injectChannel(null, (NetworkManager) nm, ch.pipeline());
-        });
-      }
-    } catch (Exception e) {
-      logger.logError(e);
-    }
+    // Restore the vanilla NML field
+    refl.getCraftServer()
+      .flatMap(cs -> refl.getFieldByName(cs, "console"))
+      .flatMap(console -> refl.getFieldByType(console, ServerConnection.class, 0))
+      .ifPresent(sc ->
+        refl.findGenericFieldByType(sc.getClass(), List.class, NetworkManager.class, 0)
+          .ifPresent(nmlf -> refl.setFieldValue(nmlf, sc, vanillaNML))
+      );
+  }
+
+  /**
+   * Proxy the network-manager's internal packet queue and wait for
+   * poll() calls. When a call occurs, run the callback and unproxy immediately
+   * @param nm NetworkManger to monitor
+   * @param queuePolled Callback, invoked on poll()
+   */
+  private void callOnceOnQueuePoll(NetworkManager nm, Runnable queuePolled) {
+    refl.findInnerClass(NetworkManager.class, "QueuedPacket")
+      .flatMap(qpC -> refl.findGenericFieldByType(NetworkManager.class, Queue.class, qpC, 0))
+      .ifPresent(qpF -> {
+
+        refl.getFieldValue(qpF, nm)
+          .ifPresent(queue -> {
+
+            // Create a proxied queue
+            refl.setFieldValue(qpF, nm, Proxy.newProxyInstance(
+              nm.getClass().getClassLoader(),
+              new Class[]{Queue.class},
+              (proxy, method, args) -> {
+                // Queue has been polled
+                if (method.getName().equals("poll")) {
+                  // Undo proxy by re-setting the vanilla ref
+                  refl.setFieldValue(qpF, nm, queue);
+
+                  // Invoke callback
+                  queuePolled.run();
+                }
+
+                // Relay method call to vanilla queue
+                return method.invoke(queue, args);
+              }
+            ));
+          });
+      });
+  }
+
+  /**
+   * Inject a non-modifying read-only proxy into the NML field and
+   * keep the vanilla ref for later restoring. Monitor for new NetworkManagers
+   * and inject into their pipelines as soon as possible.
+   */
+  private void proxyNetworkList() {
+    refl.getCraftServer()
+      .flatMap(cs -> refl.getFieldByName(cs, "console"))
+      .flatMap(console -> refl.getFieldByType(console, ServerConnection.class, 0))
+      .ifPresent(sc ->
+        refl.findGenericFieldByType(sc.getClass(), List.class, NetworkManager.class, 0)
+          .ifPresent(nmlf -> {
+            refl.getFieldValue(nmlf, sc)
+              .ifPresent(nml -> {
+
+                // Create a proxied list
+                Object proxiedList = Proxy.newProxyInstance(
+                  nml.getClass().getClassLoader(),
+                  new Class[] { List.class },
+
+                  (proxy, method, args) -> {
+                    // A new NetworkManager has just been instantiated and added to the list
+                    if (method.getName().equals("add")) {
+                      NetworkManager nman = (NetworkManager) args[0];
+
+                      // Wait until the internal packet queue polled once, to
+                      // know when the connection has been initialized completely,
+                      // then inject this channel
+                      callOnceOnQueuePoll(nman, () -> {
+                        refl.getNetworkChannel(nman).ifPresent(ch -> {
+                          injectChannel(null, nman, ch.pipeline());
+                        });
+                      });
+                    }
+                    return method.invoke(nml, args);
+                  }
+                );
+
+                // Set the field's value to the proxied list
+                // and save the vanilla ref
+                if (refl.setFieldValue(nmlf, sc, proxiedList))
+                  vanillaNML = nml;
+              });
+          })
+      );
   }
 }

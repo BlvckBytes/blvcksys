@@ -19,7 +19,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
 /*
@@ -149,7 +152,7 @@ public class PermissionListener implements Listener, IAutoConstructed {
 
     // Restore the vanilla reference
     refl.getCraftPlayer(p)
-      .flatMap(cp -> refl.getFieldByType(cp, PermissibleBase.class))
+      .flatMap(cp -> refl.getFieldByType(cp, PermissibleBase.class, 0))
       .ifPresent(pb -> refl.setFieldByName(pb, "permissions", vanillaRef));
   }
 
@@ -228,7 +231,7 @@ public class PermissionListener implements Listener, IAutoConstructed {
   @SuppressWarnings("unchecked")
   private void proxyPermissions(Player p) {
     refl.getCraftPlayer(p)
-      .flatMap(cp -> refl.getFieldByType(cp, PermissibleBase.class))
+      .flatMap(cp -> refl.getFieldByType(cp, PermissibleBase.class, 0))
       .flatMap(pb ->
         refl.getFieldByName(pb, "permissions")
           .map(permissions -> new Tuple<>((PermissibleBase) pb, (Map<?, ?>) permissions))

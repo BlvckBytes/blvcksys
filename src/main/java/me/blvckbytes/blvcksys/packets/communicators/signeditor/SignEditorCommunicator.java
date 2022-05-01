@@ -144,7 +144,7 @@ public class SignEditorCommunicator implements ISignEditorCommunicator, IPacketM
         return incoming;
 
       // Get the lines from the sign
-      refl.getArrayFieldByType(us, String.class).ifPresent(v -> {
+      refl.getGenericFieldByType(us, String[].class, String.class, 0).ifPresent(v -> {
         // Update the fake block back to it's original state
         Player tar = Bukkit.getPlayer(sender);
         if (tar != null)

@@ -85,7 +85,7 @@ public class TeamCommunicator implements ITeamCommunicator {
   private Optional<EnumChatFormat> chatFormatFromColor(char color) {
     // Loop all enum values
     for (EnumChatFormat cf : EnumChatFormat.values()) {
-      Optional<Object> colorCode = refl.getFieldByType(cf, char.class);
+      Optional<Object> colorCode = refl.getFieldByType(cf, char.class, 0);
 
       // Could not get the color code of this enum entry
       if (colorCode.isEmpty())

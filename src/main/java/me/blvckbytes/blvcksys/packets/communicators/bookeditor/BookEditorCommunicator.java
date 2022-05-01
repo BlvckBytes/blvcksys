@@ -235,7 +235,7 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
 
     // Is a book edit packet
     if (incoming instanceof PacketPlayInBEdit bookEdit) {
-      refl.getListFieldByType(bookEdit, String.class)
+      refl.getGenericFieldByType(bookEdit, List.class, String.class, 0)
         .ifPresent(pages -> {
           // Check if the slot isn't vacant and it's a book.
           // If it's not a book, the player couldn't have possible written it

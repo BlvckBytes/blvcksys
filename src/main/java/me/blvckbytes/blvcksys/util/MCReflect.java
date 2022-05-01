@@ -17,7 +17,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.*;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
@@ -50,7 +49,21 @@ public class MCReflect {
   //=========================================================================//
 
   /**
+   * Get the major, minor and revision version numbers the server's running on
+   * @return [major, minor, revision]
+   */
+  public int[] getVersion() {
+    String[] data = findVersion().split("_");
+    return new int[] {
+      Integer.parseInt(data[0].substring(1)), // remove leading v
+      Integer.parseInt(data[1]),
+      Integer.parseInt(data[2].substring(1)) // Remove leading R
+    };
+  }
+
+  /**
    * Find the minecraft version by parsing the bukkit package
+   * Format: v(MAJOR)_(MINOR)_R(REVISION)
    */
   private String findVersion() {
     return Bukkit.getServer().getClass().getName().split("\\.")[3];
@@ -111,16 +124,6 @@ public class MCReflect {
   //=========================================================================//
 
   /**
-   * Try to find a class' member field by it's type, choose the first occurrence
-   * @param c Class to search in
-   * @param fieldClass Target field's class
-   * @return Optional field, no value on reflection errors
-   */
-  public Optional<Field> findFieldByType(Class<?> c, Class<?> fieldClass) {
-    return findFieldByType(c, fieldClass, 0);
-  }
-
-  /**
    * Try to find a class' member field by it's type, choose the first occurrence after skipping some
    * @param c Class to search in
    * @param fieldClass Target field's class
@@ -146,38 +149,6 @@ public class MCReflect {
     });
   }
 
-  /**
-   * Try to find a class' member array field by it's generic type
-   * @param c Class to search in
-   * @param arrayType Generic type
-   * @return Optional field, no value on reflection errors
-   */
-  public<T> Optional<Field> findArrayFieldByType(Class<?> c, Class<T> arrayType) {
-    return walkHierarchyToFind(c, cc ->
-      Arrays.stream(cc.getDeclaredFields())
-        .filter(it -> !Modifier.isStatic(it.getModifiers()))
-        .filter(it -> it.getType().isArray())
-        .filter(it -> it.getGenericType().getTypeName().contains(arrayType.getTypeName()))
-        .findFirst()
-    );
-  }
-
-  /**
-   * Try to find a class' member Optional field by it's generic type
-   * @param c Class to search in
-   * @param arrayType Generic type
-   * @return Optional field, no value on reflection errors
-   */
-  public<T> Optional<Field> findOptionalFieldByType(Class<?> c, Class<T> arrayType) {
-    return walkHierarchyToFind(c, cc ->
-      Arrays.stream(cc.getDeclaredFields())
-        .filter(it -> !Modifier.isStatic(it.getModifiers()))
-        .filter(it -> Optional.class.isAssignableFrom(it.getType()))
-        .filter(it -> it.getGenericType().getTypeName().contains(arrayType.getTypeName()))
-        .findFirst()
-    );
-  }
-
   //=========================================================================//
   //                          Field Value By Type                            //
   //=========================================================================//
@@ -185,94 +156,37 @@ public class MCReflect {
   ///////////////////////////////// Reading ////////////////////////////////////
 
   /**
-   * Try to find a class' member array field's value by it's generic type
+   * Try to find a class' member generic field's value by it's generic type
    * @param o Object to search in
-   * @param arrayType Generic type
-   * @return Optional field value, no value on reflection errors
+   * @param type Type that holds the generic type
+   * @param genericType Generic type held by type
+   * @param skip How many occurrences to skip
+   * @return Optional Object, no value on reflection errors
    */
   @SuppressWarnings("unchecked")
-  public<T> Optional<T[]> getArrayFieldByType(Object o, Class<T> arrayType) {
-    try {
-      // Try to get the field by it's type
-      Optional<Field> f = findArrayFieldByType(o.getClass(), arrayType);
-
-      if (f.isEmpty())
+  public<C> Optional<C> getGenericFieldByType(Object o, Class<C> type, Class<?> genericType, int skip) {
+    return walkHierarchyToFind(o.getClass(), cc -> {
+      try {
+        return (Optional<C>) findGenericFieldByType(cc, type, genericType, skip)
+          .flatMap(f -> getFieldValue(f, o));
+      } catch (Exception e) {
+        logger.logError(e);
         return Optional.empty();
-
-      // Respond with the value of this field in reference to the provided object
-      f.get().setAccessible(true);
-      return Optional.of((T[]) f.get().get(o));
-    } catch (Exception e) {
-      logger.logError(e);
-      return Optional.empty();
-    }
-  }
-
-  /**
-   * Try to find a class' member list field's value by it's generic type
-   * @param o Object to search in
-   * @param arrayType Name of the generic type
-   * @return Optional field value, no value on reflection errors
-   */
-  @SuppressWarnings("unchecked")
-  public<T> Optional<List<T>> getListFieldByType(Object o, Class<T> arrayType) {
-    try {
-      // Try to get the field by it's type
-      Optional<Field> f = findListFieldByType(o.getClass(), arrayType);
-
-      if (f.isEmpty())
-        return Optional.empty();
-
-      // Respond with the value of this field in reference to the provided object
-      f.get().setAccessible(true);
-      return Optional.of((List<T>) f.get().get(o));
-    } catch (Exception e) {
-      logger.logError(e);
-      return Optional.empty();
-    }
-  }
-
-  /**
-   * Try to find a class' member Optional field's value by it's generic type
-   * @param o Object to search in
-   * @param optionalType Generic type
-   * @return Optional Optional field value, no value on reflection errors
-   */
-  @SuppressWarnings("unchecked")
-  public<T> Optional<T> getOptionalFieldByType(Object o, Class<T> optionalType) {
-    try {
-      // Try to get the field by it's type
-      Optional<Field> f = findOptionalFieldByType(o.getClass(), optionalType);
-
-      if (f.isEmpty())
-        return Optional.empty();
-
-      // Respond with the value of this field in reference to the provided object
-      f.get().setAccessible(true);
-
-      // Holds no value
-      Optional<?> opt = (Optional<?>) f.get().get(o);
-      if (opt.isEmpty())
-        return Optional.empty();
-
-      // Re-wrap to avoid unsafe cast
-      return Optional.of((T) opt.get());
-    } catch (Exception e) {
-      logger.logError(e);
-      return Optional.empty();
-    }
+      }
+    });
   }
 
   /**
    * Try to find a class' member field's value by it's type, choose the first occurrence
    * @param o Object to search in
    * @param fieldClass Target field's class
+   * @param skip How many occurrences to skip
    * @return Optional field value, no value on reflection errors
    */
-  public Optional<Object> getFieldByType(Object o, Class<?> fieldClass) {
+  public Optional<Object> getFieldByType(Object o, Class<?> fieldClass, int skip) {
     try {
       // Try to get the field by it's type
-      Optional<Field> f = findFieldByType(o.getClass(), fieldClass);
+      Optional<Field> f = findFieldByType(o.getClass(), fieldClass, skip);
 
       if (f.isEmpty())
         return Optional.empty();
@@ -287,18 +201,21 @@ public class MCReflect {
   }
 
   /**
-   * Try to find a class' member list field by it's generic type
+   * Try to find a class' member generic field by it's generic type
    * @param c Class to search in
-   * @param listType Name of the generic type
+   * @param type Type that holds the generic type
+   * @param genericType Generic type held by type
+   * @param skip How many occurrences to skip
    * @return Optional field, no value on reflection errors
    */
-  public<T> Optional<Field> findListFieldByType(Class<?> c, Class<T> listType) {
+  public<T> Optional<Field> findGenericFieldByType(Class<?> c, Class<?> type, Class<T> genericType, int skip) {
     return walkHierarchyToFind(c, cc -> {
       try {
         return Arrays.stream(cc.getDeclaredFields())
           .filter(it -> !Modifier.isStatic(it.getModifiers()))
-          .filter(it -> List.class.isAssignableFrom(it.getType()))
-          .filter(it -> it.getGenericType().getTypeName().contains(listType.getSimpleName()))
+          .filter(it -> type.isAssignableFrom(it.getType()))
+          .filter(it -> it.getGenericType().getTypeName().contains(genericType.getSimpleName()))
+          .skip(skip)
           .findFirst();
       } catch (Exception e) {
         logger.logError(e);
@@ -331,20 +248,25 @@ public class MCReflect {
   }
 
   /**
-   * Try to set a class' member array field's value by it's type, choose the first occurrence
+   * Try to set a class' member field's value by it's type, choose the first occurrence
    * @param o Object to manipulate in
-   * @param arrayType Generic type
+   * @param c Class to search in
+   * @param type Type that holds the generic type
    * @param v Value to set
+   * @param skip How many occurrences to skip
+   * @return Success state
    */
-  public<T> void setArrayFieldByType(Object o, Class<T> arrayType, Object v) {
-    findArrayFieldByType(o.getClass(), arrayType).ifPresent(f -> {
+  public boolean setGenericFieldByType(Object o, Class<?> c, Class<?> type, Object v, int skip) {
+    return findGenericFieldByType(o.getClass(), c, type, skip).map(f -> {
       try {
         f.setAccessible(true);
         f.set(o, v);
+        return true;
       } catch (Exception e) {
         logger.logError(e);
+        return false;
       }
-    });
+    }).orElse(false);
   }
 
   //=========================================================================//
@@ -459,6 +381,27 @@ public class MCReflect {
     }
   }
 
+  /**
+   * Try tosetget a field's value relative to an object
+   * @param f Field to change
+   * @param o Object to change in
+   * @param v Value to set
+   * @return Operation result
+   */
+  public boolean setFieldValue(Field f, Object o, Object v) {
+    try {
+      if (f == null)
+        return false;
+
+      f.setAccessible(true);
+      f.set(o, v);
+      return true;
+    } catch (Exception e) {
+      logger.logError(e);
+      return false;
+    }
+  }
+
   //=========================================================================//
   //                              Enumerations                               //
   //=========================================================================//
@@ -557,7 +500,7 @@ public class MCReflect {
       Class<?> epC = ep.getClass();
 
       // Try to find a field of type PlayerConnection in the EntityPlayer
-      return findFieldByType(epC, PlayerConnection.class)
+      return findFieldByType(epC, PlayerConnection.class, 0)
         .flatMap(field -> {
           try {
             return Optional.of(field.get(ep));
@@ -577,7 +520,7 @@ public class MCReflect {
   public Optional<Object> getNetworkManager(Player p) {
     return getPlayerConnection(p)
       .flatMap(pc ->
-        findFieldByType(pc.getClass(), NetworkManager.class)
+        findFieldByType(pc.getClass(), NetworkManager.class, 0)
         .flatMap(nmf -> {
           try {
             return Optional.of(nmf.get(pc));
@@ -611,7 +554,7 @@ public class MCReflect {
   public Optional<Channel> getNetworkChannel(Player p) {
     return getNetworkManager(p)
       .flatMap(nm ->
-        findFieldByType(nm.getClass(), Channel.class)
+        findFieldByType(nm.getClass(), Channel.class, 0)
           .flatMap(cf -> {
             try {
               return Optional.of(cf.get(nm));
@@ -630,7 +573,7 @@ public class MCReflect {
    * @return NetworkChannel of the player
    */
   public Optional<Channel> getNetworkChannel(Object nm) {
-    return findFieldByType(nm.getClass(), Channel.class)
+    return findFieldByType(nm.getClass(), Channel.class, 0)
       .flatMap(cf -> {
         try {
           return Optional.of(cf.get(nm));
@@ -729,6 +672,23 @@ public class MCReflect {
   //=========================================================================//
   //                                Utilities                                //
   //=========================================================================//
+
+  /**
+   * Finds an inner class (hidden inside another class) by it's name
+   * @param container Containing class
+   * @param innerName Inner class' name
+   * @return Optional class
+   */
+  public Optional<Class<?>> findInnerClass(Class<?> container, String innerName) {
+    try {
+      return Optional.of(
+        Class.forName(container.getName() + "$" + innerName)
+      );
+    } catch (Exception e) {
+      logger.logError(e);
+      return Optional.empty();
+    }
+  }
 
   /**
    * Walks the class hierarchy (superclasses) for as long as the searcher couldn't

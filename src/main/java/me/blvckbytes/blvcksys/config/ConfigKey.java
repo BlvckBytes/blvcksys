@@ -144,13 +144,17 @@ public enum ConfigKey {
 
   PLAYERLIST_TEXT(
     "playerlist.text",
-    "$0» $1❘ &e&lDevelopment Server",
-    "$0» $1❘ ➟ &aYour $1× &dAdvertisement $1× &6Placed $1× &9Here"
+    "$0» $1❘ &5&lBlvckBytes.Dev $1[&a{{version}}$1]",
+    "$0» $1❘ ➟ &aSkyPvP $1× &dSkyBlock $1× &6Farmwelt $1× &9Wie Früher!"
   ),
   PLAYERLIST_HOVER(
     "playerlist.hover",
-    "$2This server has an",
-    "$2awesome hover applied!"
+    "$3Herzlich Willkommen!",
+    " ",
+    "$0Trete uns bei und werde",
+    "$0Teil des Projektes,",
+    "$0SkyPvP wieder zum",
+    "$0Leben zu erwecken!"
   ),
   PLAYERLIST_ONLINE("playerlist.online", ""),
 

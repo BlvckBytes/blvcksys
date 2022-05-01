@@ -19,8 +19,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.nio.file.Files;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -32,6 +34,8 @@ import java.util.UUID;
 */
 @AutoConstruct
 public class ServerListPacketModifier implements IPacketModifier {
+
+  private final String VERSION_STR;
 
   private final MCReflect refl;
   private final IConfig cfg;
@@ -53,6 +57,10 @@ public class ServerListPacketModifier implements IPacketModifier {
     this.logger = logger;
     this.plugin = plugin;
 
+    this.VERSION_STR = Arrays.stream(refl.getVersion())
+      .mapToObj(String::valueOf)
+      .collect(Collectors.joining("."));
+
     loadIconFile();
     interceptor.register(this);
   }
@@ -73,12 +81,16 @@ public class ServerListPacketModifier implements IPacketModifier {
       return outgoing;
 
     if (outgoing instanceof PacketStatusOutServerInfo si) {
-      refl.getFieldByType(si, ServerPing.class)
+      refl.getFieldByType(si, ServerPing.class, 0)
         .ifPresent(sp -> {
           // Set the text
           refl.setFieldByType(
             sp, IChatBaseComponent.class,
-            new ChatMessage(cfg.get(ConfigKey.PLAYERLIST_TEXT).asScalar()), 0
+            new ChatMessage(
+              cfg.get(ConfigKey.PLAYERLIST_TEXT)
+                .withVariable("version", VERSION_STR)
+                .asScalar()
+            ), 0
           );
 
           // Modify the icon base64 string value
@@ -88,7 +100,7 @@ public class ServerListPacketModifier implements IPacketModifier {
           // Modify the player-sample by overriding online players with fake players
           String online = cfg.get(ConfigKey.PLAYERLIST_ONLINE).asScalar();
           if (!online.isEmpty()) {
-            refl.getFieldByType(sp, ServerPing.ServerData.class)
+            refl.getFieldByType(sp, ServerPing.ServerData.class, 0)
               .ifPresent(sd -> {
                 refl.setFieldByType(sd, String.class, online, 0);
                 refl.setFieldByType(sd, int.class, 0, 0);
@@ -96,7 +108,7 @@ public class ServerListPacketModifier implements IPacketModifier {
           }
 
           // Modify the player-sample by overriding online players with fake players
-          refl.getFieldByType(sp, ServerPing.ServerPingPlayerSample.class)
+          refl.getFieldByType(sp, ServerPing.ServerPingPlayerSample.class, 0)
             .ifPresent(ps -> {
               // Map individual hover lines to gameprofiles with random UUIDs
               GameProfile[] profiles =
@@ -105,7 +117,7 @@ public class ServerListPacketModifier implements IPacketModifier {
                   .map(line -> new GameProfile(UUID.randomUUID(), line))
                   .toArray(GameProfile[]::new);
 
-              refl.setArrayFieldByType(ps, GameProfile.class, profiles);
+              refl.setGenericFieldByType(ps, GameProfile[].class, GameProfile.class, profiles, 0);
             });
         });
     }

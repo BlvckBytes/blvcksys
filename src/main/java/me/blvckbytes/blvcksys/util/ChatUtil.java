@@ -92,16 +92,13 @@ public class ChatUtil implements Listener {
     // Cancel all commands that are UUIDs - they're only internal
     e.setCancelled(true);
 
-    List<ChatButtons> sessions = buttonSessions.get(p);
-
-    // Player not even registered
-    if (sessions == null)
-      return;
-
     // Try to find the target button and dispatch it
-    for (ChatButtons session : sessions) {
-      if (session.processInvocation(command))
-        return;
+    List<ChatButtons> sessions = buttonSessions.get(p);
+    if (sessions != null) {
+      for (ChatButtons session : sessions) {
+        if (session.processInvocation(command))
+          return;
+      }
     }
 
     // Inform about expiry

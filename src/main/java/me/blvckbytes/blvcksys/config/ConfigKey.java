@@ -171,6 +171,13 @@ public enum ConfigKey {
   PLAYERLIST_VERSION_MISMATCH("playerlist.version_mismatch", "$2Version {{version}}"),
 
   //=========================================================================//
+  //                                KILL Command                             //
+  //=========================================================================//
+
+  KILL_SENDER("kill.sender", "$0Du hast $2{{target}} $0per $2Befehl $0getötet!"),
+  KILL_RECEIVER("kill.receiver", "$0Du wurdest von $2{{issuer}} $0per $2Befehl $0getötet!"),
+
+  //=========================================================================//
   //                                 TP Command                              //
   //=========================================================================//
 

@@ -17,12 +17,12 @@ import java.util.stream.Stream;
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 05/01/2022
 
-  Teleport yourself or another player to a target player instantly.
+  Kill another player.
 */
 @AutoConstruct
-public class TpCommand extends APlayerCommand {
+public class KillCommand extends APlayerCommand {
 
-  public TpCommand(
+  public KillCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
@@ -30,21 +30,16 @@ public class TpCommand extends APlayerCommand {
   ) {
     super(
       plugin, logger, cfg, refl,
-      "tp",
-      "Teleport to a target instantly",
-      PlayerPermission.TP,
-      new CommandArgument("<target>", "Whom to teleport to"),
-      new CommandArgument("[player]", "Player to teleport, defaults to yourself", PlayerPermission.TP_OTHERS)
+      "kill",
+      "Kill another player instantly",
+      PlayerPermission.KILL,
+      new CommandArgument("[player]", "Player to kill")
     );
   }
 
-  //=========================================================================//
-  //                                 Handler                                 //
-  //=========================================================================//
-
   @Override
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
-    if (currArg == 0 || currArg == 1)
+    if (currArg == 0)
       return suggestOnlinePlayers(args, currArg, false);
     return super.onTabCompletion(p, args, currArg);
   }
@@ -52,29 +47,24 @@ public class TpCommand extends APlayerCommand {
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     Player target = onlinePlayer(args, 0);
-    Player player = onlinePlayer(args, 1, p);
-    boolean isSelf = player.equals(p);
 
-    // Teleport to the target
-    player.teleport(target);
+    target.getWorld().strikeLightningEffect(target.getLocation());
+    target.setHealth(0);
 
-    // Inform the command sender
+    // Inform the issuer
     p.sendMessage(
-      cfg.get(isSelf ? ConfigKey.TP_SELF : ConfigKey.TP_OTHER_SENDER)
+      cfg.get(ConfigKey.KILL_SENDER)
         .withPrefix()
         .withVariable("target", target.getName())
-        .withVariable("player", player.getName())
         .asScalar()
     );
 
-    // Inform the teleported player
-    if (!isSelf)
-      player.sendMessage(
-        cfg.get(ConfigKey.TP_OTHER_RECEIVER)
-          .withPrefix()
-          .withVariable("target", target.getName())
-          .withVariable("issuer", p.getName())
-          .asScalar()
-      );
+    // Inform the player that just got killed
+    target.sendMessage(
+      cfg.get(ConfigKey.KILL_RECEIVER)
+        .withPrefix()
+        .withVariable("issuer", p.getName())
+        .asScalar()
+    );
   }
 }

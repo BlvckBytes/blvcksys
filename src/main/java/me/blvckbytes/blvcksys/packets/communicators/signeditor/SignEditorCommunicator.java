@@ -1,16 +1,20 @@
 package me.blvckbytes.blvcksys.packets.communicators.signeditor;
 
+import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
 import me.blvckbytes.blvcksys.packets.communicators.blockspoof.IBlockSpoofCommunicator;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
+import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
 import net.minecraft.core.BlockPosition;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.PacketPlayInUpdateSign;
+import net.minecraft.network.protocol.game.PacketPlayOutCloseWindow;
 import net.minecraft.network.protocol.game.PacketPlayOutOpenSignEditor;
 import net.minecraft.network.protocol.game.PacketPlayOutTileEntityData;
 import net.minecraft.util.Tuple;
@@ -19,6 +23,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.HashMap;
@@ -33,11 +40,12 @@ import java.util.function.Consumer;
   Creates all packets in regard to opening a sign editor GUI and retrieving it's result.
 */
 @AutoConstruct
-public class SignEditorCommunicator implements ISignEditorCommunicator, IPacketModifier {
+public class SignEditorCommunicator implements ISignEditorCommunicator, IPacketModifier, Listener, IAutoConstructed {
 
   private final MCReflect refl;
   private final IBlockSpoofCommunicator spoof;
   private final JavaPlugin plugin;
+  private final IConfig cfg;
 
   // Map of a player to their signedit request (tuple of a callback and fake sign location)
   private final Map<UUID, Tuple<Consumer<String[]>, Location>> signeditRequests;
@@ -46,11 +54,13 @@ public class SignEditorCommunicator implements ISignEditorCommunicator, IPacketM
     @AutoInject MCReflect refl,
     @AutoInject IBlockSpoofCommunicator spoof,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IPacketInterceptor interceptor
+    @AutoInject IPacketInterceptor interceptor,
+    @AutoInject IConfig cfg
   ) {
     this.refl = refl;
     this.spoof = spoof;
     this.plugin = plugin;
+    this.cfg = cfg;
 
     this.signeditRequests = new HashMap<>();
     interceptor.register(this);
@@ -150,5 +160,46 @@ public class SignEditorCommunicator implements ISignEditorCommunicator, IPacketM
   @Override
   public Packet<?> modifyOutgoing(UUID receiver, NetworkManager nm, Packet<?> outgoing) {
     return outgoing;
+  }
+
+  @Override
+  public void cleanup() {
+    // Cancel editing for all active requests
+    for (UUID u : signeditRequests.keySet()) {
+      Player p = Bukkit.getPlayer(u);
+      if (p != null)
+        cancelEdit(p);
+    }
+  }
+
+  @Override
+  public void initialize() {}
+
+  @EventHandler
+  public void onQuit(PlayerQuitEvent e) {
+    // Unregister pending editing request
+    signeditRequests.remove(e.getPlayer().getUniqueId());
+  }
+
+  private void cancelEdit(Player p) {
+    // No active edit
+    if (signeditRequests.remove(p.getUniqueId()) == null)
+      return;
+
+    // Close the sign editor
+    refl.createGarbageInstance(PacketPlayOutCloseWindow.class)
+      .map(pcw -> {
+        // Window ID 0, should be the sign editor
+        refl.setFieldByType(pcw, int.class, 0, 0);
+        return pcw;
+      })
+      .ifPresent(pack -> refl.sendPacket(p, pack));
+
+    // Inform
+    p.sendMessage(
+      cfg.get(ConfigKey.SIGNEDIT_CANCELLED)
+        .withPrefix()
+        .asScalar()
+    );
   }
 }

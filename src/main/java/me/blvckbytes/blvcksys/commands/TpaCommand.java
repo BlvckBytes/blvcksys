@@ -6,7 +6,9 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.events.IMoveListener;
 import me.blvckbytes.blvcksys.handlers.AnimationType;
+import me.blvckbytes.blvcksys.handlers.BelowNameFlag;
 import me.blvckbytes.blvcksys.handlers.IAnimationHandler;
+import me.blvckbytes.blvcksys.handlers.IObjectiveHandler;
 import me.blvckbytes.blvcksys.util.ChatButtons;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.MCReflect;
@@ -32,8 +34,6 @@ import java.util.stream.Stream;
 */
 @AutoConstruct
 public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener {
-
-  // TODO: Maybe show a teleport icon in the player's below name during teleportation?
 
   /*
    * Represents a teleportation request
@@ -70,6 +70,7 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
   private final IMoveListener move;
   private final ChatUtil chat;
   private final IAnimationHandler animation;
+  private final IObjectiveHandler obj;
 
   public TpaCommand(
     @AutoInject JavaPlugin plugin,
@@ -78,7 +79,8 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
     @AutoInject MCReflect refl,
     @AutoInject IMoveListener move,
     @AutoInject ChatUtil chat,
-    @AutoInject IAnimationHandler animation
+    @AutoInject IAnimationHandler animation,
+    @AutoInject IObjectiveHandler obj
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -94,6 +96,7 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
     this.move = move;
     this.chat = chat;
     this.animation = animation;
+    this.obj = obj;
   }
 
   //=========================================================================//
@@ -379,6 +382,9 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
     // Start the animation
     animation.startAnimation(sender, TELEPORT_ANIMATION);
 
+    // Add the teleporting flag
+    obj.setBelowNameFlag(sender, BelowNameFlag.TELEPORTING, true);
+
     // Create a timeout to await non-movement in
     this.teleportingTasks.put(sender, Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
       // Stop listening to moves
@@ -392,6 +398,9 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
 
       // Stop the animation
       animation.stopAnimation(sender, TELEPORT_ANIMATION);
+
+      // Remove the teleporting flag
+      obj.setBelowNameFlag(sender, BelowNameFlag.TELEPORTING, false);
 
       // Teleport
       sender.teleport(target);
@@ -433,6 +442,9 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
 
         // Stop the animation
         animation.stopAnimation(sender, TELEPORT_ANIMATION);
+
+        // Remove the teleporting flag
+        obj.setBelowNameFlag(sender, BelowNameFlag.TELEPORTING, false);
 
         // Delete request
         deleteRequest(sender, req);

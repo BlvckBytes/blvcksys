@@ -29,10 +29,8 @@ import org.bukkit.inventory.InventoryView;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -45,7 +43,7 @@ import java.util.Map;
   that affect those metrics. The sidebar is also only refreshed on changes.
 */
 @AutoConstruct
-public class ObjectiveHandler implements Listener, IAutoConstructed {
+public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveHandler {
 
   // Name of the sidebar objective
   private static final String NAME_SIDEBAR = "side";
@@ -70,6 +68,9 @@ public class ObjectiveHandler implements Listener, IAutoConstructed {
   // Map of each player to their previous levels, used to check for level delta when leveling up
   private final Map<Player, Integer> prevLevels;
 
+  // Each player has a bitmask of below name flags
+  private final Map<Player, Integer> belowNameFlags;
+
   public ObjectiveHandler(
     @AutoInject JavaPlugin plugin,
     @AutoInject IConfig cfg,
@@ -78,6 +79,7 @@ public class ObjectiveHandler implements Listener, IAutoConstructed {
     this.prevSidebarLines = new HashMap<>();
     this.knownBelowNames = new HashMap<>();
     this.prevLevels = new HashMap<>();
+    this.belowNameFlags = new HashMap<>();
 
     this.plugin = plugin;
     this.cfg = cfg;
@@ -213,6 +215,19 @@ public class ObjectiveHandler implements Listener, IAutoConstructed {
   //=========================================================================//
 
   @Override
+  public void setBelowNameFlag(Player target, BelowNameFlag flag, boolean active) {
+    // Start out with a zero-value bitmask
+    int curr = belowNameFlags.getOrDefault(target, 0);
+    int val = flag.getValue();
+
+    // Either set (OR val) or clear (AND NOT(val)) the bit
+    belowNameFlags.put(target, active ? curr | val : curr & ~val);
+
+    // Update the below name for this player
+    updateBelowName(target, target.getHealth(), target.getLevel());
+  }
+
+  @Override
   public void initialize() {
     // Loop all online players
     for (Player t : Bukkit.getOnlinePlayers()) {
@@ -318,7 +333,7 @@ public class ObjectiveHandler implements Listener, IAutoConstructed {
       t,
       NAME_BELOW_NAME.formatted(who.getName()),
       ObjectiveMode.CREATE,
-      buildBelowNameText(who.getHealth()),
+      buildBelowNameText(who.getHealth(), belowNameFlags.getOrDefault(who, 0)),
       ObjectiveUnit.INTEGER
     )) {
 
@@ -360,13 +375,24 @@ public class ObjectiveHandler implements Listener, IAutoConstructed {
   /**
    * Build the text that's shown below the playername (used for creation and updating)
    * @param health Health of who
+   * @param flags Active {@link BelowNameFlag} bitmask
    */
-  private String buildBelowNameText(double health) {
+  private String buildBelowNameText(double health, int flags) {
+    String flagStr = Arrays.stream(BelowNameFlag.values())
+      .filter(flag -> (flags & flag.getValue()) > 0)
+      .map(flag -> flag.getColor().toString() + flag.getSymbol())
+      .collect(Collectors.joining(
+        cfg.get(ConfigKey.BELOWNAME_FLAGS_JOIN).asScalar()
+      ));
+
     // Format hearts to two decimals
     String hearts = String.valueOf(Math.floor(health * 100) / 100);
-    return cfg.get(ConfigKey.BELOWNAME_TEXT)
+    String text = cfg.get(ConfigKey.BELOWNAME_TEXT)
       .withVariable("hearts", hearts)
       .asScalar();
+
+    // Return either the text alone or the text + the flag separator + the flags
+    return text + (flagStr.isBlank() ? "" : cfg.get(ConfigKey.BELOWNAME_FLAGS_SEP).asScalar() + flagStr);
   }
 
   /**
@@ -444,6 +470,8 @@ public class ObjectiveHandler implements Listener, IAutoConstructed {
    * @param level Level of who
    */
   private void updateBelowName(Player who, double health, int level) {
+    int flags = belowNameFlags.getOrDefault(who, 0);
+
     for (Player t : Bukkit.getOnlinePlayers()) {
       // Skip self
       if (t == who)
@@ -463,7 +491,7 @@ public class ObjectiveHandler implements Listener, IAutoConstructed {
           t,
           NAME_BELOW_NAME.formatted(who.getName()),
           ObjectiveMode.MODIFY_TEXT,
-          buildBelowNameText(health),
+          buildBelowNameText(health, flags),
           ObjectiveUnit.INTEGER
         );
       }

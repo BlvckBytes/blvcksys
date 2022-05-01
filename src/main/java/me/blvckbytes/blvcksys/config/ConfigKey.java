@@ -103,9 +103,13 @@ public enum ConfigKey {
   // will always start with a white number of levels the player has.
   // Then, go from there and specify the rest
   BELOWNAME_TEXT(
-    "belowname_text",
+    "belowname.text",
     "&a◎ $1| &r{{hearts}} &c❤"
   ),
+  // Separates text and flags
+  BELOWNAME_FLAGS_SEP("belowname.flags_sep", " $1| "),
+  // Joins individual flags
+  BELOWNAME_FLAGS_JOIN("belowname.flags_join", " $1| "),
 
   //=========================================================================//
   //                                 Tablist                                 //

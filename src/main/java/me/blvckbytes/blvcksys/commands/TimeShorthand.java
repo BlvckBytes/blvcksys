@@ -10,11 +10,8 @@ import lombok.Getter;
 */
 public enum TimeShorthand {
 
-  // 06:00
-  MORNING(6 * 1000),
-
-  // 11:00
-  DAY(11 * 1000),
+  // 1:00
+  DAY(1000),
 
   // 22:00
   NIGHT(22 * 1000)

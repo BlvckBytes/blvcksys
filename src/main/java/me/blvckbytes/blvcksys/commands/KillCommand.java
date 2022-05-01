@@ -37,6 +37,10 @@ public class KillCommand extends APlayerCommand {
     );
   }
 
+  //=========================================================================//
+  //                                 Handler                                 //
+  //=========================================================================//
+
   @Override
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
     if (currArg == 0)

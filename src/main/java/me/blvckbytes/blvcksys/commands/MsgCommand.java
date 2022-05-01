@@ -6,6 +6,7 @@ import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
+import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -26,7 +27,7 @@ import java.util.stream.Stream;
   Remove this partnership if one of the two players leaves the server.
 */
 @AutoConstruct
-public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener {
+public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener, IAutoConstructed {
 
   // Mapping sender to recipient and recipient to sender
   // B executes: /msg A results in: B->A, A->B
@@ -94,6 +95,15 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener 
   //=========================================================================//
   //                                   API                                   //
   //=========================================================================//
+
+  @Override
+  public void cleanup() {
+    // Remove all previous partners
+    this.partners.clear();
+  }
+
+  @Override
+  public void initialize() {}
 
   @Override
   public Player getPartner(Player sender) {

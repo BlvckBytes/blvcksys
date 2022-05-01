@@ -8,6 +8,7 @@ import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
+import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
@@ -31,7 +32,7 @@ import java.util.stream.Stream;
   for players that get their active flight mode disabled by somebody else.
  */
 @AutoConstruct
-public class FlyCommand extends APlayerCommand implements Listener {
+public class FlyCommand extends APlayerCommand implements Listener, IAutoConstructed {
 
   // How long the fall-damage protection will wait for one occurrence of
   // cancellable damage until it expires (to avoid dead list entries)
@@ -102,6 +103,22 @@ public class FlyCommand extends APlayerCommand implements Listener {
     // Apply flight state
     target.setAllowFlight(newState);
   }
+
+  //=========================================================================//
+  //                                    API                                  //
+  //=========================================================================//
+
+  @Override
+  public void cleanup() {
+    // Delete all revocation memorizations
+    for (Player p : justRevoked.keySet()) {
+      Bukkit.getScheduler().cancelTask(justRevoked.get(p));
+      justRevoked.remove(p);
+    }
+  }
+
+  @Override
+  public void initialize() {}
 
   //=========================================================================//
   //                                 Listeners                               //

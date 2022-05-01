@@ -139,6 +139,18 @@ public enum ConfigKey {
   ),
 
   //=========================================================================//
+  //                            Version Disconnect                           //
+  //=========================================================================//
+
+  VERSION_DISCONNECT_SCREEN(
+    "version_disconnect.screen",
+    "&5&lBlvckBytes.Dev",
+    " ",
+    "$0Deine $3Clientversion $0ist leider nicht mit unserer",
+    "$0Serverversion von $3{{version}} $0kompatibel!"
+  ),
+
+  //=========================================================================//
   //                                Playerlist                               //
   //=========================================================================//
 

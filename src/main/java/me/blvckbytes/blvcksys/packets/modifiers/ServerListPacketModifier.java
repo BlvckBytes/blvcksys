@@ -19,10 +19,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.nio.file.Files;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -34,8 +32,6 @@ import java.util.stream.Collectors;
 */
 @AutoConstruct
 public class ServerListPacketModifier implements IPacketModifier {
-
-  private final String VERSION_STR;
 
   private final MCReflect refl;
   private final IConfig cfg;
@@ -56,10 +52,6 @@ public class ServerListPacketModifier implements IPacketModifier {
     this.refl = refl;
     this.logger = logger;
     this.plugin = plugin;
-
-    this.VERSION_STR = Arrays.stream(refl.getVersion())
-      .mapToObj(String::valueOf)
-      .collect(Collectors.joining("."));
 
     loadIconFile();
     interceptor.register(this);
@@ -88,7 +80,7 @@ public class ServerListPacketModifier implements IPacketModifier {
             sp, IChatBaseComponent.class,
             new ChatMessage(
               cfg.get(ConfigKey.PLAYERLIST_TEXT)
-                .withVariable("version", VERSION_STR)
+                .withVariable("version", refl.getPlayableVersion())
                 .asScalar()
             ), 0
           );

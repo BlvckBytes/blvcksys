@@ -5,10 +5,14 @@ import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
+import org.bukkit.Location;
+import org.bukkit.Particle;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -37,7 +41,7 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
   }
 
   // Delay in ticks between internal animation tick routine calls
-  private static final long TICK_DELAY = 5;
+  private static final long TICK_DELAY = 2;
 
   // Maps players to their currently active animations
   private final Map<Player, List<ActiveAnimation>> animations;
@@ -126,8 +130,88 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
    * @param animation Animation that's playing
    */
   private void tickAnimation(Player p, ActiveAnimation animation) {
-    p.sendMessage("Playing animation " + animation.type);
+    // Decide on the actual processor function
+    if (animation.type.equals(AnimationType.ROTATING_CONE))
+      tickROTATING_CONE(p, animation);
+
     // Increase the time tracking variable
     animation.time++;
+  }
+
+  ///////////////////////////////// ROTATING_CONE ////////////////////////////////////
+
+  private void tickROTATING_CONE(Player p, ActiveAnimation animation) {
+    Location a = p.getEyeLocation().add(0, 0.8, 0); // Head of the cone (a bit above the player's head)
+    Location b = p.getLocation().add(0, 0.1, 0);    // Tail of the cone (a bit above the player's feet, so it's not clamped by the ground)
+
+    int r = 1;                       // Radius of the cone's flat bottom
+    double windingPeriods = 0.55;    // How often to wind around while travelling from tail to head
+    int numSpirals = 4;              // How many spirals to wind with an even distance from each other
+    double vertDist = 0.038;         // Distance between pixels vertically
+    double degPerSec = 110.0;        // Degrees per second of rotation speed
+    double pixelSize = 0.55;         // Size of a pixel (1 = default)
+
+    List<Vector> pixels = new ArrayList<>();
+
+    // Phase difference between spirals (space evenly)
+    double phaseDiff = (2 * Math.PI) / numSpirals;
+
+    // One increment in animation.time corresponds to TICK_DELAY ticks, one tick corresponds to 1/20 seconds
+    double elapsedSeconds = animation.time / 20.0F * TICK_DELAY;
+
+    // Elapsed degrees are elapsedSeconds (1 deg/sec) times degPerSec
+    // wrapped around 360 (0-359)
+    double elapsedDegrees = (elapsedSeconds % 360) * degPerSec;
+
+    // Dynamic phase shift, ranging from 0 to 2PI based on the current time.
+    double dynamicPhaseShift = elapsedDegrees / 180F * Math.PI;
+
+    // Calculate the total delta in Y the loop will travel
+    double deltaY = a.getY() - b.getY();
+
+    // Travel from bottom to top
+    for (double y = b.getY(); y <= a.getY(); y += vertDist) {
+
+      // Calculate the relative Y change in reference to the bottom
+      double relY = b.getY() - y;
+
+      // Calculate the amount the loop travelled (0 to 1) and it's complementary
+      double amountTravelled = Math.abs(relY / deltaY);
+      double amountTravelledComp = (1 - amountTravelled);
+
+      // Create all n spirals at each y-iter
+      for (int i = 0; i < numSpirals; i++) {
+
+        // Static phase shift of the current spiral
+        // Basically increasing as i increases, and thus ranges
+        // from 0 to to ((numSpirals - 1) / numSpirals) * 2PI.
+        // This will have a gap between spirals of phaseDiff, and
+        // the first spiral will start at 0 and the last at 360 - phaseDiff,
+        // so first and last won't overlap.
+        double staticPhaseShift = phaseDiff * i;
+
+        // The total phase shift is the dynamic phase shift (time) + the static phase shift (offset between spirals)
+        double phaseShift = dynamicPhaseShift + staticPhaseShift;
+
+        // Calculate the input angle to the trigonometric functions
+        // amountTravelled will range from 0 to 1 as we go up from the bottom
+        // multiply that by 2PI will cause one full rotation, then
+        // mulitply that by the number of windings to get the resulting desired frequency
+        double phi = amountTravelled * 2 * Math.PI * windingPeriods + phaseShift;
+
+        // Call the trig functions and scale them up to the desired radius
+        // The cone should get narrower as we go up the top, thus also multiply by the
+        // inverse of amountTravelled, so that the top will collapse into a single point
+        double xAdd = Math.cos(phi) * r * amountTravelledComp, zAdd = Math.sin(phi) * r * amountTravelledComp;
+
+        // Add the resulting pixel to the list of pixels to draw
+        pixels.add(new Vector(b.getX() + xAdd, y, b.getZ() + zAdd));
+      }
+    }
+
+    // Draw all pixels
+    for (Vector pixel : pixels)
+      p.getWorld().spawnParticle(Particle.REDSTONE, pixel.getX(), pixel.getY(), pixel.getZ(), 1, new Particle.DustOptions(Color.PURPLE, (float) pixelSize));
+
   }
 }

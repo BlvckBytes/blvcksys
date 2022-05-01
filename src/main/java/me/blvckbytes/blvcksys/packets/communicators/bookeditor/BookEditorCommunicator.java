@@ -354,7 +354,7 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
       return false;
 
     // Create slot setting packet to move this fake book into the inventory
-    return refl.createGarbageInstance(PacketPlayOutSetSlot.class)
+    return refl.createPacket(PacketPlayOutSetSlot.class)
       .map(poss -> {
         // 36 is the first raw slot in the hot-bar
         int slot = 36 + hotbarSlot;

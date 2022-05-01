@@ -49,7 +49,7 @@ public class TeamCommunicator implements ITeamCommunicator {
     final List<String> memberNames = members.stream().map(Player::getName).toList();
 
     // Create the scoreboard team packet's inner data model
-    return refl.createGarbageInstance(PacketPlayOutScoreboardTeam.b.class)
+    return refl.createPacket(PacketPlayOutScoreboardTeam.b.class)
       .flatMap(b -> {
 
         refl.setFieldByType(b, IChatBaseComponent.class, new ChatMessage(group.groupName()), 0);

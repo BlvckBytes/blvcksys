@@ -38,7 +38,7 @@ public class ObjectiveCommunicator implements IObjectiveCommunicator {
     @Nullable String display,
     @Nullable ObjectiveUnit unit
   ) {
-    return refl.createGarbageInstance(PacketPlayOutScoreboardObjective.class)
+    return refl.createPacket(PacketPlayOutScoreboardObjective.class)
       .map(sop -> {
 
         // Unique identifier for this objective
@@ -74,7 +74,7 @@ public class ObjectiveCommunicator implements IObjectiveCommunicator {
 
   @Override
   public boolean displayObjective(Player p, String identifier, ObjectivePosition pos) {
-    return refl.createGarbageInstance(PacketPlayOutScoreboardDisplayObjective.class)
+    return refl.createPacket(PacketPlayOutScoreboardDisplayObjective.class)
       .map(dop -> {
 
         // Unique identifier for the objective
@@ -96,7 +96,7 @@ public class ObjectiveCommunicator implements IObjectiveCommunicator {
     boolean delete,
     @Nullable Integer score
   ) {
-    return refl.createGarbageInstance(PacketPlayOutScoreboardScore.class)
+    return refl.createPacket(PacketPlayOutScoreboardScore.class)
       .map(ssp -> {
 
         // Name of the objective's member (score holder)

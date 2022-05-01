@@ -33,7 +33,7 @@ public class BlockSpoofCommunicator implements IBlockSpoofCommunicator {
 
   @Override
   public boolean spoofBlock(Player p, Location loc, Material mat) {
-    return refl.createGarbageInstance(PacketPlayOutBlockChange.class)
+    return refl.createPacket(PacketPlayOutBlockChange.class)
       .map(pbc -> {
         // Set the position to the provided location
         BlockPosition pos = new BlockPosition(loc.getX(), loc.getY(), loc.getZ());

@@ -96,7 +96,7 @@ public class SignEditorCommunicator implements ISignEditorCommunicator, IPacketM
       return false;
 
     // Send out a sign lines update packet for the fake sign
-    if (!refl.createGarbageInstance(PacketPlayOutTileEntityData.class)
+    if (!refl.createPacket(PacketPlayOutTileEntityData.class)
       .map(ped -> {
         NBTTagCompound nbt = new NBTTagCompound();
 
@@ -126,7 +126,7 @@ public class SignEditorCommunicator implements ISignEditorCommunicator, IPacketM
       return false;
 
     // Send out a sign editor open packet for the fake block
-    return refl.createGarbageInstance(PacketPlayOutOpenSignEditor.class)
+    return refl.createPacket(PacketPlayOutOpenSignEditor.class)
       .map(pse -> {
         refl.setFieldByType(pse, BlockPosition.class, pos, 0);
         return refl.sendPacket(p, pse);
@@ -187,7 +187,7 @@ public class SignEditorCommunicator implements ISignEditorCommunicator, IPacketM
       return;
 
     // Close the sign editor
-    refl.createGarbageInstance(PacketPlayOutCloseWindow.class)
+    refl.createPacket(PacketPlayOutCloseWindow.class)
       .map(pcw -> {
         // Window ID 0, should be the sign editor
         refl.setFieldByType(pcw, int.class, 0, 0);

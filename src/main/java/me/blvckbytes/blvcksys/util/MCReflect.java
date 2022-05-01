@@ -839,13 +839,13 @@ public class MCReflect {
   //=========================================================================//
 
   /**
-   * Create a new instance of a class containing garbage data
+   * Create a new instance of a packet containing "zero-ed" data
    * to be overwritten later on. This is handy as packets don't have
    * an empty default constructor.
    * @param c Class of the target to create
    * @return Optional instance, empty when the packet doesn't support this method
    */
-  public Optional<Object> createGarbageInstance(Class<?> c) {
+  public Optional<Object> createPacket(Class<?> c) {
     return invokeConstructor(
       c, new PacketDataSerializer(Unpooled.wrappedBuffer(new byte[1024]))
     );

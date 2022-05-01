@@ -171,6 +171,22 @@ public enum ConfigKey {
   PLAYERLIST_VERSION_MISMATCH("playerlist.version_mismatch", "$2Version {{version}}"),
 
   //=========================================================================//
+  //                               TRASH Command                             //
+  //=========================================================================//
+
+  TRASH_INV_TITLE("trash.inv_title", "$3{{owner}}'s Mülleimer"),
+  TRASH_CONFIRMATION(
+    "trash.confirmation",
+    "$0Der Mülleimer wird in $2{{timeout}}s $0automatisch $2geleert$0!",
+    "$0Möchtest du die Items $2wiederherstellen$0?: "
+  ),
+  TRASH_CLEARED_MANUAL("trash.cleared.manual", "$0Du hast deinen Mülleimer $2geleert$0!"),
+  TRASH_CLEARED_AUTOMATIC("trash.cleared.automatic", "$0Dein Mülleimer $0wurde $2automatisch geleert$0!"),
+  TRASH_CLEARED_CANCELLED("trash.cleared.cancelled", "$0Dein Mülleimer wurde $2wiederhergestellt$0!"),
+  TRASH_DUMPED("trash.dumped", "$0Dein $2Mülleimer wurde in dein $2Inventar $0gelegt!"),
+  TRASH_DUMP_DROPPED("trash.dump_dropped", "$0Es wurden $4{{dropped}} $0Items $4fallen gelassen$0!"),
+
+  //=========================================================================//
   //                                KILL Command                             //
   //=========================================================================//
 

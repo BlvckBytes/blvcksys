@@ -197,46 +197,44 @@ public class TrashCommand extends APlayerCommand implements Listener, IAutoConst
   }
 
   private ChatButtons buildConfirmationButtons(Player p, TrashCan can) {
-    ChatButtons btns = new ChatButtons(
+    return ChatButtons.buildYesNo(
       cfg.get(ConfigKey.TRASH_CONFIRMATION)
         .withPrefixes()
         .withVariable("timeout", TRASH_TIMEOUT_S)
         .asScalar(),
-      true, plugin, cfg
+      plugin, cfg,
+
+      // Yes, re-open inventory
+      () -> {
+        // Cancel the deletion timeout
+        Bukkit.getScheduler().cancelTask(can.deletionTimeout);
+
+        // Re-open the inventory
+        p.openInventory(can.inv);
+
+        // Inform about the clear cancel
+        p.sendMessage(
+          cfg.get(ConfigKey.TRASH_CLEARED_CANCELLED)
+            .withPrefix()
+            .asScalar()
+        );
+      },
+
+      // No, delete instantly
+      () -> {
+        // Cancel the deletion timeout
+        Bukkit.getScheduler().cancelTask(can.deletionTimeout);
+
+        // Clear the inventory
+        can.inv.clear();
+
+        // Inform about manual-clear
+        p.sendMessage(
+          cfg.get(ConfigKey.TRASH_CLEARED_MANUAL)
+            .withPrefix()
+            .asScalar()
+        );
+      }
     );
-
-    // Yes, re-open inventory
-    btns.addButton(ConfigKey.CHATBUTTONS_YES, () -> {
-      // Cancel the deletion timeout
-      Bukkit.getScheduler().cancelTask(can.deletionTimeout);
-
-      // Re-open the inventory
-      p.openInventory(can.inv);
-
-      // Inform about the clear cancel
-      p.sendMessage(
-        cfg.get(ConfigKey.TRASH_CLEARED_CANCELLED)
-          .withPrefix()
-          .asScalar()
-      );
-    });
-
-    // No, delete instantly
-    btns.addButton(ConfigKey.CHATBUTTONS_NO, () -> {
-      // Cancel the deletion timeout
-      Bukkit.getScheduler().cancelTask(can.deletionTimeout);
-
-      // Clear the inventory
-      can.inv.clear();
-
-      // Inform about manual-clear
-      p.sendMessage(
-        cfg.get(ConfigKey.TRASH_CLEARED_MANUAL)
-          .withPrefix()
-          .asScalar()
-      );
-    });
-
-    return btns;
   }
 }

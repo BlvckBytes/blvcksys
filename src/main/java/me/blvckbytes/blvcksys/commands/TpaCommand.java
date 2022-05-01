@@ -14,6 +14,7 @@ import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
+import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -33,7 +34,7 @@ import java.util.stream.Stream;
   Send a teleport request to a given player.
 */
 @AutoConstruct
-public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener {
+public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener, IAutoConstructed {
 
   /*
    * Represents a teleportation request
@@ -179,6 +180,17 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener 
   //=========================================================================//
   //                                   API                                   //
   //=========================================================================//
+
+  @Override
+  public void cleanup() {
+    // Delete all requests from all players
+    for (Player p : Bukkit.getOnlinePlayers())
+      deleteAllRequests(p);
+  }
+
+  @Override
+  public void initialize() {}
+
 
   @Override
   public boolean acceptRequest(Player sender, Player target) {

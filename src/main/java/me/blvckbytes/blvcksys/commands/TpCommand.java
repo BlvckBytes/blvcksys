@@ -3,6 +3,7 @@ package me.blvckbytes.blvcksys.commands;
 import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
@@ -31,9 +32,9 @@ public class TpCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "tp",
       "Teleport to a target instantly",
-      null,
+      PlayerPermission.TP,
       new CommandArgument("<target>", "Whom to teleport to"),
-      new CommandArgument("[player]", "Player to teleport, defaults to yourself")
+      new CommandArgument("[player]", "Player to teleport, defaults to yourself", PlayerPermission.TP_OTHERS)
     );
   }
 

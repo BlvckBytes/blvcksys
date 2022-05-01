@@ -171,6 +171,14 @@ public enum ConfigKey {
   PLAYERLIST_VERSION_MISMATCH("playerlist.version_mismatch", "$2Version {{version}}"),
 
   //=========================================================================//
+  //                                 TP Command                              //
+  //=========================================================================//
+
+  TP_SELF("tp.self", "$0Du hast dich zu $2{{target}} $0teleportiert!"),
+  TP_OTHER_SENDER("tp.other.sender", "$0Du hast $2{{player}} $0zu $2{{target}} $0teleportiert!"),
+  TP_OTHER_RECEIVER("tp.other.receiver", "$0Du wurdest von $2{{issuer}} $0zu $2{{target}} $0teleportiert!"),
+
+  //=========================================================================//
   //                                TPA Command                              //
   //=========================================================================//
 

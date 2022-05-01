@@ -19,6 +19,7 @@ import java.lang.reflect.*;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -47,6 +48,15 @@ public class MCReflect {
   //=========================================================================//
   //                            Version Handling                             //
   //=========================================================================//
+
+  /**
+   * Formats the playable version as a human readable string
+   */
+  public String getPlayableVersion() {
+    return Arrays.stream(getVersion())
+      .mapToObj(String::valueOf)
+      .collect(Collectors.joining("."));
+  }
 
   /**
    * Get the major, minor and revision version numbers the server's running on
@@ -183,7 +193,8 @@ public class MCReflect {
    * @param skip How many occurrences to skip
    * @return Optional field value, no value on reflection errors
    */
-  public Optional<Object> getFieldByType(Object o, Class<?> fieldClass, int skip) {
+  @SuppressWarnings("unchecked")
+  public<T> Optional<T> getFieldByType(Object o, Class<T> fieldClass, int skip) {
     try {
       // Try to get the field by it's type
       Optional<Field> f = findFieldByType(o.getClass(), fieldClass, skip);
@@ -193,7 +204,7 @@ public class MCReflect {
 
       // Respond with the value of this field in reference to the provided object
       f.get().setAccessible(true);
-      return Optional.of(f.get().get(o));
+      return Optional.of((T) f.get().get(o));
     } catch (Exception e) {
       logger.logError(e);
       return Optional.empty();

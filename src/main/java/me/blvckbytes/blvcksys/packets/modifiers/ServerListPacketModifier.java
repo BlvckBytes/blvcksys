@@ -89,15 +89,18 @@ public class ServerListPacketModifier implements IPacketModifier {
           if (this.encodedIcon != null)
             refl.setFieldByType(sp, String.class, encodedIcon, 0);
 
-          // Modify the player-sample by overriding online players with fake players
-          String online = cfg.get(ConfigKey.PLAYERLIST_ONLINE).asScalar();
-          if (!online.isEmpty()) {
-            refl.getFieldByType(sp, ServerPing.ServerData.class, 0)
-              .ifPresent(sd -> {
-                refl.setFieldByType(sd, String.class, online, 0);
-                refl.setFieldByType(sd, int.class, 0, 0);
-              });
-          }
+          // Modify the version mismatch string that the client renders when the client version
+          // cannot join the server
+          refl.getFieldByType(sp, ServerPing.ServerData.class, 0)
+            .ifPresent(sd -> {
+              refl.setFieldByType(
+                sd, String.class,
+                cfg.get(ConfigKey.PLAYERLIST_VERSION_MISMATCH)
+                  .withVariable("version", refl.getPlayableVersion())
+                  .asScalar(),
+                0
+              );
+            });
 
           // Modify the player-sample by overriding online players with fake players
           refl.getFieldByType(sp, ServerPing.ServerPingPlayerSample.class, 0)

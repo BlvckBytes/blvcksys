@@ -168,7 +168,7 @@ public enum ConfigKey {
     "$0SkyPvP wieder zum",
     "$0Leben zu erwecken!"
   ),
-  PLAYERLIST_ONLINE("playerlist.online", ""),
+  PLAYERLIST_VERSION_MISMATCH("playerlist.version_mismatch", "$2Version {{version}}"),
 
   //=========================================================================//
   //                                TPA Command                              //

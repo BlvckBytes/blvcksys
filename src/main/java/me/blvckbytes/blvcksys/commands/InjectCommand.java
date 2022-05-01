@@ -10,6 +10,7 @@ import me.blvckbytes.blvcksys.util.ObjectStringifier;
 import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
+import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.protocol.Packet;
@@ -35,7 +36,7 @@ import java.util.stream.Stream;
   to a certain specified depth of recursion and apply the configured color-scheme.
  */
 @AutoConstruct
-public class InjectCommand extends APlayerCommand implements IPacketModifier {
+public class InjectCommand extends APlayerCommand implements IPacketModifier, IAutoConstructed {
 
   /**
    * Describes the direction a intercepted packet can travel
@@ -134,8 +135,8 @@ public class InjectCommand extends APlayerCommand implements IPacketModifier {
     }
 
     // Already injected, uninject
-    if (this.interceptor.isRegisteredSpecific(target, this)) {
-      this.interceptor.unregisterSpecific(target, this);
+    if (this.interceptor.isRegisteredSpecific(target.getUniqueId(), this)) {
+      this.interceptor.unregisterSpecific(target.getUniqueId(), this);
 
       p.sendMessage(
         cfg.get(ConfigKey.INJECT_UNINJECTED)
@@ -149,7 +150,7 @@ public class InjectCommand extends APlayerCommand implements IPacketModifier {
 
     // Create a new injection and store the request locally
     this.requests.put(target.getUniqueId(), new InterceptionRequest(dir, depth, regex));
-    this.interceptor.registerSpecific(target, this);
+    this.interceptor.registerSpecific(target.getUniqueId(), this);
 
     p.sendMessage(
       cfg.get(ConfigKey.INJECT_INJECTED)
@@ -158,6 +159,23 @@ public class InjectCommand extends APlayerCommand implements IPacketModifier {
         .asScalar()
     );
   }
+
+  //=========================================================================//
+  //                                   API                                   //
+  //=========================================================================//
+
+  @Override
+  public void cleanup() {
+    // Delete all injections
+    for (UUID u : requests.keySet()) {
+      requests.remove(u);
+      this.interceptor.unregisterSpecific(u, this);
+    }
+  }
+
+  @Override
+  public void initialize() {}
+
 
   //=========================================================================//
   //                                Modifiers                                //

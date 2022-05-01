@@ -80,33 +80,33 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
   }
 
   @Override
-  public void registerSpecific(OfflinePlayer target, IPacketModifier modifier) {
+  public void registerSpecific(UUID target, IPacketModifier modifier) {
     // Create empty list to add to
-    if (!this.specificModifiers.containsKey(target.getUniqueId()))
-      this.specificModifiers.put(target.getUniqueId(), new ArrayList<>());
+    if (!this.specificModifiers.containsKey(target))
+      this.specificModifiers.put(target, new ArrayList<>());
 
     // Add modifier to list
-    this.specificModifiers.get(target.getUniqueId()).add(modifier);
+    this.specificModifiers.get(target).add(modifier);
   }
 
   @Override
-  public void unregisterSpecific(OfflinePlayer target, IPacketModifier modifier) {
+  public void unregisterSpecific(UUID target, IPacketModifier modifier) {
     // Player not even known yet
-    if (!this.specificModifiers.containsKey(target.getUniqueId()))
+    if (!this.specificModifiers.containsKey(target))
       return;
 
     // Remove modifier from list
-    List<IPacketModifier> modifiers = this.specificModifiers.get(target.getUniqueId());
+    List<IPacketModifier> modifiers = this.specificModifiers.get(target);
     modifiers.remove(modifier);
 
     // Remove from map when no more modifiers remain
     if (modifiers.size() == 0)
-      this.specificModifiers.remove(target.getUniqueId());
+      this.specificModifiers.remove(target);
   }
 
   @Override
-  public boolean isRegisteredSpecific(OfflinePlayer target, IPacketModifier modifier) {
-    return this.specificModifiers.getOrDefault(target.getUniqueId(), new ArrayList<>()).contains(modifier);
+  public boolean isRegisteredSpecific(UUID target, IPacketModifier modifier) {
+    return this.specificModifiers.getOrDefault(target, new ArrayList<>()).contains(modifier);
   }
 
   @Override
@@ -118,12 +118,11 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
 
     // Unregister all specifics
     for (Map.Entry<UUID, ArrayList<IPacketModifier>> entry : specificModifiers.entrySet()) {
-      OfflinePlayer target = Bukkit.getOfflinePlayer(entry.getKey());
 
       // Loop in reverse to avoid concurrent modifications
       List<IPacketModifier> modifiers = entry.getValue();
       for (int i = modifiers.size() - 1; i >= 0; i--)
-        this.unregisterSpecific(target, modifiers.get(i));
+        this.unregisterSpecific(entry.getKey(), modifiers.get(i));
     }
 
     // Uninject all players before a reload

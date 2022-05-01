@@ -2,6 +2,8 @@ package me.blvckbytes.blvcksys.packets;
 
 import org.bukkit.OfflinePlayer;
 
+import java.util.UUID;
+
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 04/23/2022
@@ -34,14 +36,14 @@ public interface IPacketInterceptor {
    * @param target Player to target with this modifier
    * @param modifier Packet modifier to register
    */
-  void registerSpecific(OfflinePlayer target, IPacketModifier modifier);
+  void registerSpecific(UUID target, IPacketModifier modifier);
 
   /**
    * Unegister an existing modifier for a specific player
    * @param target Player targetted with this modifier
    * @param modifier Packet modifier to unregister
    */
-  void unregisterSpecific(OfflinePlayer target, IPacketModifier modifier);
+  void unregisterSpecific(UUID target, IPacketModifier modifier);
 
   /**
    * Check if a specific modifier is already registered
@@ -49,5 +51,5 @@ public interface IPacketInterceptor {
    * @param modifier Modifier to check
    * @return True if registered, false otherwise
    */
-  boolean isRegisteredSpecific(OfflinePlayer target, IPacketModifier modifier);
+  boolean isRegisteredSpecific(UUID target, IPacketModifier modifier);
 }

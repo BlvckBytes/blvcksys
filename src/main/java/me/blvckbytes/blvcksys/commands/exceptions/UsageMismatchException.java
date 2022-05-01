@@ -4,9 +4,6 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import net.md_5.bungee.api.chat.BaseComponent;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 04/26/2022

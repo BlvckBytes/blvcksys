@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.commands;
 
+import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
@@ -7,7 +8,6 @@ import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.ObjectStringifier;
-import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.di.IAutoConstructed;

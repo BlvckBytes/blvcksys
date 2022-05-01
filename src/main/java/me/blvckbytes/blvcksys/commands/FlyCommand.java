@@ -1,11 +1,11 @@
 package me.blvckbytes.blvcksys.commands;
 
+import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.events.PlayerPermissionsChangedEvent;
 import me.blvckbytes.blvcksys.util.MCReflect;
-import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
@@ -17,6 +17,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;

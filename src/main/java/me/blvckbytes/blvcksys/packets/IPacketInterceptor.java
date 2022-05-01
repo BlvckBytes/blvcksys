@@ -1,7 +1,5 @@
 package me.blvckbytes.blvcksys.packets;
 
-import org.bukkit.OfflinePlayer;
-
 import java.util.UUID;
 
 /*

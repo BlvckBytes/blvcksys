@@ -81,7 +81,7 @@ public class GiveCommand extends APlayerCommand implements IGiveCommand {
     int amount = parseInt(args, 1);
 
     // Give to all players
-    if (argval(args, 2).equalsIgnoreCase("all")) {
+    if (argval(args, 2, "self").equalsIgnoreCase("all")) {
       ensurePermission(p, PlayerPermission.COMMAND_GIVE_ALL);
 
       for (Player target : Bukkit.getOnlinePlayers())

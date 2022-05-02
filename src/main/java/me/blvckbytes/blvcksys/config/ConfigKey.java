@@ -171,6 +171,12 @@ public enum ConfigKey {
   PLAYERLIST_VERSION_MISMATCH("playerlist.version_mismatch", "$2Version {{version}}"),
 
   //=========================================================================//
+  //                            GRINDSTONE Command                           //
+  //=========================================================================//
+
+  GRINDSTONE_GUINAME("grindstone.guiname", "$3{{owner}}'s Schleifstein"),
+
+  //=========================================================================//
   //                             WORKBENCH Command                           //
   //=========================================================================//
 

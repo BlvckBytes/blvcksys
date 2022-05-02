@@ -70,8 +70,12 @@ public class AfkListener implements Listener, IAutoConstructed, IAfkListener {
     taskHandle = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, this::checkActions, 0L, 20L);
 
     // Reactivate all timeouts initially
-    for (Player t : Bukkit.getOnlinePlayers())
+    for (Player t : Bukkit.getOnlinePlayers()) {
       reactivateTimeout(t);
+
+      // Reactivate timeouts on movement
+      this.move.subscribe(t, () -> reactivateTimeout(t));
+    }
   }
 
   @Override

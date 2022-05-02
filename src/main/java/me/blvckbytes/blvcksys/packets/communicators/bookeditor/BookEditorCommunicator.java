@@ -213,6 +213,7 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
   //=========================================================================//
 
   @Override
+  @SuppressWarnings("unchecked")
   public Packet<?> modifyIncoming(UUID sender, NetworkManager nm, Packet<?> incoming) {
     // Identify the sending player
     Player p = Bukkit.getPlayer(sender);
@@ -234,62 +235,66 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
     }
 
     // Is a book edit packet
-    if (incoming instanceof PacketPlayInBEdit bookEdit) {
-      refl.getGenericFieldByType(bookEdit, List.class, String.class, 0)
-        .ifPresent(pages -> {
-          // Check if the slot isn't vacant and it's a book.
-          // If it's not a book, the player couldn't have possible written it
-          // without the fake item placed in their inv by this communicator.
-          ItemStack iu = p.getInventory().getItem(EquipmentSlot.HAND);
-          if (iu != null && (iu.getType() == Material.WRITABLE_BOOK || iu.getType() == Material.WRITTEN_BOOK)) {
+    if (!(incoming instanceof PacketPlayInBEdit bookEdit))
+      return incoming;
 
-            // Otherwise, check if this book has been overlayed by the fake book
-            // after a short delay to allow the packet to take effect
-            Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
-              ItemStack hand = p.getInventory().getItem(EquipmentSlot.HAND);
+    try {
+      List<String> pages = refl.getGenericFieldByType(bookEdit, List.class, String.class, 0);
+      // Check if the slot isn't vacant and it's a book.
+      // If it's not a book, the player couldn't have possible written it
+      // without the fake item placed in their inv by this communicator.
+      ItemStack iu = p.getInventory().getItem(EquipmentSlot.HAND);
+      if (iu != null && (iu.getType() == Material.WRITABLE_BOOK || iu.getType() == Material.WRITTEN_BOOK)) {
 
-              // Seems to have dropped it
-              if (hand == null)
-                return;
+        // Otherwise, check if this book has been overlayed by the fake book
+        // after a short delay to allow the packet to take effect
+        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+          ItemStack hand = p.getInventory().getItem(EquipmentSlot.HAND);
 
-              BookMeta bm = (BookMeta) hand.getItemMeta();
+          // Seems to have dropped it
+          if (hand == null)
+            return;
 
-              // Seems to have swapped it
-              if (bm == null)
-                return;
+          BookMeta bm = (BookMeta) hand.getItemMeta();
 
-              // Get the hand's book's pages
-              List<String> handPages = bm.getPages();
+          // Seems to have swapped it
+          if (bm == null)
+            return;
 
-              // Not what was received, so not a direct edit to a real item
-              if (handPages.size() != pages.size()) {
-                bookEditReceived(p, handPages);
-                return;
-              }
+          // Get the hand's book's pages
+          List<String> handPages = bm.getPages();
 
-              // Compare the two lists
-              boolean equal = true;
-              for (int i = 0; i < pages.size(); i++) {
-                if (pages.get(i).equals(handPages.get(i)))
-                  continue;
-
-                equal = false;
-                break;
-              }
-
-              // This real book has been edited
-              if (equal)
-                return;
-
-              // Has to be a fake book packet
-              bookEditReceived(p, handPages);
-            }, 5);
+          // Not what was received, so not a direct edit to a real item
+          if (handPages.size() != pages.size()) {
+            bookEditReceived(p, handPages);
             return;
           }
 
+          // Compare the two lists
+          boolean equal = true;
+          for (int i = 0; i < pages.size(); i++) {
+            if (pages.get(i).equals(handPages.get(i)))
+              continue;
+
+            equal = false;
+            break;
+          }
+
+          // This real book has been edited
+          if (equal)
+            return;
+
           // Has to be a fake book packet
-          bookEditReceived(p, pages);
-        });
+          bookEditReceived(p, handPages);
+        }, 5);
+
+        return incoming;
+      }
+
+      // Has to be a fake book packet
+      bookEditReceived(p, pages);
+    } catch (Exception e) {
+      logger.logError(e);
     }
     return incoming;
   }
@@ -354,25 +359,25 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
       return false;
 
     // Create slot setting packet to move this fake book into the inventory
-    return refl.createPacket(PacketPlayOutSetSlot.class)
-      .map(poss -> {
-        // 36 is the first raw slot in the hot-bar
-        int slot = 36 + hotbarSlot;
+    try {
+      Object poss = refl.createPacket(PacketPlayOutSetSlot.class);
 
-        refl.setFieldByType(poss, int.class, 0, 0); // Window ID (0=inv)
-        refl.setFieldByType(poss, int.class, 0, 1); // State ID (leave at zero for now)
-        refl.setFieldByType(poss, int.class, slot, 2); // Slot
+      // 36 is the first raw slot in the hot-bar
+      int slot = 36 + hotbarSlot;
 
-        // Convert the bukkit item stack to a craft item stack and set the corresponding field
-        refl.getClassBKT("inventory.CraftItemStack")
-          .flatMap(cisC -> refl.findMethodByName(cisC, "asNMSCopy", ItemStack.class))
-          .flatMap(m -> refl.invokeMethod(m, null, is))
-          .ifPresent(cis ->
-            refl.setFieldByType(poss, net.minecraft.world.item.ItemStack.class, cis, 0)
-          );
+      refl.setFieldByType(poss, int.class, 0, 0); // Window ID (0=inv)
+      refl.setFieldByType(poss, int.class, 0, 1); // State ID (leave at zero for now)
+      refl.setFieldByType(poss, int.class, slot, 2); // Slot
 
-        return refl.sendPacket(p, poss);
-      })
-      .orElse(false);
+      // Convert the bukkit item stack to a craft item stack and set the corresponding field
+      Class<?> cisC = refl.getClassBKT("inventory.CraftItemStack");
+      Object cis = refl.findMethodByName(cisC, "asNMSCopy", ItemStack.class).invoke(null, is);
+      refl.setFieldByType(poss, net.minecraft.world.item.ItemStack.class, cis, 0);
+
+      return refl.sendPacket(p, poss);
+    } catch (Exception e) {
+      logger.logError(e);
+      return false;
+    }
   }
 }

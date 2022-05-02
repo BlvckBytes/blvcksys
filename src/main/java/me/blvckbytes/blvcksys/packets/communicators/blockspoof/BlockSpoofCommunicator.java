@@ -33,23 +33,25 @@ public class BlockSpoofCommunicator implements IBlockSpoofCommunicator {
 
   @Override
   public boolean spoofBlock(Player p, Location loc, Material mat) {
-    return refl.createPacket(PacketPlayOutBlockChange.class)
-      .map(pbc -> {
-        // Set the position to the provided location
-        BlockPosition pos = new BlockPosition(loc.getX(), loc.getY(), loc.getZ());
-        refl.setFieldByType(pbc, BlockPosition.class, pos, 0);
+    try {
+      Object pbc = refl.createPacket(PacketPlayOutBlockChange.class);
 
-        // Create a new block from scratch using the specified material
-        refl.getClassBKT("util.CraftMagicNumbers")
-          .flatMap(cmnC -> refl.findMethodByName(cmnC, "getBlock", Material.class)
-          .flatMap(m -> refl.invokeMethod(m, null, mat))
-          // Get block data
-          .flatMap(b -> refl.getFieldByType(b, IBlockData.class, 0)))
-          .ifPresent(bd -> refl.setFieldByType(pbc, IBlockData.class, bd, 0));
+      // Set the position to the provided location
+      BlockPosition pos = new BlockPosition(loc.getX(), loc.getY(), loc.getZ());
+      refl.setFieldByType(pbc, BlockPosition.class, pos, 0);
 
-        return pbc;
-      })
-      .map(pbc -> refl.sendPacket(p, pbc))
-      .orElse(false);
+      // Create a new block from scratch using the specified material
+      Class<?> cmnC = refl.getClassBKT("util.CraftMagicNumbers");
+      Object b = refl.findMethodByName(cmnC, "getBlock", Material.class).invoke(null, mat);
+
+      // Get block data
+      Object bd = refl.getFieldByType(b, IBlockData.class, 0);
+      refl.setFieldByType(pbc, IBlockData.class, bd, 0);
+
+      return refl.sendPacket(p, pbc);
+    } catch (Exception e) {
+      logger.logError(e);
+      return false;
+    }
   }
 }

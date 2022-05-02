@@ -7,6 +7,7 @@ import me.blvckbytes.blvcksys.packets.IPacketModifier;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
+import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.chat.ChatMessage;
 import net.minecraft.network.chat.IChatBaseComponent;
@@ -29,14 +30,18 @@ public class LoginDisconnectPacketModifier implements IPacketModifier, Listener 
 
   private final MCReflect refl;
   private final IConfig cfg;
+  private final ILogger logger;
 
   public LoginDisconnectPacketModifier(
     @AutoInject MCReflect refl,
     @AutoInject IConfig cfg,
-    @AutoInject IPacketInterceptor interceptor
+    @AutoInject IPacketInterceptor interceptor,
+    @AutoInject ILogger logger
   ) {
     this.refl = refl;
     this.cfg = cfg;
+    this.logger = logger;
+
     interceptor.register(this);
   }
 
@@ -53,15 +58,16 @@ public class LoginDisconnectPacketModifier implements IPacketModifier, Listener 
 
     // Was a login disconnect
     if (outgoing instanceof PacketLoginOutDisconnect od) {
-      refl.getFieldByType(od, IChatBaseComponent.class, 0).ifPresent(bc -> {
+      try {
+        IChatBaseComponent bc = refl.getFieldByType(od, IChatBaseComponent.class, 0);
         String message = ChatColor.stripColor(bc.getString());
 
         // Didn't contain the version disconnect marker in it's message, skip
         if (!(
           message.toLowerCase().contains("outdated server!") ||
-          message.toLowerCase().contains("outdated client!")
+            message.toLowerCase().contains("outdated client!")
         ))
-          return;
+          return outgoing;
 
         // Build the new screen
         ChatMessage screen = new ChatMessage(
@@ -72,7 +78,9 @@ public class LoginDisconnectPacketModifier implements IPacketModifier, Listener 
 
         // Override the text value
         refl.setFieldByType(od, IChatBaseComponent.class, screen, 0);
-      });
+      } catch (Exception e) {
+        logger.logError(e);
+      }
     }
     return outgoing;
   }

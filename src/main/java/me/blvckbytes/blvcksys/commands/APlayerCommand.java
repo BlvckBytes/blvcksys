@@ -104,9 +104,13 @@ public abstract class APlayerCommand extends Command {
     this.playerCooldowns = new HashMap<>();
 
     // Register this command within the server's command map
-    refl.registerCommand(plugin.getDescription().getName(), this);
-    registeredCommands.put(name, this);
-    logger.logDebug("Command /" + name + ": " + this.getClass().getSimpleName());
+    try {
+      refl.registerCommand(plugin.getDescription().getName(), this);
+      registeredCommands.put(name, this);
+      logger.logDebug("Command /" + name + ": " + this.getClass().getSimpleName());
+    } catch (Exception e) {
+      logger.logError(e);
+    }
   }
 
 
@@ -147,6 +151,9 @@ public abstract class APlayerCommand extends Command {
   ) throws IllegalArgumentException {
     // Don't serve non-players
     if (!(sender instanceof Player p))
+      return new ArrayList<>();
+
+    if (cmdArgs.length == 0)
       return new ArrayList<>();
 
     // Calculate the arg index

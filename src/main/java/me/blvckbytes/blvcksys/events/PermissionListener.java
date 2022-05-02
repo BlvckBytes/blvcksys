@@ -4,7 +4,7 @@ import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
-import net.minecraft.util.Tuple;
+import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -43,6 +43,7 @@ public class PermissionListener implements Listener, IAutoConstructed {
 
   private final MCReflect refl;
   private final JavaPlugin plugin;
+  private final ILogger logger;
 
   // Vanilla references of the proxied field for every player
   private final Map<Player, Object> vanillaRefs;
@@ -52,10 +53,12 @@ public class PermissionListener implements Listener, IAutoConstructed {
 
   public PermissionListener(
     @AutoInject MCReflect refl,
-    @AutoInject JavaPlugin plugin
+    @AutoInject JavaPlugin plugin,
+    @AutoInject ILogger logger
   ) {
     this.refl = refl;
     this.plugin = plugin;
+    this.logger = logger;
 
     this.vanillaRefs = new HashMap<>();
     this.previousPermissions = new HashMap<>();
@@ -146,14 +149,23 @@ public class PermissionListener implements Listener, IAutoConstructed {
    */
   private void unproxyPermissions(Player p) {
     // Get the vanilla reference from the local map, skip non-proxied players
-    Object vanillaRef = vanillaRefs.remove(p);
+    Object vanillaRef = vanillaRefs.get(p);
     if (vanillaRef == null)
       return;
 
     // Restore the vanilla reference
-    refl.getCraftPlayer(p)
-      .flatMap(cp -> refl.getFieldByType(cp, PermissibleBase.class, 0))
-      .ifPresent(pb -> refl.setFieldByName(pb, "permissions", vanillaRef));
+    try {
+      Object cp = refl.getCraftPlayer(p);
+      refl.setFieldByName(
+        refl.getFieldByType(cp, PermissibleBase.class, 0),
+        "permissions", vanillaRef
+      );
+
+      // Remove the undone ref
+      vanillaRefs.remove(p);
+    } catch (Exception e) {
+      logger.logError(e);
+    }
   }
 
   /**
@@ -230,22 +242,20 @@ public class PermissionListener implements Listener, IAutoConstructed {
    */
   @SuppressWarnings("unchecked")
   private void proxyPermissions(Player p) {
-    refl.getCraftPlayer(p)
-      .flatMap(cp -> refl.getFieldByType(cp, PermissibleBase.class, 0))
-      .flatMap(pb ->
-        refl.getFieldByName(pb, "permissions")
-          .map(permissions -> new Tuple<>((PermissibleBase) pb, (Map<?, ?>) permissions))
-      )
-      .ifPresent(tuple -> {
-        Map<String, PermissionAttachmentInfo> permissions = (Map<String, PermissionAttachmentInfo>) tuple.b();
+    try {
+      Object cp = refl.getCraftPlayer(p);
+      Object pb = refl.getFieldByType(cp, PermissibleBase.class, 0);
+      Map<String, PermissionAttachmentInfo> perms = (Map<String, PermissionAttachmentInfo>) refl.getFieldByName(pb, "permissions");
 
-        // Call initially
-        onPermissionChange(p, getPermissions(permissions));
+      // Call initially
+      onPermissionChange(p, getPermissions(perms));
 
-        // Set field to to the proxy reference
-        if (refl.setFieldByName(tuple.a(), "permissions", createPermissionProxy(p, permissions)))
-          // Save the vanilla reference
-          this.vanillaRefs.put(p, permissions);
-      });
+      // Set field to to the proxy reference
+      if (refl.setFieldByName(pb, "permissions", createPermissionProxy(p, perms)))
+        // Save the vanilla reference
+        this.vanillaRefs.put(p, perms);
+    } catch (Exception e) {
+      logger.logError(e);
+    }
   }
 }

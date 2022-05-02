@@ -5,7 +5,6 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
-import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.PacketDataSerializer;
 import net.minecraft.network.protocol.Packet;
@@ -14,11 +13,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
 import java.util.Arrays;
-import java.util.Optional;
-import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /*
@@ -33,15 +31,12 @@ import java.util.stream.Collectors;
 public class MCReflect {
 
   private final JavaPlugin plugin;
-  private final ILogger logger;
   private final String ver;
 
   public MCReflect(
-    @AutoInject JavaPlugin plugin,
-    @AutoInject ILogger logger
+    @AutoInject JavaPlugin plugin
   ) {
     this.plugin = plugin;
-    this.logger = logger;
     this.ver = findVersion();
   }
 
@@ -84,25 +79,16 @@ public class MCReflect {
    * @param name Name of the class
    * @return Loaded class
    */
-  public Optional<Class<?>> getClassBKT(String name) {
-    try {
-      return Optional.of(Class.forName("org.bukkit.craftbukkit.%s.%s".formatted(ver, name)));
-    } catch (Exception e) {
-      return Optional.empty();
-    }
+  public Class<?> getClassBKT(String name) throws ClassNotFoundException {
+    return Class.forName("org.bukkit.craftbukkit.%s.%s".formatted(ver, name));
   }
 
   /**
    * Get the instance of the CraftServer
    */
-  public Optional<Object> getCraftServer() {
-    try {
-      // Get the server instance and cast it to a CraftServer
-      return getClassBKT("CraftServer").map(clazz -> clazz.cast(plugin.getServer()));
-    } catch (Exception e) {
-      logger.logError(e);
-      return Optional.empty();
-    }
+  public Object getCraftServer() throws ClassNotFoundException {
+    // Get the server instance and cast it to a CraftServer
+    return getClassBKT("CraftServer").cast(plugin.getServer());
   }
 
   /**
@@ -110,23 +96,11 @@ public class MCReflect {
    * bypassing the tedious plugin.yml registrations
    * @param name Name of the command
    * @param command Command handler
+   * @return Success state
    */
-  public void registerCommand(String name, Command command) {
-    getCraftServer().ifPresent(cs -> {
-      try {
-        // Get the server's command map
-        getClassBKT("CraftServer")
-          .flatMap(clazz -> findMethodByName(clazz, "getCommandMap"))
-          .flatMap(m -> invokeMethod(m, cs))
-          .ifPresent(cmdMap ->
-            findMethodByName(cmdMap.getClass(), "register", String.class, Command.class)
-              // Invoke the register method using the passed parameters
-            .ifPresent(register -> invokeMethod(register, cmdMap, name, command))
-          );
-      } catch (Exception e) {
-        logger.logError(e);
-      }
-    });
+  public void registerCommand(String name, Command command) throws Exception {
+    Object cmdMap = invokeMethodByName(getCraftServer(), "getCommandMap", null);
+    findMethodByName(cmdMap, "register", String.class, Command.class).invoke(cmdMap, name, command);
   }
 
   //=========================================================================//
@@ -138,25 +112,32 @@ public class MCReflect {
    * @param c Class to search in
    * @param fieldClass Target field's class
    * @param skip How many occurrences to skip
-   * @return Optional field, no value on reflection errors
+   * @return Target field
    */
-  public Optional<Field> findFieldByType(Class<?> c, Class<?> fieldClass, int skip) {
-    return walkHierarchyToFind(c, cc -> {
-      try {
-        return Arrays.stream(cc.getDeclaredFields())
-          .filter(it -> !Modifier.isStatic(it.getModifiers()))
-          .filter(it -> compareTypes(it.getType(), fieldClass, false))
-          .skip(skip)
-          .findFirst()
-          .map(f -> {
-            f.setAccessible(true);
-            return f;
-          });
-      } catch (Exception e) {
-        logger.logError(e);
-        return Optional.empty();
-      }
-    });
+  public Field findFieldByType(Class<?> c, Class<?> fieldClass, int skip) throws Exception {
+    return walkHierarchyToFind(c, cc ->
+      Arrays.stream(cc.getDeclaredFields())
+        .filter(it -> !Modifier.isStatic(it.getModifiers()))
+        .filter(it -> compareTypes(it.getType(), fieldClass, false))
+        .skip(skip)
+        .findFirst()
+        .map(f -> {
+          f.setAccessible(true);
+          return f;
+        })
+        .orElse(null)
+    );
+  }
+
+  /**
+   * Try to find a class' member field by it's type, choose the first occurrence after skipping some
+   * @param o Object to use for the class to search in
+   * @param fieldClass Target field's class
+   * @param skip How many occurrences to skip
+   * @return Target field
+   */
+  public Field findFieldByType(Object o, Class<?> fieldClass, int skip) throws Exception {
+    return findFieldByType(o.getClass(), fieldClass, skip);
   }
 
   //=========================================================================//
@@ -171,19 +152,11 @@ public class MCReflect {
    * @param type Type that holds the generic type
    * @param genericType Generic type held by type
    * @param skip How many occurrences to skip
-   * @return Optional Object, no value on reflection errors
+   * @return Target value
    */
   @SuppressWarnings("unchecked")
-  public<C> Optional<C> getGenericFieldByType(Object o, Class<C> type, Class<?> genericType, int skip) {
-    return walkHierarchyToFind(o.getClass(), cc -> {
-      try {
-        return (Optional<C>) findGenericFieldByType(cc, type, genericType, skip)
-          .flatMap(f -> getFieldValue(f, o));
-      } catch (Exception e) {
-        logger.logError(e);
-        return Optional.empty();
-      }
-    });
+  public<C> C getGenericFieldByType(Object o, Class<C> type, Class<?> genericType, int skip) throws Exception {
+    return walkHierarchyToFind(o.getClass(), cc -> (C) findGenericFieldByType(cc, type, genericType, skip).get(o));
   }
 
   /**
@@ -191,24 +164,11 @@ public class MCReflect {
    * @param o Object to search in
    * @param fieldClass Target field's class
    * @param skip How many occurrences to skip
-   * @return Optional field value, no value on reflection errors
+   * @return Target value
    */
   @SuppressWarnings("unchecked")
-  public<T> Optional<T> getFieldByType(Object o, Class<T> fieldClass, int skip) {
-    try {
-      // Try to get the field by it's type
-      Optional<Field> f = findFieldByType(o.getClass(), fieldClass, skip);
-
-      if (f.isEmpty())
-        return Optional.empty();
-
-      // Respond with the value of this field in reference to the provided object
-      f.get().setAccessible(true);
-      return Optional.of((T) f.get().get(o));
-    } catch (Exception e) {
-      logger.logError(e);
-      return Optional.empty();
-    }
+  public<T> T getFieldByType(Object o, Class<T> fieldClass, int skip) throws Exception {
+    return (T) findFieldByType(o.getClass(), fieldClass, skip).get(o);
   }
 
   /**
@@ -217,22 +177,22 @@ public class MCReflect {
    * @param type Type that holds the generic type
    * @param genericType Generic type held by type
    * @param skip How many occurrences to skip
-   * @return Optional field, no value on reflection errors
+   * @return Target field
    */
-  public<T> Optional<Field> findGenericFieldByType(Class<?> c, Class<?> type, Class<T> genericType, int skip) {
-    return walkHierarchyToFind(c, cc -> {
-      try {
-        return Arrays.stream(cc.getDeclaredFields())
-          .filter(it -> !Modifier.isStatic(it.getModifiers()))
-          .filter(it -> type.isAssignableFrom(it.getType()))
-          .filter(it -> it.getGenericType().getTypeName().contains(genericType.getSimpleName()))
-          .skip(skip)
-          .findFirst();
-      } catch (Exception e) {
-        logger.logError(e);
-        return Optional.empty();
-      }
-    });
+  public<T> Field findGenericFieldByType(Class<?> c, Class<?> type, Class<T> genericType, int skip) throws Exception {
+    return walkHierarchyToFind(c, cc ->
+      Arrays.stream(cc.getDeclaredFields())
+        .filter(it -> !Modifier.isStatic(it.getModifiers()))
+        .filter(it -> type.isAssignableFrom(it.getType()))
+        .filter(it -> it.getGenericType().getTypeName().contains(genericType.getSimpleName()))
+        .skip(skip)
+        .findFirst()
+        .map(f -> {
+          f.setAccessible(true);
+          return f;
+        })
+        .orElse(null)
+    );
   }
 
   ////////////////////////////////// Writing /////////////////////////////////////
@@ -246,16 +206,12 @@ public class MCReflect {
    * @return Success state
    */
   public boolean setFieldByType(Object o, Class<?> fieldClass, Object v, int skip) {
-    return findFieldByType(o.getClass(), fieldClass, skip).map(f -> {
-      try {
-        f.setAccessible(true);
-        f.set(o, v);
-        return true;
-      } catch (Exception e) {
-        logger.logError(e);
-        return false;
-      }
-    }).orElse(false);
+    try {
+      findFieldByType(o.getClass(), fieldClass, skip).set(o, v);
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   /**
@@ -268,16 +224,12 @@ public class MCReflect {
    * @return Success state
    */
   public boolean setGenericFieldByType(Object o, Class<?> c, Class<?> type, Object v, int skip) {
-    return findGenericFieldByType(o.getClass(), c, type, skip).map(f -> {
-      try {
-        f.setAccessible(true);
-        f.set(o, v);
-        return true;
-      } catch (Exception e) {
-        logger.logError(e);
-        return false;
-      }
-    }).orElse(false);
+    try {
+      findGenericFieldByType(o.getClass(), c, type, skip).set(o, v);
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   //=========================================================================//
@@ -288,26 +240,20 @@ public class MCReflect {
    * Try to find a class' member field by it's name
    * @param c Class to search in
    * @param name Name of the target field
-   * @param skip How many occurrences to skip
    * @return Optional field, no value on reflection errors
    */
-  public Optional<Field> findFieldByName(Class<?> c, String name, int skip) {
-    return walkHierarchyToFind(c, cc -> {
-      try {
-        return Arrays.stream(cc.getDeclaredFields())
-          .filter(it -> !Modifier.isStatic(it.getModifiers()))
-          .filter(it -> it.getName().equals(name))
-          .skip(skip)
-          .findFirst()
-          .map(f -> {
-            f.setAccessible(true);
-            return f;
-          });
-      } catch (Exception e) {
-        logger.logError(e);
-        return Optional.empty();
-      }
-    });
+  public Field findFieldByName(Class<?> c, String name) throws Exception {
+    return walkHierarchyToFind(c, cc ->
+      Arrays.stream(cc.getDeclaredFields())
+        .filter(it -> !Modifier.isStatic(it.getModifiers()))
+        .filter(it -> it.getName().equals(name))
+        .findFirst()
+        .map(f -> {
+          f.setAccessible(true);
+          return f;
+        })
+        .orElse(null)
+    );
   }
 
   //=========================================================================//
@@ -322,16 +268,11 @@ public class MCReflect {
    * @param field Name of the field
    * @return Value of the field
    */
-  public Optional<Object> getFieldByName(Object o, String field) {
-    try {
-      Class<?> cl = o.getClass();
-      Field f = cl.getDeclaredField(field);
-      f.setAccessible(true);
-      return Optional.of(f.get(o));
-    } catch (Exception e) {
-      logger.logError(e);
-      return Optional.empty();
-    }
+  public Object getFieldByName(Object o, String field) throws Exception {
+    Class<?> cl = o.getClass();
+    Field f = cl.getDeclaredField(field);
+    f.setAccessible(true);
+    return f.get(o);
   }
 
   ////////////////////////////////// Writing /////////////////////////////////////
@@ -344,71 +285,10 @@ public class MCReflect {
    * @return Success state
    */
   public boolean setFieldByName(Object o, String field, Object value) {
-    return setFieldByName(o, field, value, 0);
-  }
-
-  /**
-   * Set a private field's value
-   * @param o Object to modify
-   * @param field Name of the field
-   * @param value New value
-   * @param skip How many occurrences to skip
-   * @return Success state
-   */
-  public boolean setFieldByName(Object o, String field, Object value, int skip) {
-    return findFieldByName(o.getClass(), field, skip)
-      .map(f -> {
-        try {
-          f.set(o, value);
-          return true;
-        } catch (Exception e) {
-          logger.logError(e);
-          return false;
-        }
-      }).orElse(false);
-  }
-
-  //=========================================================================//
-  //                             Field Resolver                              //
-  //=========================================================================//
-
-  /**
-   * Try to get a field's value relative to an object
-   * @param f Field to resolve
-   * @param o Object to search in
-   * @return Optional field value, no value on reflection errors
-   */
-  public Optional<Object> getFieldValue(Field f, Object o) {
     try {
-      if (f == null)
-        return Optional.empty();
-
-      // Respond with the value of this field in reference to the provided object
-      f.setAccessible(true);
-      return Optional.of(f.get(o));
-    } catch (Exception e) {
-      logger.logError(e);
-      return Optional.empty();
-    }
-  }
-
-  /**
-   * Try tosetget a field's value relative to an object
-   * @param f Field to change
-   * @param o Object to change in
-   * @param v Value to set
-   * @return Operation result
-   */
-  public boolean setFieldValue(Field f, Object o, Object v) {
-    try {
-      if (f == null)
-        return false;
-
-      f.setAccessible(true);
-      f.set(o, v);
+      findFieldByName(o.getClass(), field).set(o, value);
       return true;
     } catch (Exception e) {
-      logger.logError(e);
       return false;
     }
   }
@@ -425,26 +305,22 @@ public class MCReflect {
    * @param skip Number if fields to skip of that type
    * @return Enum constant matching requirements
    */
-  public<T extends Enum<T>> Optional<T> getEnumByField(Class<T> enumClass, Class<?> fieldClass, Object v, int skip) {
-    try {
-      // Find the target field inside the enum class
-      Field f = findFieldByType(enumClass, fieldClass, skip).orElseThrow();
+  public<T extends Enum<T>> T getEnumByField(Class<T> enumClass, Class<?> fieldClass, Object v, int skip) throws Exception {
+    // Find the target field inside the enum class
+    Field f = findFieldByType(enumClass, fieldClass, skip);
 
-      // Loop all enum constants
-      for (T eC : enumClass.getEnumConstants()) {
-        // Check if the field value of this constant matches
-        if (!f.get(eC).equals(v))
-          continue;
+    // Loop all enum constants
+    for (T eC : enumClass.getEnumConstants()) {
+      // Check if the field value of this constant matches
+      if (!f.get(eC).equals(v))
+        continue;
 
-        // Match
-        return Optional.of(eC);
-      }
-    } catch (Exception e) {
-      e.printStackTrace();
+      // Match
+      return eC;
     }
 
-    // Could not find field
-    return Optional.empty();
+    // Nothing found
+    return null;
   }
 
   /**
@@ -453,17 +329,11 @@ public class MCReflect {
    * @param n Numeric index
    * @return Enum constant matching requirements
    */
-  public<T extends Enum<T>> Optional<T> getEnumNth(Class<T> enumClass, int n) {
-    try {
-      return Arrays.stream(enumClass.getEnumConstants())
-        .skip(n)
-        .findFirst();
-    } catch (Exception e) {
-      logger.logError(e);
-    }
-
-    // Could not resolve the constant
-    return Optional.empty();
+  public<T extends Enum<T>> T getEnumNth(Class<T> enumClass, int n) throws Exception {
+    return Arrays.stream(enumClass.getEnumConstants())
+      .skip(n)
+      .findFirst()
+      .orElseThrow();
   }
 
   //=========================================================================//
@@ -475,13 +345,8 @@ public class MCReflect {
    * @param p Target Player
    * @return CraftPlayer instance
    */
-  public Optional<Object> getCraftPlayer(Player p) {
-    try {
-      return getClassBKT("entity.CraftPlayer").map(cpC -> cpC.cast(p));
-    } catch (Exception e) {
-      logger.logError(e);
-      return Optional.empty();
-    }
+  public Object getCraftPlayer(Player p) throws Exception {
+    return getClassBKT("entity.CraftPlayer").cast(p);
   }
 
   /**
@@ -489,16 +354,9 @@ public class MCReflect {
    * @param p Target Player
    * @return EntityPlayer of the player
    */
-  public Optional<Object> getEntityPlayer(Player p) {
-      return getCraftPlayer(p)
-        .flatMap(cp -> {
-          try {
-            return Optional.of(cp.getClass().getMethod("getHandle").invoke(p));
-          } catch (Exception e) {
-            logger.logError(e);
-            return Optional.empty();
-          }
-        });
+  public Object getEntityPlayer(Player p) throws Exception {
+    Object cp = getCraftPlayer(p);
+    return invokeMethodByName(cp, "getHandle", null);
   }
 
   /**
@@ -506,21 +364,9 @@ public class MCReflect {
    * @param p Target Player
    * @return PlayerConnection of the player
    */
-  public Optional<Object> getPlayerConnection(Player p) {
-    return getEntityPlayer(p).flatMap(ep -> {
-      Class<?> epC = ep.getClass();
-
-      // Try to find a field of type PlayerConnection in the EntityPlayer
-      return findFieldByType(epC, PlayerConnection.class, 0)
-        .flatMap(field -> {
-          try {
-            return Optional.of(field.get(ep));
-          } catch (Exception e) {
-            logger.logError(e);
-            return Optional.empty();
-          }
-        });
-    });
+  public Object getPlayerConnection(Player p) throws Exception {
+    Object ep = getEntityPlayer(p);
+    return findFieldByType(ep, PlayerConnection.class, 0).get(ep);
   }
 
   /**
@@ -528,19 +374,9 @@ public class MCReflect {
    * @param p Target Player
    * @return NetworkManager of the player
    */
-  public Optional<Object> getNetworkManager(Player p) {
-    return getPlayerConnection(p)
-      .flatMap(pc ->
-        findFieldByType(pc.getClass(), NetworkManager.class, 0)
-        .flatMap(nmf -> {
-          try {
-            return Optional.of(nmf.get(pc));
-          } catch (Exception e) {
-            logger.logError(e);
-            return Optional.empty();
-          }
-        })
-      );
+  public Object getNetworkManager(Player p) throws Exception {
+    Object pc = getPlayerConnection(p);
+    return findFieldByType(pc, NetworkManager.class, 0).get(pc);
   }
 
   /**
@@ -550,11 +386,13 @@ public class MCReflect {
    * @return Success state
    */
   public boolean sendPacket(Player p, Object packet) {
-    return getNetworkManager(p)
-      .flatMap(nm ->
-        findMethodByArgsOnly(nm.getClass(), Packet.class)
-          .map(sendM -> invokeMethod(sendM, nm, packet))
-      ).isPresent();
+    try {
+      Object nm = getNetworkManager(p);
+      findMethodByArgsOnly(nm, Packet.class).invoke(nm, packet);
+      return true;
+    } catch (Exception e) {
+      return false;
+    }
   }
 
   /**
@@ -562,20 +400,9 @@ public class MCReflect {
    * @param p Target Player
    * @return NetworkChannel of the player
    */
-  public Optional<Channel> getNetworkChannel(Player p) {
-    return getNetworkManager(p)
-      .flatMap(nm ->
-        findFieldByType(nm.getClass(), Channel.class, 0)
-          .flatMap(cf -> {
-            try {
-              return Optional.of(cf.get(nm));
-            } catch (Exception e) {
-              logger.logError(e);
-              return Optional.empty();
-            }
-          })
-          .map(o -> ((Channel) o))
-      );
+  public Channel getNetworkChannel(Player p) throws Exception {
+    Object nm = getNetworkManager(p);
+    return getFieldByType(nm, Channel.class, 0);
   }
 
   /**
@@ -583,17 +410,8 @@ public class MCReflect {
    * @param nm NetworkManager instance to search for a channel in
    * @return NetworkChannel of the player
    */
-  public Optional<Channel> getNetworkChannel(Object nm) {
-    return findFieldByType(nm.getClass(), Channel.class, 0)
-      .flatMap(cf -> {
-        try {
-          return Optional.of(cf.get(nm));
-        } catch (Exception e) {
-          logger.logError(e);
-          return Optional.empty();
-        }
-      })
-      .map(o -> (Channel) o);
+  public Channel getNetworkChannel(Object nm) throws Exception {
+    return getFieldByType(nm, Channel.class, 0);
   }
 
   //=========================================================================//
@@ -607,14 +425,38 @@ public class MCReflect {
    * @param args Arg types of target method
    * @return Optional method
    */
-  public Optional<Method> findMethodByName(Class<?> c, String name, Class<?> ...args) {
+  public Method findMethodByName(Class<?> c, String name, Class<?> ...args) throws Exception {
     return walkHierarchyToFind(c, (Class<?> cc) -> {
       try {
-        return Optional.of(cc.getDeclaredMethod(name, args));
+        Method m = cc.getDeclaredMethod(name, args);
+        m.setAccessible(true);
+        return m;
       } catch (Exception e) {
-        return Optional.empty();
+        return null;
       }
     });
+  }
+
+  public Method findMethodByName(Object o, String name, Class<?> ...args) throws Exception {
+    return findMethodByName(o.getClass(), name, args);
+  }
+
+  public Object invokeMethodByName(Object o, String name, @Nullable Class<?>[] args, Object... values) throws Exception {
+    return findMethodByName(o.getClass(), name, args).invoke(o, values);
+  }
+
+  public Object invokeMethodByArgsOnly(Object o, @Nullable Class<?>[] args, Object... values) throws Exception {
+    return findMethodByArgsOnly(o.getClass(), args).invoke(o, values);
+  }
+
+  /**
+   * Find a method only by it's argument types
+   * @param o Object to use for the class to search in
+   * @param args Arg types of target method
+   * @return Optional method
+   */
+  public Method findMethodByArgsOnly(Object o, Class<?> ...args) throws Exception {
+    return findMethodByArgsOnly(o.getClass(), args);
   }
 
   /**
@@ -623,61 +465,37 @@ public class MCReflect {
    * @param args Arg types of target method
    * @return Optional method
    */
-  public Optional<Method> findMethodByArgsOnly(Class<?> c, Class<?> ...args) {
+  public Method findMethodByArgsOnly(Class<?> c, Class<?> ...args) throws Exception {
     return walkHierarchyToFind(c, (Class<?> cc) -> {
-      try {
-        for (Method m : cc.getDeclaredMethods()) {
-          Class<?>[] paramTypes = m.getParameterTypes();
+      for (Method m : cc.getDeclaredMethods()) {
+        Class<?>[] paramTypes = m.getParameterTypes();
 
-          // Parameter count mismatch
-          if (paramTypes.length != args.length)
+        // Parameter count mismatch
+        if (paramTypes.length != args.length)
+          continue;
+
+        // Compare all args individually
+        boolean matches = true;
+        for (int i = 0; i < paramTypes.length; i++) {
+          // Type matches
+          if (compareTypes(paramTypes[i], args[i], false))
             continue;
 
-          // Compare all args individually
-          boolean matches = true;
-          for (int i = 0; i < paramTypes.length; i++) {
-            // Type matches
-            if (compareTypes(paramTypes[i], args[i], false))
-              continue;
-
-            // Parameter mismatch
-            matches = false;
-            break;
-          }
-
-          // Args match, return this method
-          if (matches)
-            return Optional.of(m);
+          // Parameter mismatch
+          matches = false;
+          break;
         }
 
-        // Nothing matched
-        return Optional.empty();
-      } catch (Exception e) {
-        logger.logError(e);
-        return Optional.empty();
+        // Args match, return this method
+        if (matches) {
+          m.setAccessible(true);
+          return m;
+        }
       }
+
+      // Nothing matched
+      throw new IllegalStateException("Could not find a method by it's args!");
     });
-  }
-
-  /**
-   * Invoke a method safely using an internal try-catch
-   * @param m Method to invoke
-   * @param o Object to invoke on
-   * @param args Arguments to that method
-   * @return Method result
-   */
-  public Optional<Object> invokeMethod(Method m, Object o, Object ...args) {
-    try {
-      Object ret = m.invoke(o, args);
-
-      if (ret == null)
-        return Optional.empty();
-
-      return Optional.of(ret);
-    } catch (Exception e) {
-      logger.logError(e);
-      return Optional.empty();
-    }
   }
 
   //=========================================================================//
@@ -690,15 +508,8 @@ public class MCReflect {
    * @param innerName Inner class' name
    * @return Optional class
    */
-  public Optional<Class<?>> findInnerClass(Class<?> container, String innerName) {
-    try {
-      return Optional.of(
-        Class.forName(container.getName() + "$" + innerName)
-      );
-    } catch (Exception e) {
-      logger.logError(e);
-      return Optional.empty();
-    }
+  public Class<?> findInnerClass(Class<?> container, String innerName) throws Exception {
+    return Class.forName(container.getName() + "$" + innerName);
   }
 
   /**
@@ -709,33 +520,28 @@ public class MCReflect {
    * @return Optional member
    * @param <T> Type of member to be searched
    */
-  private<T> Optional<T> walkHierarchyToFind(Class<?> c, Function<Class<?>, Optional<T>> searcher) {
-    try {
-      Class<?> currC = c;
-      Optional<T> res = Optional.empty();
+  private<T> T walkHierarchyToFind(Class<?> c, UnsafeFunction<Class<?>, T> searcher) throws Exception {
+    Class<?> currC = c;
+    T res = null;
 
-      while(
-        // While there's still a superclass
-        currC != null &&
+    while(
+      // While there's still a superclass
+      currC != null &&
 
-        // And there's not yet a result
-        res.isEmpty()
-      ) {
-        // Try to find the target
-        res = searcher.apply(currC);
+      // And there's not yet a result
+      res == null
+    ) {
+      // Try to find the target
+      res = searcher.apply(currC);
 
-        // Walk into superclass
-        currC = currC.getSuperclass();
-      }
-
-      if (res.isEmpty())
-        throw new RuntimeException("Hierarchy walk didn't yield any results (" + c + ")!");
-
-      return res;
-    } catch (Exception e) {
-      logger.logError(e);
-      return Optional.empty();
+      // Walk into superclass
+      currC = currC.getSuperclass();
     }
+
+    if (res == null)
+      throw new RuntimeException("Hierarchy walk didn't yield any results (" + c + ")!");
+
+    return res;
   }
 
   /**
@@ -769,40 +575,35 @@ public class MCReflect {
    * @param args Arguments to invoke with
    * @return Optional instance
    */
-  public Optional<Object> invokeConstructor(Class<?> c, Object ...args) {
-    try {
-      // Search through all constructors
-      for (Constructor<?> ctor : c.getDeclaredConstructors()) {
-        Parameter[] params = ctor.getParameters();
+  public Object invokeConstructor(Class<?> c, Object ...args) throws Exception {
+    // Search through all constructors
+    for (Constructor<?> ctor : c.getDeclaredConstructors()) {
+      Parameter[] params = ctor.getParameters();
 
-        // Arg count mismatch
-        if (params.length != args.length)
+      // Arg count mismatch
+      if (params.length != args.length)
+        continue;
+
+      // Check args
+      boolean matches = true;
+      for (int i = 0; i < params.length; i++) {
+        if (compareTypes(params[i].getType(), args[i].getClass(), true))
           continue;
 
-        // Check args
-        boolean matches = true;
-        for (int i = 0; i < params.length; i++) {
-          if (compareTypes(params[i].getType(), args[i].getClass(), true))
-            continue;
-
-          // Arg mismatch
-          matches = false;
-          break;
-        }
-
-        // Return instance using matching constructor
-        if (matches) {
-          ctor.setAccessible(true);
-          return Optional.of(ctor.newInstance(args));
-        }
+        // Arg mismatch
+        matches = false;
+        break;
       }
 
-      // No matches found
-      return Optional.empty();
-    } catch (Exception e) {
-      logger.logError(e);
-      return Optional.empty();
+      // Return instance using matching constructor
+      if (matches) {
+        ctor.setAccessible(true);
+        return ctor.newInstance(args);
+      }
     }
+
+    // No matches found
+    throw new IllegalStateException("Could not find a constructor!");
   }
 
   //=========================================================================//
@@ -816,9 +617,7 @@ public class MCReflect {
    * @param c Class of the target to create
    * @return Optional instance, empty when the packet doesn't support this method
    */
-  public Optional<Object> createPacket(Class<?> c) {
-    return invokeConstructor(
-      c, new PacketDataSerializer(Unpooled.wrappedBuffer(new byte[1024]))
-    );
+  public Object createPacket(Class<?> c) throws Exception {
+    return invokeConstructor(c, new PacketDataSerializer(Unpooled.wrappedBuffer(new byte[1024])));
   }
 }

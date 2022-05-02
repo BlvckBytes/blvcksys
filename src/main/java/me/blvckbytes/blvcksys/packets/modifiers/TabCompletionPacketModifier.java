@@ -8,6 +8,7 @@ import me.blvckbytes.blvcksys.packets.IPacketModifier;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
+import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.chat.ChatMessage;
 import net.minecraft.network.protocol.Packet;
@@ -34,13 +35,17 @@ public class TabCompletionPacketModifier implements IPacketModifier {
   // Mapping the last completion requests to their players
   private final Map<UUID, String> lastCompletions;
   private final MCReflect refl;
+  private final ILogger logger;
 
   public TabCompletionPacketModifier(
     @AutoInject IPacketInterceptor interceptor,
-    @AutoInject MCReflect refl
-  ) {
+    @AutoInject MCReflect refl,
+    @AutoInject ILogger logger
+    ) {
     this.lastCompletions = new ConcurrentHashMap<>();
     this.refl = refl;
+    this.logger = logger;
+
     interceptor.register(this);
   }
 
@@ -50,10 +55,17 @@ public class TabCompletionPacketModifier implements IPacketModifier {
     if (sender == null)
       return incoming;
 
+    if (!(incoming instanceof PacketPlayInTabComplete))
+      return incoming;
+
     // Incoming tab completion packet, telling the server what's in the chat bar
     // There's only one int (transaction ID) and a String (value) inside this packet
-    if (incoming instanceof PacketPlayInTabComplete)
-      refl.getFieldByType(incoming, String.class, 0).ifPresent(o -> lastCompletions.put(sender, o.toString()));
+    try {
+      Object o = refl.getFieldByType(incoming, String.class, 0);
+      lastCompletions.put(sender, o.toString());
+    } catch (Exception e) {
+      logger.logError(e);
+    }
 
     return incoming;
   }
@@ -82,52 +94,46 @@ public class TabCompletionPacketModifier implements IPacketModifier {
       if (cmd.isEmpty())
         return outgoing;
 
-      // Get the suggestions object from this packet
-      refl.getFieldByType(outgoing, Suggestions.class, 0).ifPresent(sug -> {
+      try {
+        Suggestions sug = refl.getFieldByType(outgoing, Suggestions.class, 0);
 
         // Get the list of suggestions within that object
-        boolean isArgsOnly = refl.getFieldByName(sug, "suggestions")
+        List<?> sugs = (List<?>) refl.getFieldByName(sug, "suggestions");
 
-          // Map this list to a boolean that signals whether or not all suggestions are placeholders
-          .map(sugs -> {
-            // Loop all suggestions
-            for (Object suggestion : (List<?>) sugs) {
-              // Get the text of this suggestion
-              String text = refl.getFieldByName(suggestion, "text")
-                .map(Object::toString)
-                .orElse("");
+        boolean isArgsOnly = true;
+        for (Object suggestion : sugs) {
+          // Get the text of this suggestion
+          String text = refl.getFieldByName(suggestion, "text").toString();
 
-              // Get the text's first and last char
-              char fc = text.charAt(0);
-              char lc = text.charAt(text.length() - 1);
+          // Get the text's first and last char
+          char fc = text.charAt(0);
+          char lc = text.charAt(text.length() - 1);
 
-              // Not a mandatory or an optional argument placeholder (indicated by brackets)
-              if (!(fc == '<' && lc == '>' || fc == '[' && lc == ']'))
-                return false;
+          // Not a mandatory or an optional argument placeholder (indicated by brackets)
+          if (!(fc == '<' && lc == '>' || fc == '[' && lc == ']')) {
+            isArgsOnly = false;
+            break;
+          }
 
-              // Color in placeholder
-              refl.setFieldByName(suggestion, "text", cmd.get().colorizeUsage(text, false));
+          // Color in placeholder
+          refl.setFieldByName(suggestion, "text", cmd.get().colorizeUsage(text, false));
 
-              // Set the argument description as a hover-tooltip
-              // Decide on the index through the present number of spaces
-              String desc = cmd.get().getArgumentDescripton(Math.max(0, lastCompletion.split(" ").length - 1));
-              refl.setFieldByName(suggestion, "tooltip", new ChatMessage(desc));
-            }
-
-            // Only consisting of placeholder(s)
-            return true;
-          }).orElse(false);
+          // Set the argument description as a hover-tooltip
+          // Decide on the index through the present number of spaces
+          String desc = cmd.get().getArgumentDescripton(Math.max(0, lastCompletion.split(" ").length - 1));
+          refl.setFieldByName(suggestion, "tooltip", new ChatMessage(desc));
+        }
 
         // Only consists of argument placeholders
         if (isArgsOnly) {
           // Decrement the top level string-range's start so the suggestion isn't rendered into the textbox
-          refl.getFieldByType(sug, StringRange.class, 0).ifPresent(sr -> {
-            refl.getFieldByName(sr, "start").ifPresent(start -> {
-              refl.setFieldByName(sr, "start", Math.max(0, ((int) start) - 1));
-            });
-          });
+          StringRange sr = refl.getFieldByType(sug, StringRange.class, 0);
+          int start = (int) refl.getFieldByName(sr, "start");
+          refl.setFieldByName(sr, "start", Math.max(0, start - 1));
         }
-      });
+      } catch (Exception e) {
+        logger.logError(e);
+      }
     }
 
     return outgoing;

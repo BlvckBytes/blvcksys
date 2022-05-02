@@ -9,6 +9,7 @@ import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
+import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.core.BlockPosition;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.network.NetworkManager;
@@ -28,6 +29,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -46,6 +48,7 @@ public class SignEditorCommunicator implements ISignEditorCommunicator, IPacketM
   private final IBlockSpoofCommunicator spoof;
   private final JavaPlugin plugin;
   private final IConfig cfg;
+  private final ILogger logger;
 
   // Map of a player to their signedit request (tuple of a callback and fake sign location)
   private final Map<UUID, Tuple<Consumer<String[]>, Location>> signeditRequests;
@@ -55,12 +58,14 @@ public class SignEditorCommunicator implements ISignEditorCommunicator, IPacketM
     @AutoInject IBlockSpoofCommunicator spoof,
     @AutoInject JavaPlugin plugin,
     @AutoInject IPacketInterceptor interceptor,
-    @AutoInject IConfig cfg
+    @AutoInject IConfig cfg,
+    @AutoInject ILogger logger
   ) {
     this.refl = refl;
     this.spoof = spoof;
     this.plugin = plugin;
     this.cfg = cfg;
+    this.logger = logger;
 
     this.signeditRequests = new HashMap<>();
     interceptor.register(this);
@@ -95,43 +100,41 @@ public class SignEditorCommunicator implements ISignEditorCommunicator, IPacketM
     if (!spoof.spoofBlock(p, loc, Material.OAK_SIGN))
       return false;
 
-    // Send out a sign lines update packet for the fake sign
-    if (!refl.createPacket(PacketPlayOutTileEntityData.class)
-      .map(ped -> {
-        NBTTagCompound nbt = new NBTTagCompound();
+    try {
+      // Send out a sign lines update packet for the fake sign
+      Object ped = refl.createPacket(PacketPlayOutTileEntityData.class);
+      NBTTagCompound nbt = new NBTTagCompound();
 
-        // Append all lines to this tag
-        refl.findMethodByArgsOnly(nbt.getClass(), String.class, String.class)
-            .ifPresent(m -> {
-              for (int i = 0; i < lines.length; i++)
-                refl.invokeMethod(m, nbt, "Text" + (i + 1), "{\"text\":\"" + lines[i] + "\"}");
-            });
+      // Append all lines to this tag
+      for (int i = 0; i < lines.length; i++)
+        refl.invokeMethodByArgsOnly(
+          nbt,
+          new Class[]{ String.class, String.class },
+          "Text" + (i + 1),
+          "{\"text\":\"" + lines[i] + "\"}"
+        );
 
-        // Append the location to this tag
-        refl.findMethodByArgsOnly(nbt.getClass(), String.class, double.class)
-          .ifPresent(m -> {
-              refl.invokeMethod(m, nbt, "x", loc.getX());
-              refl.invokeMethod(m, nbt, "y", loc.getY());
-              refl.invokeMethod(m, nbt, "z", loc.getZ());
-            });
+      // Append the location to this tag
+      Method setDouble = refl.findMethodByArgsOnly(nbt, String.class, double.class);
+      setDouble.invoke(nbt, "x", loc.getX());
+      setDouble.invoke(nbt, "y", loc.getY());
+      setDouble.invoke(nbt, "z", loc.getZ());
 
-        refl.setFieldByType(ped, BlockPosition.class, pos, 0);
-        refl.setFieldByType(ped, NBTTagCompound.class, nbt, 0);
-        refl.setFieldByType(ped, TileEntityTypes.class, TileEntityTypes.h, 0);
-        return ped;
-      })
-      .map(pse -> refl.sendPacket(p, pse))
-      .orElse(false)
-    )
+      refl.setFieldByType(ped, BlockPosition.class, pos, 0);
+      refl.setFieldByType(ped, NBTTagCompound.class, nbt, 0);
+      refl.setFieldByType(ped, TileEntityTypes.class, TileEntityTypes.h, 0);
+
+      if (!refl.sendPacket(p, ped))
+        return false;
+
+      // Send out a sign editor open packet for the fake block
+      Object pse =  refl.createPacket(PacketPlayOutOpenSignEditor.class);
+      refl.setFieldByType(pse, BlockPosition.class, pos, 0);
+      return refl.sendPacket(p, pse);
+    } catch (Exception e) {
+      logger.logError(e);
       return false;
-
-    // Send out a sign editor open packet for the fake block
-    return refl.createPacket(PacketPlayOutOpenSignEditor.class)
-      .map(pse -> {
-        refl.setFieldByType(pse, BlockPosition.class, pos, 0);
-        return refl.sendPacket(p, pse);
-      })
-      .orElse(false);
+    }
   }
 
   @Override
@@ -143,16 +146,20 @@ public class SignEditorCommunicator implements ISignEditorCommunicator, IPacketM
       if (tuple == null)
         return incoming;
 
-      // Get the lines from the sign
-      refl.getGenericFieldByType(us, String[].class, String.class, 0).ifPresent(v -> {
+      try {
+        // Get the lines from the sign
+        String[] lines = refl.getGenericFieldByType(us, String[].class, String.class, 0);
+
         // Update the fake block back to it's original state
         Player tar = Bukkit.getPlayer(sender);
         if (tar != null)
           tar.sendBlockChange(tuple.b(), tuple.b().getBlock().getBlockData());
 
         // Synchronize back with the main task
-        Bukkit.getScheduler().runTask(plugin, () -> tuple.a().accept(v));
-      });
+        Bukkit.getScheduler().runTask(plugin, () -> tuple.a().accept(lines));
+      } catch (Exception e) {
+        logger.logError(e);
+      }
     }
     return incoming;
   }
@@ -186,14 +193,14 @@ public class SignEditorCommunicator implements ISignEditorCommunicator, IPacketM
     if (signeditRequests.remove(p.getUniqueId()) == null)
       return;
 
-    // Close the sign editor
-    refl.createPacket(PacketPlayOutCloseWindow.class)
-      .map(pcw -> {
-        // Window ID 0, should be the sign editor
-        refl.setFieldByType(pcw, int.class, 0, 0);
-        return pcw;
-      })
-      .ifPresent(pack -> refl.sendPacket(p, pack));
+    // Close the active window
+    try {
+      Object pcw = refl.createPacket(PacketPlayOutCloseWindow.class);
+      refl.setFieldByType(pcw, int.class, 0, 0);
+      refl.sendPacket(p, pcw);
+    } catch (Exception e) {
+      logger.logError(e);
+    }
 
     // Inform
     p.sendMessage(

@@ -1,10 +1,8 @@
 package me.blvckbytes.blvcksys.packets;
 
-import io.netty.channel.ChannelDuplexHandler;
-import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.ChannelPromise;
+import io.netty.channel.*;
 import me.blvckbytes.blvcksys.util.MCReflect;
+import me.blvckbytes.blvcksys.util.UnsafeRunnable;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
@@ -22,6 +20,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Proxy;
 import java.util.*;
 
@@ -175,7 +174,9 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
    * @param p Target player
    */
   private void uninjectPlayer(Player p) {
-    refl.getNetworkChannel(p).ifPresent(nc -> {
+    try {
+      Channel nc = refl.getNetworkChannel(p);
+
       // Remove pipeline entry
       ChannelPipeline pipe = nc.pipeline();
 
@@ -185,7 +186,9 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
 
       // Remove handler
       pipe.remove(handlerName);
-    });
+    } catch (Exception e) {
+      logger.logError(e);
+    }
   }
 
   /**
@@ -299,11 +302,13 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
    * @param p Target player, mandatory
    */
   private void injectPlayer(Player p) {
-    refl.getNetworkChannel(p).ifPresent(nc -> {
-      refl.getNetworkManager(p).ifPresent(nm -> {
-        injectChannel(p, (NetworkManager) nm, nc.pipeline());
-      });
-    });
+    try {
+      Channel nc = refl.getNetworkChannel(p);
+      Object nm = refl.getNetworkManager(p);
+      injectChannel(p, (NetworkManager) nm, nc.pipeline());
+    } catch (Exception e) {
+      logger.logError(e);
+    }
   }
 
   /**
@@ -316,13 +321,15 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
       return;
 
     // Restore the vanilla NML field
-    refl.getCraftServer()
-      .flatMap(cs -> refl.getFieldByName(cs, "console"))
-      .flatMap(console -> refl.getFieldByType(console, ServerConnection.class, 0))
-      .ifPresent(sc ->
-        refl.findGenericFieldByType(sc.getClass(), List.class, NetworkManager.class, 0)
-          .ifPresent(nmlf -> refl.setFieldValue(nmlf, sc, vanillaNML))
-      );
+    try {
+      Object cs = refl.getCraftServer();
+      Object console = refl.getFieldByName(cs, "console");
+      ServerConnection sc = refl.getFieldByType(console, ServerConnection.class, 0);
+      Field nmlf = refl.findGenericFieldByType(sc.getClass(), List.class, NetworkManager.class, 0);
+      nmlf.set(sc, vanillaNML);
+    } catch (Exception e) {
+      logger.logError(e);
+    }
   }
 
   /**
@@ -331,34 +338,36 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
    * @param nm NetworkManger to monitor
    * @param queuePolled Callback, invoked on poll()
    */
-  private void callOnceOnQueuePoll(NetworkManager nm, Runnable queuePolled) {
-    refl.findInnerClass(NetworkManager.class, "QueuedPacket")
-      .flatMap(qpC -> refl.findGenericFieldByType(NetworkManager.class, Queue.class, qpC, 0))
-      .ifPresent(qpF -> {
+  private void callOnceOnQueuePoll(NetworkManager nm, UnsafeRunnable queuePolled) {
+    try {
+      // Get the queue field value
+      Class<?> qpC = refl.findInnerClass(NetworkManager.class, "QueuedPacket");
+      Field qpF = refl.findGenericFieldByType(NetworkManager.class, Queue.class, qpC, 0);
 
-        refl.getFieldValue(qpF, nm)
-          .ifPresent(queue -> {
+      // Vanilla ref
+      Object queue = qpF.get(nm);
 
-            // Create a proxied queue
-            refl.setFieldValue(qpF, nm, Proxy.newProxyInstance(
-              nm.getClass().getClassLoader(),
-              new Class[]{Queue.class},
-              (proxy, method, args) -> {
-                // Queue has been polled
-                if (method.getName().equals("poll")) {
-                  // Undo proxy by re-setting the vanilla ref
-                  refl.setFieldValue(qpF, nm, queue);
+      // Create a proxied queue
+      qpF.set(nm, Proxy.newProxyInstance(
+        nm.getClass().getClassLoader(),
+        new Class[]{Queue.class},
+        (proxy, method, args) -> {
+          // Queue has been polled
+          if (method.getName().equals("poll")) {
+            // Undo proxy by re-setting the vanilla ref
+            qpF.set(nm, queue);
 
-                  // Invoke callback
-                  queuePolled.run();
-                }
+            // Invoke callback
+            queuePolled.run();
+          }
 
-                // Relay method call to vanilla queue
-                return method.invoke(queue, args);
-              }
-            ));
-          });
-      });
+          // Relay method call to vanilla queue
+          return method.invoke(queue, args);
+        }
+      ));
+    } catch (Exception e) {
+      logger.logError(e);
+    }
   }
 
   /**
@@ -367,44 +376,41 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
    * and inject into their pipelines as soon as possible.
    */
   private void proxyNetworkList() {
-    refl.getCraftServer()
-      .flatMap(cs -> refl.getFieldByName(cs, "console"))
-      .flatMap(console -> refl.getFieldByType(console, ServerConnection.class, 0))
-      .ifPresent(sc ->
-        refl.findGenericFieldByType(sc.getClass(), List.class, NetworkManager.class, 0)
-          .ifPresent(nmlf -> {
-            refl.getFieldValue(nmlf, sc)
-              .ifPresent(nml -> {
+    try {
+      Object cs = refl.getCraftServer();
+      Object console = refl.getFieldByName(cs, "console");
+      Object sc = refl.getFieldByType(console, ServerConnection.class, 0);
+      Field nmlf = refl.findGenericFieldByType(sc.getClass(), List.class, NetworkManager.class, 0);
+      Object nml = nmlf.get(sc);
 
-                // Create a proxied list
-                Object proxiedList = Proxy.newProxyInstance(
-                  nml.getClass().getClassLoader(),
-                  new Class[] { List.class },
+      // Create a proxied list
+      Object proxiedList = Proxy.newProxyInstance(
+        nml.getClass().getClassLoader(),
+        new Class[]{List.class},
 
-                  (proxy, method, args) -> {
-                    // A new NetworkManager has just been instantiated and added to the list
-                    if (method.getName().equals("add")) {
-                      NetworkManager nman = (NetworkManager) args[0];
+        (proxy, method, args) -> {
+          // A new NetworkManager has just been instantiated and added to the list
+          if (method.getName().equals("add")) {
+            NetworkManager nman = (NetworkManager) args[0];
 
-                      // Wait until the internal packet queue polled once, to
-                      // know when the connection has been initialized completely,
-                      // then inject this channel
-                      callOnceOnQueuePoll(nman, () -> {
-                        refl.getNetworkChannel(nman).ifPresent(ch -> {
-                          injectChannel(null, nman, ch.pipeline());
-                        });
-                      });
-                    }
-                    return method.invoke(nml, args);
-                  }
-                );
-
-                // Set the field's value to the proxied list
-                // and save the vanilla ref
-                if (refl.setFieldValue(nmlf, sc, proxiedList))
-                  vanillaNML = nml;
-              });
-          })
+            // Wait until the internal packet queue polled once, to
+            // know when the connection has been initialized completely,
+            // then inject this channel
+            callOnceOnQueuePoll(nman, () -> {
+              Channel ch = refl.getNetworkChannel(nman);
+              injectChannel(null, nman, ch.pipeline());
+            });
+          }
+          return method.invoke(nml, args);
+        }
       );
+
+      // Set the field's value to the proxied list
+      // and save the vanilla ref
+      nmlf.set(sc, proxiedList);
+      vanillaNML = nml;
+    } catch (Exception e) {
+      logger.logError(e);
+    }
   }
 }

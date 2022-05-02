@@ -72,49 +72,50 @@ public class ServerListPacketModifier implements IPacketModifier {
     if (receiver != null)
       return outgoing;
 
-    if (outgoing instanceof PacketStatusOutServerInfo si) {
-      refl.getFieldByType(si, ServerPing.class, 0)
-        .ifPresent(sp -> {
-          // Set the text
-          refl.setFieldByType(
-            sp, IChatBaseComponent.class,
-            new ChatMessage(
-              cfg.get(ConfigKey.PLAYERLIST_TEXT)
-                .withVariable("version", refl.getPlayableVersion())
-                .asScalar()
-            ), 0
-          );
+    if (!(outgoing instanceof PacketStatusOutServerInfo si))
+      return outgoing;
 
-          // Modify the icon base64 string value
-          if (this.encodedIcon != null)
-            refl.setFieldByType(sp, String.class, encodedIcon, 0);
+    try {
+      ServerPing sp = refl.getFieldByType(si, ServerPing.class, 0);
 
-          // Modify the version mismatch string that the client renders when the client version
-          // cannot join the server
-          refl.getFieldByType(sp, ServerPing.ServerData.class, 0)
-            .ifPresent(sd -> {
-              refl.setFieldByType(
-                sd, String.class,
-                cfg.get(ConfigKey.PLAYERLIST_VERSION_MISMATCH)
-                  .withVariable("version", refl.getPlayableVersion())
-                  .asScalar(),
-                0
-              );
-            });
+      // Set the text
+      refl.setFieldByType(
+        sp, IChatBaseComponent.class,
+        new ChatMessage(
+          cfg.get(ConfigKey.PLAYERLIST_TEXT)
+            .withVariable("version", refl.getPlayableVersion())
+            .asScalar()
+        ), 0
+      );
 
-          // Modify the player-sample by overriding online players with fake players
-          refl.getFieldByType(sp, ServerPing.ServerPingPlayerSample.class, 0)
-            .ifPresent(ps -> {
-              // Map individual hover lines to gameprofiles with random UUIDs
-              GameProfile[] profiles =
-                cfg.get(ConfigKey.PLAYERLIST_HOVER)
-                  .asStream()
-                  .map(line -> new GameProfile(UUID.randomUUID(), line))
-                  .toArray(GameProfile[]::new);
+      // Modify the icon base64 string value
+      if (this.encodedIcon != null)
+        refl.setFieldByType(sp, String.class, encodedIcon, 0);
 
-              refl.setGenericFieldByType(ps, GameProfile[].class, GameProfile.class, profiles, 0);
-            });
-        });
+      // Modify the version mismatch string that the client renders when the client version
+      // cannot join the server
+      Object sd = refl.getFieldByType(sp, ServerPing.ServerData.class, 0);
+      refl.setFieldByType(
+        sd, String.class,
+        cfg.get(ConfigKey.PLAYERLIST_VERSION_MISMATCH)
+          .withVariable("version", refl.getPlayableVersion())
+          .asScalar(),
+        0
+      );
+
+      // Modify the player-sample by overriding online players with fake players
+      Object ps = refl.getFieldByType(sp, ServerPing.ServerPingPlayerSample.class, 0);
+
+      // Map individual hover lines to gameprofiles with random UUIDs
+      GameProfile[] profiles =
+        cfg.get(ConfigKey.PLAYERLIST_HOVER)
+          .asStream()
+          .map(line -> new GameProfile(UUID.randomUUID(), line))
+          .toArray(GameProfile[]::new);
+
+      refl.setGenericFieldByType(ps, GameProfile[].class, GameProfile.class, profiles, 0);
+    } catch (Exception e) {
+      logger.logError(e);
     }
 
     return outgoing;

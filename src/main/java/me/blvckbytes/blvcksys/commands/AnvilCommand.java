@@ -22,7 +22,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 @AutoConstruct
 public class AnvilCommand extends APlayerCommand {
 
-  IPacketInterceptor interceptor;
   IAnvilCommunicator anvil;
 
   public AnvilCommand(
@@ -30,7 +29,6 @@ public class AnvilCommand extends APlayerCommand {
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
-    @AutoInject IPacketInterceptor interceptor,
     @AutoInject IAnvilCommunicator anvil
   ) {
     super(
@@ -40,7 +38,6 @@ public class AnvilCommand extends APlayerCommand {
       PlayerPermission.ANVIL
     );
 
-    this.interceptor = interceptor;
     this.anvil = anvil;
   }
 

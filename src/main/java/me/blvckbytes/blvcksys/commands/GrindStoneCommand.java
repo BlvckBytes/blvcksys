@@ -4,6 +4,7 @@ import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
+import me.blvckbytes.blvcksys.packets.communicators.container.ContainerType;
 import me.blvckbytes.blvcksys.packets.communicators.container.IContainerCommunicator;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
@@ -42,8 +43,8 @@ public class GrindStoneCommand extends APlayerCommand {
 
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
-    this.container.openFunctionalGrindstone(
-      p,
+    this.container.openContainer(
+      p, ContainerType.GRINDSTONE,
       cfg.get(ConfigKey.GRINDSTONE_GUINAME)
         .withVariable("owner", p.getName())
         .asScalar()

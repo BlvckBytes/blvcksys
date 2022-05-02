@@ -1,4 +1,4 @@
-package me.blvckbytes.blvcksys.packets.communicators.anvil;
+package me.blvckbytes.blvcksys.packets.communicators.container;
 
 import me.blvckbytes.blvcksys.commands.IGiveCommand;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
@@ -10,7 +10,6 @@ import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.core.BlockPosition;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.chat.ChatComponentText;
-import net.minecraft.network.chat.IChatBaseComponent;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.PacketPlayOutCloseWindow;
 import net.minecraft.network.protocol.game.PacketPlayOutOpenWindow;
@@ -18,7 +17,6 @@ import net.minecraft.network.protocol.game.PacketPlayOutWindowData;
 import net.minecraft.world.entity.player.PlayerInventory;
 import net.minecraft.world.inventory.Container;
 import net.minecraft.world.inventory.ContainerAccess;
-import net.minecraft.world.inventory.ContainerAnvil;
 import net.minecraft.world.inventory.Containers;
 import net.minecraft.world.level.World;
 import org.bukkit.Bukkit;
@@ -29,9 +27,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.checkerframework.checker.units.qual.A;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,18 +38,18 @@ import java.util.UUID;
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 05/02/2022
 
-  Creates all packets in regard to opening virtual fully functional anvils for players.
+  Creates all packets in regard to opening virtual fully functional containers for players.
 */
 @AutoConstruct
-public class AnvilCommunicator implements IAnvilCommunicator, IPacketModifier, Listener, IAutoConstructed {
+public class ContainerCummunicator implements IContainerCommunicator, IPacketModifier, Listener, IAutoConstructed {
 
-  private final Map<Player, AnvilContainer> anvils;
+  private final Map<Player, IContainer> containers;
 
   private final MCReflect refl;
   private final ILogger logger;
   private final IGiveCommand give;
 
-  public AnvilCommunicator(
+  public ContainerCummunicator(
     @AutoInject MCReflect refl,
     @AutoInject ILogger logger,
     @AutoInject IGiveCommand give
@@ -62,28 +58,7 @@ public class AnvilCommunicator implements IAnvilCommunicator, IPacketModifier, L
     this.logger = logger;
     this.give = give;
 
-    this.anvils = new HashMap<>();
-  }
-
-  private static class AnvilContainer extends ContainerAnvil {
-
-    private final int containerId;
-    private final Inventory inv;
-    private int levelCost;
-
-    public AnvilContainer(
-      int containerId,
-      PlayerInventory inventory,
-      ContainerAccess access,
-      IChatBaseComponent title
-    ) {
-      super(containerId, inventory, access);
-      this.containerId = containerId;
-      this.checkReachable = false;
-      this.inv = getBukkitView().getTopInventory();
-
-      setTitle(title);
-    }
+    this.containers = new HashMap<>();
   }
 
   //=========================================================================//
@@ -92,16 +67,23 @@ public class AnvilCommunicator implements IAnvilCommunicator, IPacketModifier, L
 
   @Override
   public boolean openFunctionalAnvil(Player p, String title) {
-    return createAnvilContainer(p, title)
-      .map(container -> openAnvilContainer(p, container))
+    return createContainer(p, title, Containers.h)
+      .map(container -> openContainer(p, container, Containers.h))
+      .orElse(false);
+  }
+
+  @Override
+  public boolean openFunctionalWorkbench(Player p, String title) {
+    return createContainer(p, title, Containers.l)
+      .map(container -> openContainer(p, container, Containers.l))
       .orElse(false);
   }
 
   @Override
   public void cleanup() {
-    // Close all anvils and release their items
+    // Close all containers and release their items
     for (Player t : Bukkit.getOnlinePlayers())
-      clearAnvil(t, true);
+      clearContainer(t, true);
   }
 
   @Override
@@ -116,7 +98,7 @@ public class AnvilCommunicator implements IAnvilCommunicator, IPacketModifier, L
     if (!(e.getPlayer() instanceof Player p))
       return;
 
-    clearAnvil(p, false);
+    clearContainer(p, false);
   }
 
   @EventHandler
@@ -124,13 +106,17 @@ public class AnvilCommunicator implements IAnvilCommunicator, IPacketModifier, L
     if (!(e.getWhoClicked() instanceof Player p))
       return;
 
-    // Get an active anvil container from this player
-    AnvilContainer ac = this.anvils.get(p);
-    if (ac == null)
+    // Get an active container from this player
+    IContainer cont = this.containers.get(p);
+    if (cont == null)
+      return;
+
+    // Is not an anvil
+    if (!(cont instanceof AnvilContainer ac))
       return;
 
     // Not this inventory
-    if (!ac.inv.equals(e.getClickedInventory()))
+    if (!ac.getInv().equals(e.getClickedInventory()))
       return;
 
     // Is in creative, level-costst are not subtracted
@@ -143,7 +129,7 @@ public class AnvilCommunicator implements IAnvilCommunicator, IPacketModifier, L
         e.getCurrentItem() != null &&
         e.getCurrentItem().getType() != Material.AIR
     )
-      p.setLevel(p.getLevel() - ac.levelCost);
+      p.setLevel(p.getLevel() - ac.getLevelCost());
   }
 
   //=========================================================================//
@@ -151,12 +137,13 @@ public class AnvilCommunicator implements IAnvilCommunicator, IPacketModifier, L
   //=========================================================================//
 
   /**
-   * Make a new anvil container for a specific player
+   * Make a new container for a specific player
    * @param p Player to make for
    * @param title Inventory title
-   * @return Optional AnvilContainer, empty on errors
+   * @param type Type of the container
+   * @return Optional IContainer, empty on errors
    */
-  private Optional<AnvilContainer> createAnvilContainer(Player p, String title) {
+  private Optional<IContainer> createContainer(Player p, String title, Containers<?> type) {
     try {
       Object cp = refl.getCraftPlayer(p);
 
@@ -177,7 +164,15 @@ public class AnvilCommunicator implements IAnvilCommunicator, IPacketModifier, L
       // Invoke EntityPlayer#nextContainerCounter
       int counter = (int) refl.findMethodByName(ep.getClass(), "nextContainerCounter").invoke(ep);
 
-      return Optional.of(new AnvilContainer(counter, pi, access, new ChatComponentText(title)));
+      if (type == Containers.h) {
+        return Optional.of(new AnvilContainer(counter, pi, access, new ChatComponentText(title)));
+      }
+
+      if (type == Containers.l) {
+        return Optional.of(new WorkBenchContainer(counter, pi, access, new ChatComponentText(title)));
+      }
+
+      throw new IllegalArgumentException("Cannot create container of type " + type);
     } catch (Exception e) {
       logger.logError(e);
       return Optional.empty();
@@ -185,12 +180,13 @@ public class AnvilCommunicator implements IAnvilCommunicator, IPacketModifier, L
   }
 
   /**
-   * Open a previously created anvil container for a player
+   * Open a previously created container for a player
    * @param p Target player
    * @param container Created container
+   * @param type Type of the inventory to open
    * @return Success state
    */
-  private boolean openAnvilContainer(Player p, AnvilContainer container) {
+  private boolean openContainer(Player p, IContainer container, Containers<?> type) {
     try {
       Object ep = refl.getEntityPlayer(p);
 
@@ -199,8 +195,8 @@ public class AnvilCommunicator implements IAnvilCommunicator, IPacketModifier, L
 
       // Open the window
       Object pow = new PacketPlayOutOpenWindow(
-        container.containerId,
-        Containers.h,
+        container.getContainerId(),
+        type,
         container.getTitle()
       );
 
@@ -208,7 +204,7 @@ public class AnvilCommunicator implements IAnvilCommunicator, IPacketModifier, L
       refl.invokeMethodByArgsOnly(ep, new Class[] { Container.class }, container);
 
       // Register locally
-      this.anvils.put(p, container);
+      this.containers.put(p, container);
 
       return refl.sendPacket(p, pow);
     } catch (Exception e) {
@@ -218,24 +214,27 @@ public class AnvilCommunicator implements IAnvilCommunicator, IPacketModifier, L
   }
 
   /**
-   * Clear an anvil from the local management, close the window and give
+   * Clear a container from the local management, close the window and give
    * the player back their items
    * @param p Target player
    * @param close Whether to close the inventory
    */
-  private void clearAnvil(Player p, boolean close) {
-    // Get an active anvil container from this player
-    AnvilContainer ac = this.anvils.get(p);
-    if (ac == null)
+  private void clearContainer(Player p, boolean close) {
+    // Get an active container from this player
+    IContainer cont = this.containers.get(p);
+    if (cont == null)
       return;
 
-    // Remove this anvil again
-    this.anvils.remove(p);
+    // Remove this container again
+    this.containers.remove(p);
 
-    // Hand back all items to the player (or drop them)
-    for (ItemStack item : ac.inv.getContents()) {
-      if (item != null && item.getType() != Material.AIR)
-        give.giveItemsOrDrop(p, item);
+    // Only "manually" hand back items for anvils
+    if (cont instanceof AnvilContainer) {
+      // Hand back all items to the player (or drop them)
+      for (ItemStack item : cont.getInv().getContents()) {
+        if (item != null && item.getType() != Material.AIR)
+          give.giveItemsOrDrop(p, item);
+      }
     }
 
     if (!close)
@@ -244,7 +243,7 @@ public class AnvilCommunicator implements IAnvilCommunicator, IPacketModifier, L
     // Close this inventory
     try {
       Object pcw = refl.createPacket(PacketPlayOutCloseWindow.class);
-      refl.setFieldByType(pcw, int.class, ac.containerId, 0);
+      refl.setFieldByType(pcw, int.class, cont.getContainerId(), 0);
       refl.sendPacket(p, pcw);
     } catch (Exception e) {
       logger.logError(e);
@@ -271,14 +270,18 @@ public class AnvilCommunicator implements IAnvilCommunicator, IPacketModifier, L
     if (p == null)
       return outgoing;
 
-    // Get the current anvil
-    AnvilContainer ac = this.anvils.get(p);
+    // Get the current container
+    IContainer cont = this.containers.get(p);
+
+    // Not an anvil
+    if (!(cont instanceof AnvilContainer ac))
+      return outgoing;
 
     // Read the level-cost if the window-id matches
     try {
       int wid = refl.getFieldByType(wd, int.class, 0);
-      if (wid == ac.containerId)
-        ac.levelCost = refl.getFieldByType(wd, int.class, 2);
+      if (wid == cont.getContainerId())
+        ac.setLevelCost(refl.getFieldByType(wd, int.class, 2));
     } catch (Exception e) {
       logger.logError(e);
     }

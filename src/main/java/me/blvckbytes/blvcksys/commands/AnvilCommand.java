@@ -4,8 +4,7 @@ import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
-import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
-import me.blvckbytes.blvcksys.packets.communicators.anvil.IAnvilCommunicator;
+import me.blvckbytes.blvcksys.packets.communicators.container.IContainerCommunicator;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
@@ -22,14 +21,14 @@ import org.bukkit.plugin.java.JavaPlugin;
 @AutoConstruct
 public class AnvilCommand extends APlayerCommand {
 
-  IAnvilCommunicator anvil;
+  IContainerCommunicator anvil;
 
   public AnvilCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
-    @AutoInject IAnvilCommunicator anvil
+    @AutoInject IContainerCommunicator anvil
   ) {
     super(
       plugin, logger, cfg, refl,

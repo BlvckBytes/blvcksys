@@ -29,7 +29,9 @@ import java.util.Map;
   Author: BlvckBytes <blvckbytes@gmail.com>
   6reated On: 05/01/2022
 
-  Open an empty inventory to quickly dispose unneeded items.
+  Open an empty inventory to quickly dispose unneeded items. The trash-can empties
+  itself after a specified timeout of not being restored. When the module gets unloaded,
+  all trashcans are dumped back into their owner's inventories.
  */
 @AutoConstruct
 public class TrashCommand extends APlayerCommand implements Listener, IAutoConstructed {

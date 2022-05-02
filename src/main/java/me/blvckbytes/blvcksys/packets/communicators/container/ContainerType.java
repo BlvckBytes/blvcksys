@@ -16,7 +16,9 @@ public enum ContainerType {
   ANVIL(Containers.h, ContainerAnvil.class),
   GRINDSTONE(Containers.o, ContainerGrindstone.class),
   LOOM(Containers.r, ContainerLoom.class),
-  WORKBENCH(Containers.l, ContainerWorkbench.class)
+  WORKBENCH(Containers.l, ContainerWorkbench.class),
+  SMITHING(Containers.u, ContainerSmithing.class),
+  STONECUTTER(Containers.x, ContainerStonecutter.class)
   ;
 
   @Getter

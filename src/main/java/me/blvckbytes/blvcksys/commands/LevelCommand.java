@@ -4,6 +4,7 @@ import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
+import me.blvckbytes.blvcksys.handlers.IObjectiveHandler;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
@@ -33,11 +34,14 @@ public class LevelCommand extends APlayerCommand {
     SET;      // Sets levels
   }
 
+  private final IObjectiveHandler obj;
+
   public LevelCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
-    @AutoInject MCReflect refl
+    @AutoInject MCReflect refl,
+    @AutoInject IObjectiveHandler obj
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -48,6 +52,8 @@ public class LevelCommand extends APlayerCommand {
       new CommandArgument("[player]", "Target player"),
       new CommandArgument("[amount]", "Amount of levels")
     );
+
+    this.obj = obj;
   }
 
   //=========================================================================//
@@ -116,6 +122,7 @@ public class LevelCommand extends APlayerCommand {
 
       // Apply the change
       target.setLevel(after);
+      obj.updateBelowName(target);
 
       // Notify the issuer
       p.sendMessage(

@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.packets.communicators.container;
 
 import lombok.Getter;
+import me.blvckbytes.blvcksys.util.MCReflect;
 import net.minecraft.network.chat.IChatBaseComponent;
 import net.minecraft.world.entity.player.PlayerInventory;
 import net.minecraft.world.inventory.*;
@@ -18,7 +19,8 @@ public enum ContainerType {
   LOOM(Containers.r, ContainerLoom.class),
   WORKBENCH(Containers.l, ContainerWorkbench.class),
   SMITHING(Containers.u, ContainerSmithing.class),
-  STONECUTTER(Containers.x, ContainerStonecutter.class)
+  STONECUTTER(Containers.x, ContainerStonecutter.class),
+  ENCHANTING(Containers.m, CustomContainerEnchantTable.class)
   ;
 
   @Getter
@@ -42,11 +44,24 @@ public enum ContainerType {
     int containerId,
     PlayerInventory pi,
     ContainerAccess access,
-    IChatBaseComponent title
+    IChatBaseComponent title,
+    MCReflect refl
   ) throws Exception {
-    Container inst = clazz
-      .getDeclaredConstructor(int.class, PlayerInventory.class, ContainerAccess.class)
-      .newInstance(containerId, pi, access);
+
+    // Try to instantiate with custom dependencies (for custom impls)
+    Container inst;
+    try {
+      inst = clazz
+        .getDeclaredConstructor(int.class, PlayerInventory.class, ContainerAccess.class, MCReflect.class)
+        .newInstance(containerId, pi, access, refl);
+    }
+
+    // Or just invoke the default constructor
+    catch (NoSuchMethodException e) {
+       inst = clazz
+        .getDeclaredConstructor(int.class, PlayerInventory.class, ContainerAccess.class)
+        .newInstance(containerId, pi, access);
+    }
 
     inst.setTitle(title);
     inst.checkReachable = false;

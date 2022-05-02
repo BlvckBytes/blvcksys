@@ -84,7 +84,7 @@ public class ContainerCummunicator implements IContainerCommunicator {
       int counter = (int) refl.findMethodByName(ep.getClass(), "nextContainerCounter").invoke(ep);
 
       // Create container
-      return Optional.of(type.instantiate(counter, pi, access, new ChatComponentText(title)));
+      return Optional.of(type.instantiate(counter, pi, access, new ChatComponentText(title), refl));
     } catch (Exception e) {
       logger.logError(e);
       return Optional.empty();

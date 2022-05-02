@@ -100,7 +100,7 @@ public class MCReflect {
    */
   public void registerCommand(String name, Command command) throws Exception {
     Object cmdMap = invokeMethodByName(getCraftServer(), "getCommandMap", null);
-    findMethodByName(cmdMap, "register", String.class, Command.class).invoke(cmdMap, name, command);
+    findMethodByName(cmdMap.getClass(), "register", String.class, Command.class).invoke(cmdMap, name, command);
   }
 
   //=========================================================================//
@@ -437,10 +437,6 @@ public class MCReflect {
     });
   }
 
-  public Method findMethodByName(Object o, String name, Class<?> ...args) throws Exception {
-    return findMethodByName(o.getClass(), name, args);
-  }
-
   public Object invokeMethodByName(Object o, String name, @Nullable Class<?>[] args, Object... values) throws Exception {
     return findMethodByName(o.getClass(), name, args).invoke(o, values);
   }
@@ -494,7 +490,7 @@ public class MCReflect {
       }
 
       // Nothing matched
-      throw new IllegalStateException("Could not find a method by it's args!");
+      return null;
     });
   }
 

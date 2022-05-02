@@ -106,7 +106,6 @@ public class AfkListener implements Listener, IAutoConstructed, IAfkListener {
     this.move.subscribe(e.getPlayer(), () -> reactivateTimeout(e.getPlayer()));
   }
 
-
   @EventHandler
   public void onQuit(PlayerQuitEvent e) {
     lastAction.remove(e.getPlayer());

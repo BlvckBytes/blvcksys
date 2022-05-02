@@ -9,19 +9,8 @@ import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
-import net.minecraft.core.BlockPosition;
-import net.minecraft.network.chat.ChatComponentText;
-import net.minecraft.network.protocol.game.PacketPlayOutOpenWindow;
-import net.minecraft.world.entity.player.PlayerInventory;
-import net.minecraft.world.inventory.Container;
-import net.minecraft.world.inventory.ContainerAccess;
-import net.minecraft.world.inventory.ContainerWorkbench;
-import net.minecraft.world.inventory.Containers;
-import net.minecraft.world.level.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-
-import java.util.Optional;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>

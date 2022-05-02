@@ -17,4 +17,10 @@ public interface IObjectiveHandler {
    * @param active Whether to add or remove this flag
    */
   void setBelowNameFlag(Player target, BelowNameFlag flag, boolean active);
+
+  /**
+   * Update a player's below name score on demand
+   * @param target Target player
+   */
+  void updateBelowName(Player target);
 }

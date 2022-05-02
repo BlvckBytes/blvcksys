@@ -228,6 +228,11 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
   }
 
   @Override
+  public void updateBelowName(Player target) {
+    updateBelowName(target, target.getHealth(), target.getLevel());
+  }
+
+  @Override
   public void initialize() {
     // Loop all online players
     for (Player t : Bukkit.getOnlinePlayers()) {

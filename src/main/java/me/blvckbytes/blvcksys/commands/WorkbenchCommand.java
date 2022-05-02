@@ -21,7 +21,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 @AutoConstruct
 public class WorkbenchCommand extends APlayerCommand {
 
-  private IContainerCommunicator container;
+  private final IContainerCommunicator container;
 
   public WorkbenchCommand(
     @AutoInject JavaPlugin plugin,

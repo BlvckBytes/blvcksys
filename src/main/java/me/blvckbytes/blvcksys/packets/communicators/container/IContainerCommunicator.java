@@ -33,4 +33,12 @@ public interface IContainerCommunicator {
    * @return Success state
    */
   boolean openFunctionalGrindstone(Player p, String title);
+
+  /**
+   * Open a fully functional virtual loom for a given player
+   * @param p Target player
+   * @param title Title of the inventory
+   * @return Success state
+   */
+  boolean openFunctionalLoom(Player p, String title);
 }

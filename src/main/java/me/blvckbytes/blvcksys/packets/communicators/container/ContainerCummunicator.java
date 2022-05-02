@@ -75,6 +75,13 @@ public class ContainerCummunicator implements IContainerCommunicator, Listener, 
   }
 
   @Override
+  public boolean openFunctionalLoom(Player p, String title) {
+    return createContainer(p, title, Containers.r)
+      .map(container -> openContainer(p, container, Containers.r))
+      .orElse(false);
+  }
+
+  @Override
   public void cleanup() {
     // Close all containers and release their items
     for (Player t : Bukkit.getOnlinePlayers())
@@ -142,6 +149,10 @@ public class ContainerCummunicator implements IContainerCommunicator, Listener, 
 
       if (type == Containers.o) {
         return Optional.of(new GrindStoneContainer(counter, pi, access, new ChatComponentText(title)));
+      }
+
+      if (type == Containers.r) {
+        return Optional.of(new LoomContainer(counter, pi, access, new ChatComponentText(title)));
       }
 
       throw new IllegalArgumentException("Cannot create container of type " + type);

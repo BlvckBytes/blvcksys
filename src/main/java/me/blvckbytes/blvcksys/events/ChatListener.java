@@ -7,6 +7,7 @@ import me.blvckbytes.blvcksys.handlers.ITeamHandler;
 import me.blvckbytes.blvcksys.packets.communicators.team.TeamGroup;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -67,6 +68,12 @@ public class ChatListener implements Listener, IChatListener {
   public void broadcastMessage(Collection<? extends Player> receivers, String message) {
     for (Player t : receivers)
       t.sendMessage(message);
+  }
+
+  @Override
+  public void broadcastMessage(Collection<? extends Player> receivers, TextComponent message) {
+    for (Player t : receivers)
+      t.spigot().sendMessage(message);
   }
 
   //=========================================================================//

@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.events;
 
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.entity.Player;
 
 import java.util.Collection;
@@ -27,4 +28,11 @@ public interface IChatListener {
    * @param message Message to send
    */
   void broadcastMessage(Collection<? extends Player> receivers, String message);
+
+  /**
+   * Broadcast a message to all online players
+   * @param receivers List of message receivers
+   * @param message Message to send
+   */
+  void broadcastMessage(Collection<? extends Player> receivers, TextComponent message);
 }

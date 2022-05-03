@@ -181,6 +181,16 @@ public enum ConfigKey {
   GAMEMODE_OTHERS_RECEIVER("gamemode.others.sender.set", "$0Dein $3GameMode $0wurde durch $3{{issuer}} $0von $3{{prev_mode}} $0auf $3{{curr_mode}} $0gesetzt!"),
 
   //=========================================================================//
+  //                              BROADCAST Command                          //
+  //=========================================================================//
+
+  BROADCAST_FORMAT("broadcast.format", "$1[$3Broadcast$1]$0 {{message}}"),
+  BROADCAST_HOVER(
+    "broadcast.hover",
+    "$0Gesendet von: $3{{issuer}}"
+  ),
+
+  //=========================================================================//
   //                                BACK Command                             //
   //=========================================================================//
 

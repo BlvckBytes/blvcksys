@@ -171,6 +171,20 @@ public enum ConfigKey {
   PLAYERLIST_VERSION_MISMATCH("playerlist.version_mismatch", "$2Version {{version}}"),
 
   //=========================================================================//
+  //                                BACK Command                             //
+  //=========================================================================//
+
+  BACK_TELEPORTED("back.teleported", "$0Du wurdest zu deiner $3vorherigen $0Teleport-Position gebracht."),
+  BACK_NONE("back.none", "$0Es existiert keine $3vorherige $0Teleport-Position mehr!"),
+
+  //=========================================================================//
+  //                               FORWARD Command                           //
+  //=========================================================================//
+
+  FORWARD_TELEPORTED("forward.teleported", "$0Du wurdest zu deiner $3nächsten $0Teleport-Position gebracht."),
+  FORWARD_NONE("forward.none", "$0Es existiert keine $3nächste $0Teleport-Position mehr!"),
+
+  //=========================================================================//
   //                                TPALL Command                            //
   //=========================================================================//
 

@@ -181,6 +181,12 @@ public enum ConfigKey {
   GAMEMODE_OTHERS_RECEIVER("gamemode.others.sender.set", "$0Dein $3GameMode $0wurde durch $3{{issuer}} $0von $3{{prev_mode}} $0auf $3{{curr_mode}} $0gesetzt!"),
 
   //=========================================================================//
+  //                                INVSEE Command                           //
+  //=========================================================================//
+
+  INVSEE_SELF("invsee.self", "$0Du kannst dein $3eigenes Inventar $0nicht beobachten!"),
+
+  //=========================================================================//
   //                              BROADCAST Command                          //
   //=========================================================================//
 

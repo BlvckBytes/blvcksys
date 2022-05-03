@@ -57,9 +57,12 @@ public class GiveCommand extends APlayerCommand implements IGiveCommand {
 
   @Override
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
-    // First argument - provide all material enum values (excluding air)
+    // First argument - provide all material enum values (excluding banned values)
     if (currArg == 0)
-      return suggestEnum(args, currArg, Material.class, BANNED_MATERIALS);
+      return suggestEnum(args, currArg, Material.class, (acc, curr) -> {
+        if (!BANNED_MATERIALS.contains(curr))
+          acc.add(curr.toString());
+      });
 
     // Provide placeholder for the amount
     else if (currArg == 1)
@@ -75,7 +78,7 @@ public class GiveCommand extends APlayerCommand implements IGiveCommand {
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     // Parse the material
-    Material mat = parseEnum(Material.class, args, 0, BANNED_MATERIALS);
+    Material mat = parseEnum(Material.class, args, 0, null, (repr, con) -> con.name().equalsIgnoreCase(repr));
 
     // Parse the amount
     int amount = parseInt(args, 1);

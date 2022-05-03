@@ -64,7 +64,7 @@ public class WeatherCommand extends APlayerCommand {
 
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
-    WeatherType weather = parseEnum(WeatherType.class, args, 0);
+    WeatherType weather = parseEnum(WeatherType.class, args, 0, null);
     int duration = parseInt(args, 1, DEFAULT_WEATHER_DURATION_TICKS);
     setWeather(p, p.getWorld(), weather, duration);
   }

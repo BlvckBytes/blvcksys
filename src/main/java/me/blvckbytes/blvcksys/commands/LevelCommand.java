@@ -79,7 +79,7 @@ public class LevelCommand extends APlayerCommand {
 
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
-    LevelAction action = parseEnum(LevelAction.class, args, 0);
+    LevelAction action = parseEnum(LevelAction.class, args, 0, null);
     Player target = onlinePlayer(args, 1);
     boolean isSelf = target.equals(p);
 

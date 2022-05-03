@@ -23,6 +23,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BiConsumer;
+import java.util.function.BiFunction;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 /**
@@ -271,26 +274,39 @@ public abstract class APlayerCommand extends Command {
    * @param args Already typed out arguments
    * @param currArg Currently focused argument
    * @param enumClass Class of the target enum
-   * @param exclude Enum values to exclude
    * @return Stream of suggestions
    */
-  @SafeVarargs
-  protected final <T extends Enum<T>> Stream<String> suggestEnum(String[] args, int currArg, Class<T> enumClass, T... exclude) {
-    return suggestEnum(args, currArg, enumClass, List.of(exclude));
+  protected<T extends Enum<T>> Stream<String> suggestEnum(
+    String[] args,
+    int currArg,
+    Class<T> enumClass
+  ) {
+    return suggestEnum(args, currArg, enumClass, (acc, curr) -> acc.add(curr.name()));
   }
 
   /**
-   * Suggest an enum's values as autocompletion, used with {@link #onTabCompletion}
+   * Suggest an enum's values as autocompletion by using a custom reducer, used with {@link #onTabCompletion}
    * @param args Already typed out arguments
    * @param currArg Currently focused argument
    * @param enumClass Class of the target enum
-   * @param exclude Enum values to exclude
+   * @param reducer Reducing function (acc, curr)
    * @return Stream of suggestions
    */
-  protected<T extends Enum<T>> Stream<String> suggestEnum(String[] args, int currArg, Class<T> enumClass, List<T> exclude) {
-    return Arrays.stream(enumClass.getEnumConstants())
-      .filter(c -> !exclude.contains(c))
-      .map(Enum::toString)
+  protected<T extends Enum<T>> Stream<String> suggestEnum(
+    String[] args,
+    int currArg,
+    Class<T> enumClass,
+    BiConsumer<List<String>, T> reducer
+  ) {
+    // Collect all enum values through the reducer
+    List<String> suggestions = new ArrayList<>();
+    for (T c : enumClass.getEnumConstants())
+      reducer.accept(suggestions, c);
+
+    // Filter and sort the reducer's resutls
+    return suggestions
+      .stream()
+      .sorted()
       .filter(m -> m.toLowerCase().contains(args[currArg].toLowerCase()));
   }
 
@@ -575,17 +591,6 @@ public abstract class APlayerCommand extends Command {
   ////////////////////////////// Parsing: Enum ////////////////////////////////
 
   /**
-   * Parse an enum's value from a plain string (ignores casing)
-   * @param enumClass Class of the target enum
-   * @param args Arguments of the command
-   * @param index Index within the arguments to use
-   * @return Parsed enum value
-   */
-  protected<T extends Enum<T>> T parseEnum(Class<T> enumClass, String[] args, int index) throws CommandException {
-    return parseEnum(enumClass, args, index, null, new ArrayList<>());
-  }
-
-  /**
    * Parse an enum's value from a plain string (ignores casing) and provide a fallback
    * in case the argument count isn't sufficient to fetch the required argument
    * @param enumClass Class of the target enum
@@ -595,19 +600,7 @@ public abstract class APlayerCommand extends Command {
    * @return Parsed enum value
    */
   protected<T extends Enum<T>> T parseEnum(Class<T> enumClass, String[] args, int index, T argcFallback) throws CommandException {
-    return parseEnum(enumClass, args, index, argcFallback, new ArrayList<>());
-  }
-
-  /**
-   * Parse an enum's value from a plain string (ignores casing)
-   * @param enumClass Class of the target enum
-   * @param args Arguments of the command
-   * @param index Index within the arguments to use
-   * @param exclude Items to exclude from being valid
-   * @return Parsed enum value
-   */
-  protected<T extends Enum<T>> T parseEnum(Class<T> enumClass, String[] args, int index, List<T> exclude) throws CommandException {
-    return parseEnum(enumClass, args, index, null, exclude);
+    return parseEnum(enumClass, args, index, argcFallback, (repr, con) -> con.name().equalsIgnoreCase(repr));
   }
 
   /**
@@ -617,10 +610,10 @@ public abstract class APlayerCommand extends Command {
    * @param args Arguments of the command
    * @param index Index within the arguments to use
    * @param argcFallback Fallback value to use
-   * @param exclude Items to exclude from being valid
+   * @param equalityChecker Function which checks if a enum-constant is equal to a string representation
    * @return Parsed enum value
    */
-  protected<T extends Enum<T>> T parseEnum(Class<T> enumClass, String[] args, int index, T argcFallback, List<T> exclude) throws CommandException {
+  protected<T extends Enum<T>> T parseEnum(Class<T> enumClass, String[] args, int index, T argcFallback, BiFunction<String, T, Boolean> equalityChecker) throws CommandException {
     if (index >= args.length) {
       if (argcFallback != null)
         return argcFallback;
@@ -629,11 +622,9 @@ public abstract class APlayerCommand extends Command {
 
     // Find the enum constant by it's name
     for (T constant : enumClass.getEnumConstants()) {
-      // This constant is excluded from being valid
-      if (exclude.contains(constant))
-        continue;
-
-      if (constant.name().equalsIgnoreCase(args[index]))
+      // Invoke the parser
+      boolean isMatch = equalityChecker.apply(args[index], constant);
+      if (isMatch)
         return constant;
     }
 

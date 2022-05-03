@@ -181,6 +181,34 @@ public enum ConfigKey {
   GAMEMODE_OTHERS_RECEIVER("gamemode.others.sender.set", "$0Dein $3GameMode $0wurde durch $3{{issuer}} $0von $3{{prev_mode}} $0auf $3{{curr_mode}} $0gesetzt!"),
 
   //=========================================================================//
+  //                                  UP Command                             //
+  //=========================================================================//
+
+  UP_TELEPORTED("up.teleported", "$0Du wurdest zum $3nächst höheren $0Block $3über $0dir teleportiert."),
+  UP_AIR("up.air", "$0Es befindet sich $3kein $0weiterer Block $3über $0dir!"),
+
+  //=========================================================================//
+  //                                 DOWN Command                            //
+  //=========================================================================//
+
+  DOWN_TELEPORTED("down.teleported", "$0Du wurdest zum $3nächst tieferen $0Block $3unter $0dir teleportiert."),
+  DOWN_VOID("down.void", "$0Es befindet sich $3kein $0weiterer Block $3unter $0dir!"),
+
+  //=========================================================================//
+  //                               BOTTOM Command                            //
+  //=========================================================================//
+
+  BOTTOM_TELEPORTED("bottom.teleported", "$0Du wurdest zum $3tiefsten $0Block unter dir $3teleportiert$0."),
+  BOTTOM_VOID("bottom.void", "$0Es befindet sich $3kein weiterer Block $0unter dir!"),
+
+  //=========================================================================//
+  //                                 TOP Command                             //
+  //=========================================================================//
+
+  TOP_TELEPORTED("top.teleported", "$0Du wurdest zum $3höchsten $0Block über dir $3teleportiert$0."),
+  TOP_AIR("top.air", "$0Es befindet sich $3kein weiterer Block $0über dir!"),
+
+  //=========================================================================//
   //                                INVSEE Command                           //
   //=========================================================================//
 

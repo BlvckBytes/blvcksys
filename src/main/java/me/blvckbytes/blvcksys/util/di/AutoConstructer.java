@@ -10,10 +10,7 @@ import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Parameter;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.jar.JarFile;
 
 /*
@@ -260,22 +257,35 @@ public class AutoConstructer {
 
     // Keep a list of fields within this class that need to be late-initialized
     List<Field> lateinitFields = new ArrayList<>();
-    for (Field f : instance.getClass().getDeclaredFields()) {
-      AutoInjectLate late = f.getAnnotation(AutoInjectLate.class);
 
-      // Not a lateinit receiver
-      if (late == null)
-        continue;
+    // Walk this class and all of it's superclasses
+    Class<?> c = instance.getClass();
+    while (c.getSuperclass() != null) {
+      for (Field f : c.getDeclaredFields()) {
+        AutoInjectLate late = f.getAnnotation(AutoInjectLate.class);
 
-      // Dependency already exists, set ref
-      if (refs.containsKey(f.getType())) {
-        f.set(instance, refs.get(f.getType()));
-        logDebug("Lateinit " + f.getType().getSimpleName() + " (" + name + ")");
-        continue;
+        // Not a lateinit receiver
+        if (late == null)
+          continue;
+
+        f.setAccessible(true);
+
+        // Check if the dependency already exists
+        boolean existed = false;
+        for (Class<?> knownRef : refs.keySet()) {
+          if (f.getType().isAssignableFrom(knownRef)) {
+            f.set(instance, refs.get(knownRef));
+            existed = true;
+            break;
+          }
+        }
+
+        // Add to buffer
+        if (!existed)
+          lateinitFields.add(f);
       }
 
-      // Add to buffer
-      lateinitFields.add(f);
+      c = c.getSuperclass();
     }
 
     // Add all fields as a tuple with their instance
@@ -283,7 +293,7 @@ public class AutoConstructer {
       Class<?> t = f.getType();
 
       // Class not yet requested, create empty list
-      if (!lateinits.containsKey(vanillaC))
+      if (!lateinits.containsKey(t))
         lateinits.put(t, new ArrayList<>());
 
       // Add the newly created object's lateinit request
@@ -291,19 +301,23 @@ public class AutoConstructer {
     }
 
     // Check for lateinits that need this just created type
-    List<Tuple<Object, Field>> receivers = lateinits.remove(vanillaC);
-    if (receivers != null) {
-      try {
-        // Loop all tuples of object to field and set the value
-        for (Tuple<Object, Field> fr : receivers) {
-          Field f = fr.b();
-          f.setAccessible(true);
-          f.set(fr.a(), instance);
+    for (Iterator<Map.Entry<Class<?>, List<Tuple<Object, Field>>>> li = lateinits.entrySet().iterator(); li.hasNext();) {
+      Map.Entry<Class<?>, List<Tuple<Object, Field>>> entry = li.next();
+      Class<?> lateinitC = entry.getKey();
+      if (lateinitC.isAssignableFrom(vanillaC)) {
+        li.remove();
+        try {
+          // Loop all tuples of object to field and set the value
+          for (Tuple<Object, Field> fr : entry.getValue()) {
+            Field f = fr.b();
+            f.setAccessible(true);
+            f.set(fr.a(), instance);
 
-          logDebug("Lateinit " + name + " (" + fr.a().getClass().getSimpleName() + ")");
+            logDebug("Lateinit " + name + " (" + fr.a().getClass().getSimpleName() + ")");
+          }
+        } catch (Exception e) {
+          e.printStackTrace();
         }
-      } catch (Exception e) {
-        e.printStackTrace();
       }
     }
 

@@ -489,6 +489,15 @@ public enum ConfigKey {
   GIVE_DROPPED("give.dropped", "$4Es wurden {{num_dropped}} Items fallen gelassen!"),
 
   //=========================================================================//
+  //                                HAT Command                              //
+  //=========================================================================//
+
+  HAT_NO_ITEM("hat.no_item", "$0Du hältst $3kein $0Item in der $3Hand$0!"),
+  HAT_UNDRESSED("hat.undressed", "$0Du hast deinen Hut $3ausgezogen$0."),
+  HAT_DRESSED("hat.dressed", "$0Du trägst nun das Item $3{{item}} $0als Hut."),
+  HAT_UNWEARABLE("hat.unwearable", "$0Das Item $3{{item}} $0ist $3nicht tragbar$0!"),
+
+  //=========================================================================//
   //                              INJECT Command                             //
   //=========================================================================//
 

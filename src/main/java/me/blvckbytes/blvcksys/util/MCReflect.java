@@ -5,18 +5,22 @@ import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
+import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.PacketDataSerializer;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.network.PlayerConnection;
+import net.minecraft.world.item.Item;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.*;
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /*
@@ -32,11 +36,14 @@ public class MCReflect {
 
   private final JavaPlugin plugin;
   private final String ver;
+  private final ILogger logger;
 
   public MCReflect(
-    @AutoInject JavaPlugin plugin
+    @AutoInject JavaPlugin plugin,
+    @AutoInject ILogger logger
   ) {
     this.plugin = plugin;
+    this.logger = logger;
     this.ver = findVersion();
   }
 
@@ -334,6 +341,48 @@ public class MCReflect {
       .skip(n)
       .findFirst()
       .orElseThrow();
+  }
+
+  //=========================================================================//
+  //                                  Items                                  //
+  //=========================================================================//
+
+  /**
+   * Convert a bukkit-namespaced ItemStack to an nms-namespaced
+   * @param bukkitStack Input ItemStack
+   * @return Output ItemStack
+   */
+  public Optional<Object> getNMSStack(ItemStack bukkitStack) {
+    try {
+      return Optional.of(
+        findMethodByName(
+          getClassBKT("inventory.CraftItemStack"),
+          "asNMSCopy",
+          ItemStack.class
+        ).invoke(null, bukkitStack)
+      );
+    } catch (Exception e) {
+      logger.logError(e);
+      return Optional.empty();
+    }
+  }
+
+  /**
+   * Get the nms-namespaced Item (like Bukkit's Material) from a
+   * bukkit-namespaced ItemStack
+   * @param bukkitStack Input ItemStack
+   * @return Output Item
+   */
+  public Optional<Object> getNMSItem(ItemStack bukkitStack) {
+    return getNMSStack(bukkitStack)
+      .flatMap(is -> {
+        try {
+          return Optional.of(getFieldByType(is, Item.class, 0));
+        } catch (Exception e) {
+          logger.logError(e);
+          return Optional.empty();
+        }
+      });
   }
 
   //=========================================================================//

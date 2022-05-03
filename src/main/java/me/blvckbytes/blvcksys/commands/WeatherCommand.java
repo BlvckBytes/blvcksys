@@ -22,18 +22,10 @@ import java.util.stream.Stream;
   with a specific duration or permanent sun.
 */
 @AutoConstruct
-public class WeatherCommand extends APlayerCommand {
+public class WeatherCommand extends APlayerCommand implements IWeatherCommand {
 
   // What duration to assume when none is specified
   private static final int DEFAULT_WEATHER_DURATION_TICKS = 20 * 60 * 60; // 1 hour
-
-  /**
-   * Represents the types of weather available
-   */
-  private enum WeatherType {
-    STORM,
-    SUN;
-  }
 
   public WeatherCommand(
     @AutoInject JavaPlugin plugin,
@@ -70,17 +62,11 @@ public class WeatherCommand extends APlayerCommand {
   }
 
   //=========================================================================//
-  //                                Utilities                                //
+  //                                   API                                   //
   //=========================================================================//
 
-  /**
-   * Set the weather in a given world to a given type and notify all affected players
-   * @param dispatcher Dispatcher of this action
-   * @param world World to change the weather of
-   * @param type Weather type to apply
-   * @param duration Duration of this weather-change
-   */
-  private void setWeather(Player dispatcher, World world, WeatherType type, int duration) {
+  @Override
+  public void setWeather(Player dispatcher, World world, WeatherType type, int duration) {
     if (type == WeatherType.STORM) {
       world.setClearWeatherDuration(0);
       world.setWeatherDuration(duration);
@@ -104,5 +90,10 @@ public class WeatherCommand extends APlayerCommand {
           .withVariable("weather", type.toString())
           .asScalar()
       );
+  }
+
+  @Override
+  public int getDefaultWeatherDurationTticks() {
+    return DEFAULT_WEATHER_DURATION_TICKS;
   }
 }

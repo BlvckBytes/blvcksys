@@ -55,7 +55,7 @@ public class GiveHandCommand extends APlayerCommand {
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
     // Suggest online players or "all"
     if (currArg == 0)
-      return suggestOnlinePlayers(args, currArg, true);
+      return suggestOnlinePlayers(p, args, currArg, true);
 
     return super.onTabCompletion(p, args, currArg);
   }

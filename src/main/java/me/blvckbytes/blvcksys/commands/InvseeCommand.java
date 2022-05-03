@@ -50,7 +50,7 @@ public class InvseeCommand extends APlayerCommand implements Listener {
   @Override
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
     if (currArg == 0)
-      return suggestOnlinePlayers(args, currArg, false);
+      return suggestOnlinePlayers(p, args, currArg, false);
     return super.onTabCompletion(p, args, currArg);
   }
 

@@ -53,7 +53,7 @@ public class KickCommand extends APlayerCommand {
   @Override
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
     if (currArg == 0)
-      return suggestOnlinePlayers(args, currArg, true);
+      return suggestOnlinePlayers(p, args, currArg, true);
     return super.onTabCompletion(p, args, currArg);
   }
 

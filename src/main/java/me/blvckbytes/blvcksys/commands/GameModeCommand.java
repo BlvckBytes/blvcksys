@@ -53,7 +53,7 @@ public class GameModeCommand extends APlayerCommand {
       });
 
     if (currArg == 1)
-      return suggestOnlinePlayers(args, currArg, false);
+      return suggestOnlinePlayers(p, args, currArg, false);
     return super.onTabCompletion(p, args, currArg);
   }
 

@@ -53,7 +53,7 @@ public class ClearInventoryCommand extends APlayerCommand {
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
     // Suggest all online players
     if (currArg == 0)
-      return suggestOnlinePlayers(args, currArg, false);
+      return suggestOnlinePlayers(p, args, currArg, false);
 
     return super.onTabCompletion(p, args, currArg);
   }

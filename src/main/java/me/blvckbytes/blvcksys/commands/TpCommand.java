@@ -45,7 +45,7 @@ public class TpCommand extends APlayerCommand {
   @Override
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
     if (currArg == 0 || currArg == 1)
-      return suggestOnlinePlayers(args, currArg, false);
+      return suggestOnlinePlayers(p, args, currArg, false);
     return super.onTabCompletion(p, args, currArg);
   }
 

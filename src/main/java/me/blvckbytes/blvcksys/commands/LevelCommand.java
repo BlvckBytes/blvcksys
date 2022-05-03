@@ -31,7 +31,7 @@ public class LevelCommand extends APlayerCommand {
     GET,      // Get the current number of levels
     GIVE,     // Give levels (adds)
     REMOVE,   // Remove levels (subtracts)
-    SET;      // Sets levels
+    SET       // Sets levels
   }
 
   private final IObjectiveHandler obj;
@@ -68,7 +68,7 @@ public class LevelCommand extends APlayerCommand {
 
     // Suggest online players
     if (currArg == 1)
-      return suggestOnlinePlayers(args, currArg, false);
+      return suggestOnlinePlayers(p, args, currArg, false);
 
     // Suggest placeholder
     if (currArg == 2)

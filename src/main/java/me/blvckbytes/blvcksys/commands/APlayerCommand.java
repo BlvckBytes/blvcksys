@@ -6,6 +6,7 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.util.MCReflect;
+import me.blvckbytes.blvcksys.util.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
@@ -50,6 +51,10 @@ public abstract class APlayerCommand extends Command {
   protected final ILogger logger;
   protected final IConfig cfg;
   protected final MCReflect refl;
+
+  // Used to remove vanished players from suggestions for non-bypassing players
+  @AutoInjectLate
+  private IVanishCommand vanish;
 
   // The top level permission of this command
   @Getter
@@ -312,32 +317,42 @@ public abstract class APlayerCommand extends Command {
 
   /**
    * Suggest all currently online players, except the exclusion
+   * @param p Invoking player
    * @param args Already typed out arguments
    * @param currArg Currently focused argument
    * @param suggestAll Whether to suggest "all" as an option
    * @param exclude Players to exclude from the suggestion
    * @return Stream of suggestions
    */
-  protected Stream<String> suggestOnlinePlayers(String[] args, int currArg, boolean suggestAll, Player... exclude) {
-    return suggestOnlinePlayers(args, currArg, suggestAll, List.of(exclude));
+  protected Stream<String> suggestOnlinePlayers(Player p, String[] args, int currArg, boolean suggestAll, Player... exclude) {
+    return suggestOnlinePlayers(p, args, currArg, suggestAll, List.of(exclude));
   }
 
   /**
    * Suggest all currently online players, except the exclusion
+   * @param p Invoking player
    * @param args Already typed out arguments
    * @param currArg Currently focused argument
    * @param suggestAll Whether to suggest "all" as an option
    * @param exclude Players to exclude from the suggestion
    * @return Stream of suggestions
    */
-  protected Stream<String> suggestOnlinePlayers(String[] args, int currArg, boolean suggestAll, List<Player> exclude) {
-    Stream<String> players = Bukkit.getOnlinePlayers()
+  protected Stream<String> suggestOnlinePlayers(Player p, String[] args, int currArg, boolean suggestAll, List<Player> exclude) {
+    boolean canSeeVanished = PlayerPermission.VANISH_BYPASS.has(p);
+
+    Stream<? extends Player> players = Bukkit.getOnlinePlayers()
       .stream()
-      .filter(n -> !exclude.contains(n))
+      .filter(n -> !exclude.contains(n));
+
+    // Filter out vanished players if the invoker cannot see vanished players
+    if (vanish != null && !canSeeVanished)
+      players = players.filter(n -> !vanish.isVanished(n));
+
+    Stream<String> names = players
       .map(Player::getDisplayName);
 
     return (
-      suggestAll ? Stream.concat(Stream.of("all"), players) : players
+      suggestAll ? Stream.concat(Stream.of("all"), names) : names
     )
       .filter(n -> n.toLowerCase().contains(args[currArg].toLowerCase()));
   }

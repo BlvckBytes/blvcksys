@@ -70,7 +70,7 @@ public class GiveCommand extends APlayerCommand implements IGiveCommand {
 
       // Third argument - provide all online players or "all"
     else if (currArg == 2)
-      return suggestOnlinePlayers(args, currArg, true);
+      return suggestOnlinePlayers(p, args, currArg, true);
 
     return super.onTabCompletion(p, args, currArg);
   }

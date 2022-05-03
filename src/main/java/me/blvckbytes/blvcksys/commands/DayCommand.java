@@ -17,11 +17,11 @@ import org.bukkit.plugin.java.JavaPlugin;
   Change the time of the world you're currently in to either day or night
 */
 @AutoConstruct
-public class DayNightCommand extends APlayerCommand {
+public class DayCommand extends APlayerCommand {
 
   private final ITimeCommand time;
 
-  public DayNightCommand(
+  public DayCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
@@ -30,8 +30,8 @@ public class DayNightCommand extends APlayerCommand {
   ) {
     super(
       plugin, logger, cfg, refl,
-      "day,night",
-      "Change the time of the world you're in",
+      "day",
+      "Change the time of the world you're in to day",
       PlayerPermission.COMMAND_TIME
     );
 
@@ -44,10 +44,6 @@ public class DayNightCommand extends APlayerCommand {
 
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
-    if (label.equals("day"))
-      time.setTime(p, p.getWorld(), TimeShorthand.DAY);
-
-    else if (label.equals("night"))
-      time.setTime(p, p.getWorld(), TimeShorthand.NIGHT);
+    time.setTime(p, p.getWorld(), TimeShorthand.DAY);
   }
 }

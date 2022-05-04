@@ -175,7 +175,7 @@ public enum PlayerPermission {
   //                             SignEdit Command                            //
   //=========================================================================//
 
-  COMMAND_SIGNEDIT("signedit"),
+  COMMAND_SIGNEDIT("bvs.signedit"),
 
   //=========================================================================//
   //                            VANISH Command                               //
@@ -272,8 +272,13 @@ public enum PlayerPermission {
   //                                Chat Colors                              //
   //=========================================================================//
 
-  // Format: <prefix>.<color_name>
-  CHAT_COLOR_PREFIX("bvs.chatcolor.")
+  CHAT_COLOR_PREFIX("bvs.chatcolor."),
+
+  //=========================================================================//
+  //                                Sign Colors                              //
+  //=========================================================================//
+
+  SIGN_COLOR_PREFIX("bvs.signcolor.")
   ;
 
   @Getter

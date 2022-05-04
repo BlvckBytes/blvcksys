@@ -5,6 +5,7 @@ import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
+import me.blvckbytes.blvcksys.events.IChatListener;
 import me.blvckbytes.blvcksys.packets.communicators.signeditor.ISignEditorCommunicator;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
@@ -15,6 +16,8 @@ import org.bukkit.block.Block;
 import org.bukkit.block.Sign;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.Arrays;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -27,6 +30,7 @@ public class SignEditCommand extends APlayerCommand {
 
   private final IRegionAdapter regions;
   private final ISignEditorCommunicator signEditor;
+  private final IChatListener chat;
 
   public SignEditCommand(
     @AutoInject JavaPlugin plugin,
@@ -34,7 +38,8 @@ public class SignEditCommand extends APlayerCommand {
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
     @AutoInject IRegionAdapter regions,
-    @AutoInject ISignEditorCommunicator signEditor
+    @AutoInject ISignEditorCommunicator signEditor,
+    @AutoInject IChatListener chat
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -45,6 +50,7 @@ public class SignEditCommand extends APlayerCommand {
 
     this.regions = regions;
     this.signEditor = signEditor;
+    this.chat = chat;
   }
 
   @Override
@@ -70,14 +76,21 @@ public class SignEditCommand extends APlayerCommand {
       );
     }
 
-    // Get the current lines of the sign
-    String[] currLines = s.getLines();
+    // Get the current lines of the sign and
+    // replace all colors to the alternate notation
+    String[] currLines = Arrays.stream(s.getLines())
+      .map(line -> line.replace("§", "&"))
+      .toArray(String[]::new);
 
     // Open a new sign editor and patch the sign's lines on submit
     signEditor.openSignEditor(p, currLines, lines -> {
       // Support a dynamic number of lines
       for (int i = 0; i < Math.min(currLines.length, lines.length); i++)
-        s.setLine(i, lines[i]);
+        s.setLine(
+          i,
+          // Translate sign colors based on the player's permissions
+          chat.translateColors(p, lines[i], PlayerPermission.SIGN_COLOR_PREFIX)
+        );
 
       // Update the block and make changes visible
       s.update();

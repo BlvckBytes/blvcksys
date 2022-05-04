@@ -18,9 +18,15 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
+import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
 /*
@@ -664,5 +670,106 @@ public class MCReflect {
    */
   public Object createPacket(Class<?> c) throws Exception {
     return invokeConstructor(c, new PacketDataSerializer(Unpooled.wrappedBuffer(new byte[1024])));
+  }
+
+  //=========================================================================//
+  //                              Class-Finding                              //
+  //=========================================================================//
+
+  /**
+   * Find all classes within a plugin and receive only those, which passed the filter
+   * @param plugin Plugin to search in
+   * @param filter External filter function
+   * @return List of matching classes
+   */
+  public List<Class<?>> findClasses(JavaPlugin plugin, Function<Class<?>, Boolean> filter) {
+    List<Class<?>> classes = new ArrayList<>();
+
+    try {
+      // Get the executing jar's file path
+      String fpath = new File(
+        plugin.getClass().getProtectionDomain().getCodeSource().getLocation().toURI()
+      ).getPath();
+
+      // Load the jar file by it's path
+      JarFile jf = new JarFile(fpath);
+
+      // Loop all of it's entries (packages, classes, files, ...)
+      jf.entries().asIterator().forEachRemaining(je -> {
+        String name = je.getName();
+
+        // Not a class file
+        if (!name.endsWith(".class"))
+          return;
+
+        // Try loading the class (should succeed every time) and add it to the local list
+        try {
+          classes.add(Class.forName(
+            // Transform the path back into package notation and strip off .class
+            name.substring(0, name.lastIndexOf('.')).replace("/", ".")
+          ));
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      });
+
+      jf.close();
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    // Only return classes that pass the filter
+    return classes
+      .stream()
+      .filter(filter::apply)
+      .toList();
+  }
+
+  /**
+   * Find all classes within a given package that are annotated
+   * with a specific annotation
+   * @param plugin Plugin ref
+   * @param pkg Package to search in
+   * @param annotation Annotation that has to be present
+   * @return List of classes that match
+   */
+  public List<Class<?>> findAnnotatedClasses(
+    JavaPlugin plugin,
+    String pkg,
+    Class<? extends Annotation> annotation
+  ) {
+    return findClasses(plugin, c ->
+      // Is within the target package
+      c.getPackageName().startsWith(pkg) &&
+
+      // Is annotated by the target annotation
+      c.isAnnotationPresent(annotation)
+    );
+  }
+
+  /**
+   * Find all classes within a given package that implement
+   * a specific other class
+   * @param plugin Plugin ref
+   * @param pkg Package to search in
+   * @param impl Class to be implemented
+   * @return List of classes that match
+   */
+  @SuppressWarnings("unchecked")
+  public<T> List<? extends Class<? extends T>> findImplClasses(
+    JavaPlugin plugin,
+    String pkg,
+    Class<T> impl
+  ) {
+    return findClasses(plugin, c ->
+      // Is within the target package
+      c.getPackageName().startsWith(pkg) &&
+
+      // Is implementing the specified class
+      impl.isAssignableFrom(c) &&
+
+      // Skip self
+      !impl.equals(c)
+    ).stream().map(c -> (Class<? extends T>) c).toList();
   }
 }

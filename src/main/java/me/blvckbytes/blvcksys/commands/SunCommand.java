@@ -7,6 +7,7 @@ import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import org.bukkit.WeatherType;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -46,6 +47,6 @@ public class SunCommand extends APlayerCommand {
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     int duration = parseInt(args, 0, weather.getDefaultWeatherDurationTticks());
-    weather.setWeather(p, p.getWorld(), WeatherType.SUN, duration);
+    weather.setWeather(p, p.getWorld(), WeatherType.CLEAR, duration);
   }
 }

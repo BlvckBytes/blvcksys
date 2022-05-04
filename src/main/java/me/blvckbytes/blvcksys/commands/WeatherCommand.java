@@ -8,6 +8,7 @@ import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import org.bukkit.WeatherType;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -51,6 +52,8 @@ public class WeatherCommand extends APlayerCommand implements IWeatherCommand {
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
     if (currArg == 0)
       return suggestEnum(args, currArg, WeatherType.class);
+    if (currArg == 1)
+      return Stream.of(getArgumentPlaceholder(currArg));
     return super.onTabCompletion(p, args, currArg);
   }
 
@@ -67,14 +70,14 @@ public class WeatherCommand extends APlayerCommand implements IWeatherCommand {
 
   @Override
   public void setWeather(Player dispatcher, World world, WeatherType type, int duration) {
-    if (type == WeatherType.STORM) {
+    if (type == WeatherType.DOWNFALL) {
       world.setClearWeatherDuration(0);
       world.setWeatherDuration(duration);
       world.setThundering(true);
       world.setStorm(true);
     }
 
-    else if (type == WeatherType.SUN) {
+    else if (type == WeatherType.CLEAR) {
       world.setWeatherDuration(0);
       world.setClearWeatherDuration(duration);
       world.setThundering(false);

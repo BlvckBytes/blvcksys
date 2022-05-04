@@ -57,7 +57,7 @@ public class ChatListener implements Listener, IChatListener {
       receiver.sendMessage(
         cfg.get(ConfigKey.CHAT_FORMAT)
           .withVariable("name", sender.getName())
-          .withVariable("message", translateColors(sender, message))
+          .withVariable("message", translateColors(sender, message, PlayerPermission.CHAT_COLOR_PREFIX))
           .withVariable("prefix", prefix)
           .asScalar()
       );
@@ -95,13 +95,8 @@ public class ChatListener implements Listener, IChatListener {
   //                                Utilities                                //
   //=========================================================================//
 
-  /**
-   * Translate all colors in a string based on a player's permissions
-   * @param p Target player
-   * @param message String to translate
-   * @return Color-translated string
-   */
-  private String translateColors(Player p, String message) {
+  @Override
+  public String translateColors(Player p, String message, PlayerPermission prefix) {
     StringBuilder res = new StringBuilder();
 
     for (int i = 0; i < message.length(); i++) {
@@ -124,8 +119,8 @@ public class ChatListener implements Listener, IChatListener {
       if (color == null)
         continue;
 
-      // Player cannot write using this color, skip
-      if (!PlayerPermission.CHAT_COLOR_PREFIX.has(p, color.name().toLowerCase()))
+      // Player cannot use this color, skip
+      if (!prefix.has(p, color.name().toLowerCase()))
         continue;
 
       // Substitute color character to enable this color

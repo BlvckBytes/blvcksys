@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.events;
 
+import me.blvckbytes.blvcksys.config.PlayerPermission;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.entity.Player;
 
@@ -35,4 +36,13 @@ public interface IChatListener {
    * @param message Message to send
    */
   void broadcastMessage(Collection<? extends Player> receivers, TextComponent message);
+
+  /**
+   * Translate all colors in a string based on a player's permissions
+   * @param p Target player
+   * @param message String to translate
+   * @param prefix Prefix permission that "scopes" this set of permissions
+   * @return Color-translated string
+   */
+  String translateColors(Player p, String message, PlayerPermission prefix);
 }

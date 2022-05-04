@@ -528,6 +528,13 @@ public enum ConfigKey {
   CLEARINVENTORY_CANCELLED("clearinventory.cancelled", "$0Du hast die Leerung $4abgebrochen$0!"),
 
   //=========================================================================//
+  //                            Scoreboard Command                           //
+  //=========================================================================//
+
+  SCOREBOARD_HIDDEN("scoreboard.hidden", "$0Dein Scoreboard wurde $3ausgeblendet$0."),
+  SCOREBOARD_SHOWN("scoreboard.shown", "$0Dein Scoreboard wurde $3eingeblendet$0."),
+
+  //=========================================================================//
   //                              PTime Command                              //
   //=========================================================================//
 

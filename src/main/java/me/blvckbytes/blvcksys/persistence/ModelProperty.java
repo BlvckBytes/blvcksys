@@ -26,4 +26,13 @@ public @interface ModelProperty {
   // Whether this property ignores casing
   // Only applicable to Strings
   boolean ignoreCasing() default true;
+
+  // Whether this field can be set to a NULL value
+  boolean isNullable() default false;
+
+  // Whether this field will be inherited
+  boolean isInherited() default true;
+
+  // Whether this field is inlined when using a transformer
+  boolean isInlineable() default true;
 }

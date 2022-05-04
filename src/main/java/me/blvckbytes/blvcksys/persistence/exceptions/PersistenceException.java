@@ -6,4 +6,9 @@ package me.blvckbytes.blvcksys.persistence.exceptions;
 
   Represents an exception that occurred while operating on the persistence layer.
 */
-public abstract class PersistenceException extends RuntimeException {}
+public class PersistenceException extends RuntimeException {
+
+  public PersistenceException(String message) {
+    super(message);
+  }
+}

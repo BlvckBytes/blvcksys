@@ -4,13 +4,9 @@ import lombok.Getter;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
-import me.blvckbytes.blvcksys.persistence.ModelIdentifier;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
-import me.blvckbytes.blvcksys.persistence.PersistentModel;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
-
-import java.util.UUID;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -20,12 +16,7 @@ import java.util.UUID;
   specific point within a specific world.
 */
 @RequiredArgsConstructor
-@PersistentModel(name = "warp")
-public class WarpModel extends APersistentModel<WarpModel> {
-
-  @Getter
-  @ModelIdentifier
-  private UUID id;
+public class WarpModel extends APersistentModel {
 
   @Getter
   @Setter

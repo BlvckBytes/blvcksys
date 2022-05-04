@@ -1,9 +1,9 @@
 package me.blvckbytes.blvcksys.persistence.transformers;
 
+import me.blvckbytes.blvcksys.di.AutoConstruct;
+import me.blvckbytes.blvcksys.persistence.models.OfflinePlayerModel;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
-
-import java.util.UUID;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -11,15 +11,26 @@ import java.util.UUID;
 
   Handles transforming bukkit offline-players.
 */
-public class OfflinePlayerTransformer implements IDataTransformer<UUID, OfflinePlayer> {
+@AutoConstruct
+public class OfflinePlayerTransformer implements IDataTransformer<OfflinePlayerModel, OfflinePlayer> {
 
   @Override
-  public OfflinePlayer revive(UUID data) {
-    return Bukkit.getOfflinePlayer(data);
+  public OfflinePlayer revive(OfflinePlayerModel data) {
+    return Bukkit.getOfflinePlayer(data.getUuid());
   }
 
   @Override
-  public UUID replace(OfflinePlayer data) {
-    return data.getUniqueId();
+  public OfflinePlayerModel replace(OfflinePlayer data) {
+    return new OfflinePlayerModel(data.getUniqueId());
+  }
+
+  @Override
+  public Class<OfflinePlayerModel> getKnownClass() {
+    return OfflinePlayerModel.class;
+  }
+
+  @Override
+  public Class<OfflinePlayer> getForeignClass() {
+    return OfflinePlayer.class;
   }
 }

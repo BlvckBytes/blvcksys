@@ -592,6 +592,16 @@ public enum ConfigKey {
   ERR_USAGE_COLOR_OTHER("errors.usage_color.other", "$0"),
   ERR_USAGE_COLOR_FOCUS("errors.usage_color.focus", "$5&l"),
   ERR_NOT_A_PLAYER("errors.not_a_player", "$4Dieser Befehl ist nur für $5Spieler $4zugänglich!"),
+
+  //=========================================================================//
+  //                              Database Config                            //
+  //=========================================================================//
+
+  DB_HOST("db.host", "localhost"),
+  DB_PORT("db.port", "3306"),
+  DB_DATABASE("db.database", "blvcksys"),
+  DB_USERNAME("db.username", "root"),
+  DB_PASSWORD("db.password", "mysql2001")
   ;
 
   private final String key;

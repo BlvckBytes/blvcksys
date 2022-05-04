@@ -1,5 +1,7 @@
 package me.blvckbytes.blvcksys.persistence.transformers;
 
+import me.blvckbytes.blvcksys.persistence.models.APersistentModel;
+
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 05/04/2022
@@ -7,7 +9,7 @@ package me.blvckbytes.blvcksys.persistence.transformers;
   Represents the functionality of a data transformer that's used
   when handling foreign data for R/W.
 */
-public interface IDataTransformer<Known, Foreign> {
+public interface IDataTransformer<Known extends APersistentModel, Foreign> {
 
   /**
    * Revive a known object back into it's foreign form it was in before persisting
@@ -22,4 +24,14 @@ public interface IDataTransformer<Known, Foreign> {
    * @return Known data to be saved
    */
   Known replace(Foreign data);
+
+  /**
+   * Get the known class (internal model)
+   */
+  Class<Known> getKnownClass();
+
+  /**
+   * Get the foreign class (external model)
+   */
+  Class<Foreign> getForeignClass();
 }

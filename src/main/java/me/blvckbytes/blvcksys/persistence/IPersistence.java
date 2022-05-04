@@ -18,26 +18,26 @@ public interface IPersistence {
    * Store a model persistently
    * @param model Model to store
    */
-  void store(APersistentModel<?> model) throws PersistenceException;
+  void store(APersistentModel model) throws PersistenceException;
 
   /**
    * Store a model persistently
    * @param id Target identifier
    * @return Model corresponding to the requested ID
    */
-  APersistentModel<?> findById(UUID id) throws PersistenceException;
+  APersistentModel findById(UUID id) throws PersistenceException;
 
   /**
    * Store a model persistently
    * @param id Target identifier
    * @return Model corresponding to the requested ID
    */
-  APersistentModel<?> findById(String id) throws PersistenceException;
+  APersistentModel findById(String id) throws PersistenceException;
 
   /**
    * List all available models of a certain type
    * @param type Type of model to list
    * @return List of all available records
    */
-  List<APersistentModel<?>> list(Class<APersistentModel<?>> type);
+  List<APersistentModel> list(Class<APersistentModel> type);
 }

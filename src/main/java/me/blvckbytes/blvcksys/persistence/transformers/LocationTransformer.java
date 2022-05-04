@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.persistence.transformers;
 
+import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.persistence.models.LocationModel;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -11,6 +12,7 @@ import org.bukkit.World;
 
   Handles transforming bukkit locations.
 */
+@AutoConstruct
 public class LocationTransformer implements IDataTransformer<LocationModel, Location> {
 
   @Override
@@ -39,5 +41,15 @@ public class LocationTransformer implements IDataTransformer<LocationModel, Loca
       data.getYaw(), data.getPitch(),
       data.getWorld().getName()
     );
+  }
+
+  @Override
+  public Class<LocationModel> getKnownClass() {
+    return LocationModel.class;
+  }
+
+  @Override
+  public Class<Location> getForeignClass() {
+    return Location.class;
   }
 }

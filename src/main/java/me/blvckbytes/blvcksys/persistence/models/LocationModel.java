@@ -1,25 +1,18 @@
 package me.blvckbytes.blvcksys.persistence.models;
 
 import lombok.*;
-import me.blvckbytes.blvcksys.persistence.ModelIdentifier;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
-import me.blvckbytes.blvcksys.persistence.PersistentModel;
-
-import java.util.UUID;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 05/04/2022
 
-  A specific position within a world of the server.
+  A specific position within a world of the server where only the
+  coordinates as well as the world-name is stored for revival, used
+  with the LocationTransformer.
 */
 @RequiredArgsConstructor
-@PersistentModel(name = "location")
-public class LocationModel extends APersistentModel<LocationModel> {
-
-  @Getter
-  @ModelIdentifier
-  private UUID id;
+public class LocationModel extends APersistentModel {
 
   @Getter
   @Setter

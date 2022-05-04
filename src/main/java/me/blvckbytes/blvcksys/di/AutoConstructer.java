@@ -32,15 +32,19 @@ import java.util.jar.JarFile;
 public class AutoConstructer {
 
   // Cache for already constructed classes (singletons)
-  private static final Map<Class<?>, Object> refs;
+  private final Map<Class<?>, Object> refs;
 
   // Cache for @AutoConstruct'ed class fields that are waiting for late init injections
-  private static final Map<Class<?>, List<Tuple<Object, Field>>> lateinits;
+  private final Map<Class<?>, List<Tuple<Object, Field>>> lateinits;
 
   // Queues log messages until the logger is available
-  private static final List<String> logQueue;
+  private final List<String> logQueue;
 
-  static {
+  private final JavaPlugin plugin;
+
+  public AutoConstructer(JavaPlugin plugin) {
+    this.plugin = plugin;
+
     refs = new HashMap<>();
     lateinits = new HashMap<>();
     logQueue = new ArrayList<>();
@@ -49,7 +53,7 @@ public class AutoConstructer {
   /**
    * Calls the cleanup-routine on all resources that implement it
    */
-  public static void cleanup() {
+  public void cleanup() {
     // Iterate all created instances
     for (Object ref : refs.values()) {
       // Does not implement the autoconstructed interface (which is not mandatory), thus skip
@@ -64,10 +68,9 @@ public class AutoConstructer {
   /**
    * Find all classes within the provided package that make use of {@link AutoConstruct}
    *
-   * @param plugin JavaPlugin reference
    * @param pkg Package to search for targets in
    */
-  private static List<Class<?>> findAnnotatedClasses(JavaPlugin plugin, String pkg) {
+  private List<Class<?>> findAnnotatedClasses(String pkg) {
     List<Class<?>> classes = new ArrayList<>();
 
     try {
@@ -115,15 +118,13 @@ public class AutoConstructer {
 
   /**
    * Execute the auto-constructor and thus instantiate all available
-   * classes within the specified package that are annotated by @AutoConstruct
+   * classes within the plugin's package that are annotated by @AutoConstruct
    *
-   * @param plugin JavaPlugin reference
-   * @param pkg Package to search for targets in
    * @throws Exception Errors during instantiation of modules
    */
-  public static void execute(JavaPlugin plugin, String pkg) throws Exception {
+  public void execute() throws Exception {
     // Find all classes in the target package
-    List<Class<?>> classes = findAnnotatedClasses(plugin, pkg);
+    List<Class<?>> classes = findAnnotatedClasses(plugin.getClass().getPackageName());
 
     // Mapping classes to a chosen constructor, which either has no deps or only @AutoInject dep parameters
     Map<Class<?>, Constructor<?>> ctorMap = selectConstructors(classes);
@@ -131,7 +132,7 @@ public class AutoConstructer {
     // Resolve all dependencies recursively
     List<Class<?>> seen = new ArrayList<>();
     for (Map.Entry<Class<?>, Constructor<?>> e : ctorMap.entrySet())
-      createWithDependencies(plugin, ctorMap, e.getKey(), seen);
+      createWithDependencies(ctorMap, e.getKey(), seen);
 
     // Call the init method on all resources
     for (Object o : refs.values()) {
@@ -149,7 +150,7 @@ public class AutoConstructer {
    * @param classes List of available classes to choose from
    * @return Resolved class for interfaces, target for implementations
    */
-  private static Class<?> resolveInterface(Class<?> target, List<? extends Class<?>> classes) {
+  private Class<?> resolveInterface(Class<?> target, List<? extends Class<?>> classes) {
     // Not an interface, just return the implementation itself
     if (!target.isInterface())
       return target;
@@ -192,7 +193,7 @@ public class AutoConstructer {
    * @param classes List of available classes
    * @return Map of class to valid constructor
    */
-  private static Map<Class<?>, Constructor<?>> selectConstructors(List<? extends Class<?>> classes) {
+  private Map<Class<?>, Constructor<?>> selectConstructors(List<? extends Class<?>> classes) {
     Map<Class<?>, Constructor<?>> ctorMap = new HashMap<>();
 
     // Loop all classes
@@ -243,12 +244,10 @@ public class AutoConstructer {
 
   /**
    * Called whenever a resource has been instantiated
-   * @param plugin Reference of the JavaPlugin instance
    * @param instance Created object
    * @param vanillaC Vanilla class (unresolved interface for example) of this object
    */
-  private static void onInstantiation(
-    JavaPlugin plugin,
+  private void onInstantiation(
     Object instance,
     Class<?> vanillaC
   ) throws Exception {
@@ -330,7 +329,6 @@ public class AutoConstructer {
 
   /**
    * Create a new instance of a class by creating all it's constructor's dependencies beforehand
-   * @param plugin Reference of the JavaPlugin instance
    * @param ctorMap Constructor map of pre-selected, valid constructors
    * @param target Target class to construct
    * @param seen List of already seen classes, passed for recursion
@@ -338,8 +336,7 @@ public class AutoConstructer {
    *
    * @throws Exception Issues with instantiation or dependency conflicts
    */
-  private static Object createWithDependencies(
-    JavaPlugin plugin,
+  private Object createWithDependencies(
     Map<Class<?>, Constructor<?>> ctorMap,
     Class<?> target,
     List<Class<?>> seen
@@ -369,7 +366,7 @@ public class AutoConstructer {
     if (params.length == 0) {
       // Invoke empty constructor
       Object inst = targetC.newInstance();
-      onInstantiation(plugin, inst, vanillaC);
+      onInstantiation(plugin, vanillaC);
       refs.put(target, inst);
 
       // As this dependency now exists, remove it from the seen list, as it
@@ -405,7 +402,7 @@ public class AutoConstructer {
 
       // Remember this dependency and resolve it's dependencies
       seen.add(dep);
-      args[i] = createWithDependencies(plugin, ctorMap, dep, seen);
+      args[i] = createWithDependencies(ctorMap, dep, seen);
       seen.remove(dep);
     }
 
@@ -413,7 +410,7 @@ public class AutoConstructer {
     // using all created dependencies
     Object inst = targetC.newInstance(args);
 
-    onInstantiation(plugin, inst, vanillaC);
+    onInstantiation(inst, vanillaC);
     refs.put(target, inst);
 
     return inst;
@@ -423,7 +420,7 @@ public class AutoConstructer {
    * Find the logger within the local list of refs
    * @return Logger instance or null if it's not yet constructed
    */
-  private static ILogger findLogger() {
+  private ILogger findLogger() {
     // Look through ref-list
     for (Map.Entry<Class<?>, Object> ref : refs.entrySet()) {
       // This is a logger implementation
@@ -440,7 +437,7 @@ public class AutoConstructer {
    * Log messages get queued until the logger's instantiated
    * @param message Message to log
    */
-  private static void logDebug(String message) {
+  private void logDebug(String message) {
     // Logger available
     ILogger logger = findLogger();
     if (logger != null) {

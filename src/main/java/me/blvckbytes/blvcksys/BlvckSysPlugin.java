@@ -12,11 +12,14 @@ import org.bukkit.plugin.java.JavaPlugin;
 */
 public class BlvckSysPlugin extends JavaPlugin {
 
+  private static AutoConstructer ac;
+
   @Override
   public void onEnable() {
     try {
       // Create all resources within this package
-      AutoConstructer.execute(this, getClass().getPackageName());
+      ac = new AutoConstructer(this);
+      ac.execute();
     } catch (Exception e) {
       e.printStackTrace();
       // Disable this plugin if it didn't pass auto-construct
@@ -27,6 +30,7 @@ public class BlvckSysPlugin extends JavaPlugin {
   @Override
   public void onDisable() {
     // Call cleanup on all interested resources
-    AutoConstructer.cleanup();
+    if (ac != null)
+      ac.cleanup();
   }
 }

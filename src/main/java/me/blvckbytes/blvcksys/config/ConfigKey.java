@@ -528,6 +528,17 @@ public enum ConfigKey {
   CLEARINVENTORY_CANCELLED("clearinventory.cancelled", "$0Du hast die Leerung $4abgebrochen$0!"),
 
   //=========================================================================//
+  //                            PWeather Command                             //
+  //=========================================================================//
+
+  PWEATHER_SET("pweather.set.self", "$0Du hast $3dein $0Wetter auf $3{{weather}} $0gesetzt."),
+  PWEATHER_RESET("pweather.reset.self", "$0Du hast $3dein $0Wetter $3zurückgesetzt$0."),
+  PWEATHER_SET_OTHERS_SENDER("pweather.set.others.sender", "$0Du hast das Wetter von $3{{target}} $0auf $3{{weather}} $0gesetzt."),
+  PWEATHER_SET_OTHERS_RECEIVER("pweather.set.others.receiver", "$0Dein Wetter wurde von $3{{issuer}} $0auf $3{{weather}} $0gesetzt."),
+  PWEATHER_RESET_OTHERS_SENDER("pweather.reset.others.sender", "$0Du hast das Wetter von $3{{target}} $3zurückgesetzt$0."),
+  PWEATHER_RESET_OTHERS_RECEIVER("pweather.reset.others.receiver", "$0Dein Wetter wurde von $3{{issuer}} $3zurückgesetzt$0."),
+
+  //=========================================================================//
   //                             Weather Command                             //
   //=========================================================================//
 

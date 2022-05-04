@@ -29,7 +29,7 @@ import java.util.jar.JarFile;
   same type, into which the value gets injected as soon as it's available,
   where the constructor will be passed a null-value for it in the mean time.
 */
-public class AutoConstructer {
+public class AutoConstructer implements IAutoConstructer {
 
   // Cache for already constructed classes (singletons)
   private final Map<Class<?>, Object> refs;
@@ -40,15 +40,45 @@ public class AutoConstructer {
   // Queues log messages until the logger is available
   private final List<String> logQueue;
 
-  private final JavaPlugin plugin;
+  // Callbacks that are interested in the constructer reaching completion state
+  private final List<Runnable> completionCallbacks;
 
-  public AutoConstructer(JavaPlugin plugin) {
+  private final JavaPlugin plugin;
+  private boolean completed;
+
+  public AutoConstructer(JavaPlugin plugin) throws Exception {
     this.plugin = plugin;
+    this.completed = false;
 
     refs = new HashMap<>();
     lateinits = new HashMap<>();
     logQueue = new ArrayList<>();
+    this.completionCallbacks = new ArrayList<>();
+
+    execute();
   }
+
+  //=========================================================================//
+  //                               Consumer API                              //
+  //=========================================================================//
+
+  @Override
+  public Collection<Object> getAllInstances() {
+    return Collections.unmodifiableCollection(this.refs.values());
+  }
+
+  @Override
+  public void onCompletion(Runnable r) {
+    // Already done, invoke immediately
+    if (this.completed)
+      r.run();
+
+    this.completionCallbacks.add(r);
+  }
+
+  //=========================================================================//
+  //                                Utilities                                //
+  //=========================================================================//
 
   /**
    * Calls the cleanup-routine on all resources that implement it
@@ -122,7 +152,7 @@ public class AutoConstructer {
    *
    * @throws Exception Errors during instantiation of modules
    */
-  public void execute() throws Exception {
+  private void execute() throws Exception {
     // Find all classes in the target package
     List<Class<?>> classes = findAnnotatedClasses(plugin.getClass().getPackageName());
 
@@ -138,6 +168,13 @@ public class AutoConstructer {
     for (Object o : refs.values()) {
       if (o instanceof IAutoConstructed a)
         a.initialize();
+    }
+
+    // Done, alter the state and call all completion callbacks
+    this.completed = true;
+    for (Iterator<Runnable> ir = this.completionCallbacks.iterator(); ir.hasNext();) {
+      ir.next().run();
+      ir.remove();
     }
   }
 
@@ -388,9 +425,15 @@ public class AutoConstructer {
           "Parameter %s of %s is not annotated by @AutoInject".formatted(p.getName(), target.getName())
         );
 
-      // Directly inject main at this point
+      // Directly inject the JavaPlugin ref
       if (dep.isAssignableFrom(plugin.getClass())) {
         args[i] = plugin;
+        continue;
+      }
+
+      // Directly inject the AutoConstructor ref
+      if (dep.isAssignableFrom(getClass())) {
+        args[i] = this;
         continue;
       }
 

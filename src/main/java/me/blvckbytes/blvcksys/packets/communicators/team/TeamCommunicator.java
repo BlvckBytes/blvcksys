@@ -59,7 +59,7 @@ public class TeamCommunicator implements ITeamCommunicator {
       refl.setFieldByType(b, IChatBaseComponent.class, new ChatMessage(group.prefix()), 1);
       refl.setFieldByType(b, IChatBaseComponent.class, new ChatMessage(group.suffix()), 2);
       refl.setFieldByType(b, String.class, "always", 0); // Name tag visibility: always, hideForOtherTeams, hideForOwnTeam, never
-      refl.setFieldByType(b, String.class, "pushOwnTeam", 1); // Collision rule: always, pushOtherTeams, pushOwnTeam, never
+      refl.setFieldByType(b, String.class, "never", 1); // Collision rule (physical collisions): always, pushOtherTeams, pushOwnTeam, never
 
       chatFormatFromColor(group.nameColor().getChar()).ifPresent(ecf -> {
         refl.setFieldByType(b, EnumChatFormat.class, ecf, 0); // Player name color

@@ -14,7 +14,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.*;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /*
@@ -33,6 +35,9 @@ public class AfkListener implements Listener, IAutoConstructed, IAfkListener {
   // Each player and a timestamp of their last action on the server
   private final Map<Player, Long> lastAction;
 
+  // List of AFK players
+  private final List<Player> afks;
+
   // Handle of the repeating task that polls the last action map
   private int taskHandle;
 
@@ -50,9 +55,10 @@ public class AfkListener implements Listener, IAutoConstructed, IAfkListener {
     this.teams = teams;
     this.plugin = plugin;
     this.cfg = cfg;
-
     this.move = move;
+
     this.lastAction = new HashMap<>();
+    this.afks = new ArrayList<>();
   }
 
   //=========================================================================//
@@ -142,7 +148,7 @@ public class AfkListener implements Listener, IAutoConstructed, IAfkListener {
     lastAction.put(p, System.currentTimeMillis());
 
     // Fast resume "interrupt"
-    if (teams.getGrayed(p))
+    if (afks.contains(p))
       checkActions(p);
   }
 
@@ -163,11 +169,12 @@ public class AfkListener implements Listener, IAutoConstructed, IAfkListener {
     if (!isAFK(p)) {
 
       // Not marked as AFK
-      if (!teams.getGrayed(p))
+      if (!afks.contains(p))
         return;
 
       // Unmark grayed
-      teams.setGrayed(p, false);
+      afks.remove(p);
+      teams.update(p);
 
       // Broadcast
       for (Player t : Bukkit.getOnlinePlayers())
@@ -190,15 +197,16 @@ public class AfkListener implements Listener, IAutoConstructed, IAfkListener {
    */
   private void markAFK(Player p) {
     // Already marked as afk
-    if (teams.getGrayed(p))
+    if (afks.contains(p))
       return;
 
     // Just to make sure: set an action far enough in the past, since
     // this procedure can also be called programmatically at any time
-    lastAction.put(p, System.currentTimeMillis() - TIMEOUT_MS);
+    lastAction.put(p, System.currentTimeMillis() - (2 * TIMEOUT_MS));
 
     // Mark grayed
-    teams.setGrayed(p, true);
+    afks.add(p);
+    teams.update(p);
 
     // Broadcast
     for (Player t : Bukkit.getOnlinePlayers())

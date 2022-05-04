@@ -21,16 +21,8 @@ public interface ITeamHandler {
   Optional<TeamGroup> getPlayerGroup(Player p);
 
   /**
-   * Set a player as grayed within the tablist
+   * Update a player by re-deciding their current tab group
    * @param p Target player
-   * @param state Grayed state
    */
-  void setGrayed(Player p, boolean state);
-
-  /**
-   * Get a player's grayed state within the tablist
-   * @param p Target player
-   * @return Grayed state
-   */
-  boolean getGrayed(Player p);
+  void update(Player p);
 }

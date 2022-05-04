@@ -1,8 +1,11 @@
 package me.blvckbytes.blvcksys.handlers;
 
+import me.blvckbytes.blvcksys.commands.IVanishCommand;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.config.PlayerPermission;
+import me.blvckbytes.blvcksys.events.IAfkListener;
 import me.blvckbytes.blvcksys.events.PlayerPermissionsChangedEvent;
 import me.blvckbytes.blvcksys.packets.communicators.team.ITeamCommunicator;
 import me.blvckbytes.blvcksys.packets.communicators.team.TeamAction;
@@ -10,6 +13,7 @@ import me.blvckbytes.blvcksys.packets.communicators.team.TeamGroup;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
+import me.blvckbytes.blvcksys.util.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
 import net.minecraft.network.chat.ChatComponentText;
 import net.minecraft.network.protocol.Packet;
@@ -23,6 +27,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.Nullable;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -34,22 +39,26 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
   // Used to format the current date's time for displaying purposes
   private static final SimpleDateFormat df = new SimpleDateFormat("HH:mm:ss");
 
-  // Suffix for auto-generated group clones that are grayed
-  private static final String GRAYED_SUFFIX = "_G";
+  // Suffix for auto-generated group clones that are AFK
+  private static final String AFK_SUFFIX = "_A";
+
+  // Suffix for auto-generated group clones that are Vanished
+  private static final String VANISH_SUFFIX = "_V";
 
   private final IConfig cfg;
   private final MCReflect refl;
   private final JavaPlugin plugin;
   private final ITeamCommunicator teamComm;
 
+  // Group "state providers"
+  @AutoInjectLate private IAfkListener afk;
+  @AutoInjectLate private IVanishCommand vanish;
+
   // Known groups
   private final List<TeamGroup> groups;
 
   // Members per group
-  private final Map<TeamGroup, List<Player>> members;
-
-  // Players that have been grayed
-  private final List<Player> grayed;
+  private final Map<TeamGroup, Set<Player>> members;
 
   // Created groups per player (each group has to be created once per client)
   private final Map<Player, List<TeamGroup>> createdGroups;
@@ -72,7 +81,6 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
     this.members = new HashMap<>();
     this.createdGroups = new HashMap<>();
     this.groups = new ArrayList<>();
-    this.grayed = new ArrayList<>();
 
     this.loadGroups();
   }
@@ -109,7 +117,7 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
   @Override
   public Optional<TeamGroup> getPlayerGroup(Player p) {
     // Search through all groups to find the one where the player is a member
-    for (Map.Entry<TeamGroup, List<Player>> group : members.entrySet()) {
+    for (Map.Entry<TeamGroup, Set<Player>> group : members.entrySet()) {
       if (group.getValue().contains(p))
         return Optional.of(group.getKey());
     }
@@ -119,14 +127,7 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
   }
 
   @Override
-  public void setGrayed(Player p, boolean state) {
-    // Add/remove from/to the list
-    if (state)
-      this.grayed.add(p);
-    else
-      this.grayed.remove(p);
-
-    // Re-decide on the group
+  public void update(Player p) {
     decideDisplayGroup(
       p,
       p.getEffectivePermissions()
@@ -134,11 +135,6 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
         .map(PermissionAttachmentInfo::getPermission)
         .toList()
     );
-  }
-
-  @Override
-  public boolean getGrayed(Player p) {
-    return grayed.contains(p);
   }
 
   //=========================================================================//
@@ -157,7 +153,7 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
   @EventHandler
   public void onQuit(PlayerQuitEvent e) {
     // Remove offline players from their group
-    resetPlayerGroup(e.getPlayer());
+    resetPlayerGroup(e.getPlayer(), null);
   }
 
   @EventHandler
@@ -185,9 +181,13 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
       // Get the group name from the meta-permission
       String groupName = permission.substring(permission.indexOf('.') + 1);
 
-      // Switch to the grayed version of this group
-      if (grayed.contains(p))
-        groupName += GRAYED_SUFFIX;
+      // Switch to the vanished version of this group
+      if (vanish != null && vanish.isVanished(p))
+        groupName += VANISH_SUFFIX;
+
+      // Switch to the afk version of this group
+      else if (afk != null && afk.isAFK(p))
+        groupName += AFK_SUFFIX;
 
       // Get the group by it's name
       Optional<TeamGroup> tg = getGroup(groupName);
@@ -203,7 +203,7 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
 
     // In no known group, reset back to default
     if (displayGroup == null)
-      resetPlayerGroup(p);
+      resetPlayerGroup(p, null);
 
       // Set the player's group
     else
@@ -213,10 +213,15 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
   /**
    * Remove a player from their current group
    * @param p Player to remove
+   * @param skip Groups to skip resetting
    */
-  private void resetPlayerGroup(Player p) {
+  private void resetPlayerGroup(Player p, @Nullable List<TeamGroup> skip) {
     // Remove the player from all teams
-    for (Map.Entry<TeamGroup, List<Player>> team : members.entrySet()) {
+    for (Map.Entry<TeamGroup, Set<Player>> team : members.entrySet()) {
+      // Skip group
+      if (skip != null && skip.contains(team.getKey()))
+        continue;
+
       // Send out packets
       if (team.getValue().remove(p))
         broadcastGroupState(team.getKey(), p, false);
@@ -224,20 +229,21 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
   }
 
   /**
-   * Set a player's group membership
+   * Add a player to a group
    * @param group Target group
    * @param p Player to add to that group
    */
-  private void setPlayerGroup(TeamGroup group, Player p) {
-    // Remove from any previous group
-    resetPlayerGroup(p);
-
+  private void addPlayerGroup(TeamGroup group, Player p) {
     // Create empty list initially
     boolean isNew = false;
     if (!members.containsKey(group)) {
-      members.put(group, new ArrayList<>());
+      members.put(group, new HashSet<>());
       isNew = true;
     }
+
+    // Already in that group (and the client knows about it)
+    else if (members.get(group).contains(p))
+      return;
 
     // Add the member
     members.get(group).add(p);
@@ -251,6 +257,20 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
     // Just update the group state for all players
     else
       broadcastGroupState(group, p, true);
+  }
+
+  /**
+   * Set a player's group membership
+   * @param group Target group
+   * @param p Player to add to that group
+   */
+  private void setPlayerGroup(TeamGroup group, Player p) {
+    // List of groups to keep (don't remove from to save traffic)
+    List<TeamGroup> keep = List.of(group);
+
+    // Remove from any previous groups
+    resetPlayerGroup(p, keep);
+    addPlayerGroup(group, p);
   }
 
   /**
@@ -283,28 +303,48 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
       TeamGroup group = createGroup(prefixData[0], prefixData[1], i);
       this.groups.add(group);
 
-      // Add a version of this group that's grayed and has the biggest priority (=last in tab)
-      this.groups.add(cloneGroupGrayed(group, prefixesData.size()));
+      // Add all custom state versions of this group
+      this.groups.add(cloneGroupVanished(group, 0));
+      this.groups.add(cloneGroupAFK(group, prefixesData.size()));
     }
   }
 
   /**
-   * Make a grayed clone of a normal group and add a suffix to it's name
+   * Make a Vanished clone of a normal group and add a suffix to it's name
    * @param group Group to clone
    * @param priority Priority of this new group
-   * @return Cloned grayed result
+   * @return Cloned result
    */
-  private TeamGroup cloneGroupGrayed(TeamGroup group, int priority) {
+  private TeamGroup cloneGroupVanished(TeamGroup group, int priority) {
     return new TeamGroup(
       // Add name suffix
-      group.groupName() + GRAYED_SUFFIX,
+      group.groupName() + VANISH_SUFFIX,
+      // Remove all color and make it gray
+      ChatColor.GRAY + ChatColor.stripColor(group.prefix()),
+      // Use the suffix from config
+      cfg.get(ConfigKey.VANISH_SUFFIX).asScalar(),
+      // Gray username
+      ChatColor.GRAY,
+      priority
+    );
+  }
+
+  /**
+   * Make a AFK clone of a normal group and add a suffix to it's name
+   * @param group Group to clone
+   * @param priority Priority of this new group
+   * @return Cloned result
+   */
+  private TeamGroup cloneGroupAFK(TeamGroup group, int priority) {
+    return new TeamGroup(
+      // Add name suffix
+      group.groupName() + AFK_SUFFIX,
       // Remove all color and make it gray
       ChatColor.GRAY + ChatColor.stripColor(group.prefix()),
       // Use the suffix from config
       cfg.get(ConfigKey.AFK_SUFFIX).asScalar(),
       // Gray username
       ChatColor.GRAY,
-      //
       priority
     );
   }
@@ -392,17 +432,22 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
    * @param members Initial group members
    * @param t Packet receiver
    */
-  private void createGroup(TeamGroup group, List<Player> members, Player t) {
+  private void createGroup(TeamGroup group, Set<Player> members, Player t) {
+    // Create an empty list initially
+    if (!createdGroups.containsKey(t))
+      createdGroups.put(t, new ArrayList<>());
+
+    // Client already knows this team
+    if (createdGroups.get(t).contains(group))
+      return;
+
     // Create the new team
     if (teamComm.sendScoreboardTeam(
       t, group,
       TeamAction.CREATE,
       members
     )) {
-
       // Remember that this client now knows this group
-      if (!createdGroups.containsKey(t))
-        createdGroups.put(t, new ArrayList<>());
       createdGroups.get(t).add(group);
     }
   }
@@ -412,7 +457,7 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
    * @param t Packet receiver
    */
   private void createGroups(Player t) {
-    for (Map.Entry<TeamGroup, List<Player>> group : members.entrySet())
+    for (Map.Entry<TeamGroup, Set<Player>> group : members.entrySet())
       createGroup(group.getKey(), group.getValue(), t);
   }
 

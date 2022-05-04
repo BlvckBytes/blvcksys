@@ -489,6 +489,14 @@ public enum ConfigKey {
   GIVE_DROPPED("give.dropped", "$4Es wurden {{num_dropped}} Items fallen gelassen!"),
 
   //=========================================================================//
+  //                              VANISH Command                             //
+  //=========================================================================//
+
+  VANISH_HIDDEN("vanish.hidden", "$0Du bist nun $3unsichtbar$0."),
+  VANISH_SHOWN("vanish.shown", "$0Du bist $3nicht mehr $0unsichtbar."),
+  VANISH_SUFFIX("vanish.suffix", " $3&lV"),
+
+  //=========================================================================//
   //                                HAT Command                              //
   //=========================================================================//
 

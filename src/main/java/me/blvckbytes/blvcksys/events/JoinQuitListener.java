@@ -1,10 +1,12 @@
 package me.blvckbytes.blvcksys.events;
 
+import me.blvckbytes.blvcksys.commands.IVanishCommand;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.util.di.AutoConstruct;
 import me.blvckbytes.blvcksys.util.di.AutoInject;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
@@ -19,11 +21,14 @@ import org.bukkit.event.player.PlayerQuitEvent;
 public class JoinQuitListener implements Listener {
 
   private final IConfig cfg;
+  private final IVanishCommand vanish;
 
   public JoinQuitListener(
-    @AutoInject IConfig cfg
+    @AutoInject IConfig cfg,
+    @AutoInject IVanishCommand vanish
   ) {
     this.cfg = cfg;
+    this.vanish = vanish;
   }
 
   @EventHandler
@@ -36,8 +41,14 @@ public class JoinQuitListener implements Listener {
     );
   }
 
-  @EventHandler
+  @EventHandler(priority = EventPriority.LOWEST)
   public void onQuit(PlayerQuitEvent e) {
+    // Don't print quit messages for vanished players
+    if (vanish.isVanished(e.getPlayer())) {
+      e.setQuitMessage(null);
+      return;
+    }
+
     e.setQuitMessage(
       cfg.get(ConfigKey.GENERIC_QUIT)
         .withPrefix()

@@ -45,6 +45,8 @@ import java.util.stream.Collectors;
 @AutoConstruct
 public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveHandler {
 
+  // TODO: Persist hidden sidebar state
+
   // Name of the sidebar objective
   private static final String NAME_SIDEBAR = "side";
 
@@ -71,6 +73,9 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
   // Each player has a bitmask of below name flags
   private final Map<Player, Integer> belowNameFlags;
 
+  // List of players that have hidden their sidebar objective
+  private final Set<UUID> hiddenSidebars;
+
   public ObjectiveHandler(
     @AutoInject JavaPlugin plugin,
     @AutoInject IConfig cfg,
@@ -80,6 +85,7 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
     this.knownBelowNames = new HashMap<>();
     this.prevLevels = new HashMap<>();
     this.belowNameFlags = new HashMap<>();
+    this.hiddenSidebars = new HashSet<>();
 
     this.plugin = plugin;
     this.cfg = cfg;
@@ -233,6 +239,26 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
   }
 
   @Override
+  public boolean getSidebarVisibility(Player target) {
+    return !this.hiddenSidebars.contains(target.getUniqueId());
+  }
+
+  @Override
+  public void setSidebarVisibility(Player target, boolean status) {
+    // Add the player to the disable-list and destory the objective
+    if (!status) {
+      this.hiddenSidebars.add(target.getUniqueId());
+      clearSidebarObjective(target);
+    }
+
+    // Remove the player from the disable-list and re-create the objective
+    else {
+      this.hiddenSidebars.remove(target.getUniqueId());
+      createSidebarObjective(target);
+    }
+  }
+
+  @Override
   public void initialize() {
     // Loop all online players
     for (Player t : Bukkit.getOnlinePlayers()) {
@@ -285,8 +311,7 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
    * @param t Target player
    */
   private void clearObjectives(Player t) {
-    // Remove the sidebar
-    oComm.sendObjective(t, NAME_SIDEBAR, ObjectiveMode.REMOVE, null, null);
+    clearSidebarObjective(t);
 
     // Clear all below name objectives
     if (knownBelowNames.containsKey(t)) {
@@ -296,6 +321,14 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
       for (int i = knowns.size() - 1; i >= 0; i--)
         clearBelowNameObjective(t, knowns.get(i));
     }
+  }
+
+  /**
+   * Clear a previously created sidebar objective for a player
+   * @param t Target player
+   */
+  private void clearSidebarObjective(Player t) {
+    oComm.sendObjective(t, NAME_SIDEBAR, ObjectiveMode.REMOVE, null, null);
   }
 
   /**
@@ -433,6 +466,10 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
    * @param t Target player
    */
   private void updateSidebar(Player t) {
+    // This player has disabled the sidebar
+    if (hiddenSidebars.contains(t.getUniqueId()))
+      return;
+
     // Get the templated list of scoreboard lines
     List<String> scores = cfg.get(ConfigKey.SIDEBAR_LINES)
       .withVariable("num_online", Bukkit.getOnlinePlayers().size())

@@ -23,4 +23,18 @@ public interface IObjectiveHandler {
    * @param target Target player
    */
   void updateBelowName(Player target);
+
+  /**
+   * Toggle the sidebar objective's visibility for a specific player
+   * @param target Target player
+   * @param status Visibility status
+   */
+  void setSidebarVisibility(Player target, boolean status);
+
+  /**
+   * Get a player's current sidebar objective's visibility
+   * @param target Target player
+   * @return Visibility status
+   */
+  boolean getSidebarVisibility(Player target);
 }

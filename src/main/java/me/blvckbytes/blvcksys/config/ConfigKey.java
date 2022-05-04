@@ -528,6 +528,17 @@ public enum ConfigKey {
   CLEARINVENTORY_CANCELLED("clearinventory.cancelled", "$0Du hast die Leerung $4abgebrochen$0!"),
 
   //=========================================================================//
+  //                              PTime Command                              //
+  //=========================================================================//
+
+  PTIME_SET("ptime.set.self", "$0Du hast $3deine $0Clientzeit auf $3{{time}} $0gesetzt."),
+  PTIME_RESET("ptime.reset.self", "$0Du hast $3deine $0Clientzeit $3zurückgesetzt$0."),
+  PTIME_SET_OTHERS_SENDER("ptime.set.others.sender", "$0Du hast die Clientzeit von $3{{target}} $0auf $3{{time}} $0gesetzt."),
+  PTIME_SET_OTHERS_RECEIVER("ptime.set.others.receiver", "$0Deine Clientzeit wurde von $3{{issuer}} $0auf $3{{time}} $0gesetzt."),
+  PTIME_RESET_OTHERS_SENDER("ptime.reset.others.sender", "$0Du hast die Clientzeit von $3{{target}} $3zurückgesetzt$0."),
+  PTIME_RESET_OTHERS_RECEIVER("ptime.reset.others.receiver", "$0Deine Clientzeit wurde von $3{{issuer}} $3zurückgesetzt$0."),
+
+  //=========================================================================//
   //                            PWeather Command                             //
   //=========================================================================//
 

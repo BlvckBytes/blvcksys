@@ -188,6 +188,13 @@ public enum PlayerPermission {
   //                           PWEATHER Command                              //
   //=========================================================================//
 
+  COMMAND_PTIME("bvs.ptime"),
+  COMMAND_PTIME_OTHERS("bvs.ptime.others"),
+
+  //=========================================================================//
+  //                           PWEATHER Command                              //
+  //=========================================================================//
+
   COMMAND_PWEATHER("bvs.pweather"),
   COMMAND_PWEATHER_OTHERS("bvs.pweather.others"),
 

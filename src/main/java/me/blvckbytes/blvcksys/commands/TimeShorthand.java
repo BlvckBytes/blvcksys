@@ -16,7 +16,10 @@ public enum TimeShorthand {
   DAY(1000),
 
   // 22:00
-  NIGHT(22 * 1000)
+  NIGHT(22 * 1000),
+
+  // Reset (used for player time)
+  RESET(-1)
   ;
 
   @Getter

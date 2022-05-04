@@ -437,11 +437,17 @@ public class AutoConstructer implements IAutoConstructer {
 
     // All constructor dependencies instantiated, now create the target itself
     // using all created dependencies
-    Object inst = targetC.newInstance(args);
+
+    Object inst;
+    try {
+      inst = targetC.newInstance(args);
+    } catch (Exception e) {
+      // Unwrap the inner exception
+      throw new RuntimeException(e.getCause());
+    }
 
     onInstantiation(inst, vanillaC);
     refs.put(target, inst);
-
     return inst;
   }
 

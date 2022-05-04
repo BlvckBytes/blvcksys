@@ -14,11 +14,4 @@ public interface IAutoConstructer {
    * Get all instantiated {@link AutoConstruct} resources
    */
   Collection<Object> getAllInstances();
-
-  /**
-   * Register a callback to be executed as soon as all resources have
-   * been instantiated and the constructer has reached a state of completion
-   * @param r Runnable to call
-   */
-  void onCompletion(Runnable r);
 }

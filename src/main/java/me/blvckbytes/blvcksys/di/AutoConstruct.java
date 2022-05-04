@@ -21,4 +21,10 @@ public @interface AutoConstruct {
    * them is missing on instantiation
    */
   String[] pluginDependencies() default {};
+
+  /**
+   * Specify any types of classes here, that this module is
+   * depending on at runtime, after instantiation
+   */
+  Class<?>[] typeDependencies() default {};
 }

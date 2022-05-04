@@ -40,20 +40,14 @@ public class AutoConstructer implements IAutoConstructer {
   // Queues log messages until the logger is available
   private final List<String> logQueue;
 
-  // Callbacks that are interested in the constructer reaching completion state
-  private final List<Runnable> completionCallbacks;
-
   private final JavaPlugin plugin;
-  private boolean completed;
 
   public AutoConstructer(JavaPlugin plugin) throws Exception {
     this.plugin = plugin;
-    this.completed = false;
 
     refs = new HashMap<>();
     lateinits = new HashMap<>();
     logQueue = new ArrayList<>();
-    this.completionCallbacks = new ArrayList<>();
 
     execute();
   }
@@ -65,15 +59,6 @@ public class AutoConstructer implements IAutoConstructer {
   @Override
   public Collection<Object> getAllInstances() {
     return Collections.unmodifiableCollection(this.refs.values());
-  }
-
-  @Override
-  public void onCompletion(Runnable r) {
-    // Already done, invoke immediately
-    if (this.completed)
-      r.run();
-
-    this.completionCallbacks.add(r);
   }
 
   //=========================================================================//
@@ -168,13 +153,6 @@ public class AutoConstructer implements IAutoConstructer {
     for (Object o : refs.values()) {
       if (o instanceof IAutoConstructed a)
         a.initialize();
-    }
-
-    // Done, alter the state and call all completion callbacks
-    this.completed = true;
-    for (Iterator<Runnable> ir = this.completionCallbacks.iterator(); ir.hasNext();) {
-      ir.next().run();
-      ir.remove();
     }
   }
 
@@ -447,6 +425,14 @@ public class AutoConstructer implements IAutoConstructer {
       seen.add(dep);
       args[i] = createWithDependencies(ctorMap, dep, seen);
       seen.remove(dep);
+    }
+
+    // Make sure that all type dependencies are loaded before calling the constructor
+    for (Class<?> type : ac.typeDependencies()) {
+      for (Class<?> knownType : ctorMap.keySet()) {
+        if (type.isAssignableFrom(knownType))
+          createWithDependencies(ctorMap, knownType, seen);
+      }
     }
 
     // All constructor dependencies instantiated, now create the target itself

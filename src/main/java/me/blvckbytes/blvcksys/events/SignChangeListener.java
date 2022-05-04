@@ -1,8 +1,8 @@
 package me.blvckbytes.blvcksys.events;
 
 import me.blvckbytes.blvcksys.config.PlayerPermission;
-import me.blvckbytes.blvcksys.util.di.AutoConstruct;
-import me.blvckbytes.blvcksys.util.di.AutoInject;
+import me.blvckbytes.blvcksys.di.AutoConstruct;
+import me.blvckbytes.blvcksys.di.AutoInject;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.SignChangeEvent;

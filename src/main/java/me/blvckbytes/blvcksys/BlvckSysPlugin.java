@@ -1,6 +1,6 @@
 package me.blvckbytes.blvcksys;
 
-import me.blvckbytes.blvcksys.util.di.AutoConstructer;
+import me.blvckbytes.blvcksys.di.AutoConstructer;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.java.JavaPlugin;
 

@@ -1,6 +1,6 @@
 package me.blvckbytes.blvcksys.events;
 
-import me.blvckbytes.blvcksys.util.di.AutoConstruct;
+import me.blvckbytes.blvcksys.di.AutoConstruct;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;

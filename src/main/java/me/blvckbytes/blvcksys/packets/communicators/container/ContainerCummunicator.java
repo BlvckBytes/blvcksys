@@ -1,8 +1,8 @@
 package me.blvckbytes.blvcksys.packets.communicators.container;
 
 import me.blvckbytes.blvcksys.util.MCReflect;
-import me.blvckbytes.blvcksys.util.di.AutoConstruct;
-import me.blvckbytes.blvcksys.util.di.AutoInject;
+import me.blvckbytes.blvcksys.di.AutoConstruct;
+import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.core.BlockPosition;
 import net.minecraft.network.chat.ChatComponentText;

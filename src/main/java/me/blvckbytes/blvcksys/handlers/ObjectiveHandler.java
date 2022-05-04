@@ -6,9 +6,9 @@ import me.blvckbytes.blvcksys.packets.communicators.objective.IObjectiveCommunic
 import me.blvckbytes.blvcksys.packets.communicators.objective.ObjectiveMode;
 import me.blvckbytes.blvcksys.packets.communicators.objective.ObjectivePosition;
 import me.blvckbytes.blvcksys.packets.communicators.objective.ObjectiveUnit;
-import me.blvckbytes.blvcksys.util.di.AutoConstruct;
-import me.blvckbytes.blvcksys.util.di.AutoInject;
-import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
+import me.blvckbytes.blvcksys.di.AutoConstruct;
+import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;

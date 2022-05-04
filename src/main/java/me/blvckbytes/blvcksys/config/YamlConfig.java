@@ -1,8 +1,8 @@
 package me.blvckbytes.blvcksys.config;
 
-import me.blvckbytes.blvcksys.util.di.AutoConstruct;
-import me.blvckbytes.blvcksys.util.di.AutoInject;
-import me.blvckbytes.blvcksys.util.di.IAutoConstructed;
+import me.blvckbytes.blvcksys.di.AutoConstruct;
+import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 

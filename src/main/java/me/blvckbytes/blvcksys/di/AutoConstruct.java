@@ -1,4 +1,4 @@
-package me.blvckbytes.blvcksys.util.di;
+package me.blvckbytes.blvcksys.di;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

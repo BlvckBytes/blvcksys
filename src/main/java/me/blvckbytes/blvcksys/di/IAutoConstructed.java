@@ -1,4 +1,4 @@
-package me.blvckbytes.blvcksys.util.di;
+package me.blvckbytes.blvcksys.di;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>

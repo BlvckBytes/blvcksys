@@ -3,9 +3,9 @@ package me.blvckbytes.blvcksys.util.logging;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.util.ObjectStringifier;
-import me.blvckbytes.blvcksys.util.di.AutoConstruct;
-import me.blvckbytes.blvcksys.util.di.AutoInject;
-import me.blvckbytes.blvcksys.util.di.AutoInjectLate;
+import me.blvckbytes.blvcksys.di.AutoConstruct;
+import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import org.bukkit.Bukkit;
 
 import java.io.PrintWriter;

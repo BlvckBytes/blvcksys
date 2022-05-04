@@ -1,4 +1,4 @@
-package me.blvckbytes.blvcksys.util.di;
+package me.blvckbytes.blvcksys.di;
 
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.util.Tuple;

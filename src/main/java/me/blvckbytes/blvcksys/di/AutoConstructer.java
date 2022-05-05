@@ -12,6 +12,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Parameter;
 import java.util.*;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -31,8 +32,13 @@ import java.util.jar.JarFile;
 */
 public class AutoConstructer implements IAutoConstructer {
 
+  private record ConstructedRef(
+    Class<?> type,
+    Object inst
+  ) {}
+
   // Cache for already constructed classes (singletons)
-  private final Map<Class<?>, Object> refs;
+  private final List<ConstructedRef> refs;
 
   // Cache for @AutoConstruct'ed class fields that are waiting for late init injections
   private final Map<Class<?>, List<Tuple<Object, Field>>> lateinits;
@@ -45,7 +51,7 @@ public class AutoConstructer implements IAutoConstructer {
   public AutoConstructer(JavaPlugin plugin) throws Exception {
     this.plugin = plugin;
 
-    refs = new HashMap<>();
+    refs = new LinkedList<>();
     lateinits = new HashMap<>();
     logQueue = new ArrayList<>();
 
@@ -58,7 +64,9 @@ public class AutoConstructer implements IAutoConstructer {
 
   @Override
   public Collection<Object> getAllInstances() {
-    return Collections.unmodifiableCollection(this.refs.values());
+    return this.refs.stream()
+      .map(ref -> ref.inst)
+      .collect(Collectors.toUnmodifiableSet());
   }
 
   //=========================================================================//
@@ -66,11 +74,14 @@ public class AutoConstructer implements IAutoConstructer {
   //=========================================================================//
 
   /**
-   * Calls the cleanup-routine on all resources that implement it
+   * Calls the cleanup-routine on all resources that implement
+   * it in the exact reverse order of creation
    */
   public void cleanup() {
     // Iterate all created instances
-    for (Object ref : refs.values()) {
+    for (int i = refs.size() - 1; i >= 0; i--) {
+      Object ref = refs.remove(i).inst;
+
       // Does not implement the autoconstructed interface (which is not mandatory), thus skip
       if (!IAutoConstructed.class.isAssignableFrom(ref.getClass()))
         continue;
@@ -150,8 +161,8 @@ public class AutoConstructer implements IAutoConstructer {
       createWithDependencies(ctorMap, e.getKey(), seen);
 
     // Call the init method on all resources
-    for (Object o : refs.values()) {
-      if (o instanceof IAutoConstructed a)
+    for (ConstructedRef r : refs) {
+      if (r.inst instanceof IAutoConstructed a)
         a.initialize();
     }
   }
@@ -286,9 +297,9 @@ public class AutoConstructer implements IAutoConstructer {
 
         // Check if the dependency already exists
         boolean existed = false;
-        for (Class<?> knownRef : refs.keySet()) {
-          if (f.getType().isAssignableFrom(knownRef)) {
-            f.set(instance, refs.get(knownRef));
+        for (ConstructedRef cr : refs) {
+          if (f.getType().isAssignableFrom(cr.type)) {
+            f.set(instance, cr.inst);
             existed = true;
             break;
           }
@@ -361,8 +372,15 @@ public class AutoConstructer implements IAutoConstructer {
     target = resolveInterface(target, new ArrayList<>(ctorMap.keySet()));
 
     // Already exists, return "singleton" object
-    if (refs.containsKey(target))
-      return refs.get(target);
+    Class<?> finalTarget = target;
+    Object existing = refs.stream()
+      .filter(cr -> cr.type.equals(finalTarget))
+      .map(cr -> cr.inst)
+      .findFirst()
+      .orElse(null);
+
+    if (existing != null)
+      return existing;
 
     // Check for required plugin dependencies
     AutoConstruct ac = target.getAnnotation(AutoConstruct.class);
@@ -381,8 +399,8 @@ public class AutoConstructer implements IAutoConstructer {
     if (params.length == 0) {
       // Invoke empty constructor
       Object inst = targetC.newInstance();
-      onInstantiation(plugin, vanillaC);
-      refs.put(target, inst);
+      onInstantiation(inst, vanillaC);
+      refs.add(new ConstructedRef(target, inst));
 
       // As this dependency now exists, remove it from the seen list, as it
       // cannot cause any further circular dependencies
@@ -447,7 +465,7 @@ public class AutoConstructer implements IAutoConstructer {
     }
 
     onInstantiation(inst, vanillaC);
-    refs.put(target, inst);
+    refs.add(new ConstructedRef(target, inst));
     return inst;
   }
 
@@ -457,10 +475,10 @@ public class AutoConstructer implements IAutoConstructer {
    */
   private ILogger findLogger() {
     // Look through ref-list
-    for (Map.Entry<Class<?>, Object> ref : refs.entrySet()) {
+    for (ConstructedRef cr : refs) {
       // This is a logger implementation
-      if (ILogger.class.isAssignableFrom(ref.getKey()))
-        return (ILogger) ref.getValue();
+      if (ILogger.class.isAssignableFrom(cr.type))
+        return (ILogger) cr.inst;
     }
 
     // Logger not yet available

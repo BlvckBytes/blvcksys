@@ -40,10 +40,7 @@ public enum MysqlType {
    */
   public static Optional<MysqlType> fromJavaType(Class<?> javaType, boolean lengthRequired) {
     for (MysqlType type : MysqlType.values()) {
-      if (
-        type.javaEquivalent.equals(javaType) &&
-        !lengthRequired || (type.hasLength && lengthRequired)
-      )
+      if (type.javaEquivalent.equals(javaType) && (!lengthRequired || type.hasLength))
         return Optional.of(type);
     }
     return Optional.empty();

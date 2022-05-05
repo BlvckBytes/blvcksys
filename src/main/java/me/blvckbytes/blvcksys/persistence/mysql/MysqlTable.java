@@ -11,5 +11,8 @@ import java.util.List;
 public record MysqlTable(
   String name,
   List<MysqlColumn> columns,
+
+  // Whether this table is used in combination with a
+  // transformer and thus not an entity of it's own
   boolean isTransformer
 ) {}

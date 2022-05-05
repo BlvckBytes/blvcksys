@@ -1,7 +1,6 @@
 package me.blvckbytes.blvcksys.persistence.models;
 
 import lombok.Getter;
-import me.blvckbytes.blvcksys.persistence.ModelIdentifier;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
 
 import java.util.Date;
@@ -16,7 +15,7 @@ import java.util.UUID;
 public abstract class APersistentModel {
 
   @Getter
-  @ModelIdentifier
+  @ModelProperty
   private UUID id;
 
   @Getter
@@ -24,7 +23,7 @@ public abstract class APersistentModel {
   private Date createdAt;
 
   @Getter
-  @ModelProperty(isInlineable = false)
+  @ModelProperty(isInlineable = false, isNullable = true)
   private Date updatedAt;
 
 }

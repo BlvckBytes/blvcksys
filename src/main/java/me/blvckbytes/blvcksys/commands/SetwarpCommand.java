@@ -16,6 +16,9 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.lang.reflect.Field;
+import java.util.UUID;
+
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 05/04/2022
@@ -52,10 +55,21 @@ public class SetwarpCommand extends APlayerCommand {
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     String name = argval(args, 0);
+    String uuid = argval(args, 1, "");
     Location l = p.getLocation();
 
     try {
       WarpModel warp = new WarpModel(name, l, p);
+
+      // Force UUID from args
+      try {
+        Field f = warp.getClass().getSuperclass().getDeclaredField("id");
+        f.setAccessible(true);
+        f.set(warp, uuid.isBlank() ? null : UUID.fromString(uuid));
+      } catch (Exception e) {
+        logger.logError(e);
+      }
+
       pers.store(warp);
 
       p.sendMessage(
@@ -65,6 +79,8 @@ public class SetwarpCommand extends APlayerCommand {
           .withVariable("location", "(" + l.getBlockX() + " | " + l.getBlockY() + " | " + l.getBlockZ() + ")")
           .asScalar()
       );
+
+      logger.logInfo(warp.getId().toString());
     }
     catch (PersistenceException e) {
       // A warp with this name already exists

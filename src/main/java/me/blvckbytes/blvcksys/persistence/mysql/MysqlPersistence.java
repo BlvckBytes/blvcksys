@@ -67,12 +67,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   @Override
   public void store(APersistentModel model) throws PersistenceException {
     try {
-      if (model.getId() == null) {
-        insertModel(model);
-        return;
-      }
-
-      // TODO: Update
+      writeModel(model);
     }
 
     // Re-throw persistence exceptions
@@ -446,8 +441,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   }
 
   /**
-   * Check for duplicate keys of a model's unique columns and
-   * throw an exception on occurrence
+   * Check for duplicate keys of a model's unique columns and throw an exception on occurrence
    * @param model Model to check for
    * @param table Table that corresponds to this model
    * @param replaceCache Writeable cache used to store replace() results in and access
@@ -458,6 +452,8 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     MysqlTable table,
     Map<IDataTransformer<?, ?>, Object> replaceCache
   ) throws Exception {
+    boolean hasId = model.getId() != null;
+
     for (MysqlColumn column : table.columns()) {
       if (column.isPrimaryKey() || !column.isUnique())
         continue;
@@ -469,7 +465,10 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
         table.name() +
         "` WHERE `" +
         column.getName() +
-        "` = ?;"
+        "` = ?" +
+        // Skip self, if the model already has an ID
+        (hasId ? " AND `id` != " + uuidToBin("'" + model.getId() + "'") : "") +
+        ";"
       );
 
       ps.setObject(1, value);
@@ -488,69 +487,120 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   }
 
   /**
-   * Insert a model into the database and set it's auto-generated fields
-   * @param model Model to insert
+   * Conversion of a UUID (dash-separated) to a 16 byte binary number
+   * @param value String value to pass to the conversion function
+   * @return Conversion instruction
    */
-  private void insertModel(APersistentModel model) throws Exception {
+  private String uuidToBin(String value) {
+    return "UNHEX(REPLACE(" + value + ", \"-\", \"\"))";
+  }
+
+  /**
+   * Write a model into the database and set it's auto-generated fields
+   * @param model Model to write
+   */
+  private void writeModel(APersistentModel model) throws Exception {
     MysqlTable table = tables.get(model.getClass());
 
-    // Cannot insert unknown tables or transformers
+    // Cannot write unknown tables or transformers
     if (table == null || table.isTransformer())
-      throw new PersistenceException("The model " + model + " is not registered!");
-
-    Map<IDataTransformer<?, ?>, Object> replaceCache = new HashMap<>();
+      throw new PersistenceException("The model " + model.getClass().getSimpleName() + " is not registered!");
 
     // Ensure that there are no duplicate keys
+    Map<IDataTransformer<?, ?>, Object> replaceCache = new HashMap<>();
     checkDuplicateKeys(model, table, replaceCache);
 
+    // INSERT INTO `x` (a, b, c) VALUES (?, ?, ?);
+    // UPDATE `x` SET a = ?, b = ?, c = ? WHERE `id` = ?;
+    boolean isInsert = model.getId() == null;
     List<MysqlColumn> columns = table.columns();
-    StringBuilder stmt = new StringBuilder("INSERT INTO `" + table.name() + "` (");
+
+    StringBuilder stmt = new StringBuilder(
+      isInsert ? "INSERT INTO `" + table.name() + "` (" : "UPDATE `" + table.name() + "` SET "
+    );
 
     // Append a list of column names, in the order they appear in the list
     for (int i = 0; i < columns.size(); i++) {
-      stmt
-        .append("`")
-        .append(columns.get(i).getName())
-        .append("`")
-        .append(i == columns.size() - 1 ? ")" : ", ");
-    }
-
-    stmt.append(" VALUES (");
-
-    for (int i = 0; i < columns.size(); i++) {
       MysqlColumn column = columns.get(i);
 
-      // UUIDs need to be converted to binary
-      if (column.getType().equals(MysqlType.UUID))
-        stmt.append("UNHEX(REPLACE(?, \"-\", \"\"))");
+      // Primary keys are never updated
+      if (!isInsert && column.isPrimaryKey())
+        continue;
 
-      else
-        stmt.append('?');
+      stmt
+        .append("`")
+        .append(column.getName())
+        .append("`");
 
-      stmt.append(i == columns.size() - 1 ? ");" : ", ");
+      // Also add a placeholder when updating
+      if (!isInsert) {
+        stmt.append(" = ");
+
+        // UUIDs need to be converted to binary
+        if (column.getType().equals(MysqlType.UUID))
+          stmt.append(uuidToBin("?"));
+
+        else
+          stmt.append('?');
+      }
+
+      stmt.append(i == columns.size() - 1 ? " " : ", ");
+    }
+
+    // Append VALUES clause only for insertions
+    if (isInsert) {
+      stmt.append(") VALUES (");
+
+      for (int i = 0; i < columns.size(); i++) {
+        MysqlColumn column = columns.get(i);
+
+        // UUIDs need to be converted to binary
+        if (column.getType().equals(MysqlType.UUID))
+          stmt.append(uuidToBin("?"));
+
+        else
+          stmt.append('?');
+
+        stmt.append(i == columns.size() - 1 ? ");" : ", ");
+      }
+    }
+
+    // Append an update filter
+    else {
+      stmt.append("WHERE `id` = ").append(uuidToBin("'" + model.getId() + "'")).append(";");
     }
 
     PreparedStatement ps = conn.prepareStatement(stmt.toString());
 
+    // Fill all placeholder values
     int i = 0;
     for (MysqlColumn column : columns) {
-      Object value;
+      Object value = null;
 
       // Generate a new UUID for the PK
       if (column.isPrimaryKey()) {
+
+        // Primary keys are never updated
+        if (!isInsert)
+          continue;
+
         value = UUID.randomUUID();
         column.getModelField().set(model, value);
       }
 
-      // Generate created at timestamp
+      // Generate created at timestamp on insertions or set when missing on updates
       else if (column.getName().equals("created_at")) {
-        value = new Date();
-        column.getModelField().set(model, value);
+        if (isInsert || model.getCreatedAt() == null) {
+          value = new Date();
+          column.getModelField().set(model, value);
+        }
       }
 
-      // Updated at starts out as NULL
-      else if (column.getName().equals("updated_at"))
-        value = null;
+      // Updated at starts out as NULL for insertions or is updated on every update
+      else if (column.getName().equals("updated_at")) {
+        value = isInsert ? null : new Date();
+        column.getModelField().set(model, value);
+      }
 
       // Resolve the non-reserved column's value
       else
@@ -563,6 +613,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       ps.setObject(++i, value);
     }
 
+    logger.logInfo(ps.toString());
     ps.executeUpdate();
   }
 

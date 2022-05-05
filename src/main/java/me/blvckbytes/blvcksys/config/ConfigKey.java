@@ -569,6 +569,13 @@ public enum ConfigKey {
   TIME_SET("time_set", "$0Der Spieler $3{{issuer}} $0hat die Zeit auf $3{{time}} $0gesetzt."),
 
   //=========================================================================//
+  //                               WARP Command                              //
+  //=========================================================================//
+
+  WARP_EXISTS("warp.exists", "$0Es existiert bereits ein Warp namens $4{{name}}$0!"),
+  WARP_CREATED("warp.created", "$0Der Warp $3{{name}} $0wurde bei $3{{location}} $0erstellt!"),
+
+  //=========================================================================//
   //                            Generic Messages                             //
   //=========================================================================//
   GENERIC_JOINED("generic.joined", "$0Der Spieler $2{{name}} $0ist dem Server $2beigetreten$0!"),

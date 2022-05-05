@@ -8,6 +8,7 @@ import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.di.IAutoConstructer;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
+import me.blvckbytes.blvcksys.persistence.exceptions.DuplicatePropertyException;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.APersistentModel;
 import me.blvckbytes.blvcksys.persistence.transformers.IDataTransformer;
@@ -65,19 +66,25 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
   @Override
   public void store(APersistentModel model) throws PersistenceException {
-    // Insert
-    if (model.getId() == null) {
-      // TODO: Check for duplicates on unique keys
-      try {
+    try {
+      if (model.getId() == null) {
         insertModel(model);
-      } catch (Exception e) {
-        logger.logError(e);
-        throw new PersistenceException("An internal error occurred");
+        return;
       }
-      return;
+
+      // TODO: Update
     }
 
-    // Update
+    // Re-throw persistence exceptions
+    catch (PersistenceException e) {
+      throw e;
+    }
+
+    // Map various other issues to "internal errors"
+    catch (Exception e) {
+      logger.logError(e);
+      throw new PersistenceException("An internal error occurred");
+    }
   }
 
   @Override
@@ -144,6 +151,41 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   }
 
   //////////////////////////////////// Tables ///////////////////////////////////////
+
+  /**
+   * Transform a table name representation (snake case)) into it's
+   * model name representation (pascal case)
+   * @param tableName Name to convert
+   * @param capitalizeFirst Whether to capitalize the very first character
+   * @return Converted name
+   */
+  private String tableNameToModelName(String tableName, boolean capitalizeFirst) {
+    StringBuilder res = new StringBuilder();
+
+    char[] chars = tableName.toCharArray();
+    for (int i = 0; i < chars.length; i++) {
+      char c = chars[i];
+
+      // Capitalize the first char if it's lowercase
+      if (i == 0 && c >= 97 && c <= 122 && capitalizeFirst) {
+        res.append(((char) (c - 32)));
+        continue;
+      }
+
+      // Skip the underscore
+      if (c == '_' && i != chars.length - 1) {
+        char next = chars[++i];
+        // Transform to uppercase
+        res.append((char) (next - ((next >= 97 && next <= 122) ? 32 : 0)));
+        continue;
+      }
+
+      // Append as is
+      res.append(c);
+    }
+
+    return res.toString();
+  }
 
   /**
    * Transform a model name (pascal case) into it's table name representation (snake
@@ -404,6 +446,48 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   }
 
   /**
+   * Check for duplicate keys of a model's unique columns and
+   * throw an exception on occurrence
+   * @param model Model to check for
+   * @param table Table that corresponds to this model
+   * @param replaceCache Writeable cache used to store replace() results in and access
+   *                     them over the (possibly) multiple field accesses of a transformed result
+   */
+  private void checkDuplicateKeys(
+    APersistentModel model,
+    MysqlTable table,
+    Map<IDataTransformer<?, ?>, Object> replaceCache
+  ) throws Exception {
+    for (MysqlColumn column : table.columns()) {
+      if (column.isPrimaryKey() || !column.isUnique())
+        continue;
+
+      Object value = resolveColumnValue(column, model, replaceCache);
+
+      PreparedStatement ps = conn.prepareStatement(
+        "SELECT COUNT(*) FROM `" +
+        table.name() +
+        "` WHERE `" +
+        column.getName() +
+        "` = ?;"
+      );
+
+      ps.setObject(1, value);
+      ResultSet rs = ps.executeQuery();
+
+      // There was a result (where there shouldn't be), throw
+      if (rs.next()) {
+        if (rs.getInt(1) > 0)
+          throw new DuplicatePropertyException(
+            tableNameToModelName(table.name(), true),
+            tableNameToModelName(column.getName(), false),
+            value
+          );
+      }
+    }
+  }
+
+  /**
    * Insert a model into the database and set it's auto-generated fields
    * @param model Model to insert
    */
@@ -413,6 +497,11 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     // Cannot insert unknown tables or transformers
     if (table == null || table.isTransformer())
       throw new PersistenceException("The model " + model + " is not registered!");
+
+    Map<IDataTransformer<?, ?>, Object> replaceCache = new HashMap<>();
+
+    // Ensure that there are no duplicate keys
+    checkDuplicateKeys(model, table, replaceCache);
 
     List<MysqlColumn> columns = table.columns();
     StringBuilder stmt = new StringBuilder("INSERT INTO `" + table.name() + "` (");
@@ -444,7 +533,6 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     PreparedStatement ps = conn.prepareStatement(stmt.toString());
 
     int i = 0;
-    Map<IDataTransformer<?, ?>, Object> replaceCache = new HashMap<>();
     for (MysqlColumn column : columns) {
       Object value;
 

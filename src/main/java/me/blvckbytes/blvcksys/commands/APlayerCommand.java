@@ -496,6 +496,15 @@ public abstract class APlayerCommand extends Command {
     throw new CommandException(message);
   }
 
+  /**
+   * Generate an internal error result
+   */
+  protected void internalError() throws CommandException {
+    throw new CommandException(
+      cfg.get(ConfigKey.ERR_INTERNAL).withPrefix().asScalar()
+    );
+  }
+
   /////////////////////////// Ensure Permission /////////////////////////////
 
   /**

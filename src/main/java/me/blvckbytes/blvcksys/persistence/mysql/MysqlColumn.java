@@ -18,16 +18,19 @@ import java.lang.reflect.Field;
 public class MysqlColumn {
   private final String name;
   private final MysqlType type;
+
   private final boolean isNullable;
   private final boolean isUnique;
 
   // Whether this column can be inlined when using transformers
   private final boolean isInlineable;
 
-  @Nullable private final MysqlColumn transformerColumn;
-
   // The corresponding field within the persistent model
   private final Field modelField;
+
+  // The field within a transformer's known class that has been inlined
+  // through this cloned column, null for non-transformed fields
+  @Nullable private final Field knownModelField;
 
   // The "id" field is reserved for the primary key
   public boolean isPrimaryKey() {

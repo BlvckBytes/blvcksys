@@ -15,17 +15,9 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface ModelProperty {
 
-  // Representitive name of the field, defaults
-  // to the field's name if not provided
-  String name() default "";
-
   // Whether this property's value has to be unique accross
   // all models of the same type
   boolean isUnique() default false;
-
-  // Whether this property ignores casing
-  // Only applicable to Strings
-  boolean ignoreCasing() default true;
 
   // Whether this field can be set to a NULL value
   boolean isNullable() default false;

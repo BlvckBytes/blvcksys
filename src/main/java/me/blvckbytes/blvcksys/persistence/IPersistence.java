@@ -39,5 +39,5 @@ public interface IPersistence {
    * @param type Type of model to list
    * @return List of all available records
    */
-  List<APersistentModel> list(Class<APersistentModel> type);
+   <T extends APersistentModel> List<T> list(Class<T> type);
 }

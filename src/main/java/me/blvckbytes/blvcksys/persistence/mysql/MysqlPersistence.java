@@ -32,8 +32,8 @@ import java.util.Date;
 public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
   private final Map<Class<? extends APersistentModel>, MysqlTable> tables;
-  private final List<? extends IDataTransformer<?, ?>> transformers;
-  private final Connection conn;
+  private final List<IDataTransformer<?, ?>> transformers;
+  private Connection conn;
 
   private final ILogger logger;
   private final MCReflect refl;
@@ -47,16 +47,19 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     @AutoInject JavaPlugin plugin,
     @AutoInject IAutoConstructer ac,
     @AutoInject IConfig cfg
-  ) throws SQLException {
+  ) throws Exception {
     this.logger = logger;
     this.refl = refl;
     this.plugin = plugin;
     this.ac = ac;
     this.cfg = cfg;
 
-    this.conn = connect();
-    this.transformers = loadTransformers();
-    this.tables = parseAllTables();
+    this.transformers = new ArrayList<>();
+    this.tables = new HashMap<>();
+
+    connect();
+    loadTransformers();
+    parseAllTables();
     createAllTables();
   }
 
@@ -93,8 +96,16 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   }
 
   @Override
-  public List<APersistentModel> list(Class<APersistentModel> type) {
-    return null;
+  public<T extends APersistentModel> List<T> list(Class<T> type) {
+    try {
+      MysqlTable table = getTableFromModel(type);
+      ResultSet rs = conn.prepareStatement("SELECT * FROM `" + table.name() + "`").executeQuery();
+      // TODO: Map rows
+      return new ArrayList<>();
+    } catch (Exception e) {
+      logger.logError(e);
+      return new ArrayList<>();
+    }
   }
 
   @Override
@@ -114,7 +125,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   /**
    * Establish a connection to the database specified within the configuration file
    */
-  private Connection connect() throws SQLException {
+  private void connect() throws SQLException {
     String user = cfg.get(ConfigKey.DB_USERNAME).toString();
     String host = cfg.get(ConfigKey.DB_HOST).toString();
     String port = cfg.get(ConfigKey.DB_PORT).toString();
@@ -122,12 +133,11 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
     String resource = host + ":" + port + "/" + database;
 
-    Connection conn = DriverManager.getConnection(
+    conn = DriverManager.getConnection(
       "jdbc:mysql://" + resource, user, cfg.get(ConfigKey.DB_PASSWORD).toString()
     );
 
     logger.logInfo("Connected to the Database using " + user + "@" + resource);
-    return conn;
   }
 
   /**
@@ -188,7 +198,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    * @param modelName Name to convert
    * @return Converted name
    */
-  private String modelNameToTableName(String modelName) {
+  private String modelNameToDBName(String modelName) {
     StringBuilder res = new StringBuilder();
 
     char[] chars = modelName.toCharArray();
@@ -219,88 +229,61 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    * unknown foreign field is encountered, the method tries to find a matching
    * transformer which will provide inlineable fields.
    * @param model Model to parse
-   * @param parsedTables Map of already parsed tables, has to be writeable
    */
-  private void parseTable(Class<? extends APersistentModel> model, Map<Class<? extends APersistentModel>, MysqlTable> parsedTables) {
+  private void parseTable(Class<? extends APersistentModel> model) throws Exception {
     List<MysqlColumn> columns = new ArrayList<>();
-    boolean foundIdColumn = false;
 
-    // Loop all superclasses
-    Class<?> c = model;
-    while (c.getSuperclass() != null) {
+    for (Field f : refl.findAllFields(model)) {
 
-      // Loop all fields of the current class
-      for (Field f : c.getDeclaredFields()) {
-        f.setAccessible(true);
+      // Skip non-model fields
+      ModelProperty mp = f.getAnnotation(ModelProperty.class);
+      if (mp == null)
+        continue;
 
-        ModelProperty mp = f.getAnnotation(ModelProperty.class);
+      // Skip non-inherited fields from superclasses
+      if (!mp.isInherited() && f.getDeclaringClass() != model)
+        continue;
 
-        // Skip non-model fields
-        if (mp == null)
-          continue;
+      f.setAccessible(true);
+      boolean isIdentifier = f.getName().equals("id");
 
-        String name = mp.name().isBlank() ? f.getName() : mp.name();
-        boolean isIdentifier = name.equals("id");
+      // Get the corresponding SQL type
+      Optional<MysqlType> type = MysqlType.fromJavaType(
+        f.getType(),
+        // Unique fields or identifiers (primary key) require fixed-length datatypes
+        mp.isUnique() || isIdentifier
+      );
 
-        // Get the corresponding SQL type
-        Optional<MysqlType> type = MysqlType.fromJavaType(
-          f.getType(),
-          // Unique fields or identifiers (primary key) require fixed-length datatypes
-          mp.isUnique() || isIdentifier
-        );
+      // Could not find a matching SQL type directly
+      if (type.isEmpty()) {
 
-        // Could not find a matching SQL type directly
-        if (type.isEmpty()) {
-
-          // Try to resolve this field through a known transformer
-          Optional<List<MysqlColumn>> transformed = inlineTransformedField(f, parsedTables);
-          if (transformed.isPresent()) {
-            columns.addAll(transformed.get());
-            continue;
-          }
-
-          throw new PersistenceException(
-            "Could not find matching SQL-Type for " + model + ": " + f.getName() + " (" + f.getType() + ")"
-          );
-        }
-
-        // Found an identifier field
-        if (isIdentifier) {
-
-          if (foundIdColumn)
-            throw new PersistenceException("Duplicate identifier in " + model + ": " + f.getName());
-
-          if (type.get() != MysqlType.UUID)
-            throw new PersistenceException("Unsupported identifier type in " + model + ": " + f.getName());
-
-          columns.add(new MysqlColumn("id", type.get(), false, true, false, null, f));
-          foundIdColumn = true;
+        // Try to resolve this field through a known transformer
+        Optional<List<MysqlColumn>> transformed = inlineTransformedField(f);
+        if (transformed.isPresent()) {
+          columns.addAll(transformed.get());
           continue;
         }
 
-        // Skip non-inherited fields from superclasses
-        if (!mp.isInherited() && c != model)
-          continue;
-
-        columns.add(new MysqlColumn(
-          modelNameToTableName(name),
-          type.get(), mp.isNullable(), mp.isUnique(), mp.isInlineable(), null, f
-        ));
+        throw new PersistenceException("Invalid type " + f.getType() + " for field " + f.getName() + " of " + model);
       }
 
-      // Walk up the inheritance hierarchy
-      c = c.getSuperclass();
+      if (isIdentifier) {
+        if (type.get() != MysqlType.UUID)
+          throw new PersistenceException("Unsupported identifier type " + f.getType() + " for field " + f.getName() + " of " + model);
+
+        columns.add(new MysqlColumn("id", type.get(), false, true, false, f, null));
+        continue;
+      }
+
+      columns.add(new MysqlColumn(
+        modelNameToDBName(f.getName()),
+        type.get(), mp.isNullable(), mp.isUnique(), mp.isInlineable(), f, null
+      ));
     }
 
-    if (!foundIdColumn)
-      throw new PersistenceException("Missing identifier field in " + model);
-
-    // Check for duplicate columns
-    Set<String> colNames = new HashSet<>();
-    for (MysqlColumn column : columns) {
-      if (!colNames.add(column.getName()))
-        throw new PersistenceException("Duplicate column in " + model + ": " + column.getName());
-    }
+    // No primary key field provided
+    if (columns.stream().noneMatch(MysqlColumn::isPrimaryKey))
+      throw new PersistenceException("Missing an identifier field in " + model);
 
     // Check if this model is used in combination with a registered transformer
     boolean isTransformer = false;
@@ -313,10 +296,10 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     }
 
     // Register this table with it's model-class
-    parsedTables.put(
+    tables.put(
       model,
       new MysqlTable(
-        modelNameToTableName(model.getSimpleName()),
+        modelNameToDBName(model.getSimpleName()),
         columns,
         isTransformer
       )
@@ -379,10 +362,8 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    * Parse all tables by their meta-information into the required data-structure
    * @return Map of the model-class and it's corresponding SQL table
    */
-  private Map<Class<? extends APersistentModel>, MysqlTable> parseAllTables() {
+  private void parseAllTables() throws Exception {
     String pkg = getClass().getPackageName();
-
-    Map<Class<? extends APersistentModel>, MysqlTable> res = new HashMap<>();
 
     // Look up all classes that are marked as models in ../models
     List<? extends Class<? extends APersistentModel>> models = refl.findImplClasses(
@@ -393,9 +374,38 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
     // Parse them into tables
     for (Class<? extends APersistentModel> model : models)
-      parseTable(model, res);
+      parseTable(model);
+  }
 
-    return res;
+  private IDataTransformer<?, ?> getTransformerByKnownField(Field knownField) {
+    if (knownField == null)
+      return null;
+
+    // Get the transformer by the field's declaring class (the known type)
+    return transformers.stream()
+      .filter(tr -> tr.getKnownClass().equals(knownField.getDeclaringClass()))
+      .findFirst()
+      .orElse(null);
+  }
+
+  private Object callTransformerReplace(IDataTransformer<?, ?> transformer, Object input) throws Exception {
+    // Call the replace method on the model's column value
+    Method replace = Arrays.stream(transformer.getClass().getMethods())
+      .filter(m -> m.getName().equals("replace"))
+      .findFirst().orElseThrow();
+
+    // Return the method's result
+    return replace.invoke(transformer, input);
+  }
+
+  private Object callTransformerRevive(IDataTransformer<?, ?> transformer, Object input) throws Exception {
+    // Call the revive method on the model's column value
+    Method revive = Arrays.stream(transformer.getClass().getMethods())
+      .filter(m -> m.getName().equals("revive"))
+      .findFirst().orElseThrow();
+
+    // Return the method's result
+    return revive.invoke(transformer, input);
   }
 
   /////////////////////////////////// Insertion ///////////////////////////////////////
@@ -412,32 +422,28 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   private Object resolveColumnValue(
     MysqlColumn column,
     APersistentModel model,
-    Map<IDataTransformer<?, ?>, Object> replaceCache
+    Map<String, Object> replaceCache
   ) throws Exception {
     Object value = column.getModelField().get(model);
-    MysqlColumn col = column.getTransformerColumn();
+    Field knownModelField = column.getKnownModelField();
+    IDataTransformer<?, ?> transformer = getTransformerByKnownField(knownModelField);
 
-    // This column is not being transformed, return the value as-is
-    if (col == null)
+    // This column is not bein transformed
+    if (knownModelField == null || transformer == null)
       return value;
 
-    // Get the transformer by the field's declaring class (the known type)
-    IDataTransformer<?, ?> transformer = transformers.stream()
-      .filter(tr -> tr.getKnownClass().equals(col.getModelField().getDeclaringClass()))
-      .findFirst()
-      .orElseThrow();
+    // Format: <field>__<inlined_field>
+    String fieldName = column.getName().split("__")[0];
 
-    // Call the replace method on the model's column value
-    Method replace = Arrays.stream(transformer.getClass().getMethods())
-      .filter(m -> m.getName().equals("replace"))
-      .findFirst().orElseThrow();
-
-    // Save the replace result into cache
-    Object replaced = replace.invoke(transformer, value);
-    replaceCache.put(transformer, replaced);
+    // Only compute the replace if there's no cache entry yet
+    Object replaced = replaceCache.get(fieldName);
+    if (!replaceCache.containsKey(fieldName)) {
+      replaced = callTransformerReplace(transformer, value);
+      replaceCache.put(fieldName, replaced);
+    }
 
     // Get the transformer column's value from the model the value just got replaced into
-    return col.getModelField().get(replaced);
+    return knownModelField.get(replaced);
   }
 
   /**
@@ -450,7 +456,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   private void checkDuplicateKeys(
     APersistentModel model,
     MysqlTable table,
-    Map<IDataTransformer<?, ?>, Object> replaceCache
+    Map<String, Object> replaceCache
   ) throws Exception {
     boolean hasId = model.getId() != null;
 
@@ -496,18 +502,30 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   }
 
   /**
+   * Get a model's corresponding parsed table
+   * @param model Model class
+   * @return Table instance
+   * @throws PersistenceException Model not known
+   */
+  private MysqlTable getTableFromModel(Class<? extends APersistentModel> model) throws PersistenceException {
+    MysqlTable table = tables.get(model);
+
+    // Cannot write unknown tables or transformers
+    if (table == null || table.isTransformer())
+      throw new PersistenceException("The model " + model.getSimpleName() + " is not registered!");
+
+    return table;
+  }
+
+  /**
    * Write a model into the database and set it's auto-generated fields
    * @param model Model to write
    */
   private void writeModel(APersistentModel model) throws Exception {
-    MysqlTable table = tables.get(model.getClass());
-
-    // Cannot write unknown tables or transformers
-    if (table == null || table.isTransformer())
-      throw new PersistenceException("The model " + model.getClass().getSimpleName() + " is not registered!");
+    MysqlTable table = getTableFromModel(model.getClass());
 
     // Ensure that there are no duplicate keys
-    Map<IDataTransformer<?, ?>, Object> replaceCache = new HashMap<>();
+    Map<String, Object> replaceCache = new HashMap<>();
     checkDuplicateKeys(model, table, replaceCache);
 
     // INSERT INTO `x` (a, b, c) VALUES (?, ?, ?);
@@ -622,55 +640,56 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   /**
    * Load all available transformers into the local list
    */
-  private List<? extends IDataTransformer<?, ?>> loadTransformers() {
-    return ac.getAllInstances()
+  private void loadTransformers() {
+    ac.getAllInstances()
       .stream()
       .filter(IDataTransformer.class::isInstance)
       .map(IDataTransformer.class::cast)
-      .map(dt -> (IDataTransformer<?, ?>) dt)
-      .toList();
+      .forEach(dt -> this.transformers.add(((IDataTransformer<?, ?>) dt)));
   }
 
   /**
    * Tries to find a transformer for the provided type and returns a list
    * of inlined (filtered and prefixed) columns which that transformer's
-   * known class describes. Loads transformers into tables on demand
-   * if they're not yet loaded.
+   * known class describes. Parses transformer's known models into tables on
+   * demand if they're not yet loaded.
    * @param f The field that's trying to be inlined
-   * @param parsedTables Writable reference to a map of already parsed tables
    * @return Optional list of inlined columns, empty if no transformer supports this type
    */
-  private Optional<List<MysqlColumn>> inlineTransformedField(
-    Field f,
-    Map<Class<? extends APersistentModel>, MysqlTable> parsedTables
-  ) {
-    // Search for a matching transformer
+  private Optional<List<MysqlColumn>> inlineTransformedField(Field f) throws Exception {
+    IDataTransformer<?, ?> match = null;
     for (IDataTransformer<?, ?> dt : transformers) {
       if (!dt.getForeignClass().equals(f.getType()))
         continue;
 
-      Class<? extends APersistentModel> model = dt.getKnownClass();
-
-      // Parse this table if it hasn't yet been parsed
-      if (!parsedTables.containsKey(model))
-        parseTable(model, parsedTables);
-
-      // Return a list of columns to be inlined into the requesting table
-      MysqlTable table = parsedTables.get(model);
-      return Optional.of(
-        table.columns()
-          .stream()
-          // Filter out non-transformer columns
-          .filter(MysqlColumn::isInlineable)
-          // Create a clone of this column that has the table's name as a prefix
-          .map(c -> new MysqlColumn(
-            table.name() + "_" + c.getName(),
-            c.getType(), c.isNullable(), c.isUnique(), true, c, f
-          ))
-          .toList()
-      );
+      match = dt;
+      break;
     }
 
-    return Optional.empty();
+    if (match == null)
+      return Optional.empty();
+
+    Class<? extends APersistentModel> model = match.getKnownClass();
+
+    // Make sure the transformer's known model is parsed as a table
+    if (!tables.containsKey(model))
+      parseTable(model);
+
+    // Return a list of columns to be inlined into the requesting table
+    MysqlTable table = tables.get(model);
+    return Optional.of(
+      table.columns()
+        .stream()
+
+        // Filter out non-transformer columns
+        .filter(MysqlColumn::isInlineable)
+
+        // Create a clone of this column that has the foreign field's name as a prefix
+        .map(c -> new MysqlColumn(
+          f.getName() + "__" + c.getName(),
+          c.getType(), c.isNullable(), c.isUnique(), true, f, c.getModelField()
+        ))
+        .toList()
+    );
   }
 }

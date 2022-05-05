@@ -117,6 +117,25 @@ public class MCReflect {
   }
 
   //=========================================================================//
+  //                             Field Iteration                             //
+  //=========================================================================//
+
+  /**
+   * Find all declared fields within a class and all of it's superclasses
+   * @param c Target class
+   * @return List of all found fields
+   */
+  public List<Field> findAllFields(Class<?> c) throws Exception {
+    List<Field> res = new ArrayList<>();
+
+    do {
+      res.addAll(Arrays.asList(c.getDeclaredFields()));
+    } while((c = c.getSuperclass()) != null);
+
+    return res;
+  }
+
+  //=========================================================================//
   //                              Field By Type                              //
   //=========================================================================//
 

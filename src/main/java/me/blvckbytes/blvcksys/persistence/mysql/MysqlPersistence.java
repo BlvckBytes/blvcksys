@@ -16,9 +16,13 @@ import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.nio.ByteBuffer;
 import java.sql.*;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.*;
 import java.util.Date;
 
@@ -98,10 +102,9 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   @Override
   public<T extends APersistentModel> List<T> list(Class<T> type) {
     try {
-      MysqlTable table = getTableFromModel(type);
+      MysqlTable table = getTableFromModel(type, false);
       ResultSet rs = conn.prepareStatement("SELECT * FROM `" + table.name() + "`").executeQuery();
-      // TODO: Map rows
-      return new ArrayList<>();
+      return mapRows(type, rs);
     } catch (Exception e) {
       logger.logError(e);
       return new ArrayList<>();
@@ -360,7 +363,6 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
   /**
    * Parse all tables by their meta-information into the required data-structure
-   * @return Map of the model-class and it's corresponding SQL table
    */
   private void parseAllTables() throws Exception {
     String pkg = getClass().getPackageName();
@@ -377,35 +379,123 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       parseTable(model);
   }
 
-  private IDataTransformer<?, ?> getTransformerByKnownField(Field knownField) {
-    if (knownField == null)
-      return null;
+  ////////////////////////////////// Row Mapping //////////////////////////////////////
 
-    // Get the transformer by the field's declaring class (the known type)
-    return transformers.stream()
-      .filter(tr -> tr.getKnownClass().equals(knownField.getDeclaringClass()))
-      .findFirst()
-      .orElse(null);
+  /**
+   * Create a new empty instance of a model by invoking it's hidden default constructor
+   * @param model Model to instantiate
+   * @return Instantiated model
+   */
+  private<T extends APersistentModel> T newEmpty(Class<T> model) throws Exception {
+    Constructor<T> ctor;
+    try {
+      ctor = model.getDeclaredConstructor();
+    } catch (NoSuchMethodException e) {
+      throw new PersistenceException("Model " + model + " provides no empty constructor");
+    }
+
+    // Create a new empty object from the hidden empty constructor
+    ctor.setAccessible(true);
+    return ctor.newInstance();
   }
 
-  private Object callTransformerReplace(IDataTransformer<?, ?> transformer, Object input) throws Exception {
-    // Call the replace method on the model's column value
-    Method replace = Arrays.stream(transformer.getClass().getMethods())
-      .filter(m -> m.getName().equals("replace"))
-      .findFirst().orElseThrow();
+  /**
+   * Translate a column value into the corresponding used java-type as
+   * specified by the enum {@link MysqlType}
+   * @param col Column that this value stems from
+   * @param value Column value
+   * @return Transformed value
+   */
+  private Object translateColumnValue(MysqlColumn col, Object value) {
+    // Turn byte[]'s (binary columns) into UUIDs
+    if (col.getType() == MysqlType.UUID) {
+      ByteBuffer bb = ByteBuffer.wrap((byte[]) value);
+      value = new UUID(bb.getLong(), bb.getLong());
+    }
 
-    // Return the method's result
-    return replace.invoke(transformer, input);
+    // Turn the driver's LocalDateTime into java's default Date
+    if (col.getType() == MysqlType.DATETIME) {
+      if (value instanceof LocalDateTime ldt)
+        value = Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant());
+    }
+
+    // Value shouldn't need any transformation
+    return value;
   }
 
-  private Object callTransformerRevive(IDataTransformer<?, ?> transformer, Object input) throws Exception {
-    // Call the revive method on the model's column value
-    Method revive = Arrays.stream(transformer.getClass().getMethods())
-      .filter(m -> m.getName().equals("revive"))
-      .findFirst().orElseThrow();
+  /**
+   * Maps an individual row (the one currently selected by the ResultSet's
+   * cursor) into it's corresponding model
+   * @param model Model used to represent the row of data
+   * @param rs ResultSet containing the row to be mapped
+   * @return Model with fields containing the row's data
+   */
+  @SuppressWarnings("unchecked")
+  private<T extends APersistentModel> T mapRow(
+    Class<T> model,
+    ResultSet rs
+  ) throws Exception {
+    MysqlTable table = getTableFromModel(model, false);
+    List<MysqlColumn> remainingColumns = new ArrayList<>(table.columns());
+    T inst = newEmpty(model);
 
-    // Return the method's result
-    return revive.invoke(transformer, input);
+    // Loop while there are still columns left to be mapped
+    while (remainingColumns.size() > 0) {
+      MysqlColumn col = remainingColumns.get(0);
+      Field knownField = col.getKnownModelField();
+
+      // This column requires a transformer
+      if (knownField != null) {
+        // Create a new instance of the transformed field's declaring class
+        Class<? extends APersistentModel> knownModel = (Class<? extends APersistentModel>) knownField.getDeclaringClass();
+        MysqlTable knownTable = getTableFromModel(knownModel, true);
+        Object knownInst = newEmpty(knownModel);
+
+        // Loop all columns from the known table and set the known instance's fields accordingly
+        for (MysqlColumn knownCol : knownTable.columns()) {
+          MysqlColumn targRemCol = remainingColumns.stream()
+            .filter(rc ->
+              rc.getKnownModelField() != null &&
+              rc.getKnownModelField().equals(knownCol.getModelField())
+            ).findFirst().orElse(null);
+
+          // This column doesn't seem to be mapped
+          if (targRemCol == null)
+            continue;
+
+          // Directly set the known model's field value to the corresponding column's value
+          Object value = translateColumnValue(col, rs.getObject(targRemCol.getName()));
+          knownCol.getModelField().set(knownInst, value);
+          remainingColumns.remove(targRemCol);
+        }
+
+        // Call the reviver on this known model to receive the foreign value to write to the row's model
+        IDataTransformer<?, ?> dt = getTransformerByKnownField(knownField);
+        col.getModelField().set(inst, callTransformerRevive(dt, knownInst));
+        continue;
+      }
+
+      // Directly set the model's field value to the corresponding column's value
+      col.getModelField().set(inst, translateColumnValue(col, rs.getObject(col.getName())));
+      remainingColumns.remove(col);
+    }
+
+    return inst;
+  }
+
+  /**
+   * Map a ResultSet's rows of data to the corresponding models and use transformers where necessary
+   * @param model Model used to represent the individual result rows
+   * @param rs ResultSet containing all the rows
+   * @return List of models, as many as available rows
+   */
+  private<T extends APersistentModel> List<T> mapRows(Class<T> model, ResultSet rs) throws Exception {
+    List<T> res = new ArrayList<>();
+
+    while (rs.next())
+      res.add(mapRow(model, rs));
+
+    return res;
   }
 
   /////////////////////////////////// Insertion ///////////////////////////////////////
@@ -504,15 +594,18 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   /**
    * Get a model's corresponding parsed table
    * @param model Model class
+   * @param allowTransformers Whether to allow transformer models
    * @return Table instance
    * @throws PersistenceException Model not known
    */
-  private MysqlTable getTableFromModel(Class<? extends APersistentModel> model) throws PersistenceException {
+  private MysqlTable getTableFromModel(Class<?> model, boolean allowTransformers) throws PersistenceException {
     MysqlTable table = tables.get(model);
 
-    // Cannot write unknown tables or transformers
-    if (table == null || table.isTransformer())
+    if (table == null)
       throw new PersistenceException("The model " + model.getSimpleName() + " is not registered!");
+
+    if (!allowTransformers && table.isTransformer())
+      throw new PersistenceException("Cannot directly write transformers: " + model.getSimpleName());
 
     return table;
   }
@@ -522,7 +615,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    * @param model Model to write
    */
   private void writeModel(APersistentModel model) throws Exception {
-    MysqlTable table = getTableFromModel(model.getClass());
+    MysqlTable table = getTableFromModel(model.getClass(), false);
 
     // Ensure that there are no duplicate keys
     Map<String, Object> replaceCache = new HashMap<>();
@@ -691,5 +784,53 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
         ))
         .toList()
     );
+  }
+
+  /**
+   * Get a known field's corresponding transformer by it's declaring class
+   * @param knownField Known field
+   * @return Data transformer or null if this field is either null or has no transformer attached
+   */
+  private IDataTransformer<?, ?> getTransformerByKnownField(Field knownField) {
+    if (knownField == null)
+      return null;
+
+    // Get the transformer by the field's declaring class (the known type)
+    return transformers.stream()
+      .filter(tr -> tr.getKnownClass().equals(knownField.getDeclaringClass()))
+      .findFirst()
+      .orElse(null);
+  }
+
+  /**
+   * Call the transformers replace method to turn a foreign value into it's known model
+   * @param transformer Transformer to be used
+   * @param input Input value to the replace function
+   * @return Replaced known model
+   */
+  private Object callTransformerReplace(IDataTransformer<?, ?> transformer, Object input) throws Exception {
+    // Call the replace method on the model's column value
+    Method replace = Arrays.stream(transformer.getClass().getMethods())
+      .filter(m -> m.getName().equals("replace"))
+      .findFirst().orElseThrow();
+
+    // Return the method's result
+    return replace.invoke(transformer, input);
+  }
+
+  /**
+   * Call the transformers revive method to turn a known model into it's foreign value
+   * @param transformer Transformer to be used
+   * @param input Input value to the revive function
+   * @return Revived foreign value
+   */
+  private Object callTransformerRevive(IDataTransformer<?, ?> transformer, Object input) throws Exception {
+    // Call the revive method on the model's column value
+    Method revive = Arrays.stream(transformer.getClass().getMethods())
+      .filter(m -> m.getName().equals("revive"))
+      .findFirst().orElseThrow();
+
+    // Return the method's result
+    return revive.invoke(transformer, input);
   }
 }

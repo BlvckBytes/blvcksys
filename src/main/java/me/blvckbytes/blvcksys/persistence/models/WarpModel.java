@@ -1,9 +1,6 @@
 package me.blvckbytes.blvcksys.persistence.models;
 
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
@@ -16,6 +13,7 @@ import org.bukkit.OfflinePlayer;
   specific point within a specific world.
 */
 @RequiredArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class WarpModel extends APersistentModel {
 
   @Getter

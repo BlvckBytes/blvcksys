@@ -12,16 +12,15 @@ import me.blvckbytes.blvcksys.persistence.ModelProperty;
   with the LocationTransformer.
 */
 @RequiredArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class LocationModel extends APersistentModel {
 
   @Getter
-  @Setter
   @NonNull
   @ModelProperty
   private double x, y, z, yaw, pitch;
 
   @Getter
-  @Setter
   @NonNull
   @ModelProperty
   private String world;

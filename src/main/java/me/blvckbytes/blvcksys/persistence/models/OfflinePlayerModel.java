@@ -1,9 +1,6 @@
 package me.blvckbytes.blvcksys.persistence.models;
 
-import lombok.Getter;
-import lombok.NonNull;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
 
 import java.util.UUID;
@@ -16,10 +13,10 @@ import java.util.UUID;
   used with the OfflinePlayerTransformer.
 */
 @RequiredArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class OfflinePlayerModel extends APersistentModel {
 
   @Getter
-  @Setter
   @NonNull
   @ModelProperty
   private UUID uuid;

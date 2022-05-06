@@ -153,7 +153,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       if (!rs.next())
         return 0;
 
-      int res = rs.findColumn("count");
+      int res = rs.getInt("count");
 
       rs.close();
       ps.close();
@@ -291,6 +291,15 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
       // Skip the underscore
       if (c == '_' && i != chars.length - 1) {
+
+        // Two underscores in a row, marks a sub-model, leave as
+        // is (and don't capitalize afterwards)
+        if (chars[i + 1] == '_') {
+          i++;
+          res.append("__");
+          continue;
+        }
+
         char next = chars[++i];
         // Transform to uppercase
         res.append((char) (next - ((next >= 97 && next <= 122) ? 32 : 0)));
@@ -510,7 +519,6 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    * @param name Name of the target column
    */
   private MysqlColumn getColumnByName(MysqlTable table, String name) {
-    // TODO: Allow for queries to target transformed fields by their name in the known-model
     return table.columns().stream()
       .filter(
         c -> dbNameToModelName(c.getName(), false).equals(name)
@@ -539,17 +547,23 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     if (!targCol.getType().supportsOp(query.op()))
       throw new RuntimeException("The query field " + query.field() + " does not support the operation " + query.op());
 
+    String ph = "?";
+
+    // UUIDs need to be converted to binary
+    if (targCol.getType().equals(MysqlType.UUID))
+      ph = uuidToBin("?", false);
+
     params.put(targCol.getType(), query.value());
 
     return switch (query.op()) {
-      case EQ -> "`" + query.field() + "` = ?";
-      case NEQ -> "`" + query.field() + "` != ?";
-      case EQ_IC -> "LOWER(`" + query.field() + "`) = LOWER(?)";
-      case NEQ_IC -> "LOWER(`" + query.field() + "`) != LOWER(?)";
-      case LT -> "`" + query.field() + "` < ?";
-      case LTE -> "`" + query.field() + "` <= ?";
-      case GT -> "`" + query.field() + "` > ?";
-      case GTE -> "`" + query.field() + "` >= ?";
+      case EQ -> "`" + query.field() + "` = " + ph;
+      case NEQ -> "`" + query.field() + "` != " + ph;
+      case EQ_IC -> "LOWER(`" + query.field() + "`) = LOWER(" + ph + ")";
+      case NEQ_IC -> "LOWER(`" + query.field() + "`) != LOWER(" + ph + ")";
+      case LT -> "`" + query.field() + "` < " + ph;
+      case LTE -> "`" + query.field() + "` <= " + ph;
+      case GT -> "`" + query.field() + "` > " + ph;
+      case GTE -> "`" + query.field() + "` >= " + ph;
     };
   }
 
@@ -716,14 +730,20 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    * @return Transformed value
    */
   private Object translateValue(MysqlType type, Object value) {
-    // Turn byte[]'s (binary columns) into UUIDs
     if (type == MysqlType.UUID) {
-      ByteBuffer bb = ByteBuffer.wrap((byte[]) value);
-      value = new UUID(bb.getLong(), bb.getLong());
+      // Turn byte[]'s (binary columns) into UUIDs when reading
+      if (value instanceof byte[] ba) {
+        ByteBuffer bb = ByteBuffer.wrap(ba);
+        value = new UUID(bb.getLong(), bb.getLong());
+      }
+
+      // Stringify UUIDs when writing
+      else
+        value = value.toString();
     }
 
     // Turn the driver's LocalDateTime into java's default Date
-    if (type == MysqlType.DATETIME) {
+    else if (type == MysqlType.DATETIME) {
       if (value instanceof LocalDateTime ldt)
         value = Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant());
     }

@@ -128,7 +128,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   @Override
   public <T extends APersistentModel> List<T> find(QueryBuilder<T> query) throws PersistenceException {
     try {
-      PreparedStatement ps = buildQuery(query.getModel(), query, false);
+      PreparedStatement ps = buildQuery(query.getModel(), query, false, false);
       ResultSet rs = ps.executeQuery();
       List<T> res = mapRows(query.getModel(), rs);
 
@@ -146,13 +146,31 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
   @Override
   public <T extends APersistentModel> int count(QueryBuilder<T> query) throws PersistenceException {
-    return 0;
+    try {
+      PreparedStatement ps = buildQuery(query.getModel(), query, false, true);
+      ResultSet rs = ps.executeQuery();
+
+      if (!rs.next())
+        return 0;
+
+      int res = rs.findColumn("count");
+
+      rs.close();
+      ps.close();
+
+      return res;
+    } catch (PersistenceException e) {
+      throw e;
+    } catch (Exception e) {
+      logger.logError(e);
+      throw new PersistenceException("An internal error occurred");
+    }
   }
 
   @Override
   public <T extends APersistentModel> Optional<T> findFirst(QueryBuilder<T> query) throws PersistenceException {
     try {
-      PreparedStatement ps = buildQuery(query.getModel(), query, true);
+      PreparedStatement ps = buildQuery(query.getModel(), query, true, false);
       ResultSet rs = ps.executeQuery();
 
       if (!rs.next())
@@ -563,6 +581,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    * Build a selecting query from a query builder's state
    * @param query Query builder to build from, leave at null to have no WHERE clause
    * @param onlyFirst Whether to only query for the first result
+   * @param onlyCount Whether to only count the number of results instead of fetching the actual data
    * @param fields Fields to select, leave empty to select everything
    * @return Built query statement with all parameters applied
    */
@@ -570,13 +589,17 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     Class<T> model,
     @Nullable QueryBuilder<?> query,
     boolean onlyFirst,
+    boolean onlyCount,
     String ...fields
   ) throws Exception {
     MysqlTable table = getTableFromModel(model, false);
 
     StringBuilder stmt = new StringBuilder("SELECT ");
 
-    if (fields.length == 0)
+    if (onlyCount)
+      stmt.append("COUNT(*) AS `count`");
+
+    else if (fields.length == 0)
       stmt.append("*");
 
     else {
@@ -637,7 +660,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   ) throws Exception {
     List<Map<String, Object>> res = new ArrayList<>();
 
-    PreparedStatement ps = buildQuery(model, query, false, columns);
+    PreparedStatement ps = buildQuery(model, query, false, false, columns);
     ResultSet rs = ps.executeQuery();
 
     while(rs.next())

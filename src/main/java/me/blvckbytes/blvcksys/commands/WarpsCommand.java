@@ -63,6 +63,7 @@ public class WarpsCommand extends APlayerCommand {
     TextComponent res = new TextComponent(
       cfg.get(ConfigKey.WARP_LIST_PREFIX)
         .withPrefix()
+        .withVariable("count", warps.size())
         .asScalar()
     );
 

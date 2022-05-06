@@ -20,8 +20,6 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.Optional;
-
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 05/04/2022
@@ -30,6 +28,9 @@ import java.util.Optional;
 */
 @AutoConstruct
 public class SetwarpCommand extends APlayerCommand {
+
+  // TODO: Maybe clear up the control-flow a bit
+  // TODO: Exceptions in button runnables don't bubble up to #invoke()
 
   private final IPersistence pers;
   private final ChatUtil chat;
@@ -64,14 +65,14 @@ public class SetwarpCommand extends APlayerCommand {
     Location l = p.getLocation();
 
     try {
-      WarpModel existing = pers.findFirst(
+      boolean exists = pers.count(
         new QueryBuilder<>(
           WarpModel.class,
           "name", EqualityOperation.EQ, name
         )
-      ).orElse(null);
+      ) > 0;
 
-      if (existing != null) {
+      if (exists) {
         chat.sendButtons(p, ChatButtons.buildYesNo(
           cfg.get(ConfigKey.WARP_OVERWRITE_PREFIX)
             .withVariable("name", name)
@@ -81,6 +82,25 @@ public class SetwarpCommand extends APlayerCommand {
 
           // Yes
           () -> {
+
+            WarpModel existing = pers.findFirst(
+              new QueryBuilder<>(
+                WarpModel.class,
+                "name", EqualityOperation.EQ, name
+              )
+            ).orElse(null);
+
+            if (existing == null) {
+              p.sendMessage(
+                cfg.get(ConfigKey.WARP_NOT_EXISTING)
+                  .withPrefix()
+                  .withVariable("name", name)
+                  .asScalar()
+              );
+
+              return;
+            }
+
             // Update the location
             existing.setLoc(p.getLocation());
             pers.store(existing);

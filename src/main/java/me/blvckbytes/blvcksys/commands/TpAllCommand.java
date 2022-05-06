@@ -90,7 +90,9 @@ public class TpAllCommand extends APlayerCommand {
             .withPrefix()
             .asScalar()
         );
-      }
+      },
+
+      null
     );
 
     // Invalidate previous prompt, if existing

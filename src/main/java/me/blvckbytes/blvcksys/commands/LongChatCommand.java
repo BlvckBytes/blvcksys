@@ -110,7 +110,7 @@ public class LongChatCommand extends APlayerCommand {
         .withPrefix()
         .withVariable("max_len", MAX_LEN)
         .asScalar(),
-      true, plugin, cfg
+      true, plugin, cfg, null
     );
 
     // Send this message

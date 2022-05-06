@@ -81,7 +81,9 @@ public class ClearInventoryCommand extends APlayerCommand {
             .withPrefix()
             .asScalar()
         );
-      }
+      },
+
+      null
     ));
   }
 

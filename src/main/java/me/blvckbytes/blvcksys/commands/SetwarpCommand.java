@@ -7,8 +7,6 @@ import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
-import me.blvckbytes.blvcksys.persistence.exceptions.DuplicatePropertyException;
-import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.WarpModel;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
@@ -28,9 +26,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 */
 @AutoConstruct
 public class SetwarpCommand extends APlayerCommand {
-
-  // TODO: Maybe clear up the control-flow a bit
-  // TODO: Exceptions in button runnables don't bubble up to #invoke()
 
   private final IPersistence pers;
   private final ChatUtil chat;
@@ -64,92 +59,83 @@ public class SetwarpCommand extends APlayerCommand {
     String name = argval(args, 0);
     Location l = p.getLocation();
 
-    try {
-      boolean exists = pers.count(
-        new QueryBuilder<>(
-          WarpModel.class,
-          "name", EqualityOperation.EQ, name
-        )
-      ) > 0;
+    // Check if a warp with this name already exists
+    boolean exists = pers.count(
+      new QueryBuilder<>(
+        WarpModel.class,
+        "name", EqualityOperation.EQ_IC, name
+      )
+    ) > 0;
 
-      if (exists) {
-        chat.sendButtons(p, ChatButtons.buildYesNo(
-          cfg.get(ConfigKey.WARP_OVERWRITE_PREFIX)
-            .withVariable("name", name)
-            .withPrefixes()
-            .asScalar(),
-          plugin, cfg,
+    if (exists) {
+      // Send out an overwrite confirmation prompt
+      chat.sendButtons(p, ChatButtons.buildYesNo(
+        cfg.get(ConfigKey.WARP_OVERWRITE_PREFIX)
+          .withVariable("name", name)
+          .withPrefixes()
+          .asScalar(),
+        plugin, cfg,
 
-          // Yes
-          () -> {
+        // Yes
+        () -> {
 
-            WarpModel existing = pers.findFirst(
-              new QueryBuilder<>(
-                WarpModel.class,
-                "name", EqualityOperation.EQ, name
-              )
-            ).orElse(null);
+          // Get the existing model
+          WarpModel existing = pers.findFirst(
+            new QueryBuilder<>(
+              WarpModel.class,
+              "name", EqualityOperation.EQ, name
+            )
+          ).orElse(null);
 
-            if (existing == null) {
-              p.sendMessage(
-                cfg.get(ConfigKey.WARP_NOT_EXISTING)
-                  .withPrefix()
-                  .withVariable("name", name)
-                  .asScalar()
-              );
-
-              return;
-            }
-
-            // Update the location
-            existing.setLoc(p.getLocation());
-            pers.store(existing);
-
+          // Got deleted in the meantime
+          if (existing == null) {
             p.sendMessage(
-              cfg.get(ConfigKey.WARP_OVERWRITE_SAVED)
+              cfg.get(ConfigKey.WARP_NOT_EXISTING)
                 .withPrefix()
                 .withVariable("name", name)
                 .asScalar()
             );
-          },
 
-          // No
-          () -> {
-            p.sendMessage(
-              cfg.get(ConfigKey.WARP_OVERWRITE_CANCELLED)
-                .withPrefix()
-                .asScalar()
-            );
+            return;
           }
-        ));
 
-        return;
-      }
+          // Update the location
+          existing.setLoc(p.getLocation());
+          pers.store(existing);
 
-      WarpModel warp = new WarpModel(name, l, p);
-      pers.store(warp);
+          p.sendMessage(
+            cfg.get(ConfigKey.WARP_OVERWRITE_SAVED)
+              .withPrefix()
+              .withVariable("name", name)
+              .asScalar()
+          );
+        },
 
-      p.sendMessage(
-        cfg.get(ConfigKey.WARP_CREATED)
-          .withPrefix()
-          .withVariable("name", name)
-          .withVariable("location", "(" + l.getBlockX() + " | " + l.getBlockY() + " | " + l.getBlockZ() + ")")
-          .asScalar()
-      );
+        // No
+        () -> {
+          p.sendMessage(
+            cfg.get(ConfigKey.WARP_OVERWRITE_CANCELLED)
+              .withPrefix()
+              .asScalar()
+          );
+        },
+
+        null
+      ));
+
+      return;
     }
-    catch (PersistenceException e) {
-      // A warp with this name already exists
-      if (e instanceof DuplicatePropertyException d && d.getProperty().equals("name")) {
-        p.sendMessage(
-          cfg.get(ConfigKey.WARP_EXISTS)
-            .withPrefix()
-            .withVariable("name", d.getValue())
-            .asScalar()
-        );
-        return;
-      }
 
-      throw e;
-    }
+    // Create the new warp
+    WarpModel warp = new WarpModel(name, l, p);
+    pers.store(warp);
+
+    p.sendMessage(
+      cfg.get(ConfigKey.WARP_CREATED)
+        .withPrefix()
+        .withVariable("name", name)
+        .withVariable("location", "(" + l.getBlockX() + " | " + l.getBlockY() + " | " + l.getBlockZ() + ")")
+        .asScalar()
+    );
   }
 }

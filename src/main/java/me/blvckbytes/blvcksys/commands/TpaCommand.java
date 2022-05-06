@@ -159,7 +159,9 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener,
         () -> acceptRequest(p, target),
 
         // No
-        () -> denyRequest(p, target)
+        () -> denyRequest(p, target),
+
+        null
       );
 
     // Register the new request (no move-listener at this point)

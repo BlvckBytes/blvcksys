@@ -8,11 +8,14 @@ import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -43,18 +46,29 @@ public class ChatButtons {
   private final boolean clickOnce;
   private final JavaPlugin plugin;
   private final String prefix;
+  private final Function<Exception, String> exceptionMapper;
 
   /**
    * Create a new button builder/handler
    * @param plugin Plugin reference
    * @param cfg Config reference
    * @param clickOnce Whether to expire all buttons when one has been clicked
+   * @param exceptionMapper Used to decide what message to display to the player on
+   *                        exceptions, nullable to just send out an internal error response
    */
-  public ChatButtons(String prefix, boolean clickOnce, JavaPlugin plugin, IConfig cfg) {
+  public ChatButtons(
+    String prefix,
+    boolean clickOnce,
+    JavaPlugin plugin,
+    IConfig cfg,
+    @Nullable Function<Exception, String> exceptionMapper
+  ) {
     this.cfg = cfg;
     this.prefix = prefix;
     this.clickOnce = clickOnce;
     this.plugin = plugin;
+    this.exceptionMapper = exceptionMapper;
+
     this.buttons = new ArrayList<>();
   }
 
@@ -106,10 +120,11 @@ public class ChatButtons {
 
   /**
    * Process the invocation of a dispatched command within this instance
+   * @param p Player that invoked this command, used for error reporting
    * @param command Dispatched command without the leading /
    * @return True if a button has been used, false on no matches
    */
-  public boolean processInvocation(String command) {
+  public boolean processInvocation(Player p, String command) {
     for (int i = this.buttons.size() - 1; i >= 0; i--) {
       CommandButton button = this.buttons.get(i);
 
@@ -118,7 +133,23 @@ public class ChatButtons {
         continue;
 
       // Call the callback
-      Bukkit.getScheduler().runTask(this.plugin, () -> button.action.run());
+      Bukkit.getScheduler().runTask(this.plugin, () -> {
+        try {
+          button.action.run();
+        } catch (Exception e) {
+          if (this.exceptionMapper == null) {
+            p.sendMessage(
+              cfg.get(ConfigKey.ERR_INTERNAL)
+                .withPrefix()
+                .asScalar()
+            );
+
+            return;
+          }
+
+          p.sendMessage(this.exceptionMapper.apply(e));
+        }
+      });
 
       // Remove the button or kill all buttons
       if (clickOnce)
@@ -142,8 +173,15 @@ public class ChatButtons {
    * @param no Called when clicking NO
    * @return ChatButtons instance
    */
-  public static ChatButtons buildYesNo(String prefix, JavaPlugin plugin, IConfig cfg, Runnable yes, Runnable no) {
-    return new ChatButtons(prefix, true, plugin, cfg)
+  public static ChatButtons buildYesNo(
+    String prefix,
+    JavaPlugin plugin,
+    IConfig cfg,
+    Runnable yes,
+    Runnable no,
+    @Nullable Function<Exception, String> exceptionMapper
+  ) {
+    return new ChatButtons(prefix, true, plugin, cfg, exceptionMapper)
       .addButton(ConfigKey.CHATBUTTONS_YES, yes)
       .addButton(ConfigKey.CHATBUTTONS_NO, no);
   }

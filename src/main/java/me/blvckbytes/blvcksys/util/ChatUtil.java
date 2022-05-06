@@ -99,7 +99,7 @@ public class ChatUtil implements Listener {
     List<ChatButtons> sessions = buttonSessions.get(p);
     if (sessions != null) {
       for (ChatButtons session : sessions) {
-        if (session.processInvocation(command))
+        if (session.processInvocation(p, command))
           return;
       }
     }

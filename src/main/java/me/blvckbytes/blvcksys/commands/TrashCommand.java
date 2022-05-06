@@ -236,7 +236,9 @@ public class TrashCommand extends APlayerCommand implements Listener, IAutoConst
             .withPrefix()
             .asScalar()
         );
-      }
+      },
+
+      null
     );
   }
 }

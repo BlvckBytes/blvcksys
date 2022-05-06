@@ -6,14 +6,16 @@ import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
-import me.blvckbytes.blvcksys.persistence.exceptions.ModelNotFoundException;
 import me.blvckbytes.blvcksys.persistence.models.WarpModel;
+import me.blvckbytes.blvcksys.persistence.query.FieldQuery;
+import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
+import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.UUID;
+import java.util.Optional;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -38,7 +40,7 @@ public class DelwarpCommand extends APlayerCommand {
       "delwarp",
       "Delete an existing warp",
       PlayerPermission.DELWARP,
-      new CommandArgument("<uuid>", "UUID of the warp (for now)")
+      new CommandArgument("<name>", "Name of the warp")
     );
 
     this.pers = pers;
@@ -46,16 +48,26 @@ public class DelwarpCommand extends APlayerCommand {
 
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
-    String uuid = argval(args, 0);
+    String name = argval(args, 0);
+
+    Optional<WarpModel> res = pers.findFirst(
+      new QueryBuilder<>(
+        WarpModel.class,
+        "name", EqualityOperation.EQ_IC, name
+      )
+    );
+
+    if (res.isEmpty()) {
+      p.sendMessage("§cThere is no warp named '" + name + "'");
+      return;
+    }
 
     try {
-      UUID u = UUID.fromString(uuid);
-      pers.delete(WarpModel.class, u);
-      p.sendMessage("§aDeleted " + u);
-    } catch (IllegalArgumentException e) {
-      customError("§cInvalid UUID");
-    } catch (ModelNotFoundException e) {
-      p.sendMessage("§cNo model with ID " + uuid);
+      pers.delete(res.get());
+      p.sendMessage("§aWarp '" + name + "' successfully deleted");
+    } catch (Exception e) {
+      logger.logError(e);
+      internalError();
     }
   }
 }

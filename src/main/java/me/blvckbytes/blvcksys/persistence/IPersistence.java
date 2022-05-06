@@ -2,8 +2,10 @@ package me.blvckbytes.blvcksys.persistence;
 
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.APersistentModel;
+import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 /*
@@ -38,4 +40,18 @@ public interface IPersistence {
    * @param id ID of the model
    */
   <T extends APersistentModel>void delete(Class<T> type, UUID id) throws PersistenceException;
+
+  /**
+   * Find all models that match the specified query
+   * @param query Query to execute
+   * @return List of models
+   */
+  <T extends APersistentModel> List<T> find(QueryBuilder<T> query) throws PersistenceException;
+
+  /**
+   * Find the first model that matches the specified query
+   * @param query Query to execute
+   * @return First model, empty if there were no matches
+   */
+  <T extends APersistentModel> Optional<T> findFirst(QueryBuilder<T> query) throws PersistenceException;
 }

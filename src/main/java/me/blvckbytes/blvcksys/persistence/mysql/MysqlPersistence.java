@@ -12,6 +12,7 @@ import me.blvckbytes.blvcksys.persistence.exceptions.DuplicatePropertyException;
 import me.blvckbytes.blvcksys.persistence.exceptions.ModelNotFoundException;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.APersistentModel;
+import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import me.blvckbytes.blvcksys.persistence.transformers.IDataTransformer;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
@@ -109,6 +110,16 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       logger.logError(e);
       throw new PersistenceException("An internal error occurred");
     }
+  }
+
+  @Override
+  public <T extends APersistentModel> List<T> find(QueryBuilder<T> query) throws PersistenceException {
+    return new ArrayList<>();
+  }
+
+  @Override
+  public <T extends APersistentModel> Optional<T> findFirst(QueryBuilder<T> query) throws PersistenceException {
+    return Optional.empty();
   }
 
   @Override

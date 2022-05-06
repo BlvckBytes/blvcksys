@@ -12,10 +12,14 @@ import me.blvckbytes.blvcksys.persistence.exceptions.DuplicatePropertyException;
 import me.blvckbytes.blvcksys.persistence.exceptions.ModelNotFoundException;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.APersistentModel;
+import me.blvckbytes.blvcksys.persistence.query.FieldQuery;
+import me.blvckbytes.blvcksys.persistence.query.FieldQueryGroup;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
+import me.blvckbytes.blvcksys.persistence.query.QueryConnection;
 import me.blvckbytes.blvcksys.persistence.transformers.IDataTransformer;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import net.minecraft.util.Tuple;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
@@ -90,8 +94,17 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   public<T extends APersistentModel> List<T> list(Class<T> type) throws PersistenceException {
     try {
       MysqlTable table = getTableFromModel(type, false);
-      ResultSet rs = conn.prepareStatement("SELECT * FROM `" + table.name() + "`").executeQuery();
-      return mapRows(type, rs);
+      PreparedStatement ps = conn.prepareStatement("SELECT * FROM `" + table.name() + "`");
+
+      logger.logDebug(ps.toString());
+
+      ResultSet rs = ps.executeQuery();
+      List<T> res = mapRows(type, rs);
+
+      rs.close();
+      ps.close();
+
+      return res;
     } catch (PersistenceException e) {
       throw e;
     } catch (Exception e) {
@@ -114,17 +127,50 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
   @Override
   public <T extends APersistentModel> List<T> find(QueryBuilder<T> query) throws PersistenceException {
-    return new ArrayList<>();
+    try {
+      PreparedStatement ps = buildQuery(query, false);
+      ResultSet rs = ps.executeQuery();
+      List<T> res = mapRows(query.getModel(), rs);
+
+      rs.close();
+      ps.close();
+
+      return res;
+    } catch (PersistenceException e) {
+      throw e;
+    } catch (Exception e) {
+      logger.logError(e);
+      throw new PersistenceException("An internal error occurred");
+    }
   }
 
   @Override
   public <T extends APersistentModel> Optional<T> findFirst(QueryBuilder<T> query) throws PersistenceException {
-    return Optional.empty();
+    try {
+      PreparedStatement ps = buildQuery(query, true);
+      ResultSet rs = ps.executeQuery();
+
+      if (!rs.next())
+        return Optional.empty();
+
+      Optional<T> res = Optional.of(mapRow(query.getModel(), rs));
+
+      rs.close();
+      ps.close();
+
+      return res;
+    } catch (PersistenceException e) {
+      throw e;
+    } catch (Exception e) {
+      logger.logError(e);
+      throw new PersistenceException("An internal error occurred");
+    }
   }
 
   @Override
   public void delete(APersistentModel model) throws PersistenceException {
     delete(model.getClass(), model.getId());
+    refl.setFieldByName(model, "id", null);
   }
 
   @Override
@@ -177,13 +223,13 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   //////////////////////////////////// Tables ///////////////////////////////////////
 
   /**
-   * Transform a table name representation (snake case)) into it's
+   * Transform a db name representation (snake case)) into it's
    * model name representation (pascal case)
    * @param tableName Name to convert
    * @param capitalizeFirst Whether to capitalize the very first character
    * @return Converted name
    */
-  private String tableNameToModelName(String tableName, boolean capitalizeFirst) {
+  private String dbNameToModelName(String tableName, boolean capitalizeFirst) {
     StringBuilder res = new StringBuilder();
 
     char[] chars = tableName.toCharArray();
@@ -331,7 +377,16 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    * @return Existing state
    */
   private boolean isTableExisting(MysqlTable table) throws SQLException {
-    return conn.prepareStatement("SHOW TABLES LIKE '" + table.name() + "';").executeQuery().next();
+    PreparedStatement ps = conn.prepareStatement("SHOW TABLES LIKE '" + table.name() + "';");
+    ResultSet rs = ps.executeQuery();
+    boolean exists = rs.next();
+
+    logger.logDebug(ps.toString());
+
+    rs.close();
+    ps.close();
+
+    return exists;
   }
 
   /**
@@ -361,7 +416,12 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     }
 
     stmt.append(");");
-    this.conn.prepareStatement(stmt.toString()).executeUpdate();
+    PreparedStatement ps = this.conn.prepareStatement(stmt.toString());
+    logger.logDebug(ps.toString());
+
+    ps.executeUpdate();
+    ps.close();
+
     logger.logInfo("Created table " + table.name());
   }
 
@@ -395,6 +455,108 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       parseTable(model);
   }
 
+  ///////////////////////////////// Query Builder /////////////////////////////////////
+
+  /**
+   * Stringify a field query to a partial statement, for example:
+   * field=test, op=EQ, value=5 would yield: `test` == ? and add (INTEGER, 5) to params
+   * @param query Query to stringify
+   * @param table Table which this field has to be a member of
+   * @param params Modifyable map of parameters to add the value parameter
+   * @return Stringified query
+   */
+  private String stringifyFieldQuery(FieldQuery query, MysqlTable table, Map<MysqlType, Object> params) {
+    MysqlColumn targCol = table.columns().stream()
+      .filter(
+        c -> dbNameToModelName(c.getName(), false).equals(query.field())
+      )
+      .findFirst()
+      .orElseThrow(() -> new RuntimeException(
+        "The query field " + query.field() + " is not a member of the model " + dbNameToModelName(table.name(), true)
+      ));
+
+    Class<?> targType = targCol.getType().getJavaEquivalent();
+    Class<?> queryType = query.value().getClass();
+    if (targType != queryType)
+      throw new RuntimeException("The query field " + query.field() + " is of invalid type " + queryType + " instead of " + targType);
+
+    if (!targCol.getType().supportsOp(query.op()))
+      throw new RuntimeException("The query field " + query.field() + " does not support the operation " + query.op());
+
+    params.put(targCol.getType(), query.value());
+
+    return switch (query.op()) {
+      case EQ -> "`" + query.field() + "` = ?";
+      case NEQ -> "`" + query.field() + "` != ?";
+      case EQ_IC -> "LOWER(`" + query.field() + "`) = LOWER(?)";
+      case NEQ_IC -> "LOWER(`" + query.field() + "`) != LOWER(?)";
+      case LT -> "`" + query.field() + "` < ?";
+      case LTE -> "`" + query.field() + "` <= ?";
+      case GT -> "`" + query.field() + "` > ?";
+      case GTE -> "`" + query.field() + "` >= ?";
+    };
+  }
+
+  /**
+   * Stringify a field query group to a partial statement, for example:
+   * root=(field=test, op=EQ, value=5) additionals=[(AND, (field=test2, op=NEQ, value=10))] would yield:
+   * (`test` == ? AND test2 != ?) and add (INTEGER, 5), (INTEGER, 10) to params
+   * @param group Query group to stringify
+   * @param table Table which this field has to be a member of
+   * @param params Modifyable map of parameters to add the value parameter
+   * @return Stringified query group
+   */
+  private String stringifyFieldQueryGroup(FieldQueryGroup group, MysqlTable table, Map<MysqlType, Object> params) {
+    StringBuilder groupStr = new StringBuilder("(");
+
+    // Append the root (first entry with no connection prefix)
+    groupStr.append(stringifyFieldQuery(group.getRoot(), table, params));
+
+    // Append all additional queries with their connection leading them
+    for (Tuple<QueryConnection, FieldQuery> additional : group.getAdditionals()) {
+      groupStr.append(additional.a()).append(" ");
+      groupStr.append(stringifyFieldQuery(additional.b(), table, params));
+    }
+
+    return groupStr + ")";
+  }
+
+  /**
+   * Build a selecting query from a query builder's state
+   * @param query Query builder to build from
+   * @param onlyFirst Whether to only query for the first result
+   * @return Built query statement with all parameters applied
+   */
+  private PreparedStatement buildQuery(QueryBuilder<?> query, boolean onlyFirst) throws Exception {
+    MysqlTable table = getTableFromModel(query.getModel(), false);
+
+    StringBuilder stmt = new StringBuilder("SELECT * FROM `" + table.name() + "` WHERE ");
+    Map<MysqlType, Object> params = new HashMap<>();
+
+    stmt.append(stringifyFieldQueryGroup(query.getRoot(), table, params));
+
+    // Append all additional query groups with their connection leading them
+    for (Tuple<QueryConnection, FieldQueryGroup> additional : query.getAdditionals()) {
+      stmt.append(" ").append(additional.a()).append(" ");
+      stmt.append(stringifyFieldQueryGroup(additional.b(), table, params));
+    }
+
+    if (query.getLimit() != null || onlyFirst)
+      stmt.append(" LIMIT ").append(onlyFirst ? 1 : query.getLimit());
+
+    if (query.getSkip() != null)
+      stmt.append(" OFFSET ").append(query.getSkip());
+
+    PreparedStatement ps = conn.prepareStatement(stmt + ";");
+
+    int i = 0;
+    for (Map.Entry<MysqlType, Object> param : params.entrySet())
+      ps.setObject(++i, translateValue(param.getKey(), param.getValue()));
+
+    logger.logDebug(ps.toString());
+    return ps;
+  }
+
   ////////////////////////////////// Row Mapping //////////////////////////////////////
 
   /**
@@ -416,21 +578,21 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   }
 
   /**
-   * Translate a column value into the corresponding used java-type as
+   * Translate a value into the corresponding used java-type as
    * specified by the enum {@link MysqlType}
-   * @param col Column that this value stems from
+   * @param type Type of the value to translate
    * @param value Column value
    * @return Transformed value
    */
-  private Object translateColumnValue(MysqlColumn col, Object value) {
+  private Object translateValue(MysqlType type, Object value) {
     // Turn byte[]'s (binary columns) into UUIDs
-    if (col.getType() == MysqlType.UUID) {
+    if (type == MysqlType.UUID) {
       ByteBuffer bb = ByteBuffer.wrap((byte[]) value);
       value = new UUID(bb.getLong(), bb.getLong());
     }
 
     // Turn the driver's LocalDateTime into java's default Date
-    if (col.getType() == MysqlType.DATETIME) {
+    if (type == MysqlType.DATETIME) {
       if (value instanceof LocalDateTime ldt)
         value = Date.from(ldt.atZone(ZoneId.systemDefault()).toInstant());
     }
@@ -480,7 +642,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
             continue;
 
           // Directly set the known model's field value to the corresponding column's value
-          Object value = translateColumnValue(col, rs.getObject(targRemCol.getName()));
+          Object value = translateValue(col.getType(), rs.getObject(targRemCol.getName()));
           knownCol.getModelField().set(knownInst, value);
           remainingColumns.remove(targRemCol);
         }
@@ -492,7 +654,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       }
 
       // Directly set the model's field value to the corresponding column's value
-      col.getModelField().set(inst, translateColumnValue(col, rs.getObject(col.getName())));
+      col.getModelField().set(inst, translateValue(col.getType(), rs.getObject(col.getName())));
       remainingColumns.remove(col);
     }
 
@@ -524,13 +686,16 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     MysqlTable table = getTableFromModel(type, false);
     String idStr = id == null ? null : id.toString();
 
-    if (
-      conn.prepareStatement(
-        "DELETE FROM `" + table.name() + "` WHERE `id` = " + uuidToBin(id) + ";"
-      ).executeUpdate() == 0
-    ) {
-      throw new ModelNotFoundException(tableNameToModelName(table.name(), true), idStr);
-    }
+    PreparedStatement ps = conn.prepareStatement(
+      "DELETE FROM `" + table.name() + "` WHERE `id` = " + uuidToBin(id) + ";"
+    );
+
+    logger.logDebug(ps.toString());
+
+    if (ps.executeUpdate() == 0)
+      throw new ModelNotFoundException(dbNameToModelName(table.name(), true), idStr);
+
+    ps.close();
   }
 
   //////////////////////////////////// Writing ////////////////////////////////////////
@@ -603,17 +768,21 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       );
 
       ps.setObject(1, value);
+      logger.logDebug(ps.toString());
+
       ResultSet rs = ps.executeQuery();
 
       // There was a result (where there shouldn't be), throw
       if (rs.next()) {
         if (rs.getInt(1) > 0)
           throw new DuplicatePropertyException(
-            tableNameToModelName(table.name(), true),
-            tableNameToModelName(column.getName(), false),
+            dbNameToModelName(table.name(), true),
+            dbNameToModelName(column.getName(), false),
             value
           );
       }
+
+      ps.close();
     }
   }
   /**
@@ -769,7 +938,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       ps.setObject(++i, value);
     }
 
-    logger.logInfo(ps.toString());
+    logger.logDebug(ps.toString());
     ps.executeUpdate();
   }
 

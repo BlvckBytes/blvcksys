@@ -214,6 +214,14 @@ public abstract class APlayerCommand extends Command {
       // Send the exceptions text to the executor
       p.spigot().sendMessage(e.getText());
       return false;
+    } catch (Exception e) {
+      logger.logError(e);
+      p.sendMessage(
+        cfg.get(ConfigKey.ERR_INTERNAL)
+          .withPrefix()
+          .asScalar()
+      );
+      return false;
     }
   }
 

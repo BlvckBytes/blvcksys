@@ -3,7 +3,6 @@ package me.blvckbytes.blvcksys.commands;
 import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
-import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
@@ -21,14 +20,14 @@ import java.util.Optional;
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 05/06/2022
 
-  Delete an existing warp by it's name.
+  Teleport to an existing warping-point.
 */
 @AutoConstruct
-public class DelwarpCommand extends APlayerCommand {
+public class WarpCommand extends APlayerCommand {
 
   private final IPersistence pers;
 
-  public DelwarpCommand(
+  public WarpCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
@@ -37,9 +36,9 @@ public class DelwarpCommand extends APlayerCommand {
   ) {
     super(
       plugin, logger, cfg, refl,
-      "delwarp",
-      "Delete an existing warp",
-      PlayerPermission.DELWARP,
+      "warp",
+      "Teleport to a warping point",
+      null,
       new CommandArgument("<name>", "Name of the warp")
     );
 
@@ -67,11 +66,12 @@ public class DelwarpCommand extends APlayerCommand {
       return;
     }
 
+    // TODO: Also add a teleport timer here
     WarpModel warp = res.get();
+    p.teleport(warp.getLoc());
 
-    pers.delete(warp);
     p.sendMessage(
-      cfg.get(ConfigKey.WARP_DELETED)
+      cfg.get(ConfigKey.WARP_TELEPORTED)
         .withPrefix()
         .withVariable("name", warp.getName())
         .asScalar()

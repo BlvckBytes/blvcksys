@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.persistence.mysql;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 
 import java.util.Date;
@@ -101,7 +102,10 @@ public enum MysqlType {
   ;
 
   private final String queryType;
+
+  @Getter
   private final Class<?> javaEquivalent;
+
   private final boolean hasLength;
   private final EqualityOperation[] supportedOps;
 

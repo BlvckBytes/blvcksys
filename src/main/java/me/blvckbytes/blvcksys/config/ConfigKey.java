@@ -573,7 +573,21 @@ public enum ConfigKey {
   //=========================================================================//
 
   WARP_EXISTS("warp.exists", "$0Es existiert bereits ein Warp namens $4{{name}}$0!"),
-  WARP_CREATED("warp.created", "$0Der Warp $3{{name}} $0wurde bei $3{{location}} $0erstellt!"),
+  WARP_NOT_EXISTING("warp.not_existing", "$0Es existiert kein Warp namens $4{{name}}$0!"),
+  WARP_CREATED("warp.created", "$0Der Warp $3{{name}} $0wurde bei $3{{location}} $0erstellt."),
+  WARP_DELETED("warp.deleted", "$0Der Warp $3{{name}} $0wurde $3gelöscht$0."),
+  WARP_TELEPORTED("warp.teleported", "$0Du wurdest zum Warp $3{{name}} $0teleportiert."),
+  WARP_LIST_PREFIX("warp.list.prefix", "$0Verfügbare Warps: "),
+  WARP_LIST_NO_ITEMS("warp.list.no_items", "$4Keine Warps verfügbar"),
+  WARP_LIST_ITEM_FORMAT("warp.list.item_format", "$3{{name}}$1"),
+  WARP_LIST_HOVER(
+    "warp.list.hover",
+    "$0Erstellt am: $3{{created_at}}",
+    "$0Zuletzt geändert: $3{{updated_at}}",
+    "$0Erstellt von: $3{{creator}}",
+    "$0Welt: $3{{world}}",
+    "$0Position: $3{{location}}"
+  ),
 
   //=========================================================================//
   //                            Generic Messages                             //

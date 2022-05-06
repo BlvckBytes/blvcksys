@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.commands;
 
 import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
+import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -8,18 +9,31 @@ import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.WarpModel;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
+import org.bukkit.Location;
 import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.List;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 05/06/2022
+
+  Get a list of all available warps which shows additional
+  information on hovering the individual warps.
+*/
 @AutoConstruct
 public class WarpsCommand extends APlayerCommand {
 
+  // Date format for created and updated timestamp displaying
   private static final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+
   private final IPersistence pers;
 
   public WarpsCommand(
@@ -42,28 +56,44 @@ public class WarpsCommand extends APlayerCommand {
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     List<WarpModel> warps = pers.list(WarpModel.class);
+    TextComponent res = new TextComponent(
+      cfg.get(ConfigKey.WARP_LIST_PREFIX)
+        .withPrefix()
+        .asScalar()
+    );
 
-    p.sendMessage("Num warps: " + warps.size());
+    if (warps.size() == 0)
+      res.addExtra(new TextComponent(cfg.get(ConfigKey.WARP_LIST_NO_ITEMS).asScalar()));
 
-    for (WarpModel warp : warps) {
+    for (int i = 0; i < warps.size(); i++) {
+      WarpModel warp = warps.get(i);
+      TextComponent warpComp = new TextComponent(
+        cfg.get(ConfigKey.WARP_LIST_ITEM_FORMAT)
+          .withVariable("name", warp.getName())
+          .asScalar()
+        + (i == warps.size() - 1 ? "" : ", ")
+      );
 
-      World w = warp.getLoc().getWorld();
-      Date ca = warp.getCreatedAt();
-      Date ua = warp.getUpdatedAt();
+      Location l = warp.getLoc();
+      World w = l.getWorld();
+      warpComp.setHoverEvent(new HoverEvent(
+        HoverEvent.Action.SHOW_TEXT,
+        new Text(
+          cfg.get(ConfigKey.WARP_LIST_HOVER)
+            .withVariable("created_at", df.format(warp.getCreatedAt()))
+            .withVariable("updated_at", warp.getUpdatedAt() == null ? "/" : df.format(warp.getUpdatedAt()))
+            .withVariable("creator", warp.getCreator().getName())
+            .withVariable("world", w == null ? "?" : w.getName())
+            .withVariable("location", "(" + l.getBlockX() + " | " + l.getBlockY() + " | " + l.getBlockZ() + ")")
+            .asScalar()
+        )
+      ));
 
-      p.sendMessage("---------------[" + warp.getName() + "]-----------------");
-      p.sendMessage("ID: " + warp.getId());
-      p.sendMessage("Created at: " + (ca == null ? null : df.format(ca)));
-      p.sendMessage("Updated at: " + (ua == null ? null : df.format(ua)));
-      p.sendMessage("Creator Name: " + warp.getCreator().getName());
-      p.sendMessage("Creator ID: " + warp.getCreator().getUniqueId());
-      p.sendMessage("Loc X: " + warp.getLoc().getX());
-      p.sendMessage("Loc Y: " + warp.getLoc().getY());
-      p.sendMessage("Loc Z: " + warp.getLoc().getZ());
-      p.sendMessage("Loc YAW: " + warp.getLoc().getYaw());
-      p.sendMessage("Loc PITCH: " + warp.getLoc().getPitch());
-      p.sendMessage("Loc WORLD: " + (w == null ? null : w.getName()));
-      p.sendMessage("---------------[" + warp.getName() + "]-----------------");
+      warpComp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/warp " + warp.getName()));
+
+      res.addExtra(warpComp);
     }
+
+    p.spigot().sendMessage(res);
   }
 }

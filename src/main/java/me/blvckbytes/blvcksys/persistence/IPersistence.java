@@ -5,6 +5,7 @@ import me.blvckbytes.blvcksys.persistence.models.APersistentModel;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -54,4 +55,21 @@ public interface IPersistence {
    * @return First model, empty if there were no matches
    */
   <T extends APersistentModel> Optional<T> findFirst(QueryBuilder<T> query) throws PersistenceException;
+
+  /**
+   * Get a set of properties for all models that match
+   * the specified query in their raw, unwrapped form
+   * @param query Query to execute
+   * @param properties Properties to receive within the map
+   * @return List of properties
+   */
+  <T extends APersistentModel> List<Map<String, Object>> findRaw(QueryBuilder<T> query, String... properties);
+
+  /**
+   * Get a set of properties for all models that are available
+   * @param type Type of model to list
+   * @param properties Properties to receive within the map
+   * @return List of properties for all available items
+   */
+  <T extends APersistentModel> List<Map<String, Object>> listRaw(Class<T> type, String... properties);
 }

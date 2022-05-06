@@ -53,6 +53,10 @@ public class WarpsCommand extends APlayerCommand {
     this.pers = pers;
   }
 
+  //=========================================================================//
+  //                                 Handler                                 //
+  //=========================================================================//
+
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     List<WarpModel> warps = pers.list(WarpModel.class);

@@ -128,7 +128,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   @Override
   public <T extends APersistentModel> List<T> find(QueryBuilder<T> query) throws PersistenceException {
     try {
-      PreparedStatement ps = buildQuery(query, false);
+      PreparedStatement ps = buildQuery(query.getModel(), query, false);
       ResultSet rs = ps.executeQuery();
       List<T> res = mapRows(query.getModel(), rs);
 
@@ -147,7 +147,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   @Override
   public <T extends APersistentModel> Optional<T> findFirst(QueryBuilder<T> query) throws PersistenceException {
     try {
-      PreparedStatement ps = buildQuery(query, true);
+      PreparedStatement ps = buildQuery(query.getModel(), query, true);
       ResultSet rs = ps.executeQuery();
 
       if (!rs.next())
@@ -159,6 +159,30 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       ps.close();
 
       return res;
+    } catch (PersistenceException e) {
+      throw e;
+    } catch (Exception e) {
+      logger.logError(e);
+      throw new PersistenceException("An internal error occurred");
+    }
+  }
+
+  @Override
+  public <T extends APersistentModel> List<Map<String, Object>> findRaw(QueryBuilder<T> query, String... properties) {
+    try {
+      return readRowsRaw(query.getModel(), query, properties);
+    } catch (PersistenceException e) {
+      throw e;
+    } catch (Exception e) {
+      logger.logError(e);
+      throw new PersistenceException("An internal error occurred");
+    }
+  }
+
+  @Override
+  public <T extends APersistentModel> List<Map<String, Object>> listRaw(Class<T> type, String... properties) {
+    try {
+      return readRowsRaw(type, null, properties);
     } catch (PersistenceException e) {
       throw e;
     } catch (Exception e) {
@@ -458,6 +482,23 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   ///////////////////////////////// Query Builder /////////////////////////////////////
 
   /**
+   * Get a table's column by it's name
+   * @param table Table containing the column
+   * @param name Name of the target column
+   */
+  private MysqlColumn getColumnByName(MysqlTable table, String name) {
+    // TODO: Allow for queries to target transformed fields by their name in the known-model
+    return table.columns().stream()
+      .filter(
+        c -> dbNameToModelName(c.getName(), false).equals(name)
+      )
+      .findFirst()
+      .orElseThrow(() -> new RuntimeException(
+        "The query field " + name + " is not a member of the model " + dbNameToModelName(table.name(), true)
+      ));
+  }
+
+  /**
    * Stringify a field query to a partial statement, for example:
    * field=test, op=EQ, value=5 would yield: `test` == ? and add (INTEGER, 5) to params
    * @param query Query to stringify
@@ -466,15 +507,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    * @return Stringified query
    */
   private String stringifyFieldQuery(FieldQuery query, MysqlTable table, Map<MysqlType, Object> params) {
-    MysqlColumn targCol = table.columns().stream()
-      .filter(
-        c -> dbNameToModelName(c.getName(), false).equals(query.field())
-      )
-      .findFirst()
-      .orElseThrow(() -> new RuntimeException(
-        "The query field " + query.field() + " is not a member of the model " + dbNameToModelName(table.name(), true)
-      ));
-
+    MysqlColumn targCol = getColumnByName(table, query.field());
     Class<?> targType = targCol.getType().getJavaEquivalent();
     Class<?> queryType = query.value().getClass();
     if (targType != queryType)
@@ -523,29 +556,54 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
   /**
    * Build a selecting query from a query builder's state
-   * @param query Query builder to build from
+   * @param query Query builder to build from, leave at null to have no WHERE clause
    * @param onlyFirst Whether to only query for the first result
+   * @param fields Fields to select, leave empty to select everything
    * @return Built query statement with all parameters applied
    */
-  private PreparedStatement buildQuery(QueryBuilder<?> query, boolean onlyFirst) throws Exception {
-    MysqlTable table = getTableFromModel(query.getModel(), false);
+  private<T extends APersistentModel> PreparedStatement buildQuery(
+    Class<T> model,
+    @Nullable QueryBuilder<?> query,
+    boolean onlyFirst,
+    String ...fields
+  ) throws Exception {
+    MysqlTable table = getTableFromModel(model, false);
 
-    StringBuilder stmt = new StringBuilder("SELECT * FROM `" + table.name() + "` WHERE ");
-    Map<MysqlType, Object> params = new HashMap<>();
+    StringBuilder stmt = new StringBuilder("SELECT ");
 
-    stmt.append(stringifyFieldQueryGroup(query.getRoot(), table, params));
+    if (fields.length == 0)
+      stmt.append("*");
 
-    // Append all additional query groups with their connection leading them
-    for (Tuple<QueryConnection, FieldQueryGroup> additional : query.getAdditionals()) {
-      stmt.append(" ").append(additional.a()).append(" ");
-      stmt.append(stringifyFieldQueryGroup(additional.b(), table, params));
+    else {
+      for (int i = 0; i < fields.length; i++) {
+        String field = fields[i];
+        String name = getColumnByName(table, field).getName();
+        stmt.append("`").append(name).append("`").append(i != fields.length - 1 ? ", " : "");
+      }
     }
 
-    if (query.getLimit() != null || onlyFirst)
-      stmt.append(" LIMIT ").append(onlyFirst ? 1 : query.getLimit());
+    stmt.append(" FROM `").append(table.name()).append("`");
+    Map<MysqlType, Object> params = new HashMap<>();
 
-    if (query.getSkip() != null)
-      stmt.append(" OFFSET ").append(query.getSkip());
+    if (query != null) {
+
+      stmt.append(" WHERE ");
+
+      stmt.append(stringifyFieldQueryGroup(query.getRoot(), table, params));
+
+      // Append all additional query groups with their connection leading them
+      for (Tuple<QueryConnection, FieldQueryGroup> additional : query.getAdditionals()) {
+        stmt.append(" ").append(additional.a()).append(" ");
+        stmt.append(stringifyFieldQueryGroup(additional.b(), table, params));
+      }
+
+      if (query.getLimit() != null || onlyFirst)
+        stmt.append(" LIMIT ").append(onlyFirst ? 1 : query.getLimit());
+
+      if (query.getSkip() != null)
+        stmt.append(" OFFSET ").append(query.getSkip());
+
+    }
 
     PreparedStatement ps = conn.prepareStatement(stmt + ";");
 
@@ -554,7 +612,52 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       ps.setObject(++i, translateValue(param.getKey(), param.getValue()));
 
     logger.logDebug(ps.toString());
+
     return ps;
+  }
+
+  ////////////////////////////////// Raw Reading //////////////////////////////////////
+
+  /**
+   * Read a ResultSet's rows of data as raw k-v pairs and collect these maps into a list
+   * @param model Model used to represent the individual result rows
+   * @param query Query builder to build from, leave at null to have no WHERE clause
+   * @param columns Columns to select
+   * @return List of raw k-v pairs, as many as available rows
+   */
+  private<T extends APersistentModel> List<Map<String, Object>> readRowsRaw(
+    Class<T> model,
+    @Nullable QueryBuilder<T> query,
+    String[] columns
+  ) throws Exception {
+    List<Map<String, Object>> res = new ArrayList<>();
+
+    PreparedStatement ps = buildQuery(model, query, false, columns);
+    ResultSet rs = ps.executeQuery();
+
+    while(rs.next())
+      res.add(readRowRaw(rs, columns));
+
+    rs.close();
+    ps.close();
+
+    return res;
+  }
+
+  /**
+   * Read an individual row (the one currently selected by the ResultSet's
+   * cursor) into a raw k-v map
+   * @param rs ResultSet containing the row to be mapped
+   * @param columns Selected columns that this ResultSet contains
+   * @return Model with fields containing the row's data
+   */
+  private Map<String, Object> readRowRaw(ResultSet rs, String[] columns) throws SQLException {
+   Map<String, Object> res = new HashMap<>();
+
+   for (String property : columns)
+     res.put(property, rs.getObject(property));
+
+   return res;
   }
 
   ////////////////////////////////// Row Mapping //////////////////////////////////////

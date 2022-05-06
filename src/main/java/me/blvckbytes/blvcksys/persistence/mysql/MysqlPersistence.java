@@ -9,12 +9,14 @@ import me.blvckbytes.blvcksys.di.IAutoConstructer;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
 import me.blvckbytes.blvcksys.persistence.exceptions.DuplicatePropertyException;
+import me.blvckbytes.blvcksys.persistence.exceptions.ModelNotFoundException;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.APersistentModel;
 import me.blvckbytes.blvcksys.persistence.transformers.IDataTransformer;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -75,40 +77,43 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   public void store(APersistentModel model) throws PersistenceException {
     try {
       writeModel(model);
-    }
-
-    // Re-throw persistence exceptions
-    catch (PersistenceException e) {
+    } catch (PersistenceException e) {
       throw e;
-    }
-
-    // Map various other issues to "internal errors"
-    catch (Exception e) {
+    } catch (Exception e) {
       logger.logError(e);
       throw new PersistenceException("An internal error occurred");
     }
   }
 
   @Override
-  public APersistentModel findById(UUID id) throws PersistenceException {
-    return null;
-  }
-
-  @Override
-  public APersistentModel findById(String id) throws PersistenceException {
-    return null;
-  }
-
-  @Override
-  public<T extends APersistentModel> List<T> list(Class<T> type) {
+  public<T extends APersistentModel> List<T> list(Class<T> type) throws PersistenceException {
     try {
       MysqlTable table = getTableFromModel(type, false);
       ResultSet rs = conn.prepareStatement("SELECT * FROM `" + table.name() + "`").executeQuery();
       return mapRows(type, rs);
+    } catch (PersistenceException e) {
+      throw e;
     } catch (Exception e) {
       logger.logError(e);
-      return new ArrayList<>();
+      throw new PersistenceException("An internal error occurred");
     }
+  }
+
+  @Override
+  public <T extends APersistentModel>void delete(Class<T> type, UUID id) throws PersistenceException {
+    try {
+      deleteModel(type, id);
+    } catch (PersistenceException e) {
+      throw e;
+    } catch (Exception e) {
+      logger.logError(e);
+      throw new PersistenceException("An internal error occurred");
+    }
+  }
+
+  @Override
+  public void delete(APersistentModel model) throws PersistenceException {
+    delete(model.getClass(), model.getId());
   }
 
   @Override
@@ -498,7 +503,26 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     return res;
   }
 
-  /////////////////////////////////// Insertion ///////////////////////////////////////
+  //////////////////////////////////// Deletion ////////////////////////////////////////
+
+  /**
+   * Delete an existing modelfrom the database by it's ID
+   * @param id ID of the model
+   */
+  private void deleteModel(Class<? extends APersistentModel> type, UUID id) throws Exception {
+    MysqlTable table = getTableFromModel(type, false);
+    String idStr = id == null ? null : id.toString();
+
+    if (
+      conn.prepareStatement(
+        "DELETE FROM `" + table.name() + "` WHERE `id` = " + uuidToBin(id) + ";"
+      ).executeUpdate() == 0
+    ) {
+      throw new ModelNotFoundException(tableNameToModelName(table.name(), true), idStr);
+    }
+  }
+
+  //////////////////////////////////// Writing ////////////////////////////////////////
 
   /**
    * Tries to resolve a transformed column into it's value after the
@@ -563,7 +587,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
         column.getName() +
         "` = ?" +
         // Skip self, if the model already has an ID
-        (hasId ? " AND `id` != " + uuidToBin("'" + model.getId() + "'") : "") +
+        (hasId ? " AND `id` != " + uuidToBin(model.getId()) : "") +
         ";"
       );
 
@@ -581,14 +605,24 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       }
     }
   }
+  /**
+   * Conversion of a UUID (dash-separated) to a 16 byte binary number
+   * @param u UUID value
+   * @return Conversion instruction
+   */
+  private String uuidToBin(@Nullable UUID u) {
+    return uuidToBin((u == null ? "null" : u.toString()), true);
+  }
 
   /**
    * Conversion of a UUID (dash-separated) to a 16 byte binary number
    * @param value String value to pass to the conversion function
+   * @param immediate Whether this is an immediate value and no placeholder (?)
    * @return Conversion instruction
    */
-  private String uuidToBin(String value) {
-    return "UNHEX(REPLACE(" + value + ", \"-\", \"\"))";
+  private String uuidToBin(String value, boolean immediate) {
+    String im = immediate ? "'" : "";
+    return "UNHEX(REPLACE(" + im + value + im + ", \"-\", \"\"))";
   }
 
   /**
@@ -649,7 +683,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
         // UUIDs need to be converted to binary
         if (column.getType().equals(MysqlType.UUID))
-          stmt.append(uuidToBin("?"));
+          stmt.append(uuidToBin("?", false));
 
         else
           stmt.append('?');
@@ -667,7 +701,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
         // UUIDs need to be converted to binary
         if (column.getType().equals(MysqlType.UUID))
-          stmt.append(uuidToBin("?"));
+          stmt.append(uuidToBin("?", false));
 
         else
           stmt.append('?');
@@ -678,7 +712,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
     // Append an update filter
     else {
-      stmt.append("WHERE `id` = ").append(uuidToBin("'" + model.getId() + "'")).append(";");
+      stmt.append("WHERE `id` = ").append(uuidToBin(model.getId())).append(";");
     }
 
     PreparedStatement ps = conn.prepareStatement(stmt.toString());

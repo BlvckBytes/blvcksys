@@ -14,10 +14,11 @@ import org.bukkit.entity.Player;
 public enum PlayerPermission {
 
   //=========================================================================//
-  //                               SETWARP Command                           //
+  //                                WARP Command                             //
   //=========================================================================//
 
   SETWARP("bvs.setwarp"),
+  DELWARP("bvs.delwarp"),
 
   //=========================================================================//
   //                              GAMEMODE Command                           //

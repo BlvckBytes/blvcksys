@@ -608,6 +608,7 @@ public enum ConfigKey {
 
   ERR_INTERNAL("errors.internal", "$5Es trat ein interner Fehler auf!"),
   ERR_INTPARSE("errors.intparse", "$4Die Eingabe $5{{number}} $4ist keine Ganzzahl!"),
+  ERR_FLOATPARSE("errors.floatparse", "$4Die Eingabe $5{{number}} $4ist keine Kommazahl!"),
   ERR_PERMISSION("errors.permission", "$4Dir fehlt das Recht $5{{permission}} $4um diesen Befehl ausführen zu können!"),
   ERR_OPTIONPARSE("errors.optionparse", "$4Die Eingabe $5{{option}} $4ist keine gültige Wahl!"),
   ERR_NOT_ONLINE("errors.not_online", "$4Der Spieler $5{{player}} $4ist nicht online!"),

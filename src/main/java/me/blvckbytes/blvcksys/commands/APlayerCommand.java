@@ -586,10 +586,27 @@ public abstract class APlayerCommand extends Command {
     return res.get();
   }
 
-  ///////////////////////////// Parsing: Integer ///////////////////////////////
+  ///////////////////////////// Parsing: Numbers ///////////////////////////////
 
   /**
-   * Try to parse an integer value from a string and provide a fallback
+   * Try to parse a floating point value from a string
+   * @param args Arguments of the command
+   * @param index Index within the arguments to use
+   * @return Parsed float
+   */
+  protected float parseFloat(String[] args, int index) throws CommandException {
+    if (index >= args.length)
+      throw new UsageMismatchException(cfg, buildAdvancedUsage(index));
+
+    try {
+      return Float.parseFloat(args[index].replace(",", "."));
+    } catch (NumberFormatException e) {
+      throw new InvalidFloatException(cfg, args[index]);
+    }
+  }
+
+  /**
+   * Try to parse an integer value from a string
    * @param args Arguments of the command
    * @param index Index within the arguments to use
    * @return Parsed integer

@@ -145,6 +145,11 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   }
 
   @Override
+  public <T extends APersistentModel> int count(QueryBuilder<T> query) throws PersistenceException {
+    return 0;
+  }
+
+  @Override
   public <T extends APersistentModel> Optional<T> findFirst(QueryBuilder<T> query) throws PersistenceException {
     try {
       PreparedStatement ps = buildQuery(query.getModel(), query, true);
@@ -938,8 +943,6 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     Map<String, Object> replaceCache = new HashMap<>();
     checkDuplicateKeys(model, table, replaceCache);
 
-    // INSERT INTO `x` (a, b, c) VALUES (?, ?, ?);
-    // UPDATE `x` SET a = ?, b = ?, c = ? WHERE `id` = ?;
     boolean isInsert = model.getId() == null;
     List<MysqlColumn> columns = table.columns();
 
@@ -1017,11 +1020,12 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       }
 
       // Generate created at timestamp on insertions or set when missing on updates
-      else if (column.getName().equals("created_at")) {
-        if (isInsert || model.getCreatedAt() == null) {
-          value = new Date();
-          column.getModelField().set(model, value);
-        }
+      else if (
+        column.getName().equals("created_at") &&
+        (isInsert || model.getCreatedAt() == null)
+      ) {
+        value = new Date();
+        column.getModelField().set(model, value);
       }
 
       // Updated at starts out as NULL for insertions or is updated on every update

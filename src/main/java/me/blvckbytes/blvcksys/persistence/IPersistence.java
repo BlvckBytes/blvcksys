@@ -50,6 +50,12 @@ public interface IPersistence {
   <T extends APersistentModel> List<T> find(QueryBuilder<T> query) throws PersistenceException;
 
   /**
+   * Count all models that match the specified query
+   * @param query Query to execute
+   */
+  <T extends APersistentModel> int count(QueryBuilder<T> query) throws PersistenceException;
+
+  /**
    * Find the first model that matches the specified query
    * @param query Query to execute
    * @return First model, empty if there were no matches

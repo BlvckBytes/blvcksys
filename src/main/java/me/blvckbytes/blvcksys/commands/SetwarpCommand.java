@@ -10,11 +10,17 @@ import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.exceptions.DuplicatePropertyException;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.WarpModel;
+import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
+import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
+import me.blvckbytes.blvcksys.util.ChatButtons;
+import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.Optional;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -26,13 +32,15 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class SetwarpCommand extends APlayerCommand {
 
   private final IPersistence pers;
+  private final ChatUtil chat;
 
   public SetwarpCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
-    @AutoInject IPersistence pers
+    @AutoInject IPersistence pers,
+    @AutoInject ChatUtil chat
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -43,6 +51,7 @@ public class SetwarpCommand extends APlayerCommand {
     );
 
     this.pers = pers;
+    this.chat = chat;
   }
 
   //=========================================================================//
@@ -55,6 +64,48 @@ public class SetwarpCommand extends APlayerCommand {
     Location l = p.getLocation();
 
     try {
+      WarpModel existing = pers.findFirst(
+        new QueryBuilder<>(
+          WarpModel.class,
+          "name", EqualityOperation.EQ, name
+        )
+      ).orElse(null);
+
+      if (existing != null) {
+        chat.sendButtons(p, ChatButtons.buildYesNo(
+          cfg.get(ConfigKey.WARP_OVERWRITE_PREFIX)
+            .withVariable("name", name)
+            .withPrefixes()
+            .asScalar(),
+          plugin, cfg,
+
+          // Yes
+          () -> {
+            // Update the location
+            existing.setLoc(p.getLocation());
+            pers.store(existing);
+
+            p.sendMessage(
+              cfg.get(ConfigKey.WARP_OVERWRITE_SAVED)
+                .withPrefix()
+                .withVariable("name", name)
+                .asScalar()
+            );
+          },
+
+          // No
+          () -> {
+            p.sendMessage(
+              cfg.get(ConfigKey.WARP_OVERWRITE_CANCELLED)
+                .withPrefix()
+                .asScalar()
+            );
+          }
+        ));
+
+        return;
+      }
+
       WarpModel warp = new WarpModel(name, l, p);
       pers.store(warp);
 

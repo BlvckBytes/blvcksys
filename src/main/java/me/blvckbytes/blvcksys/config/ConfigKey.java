@@ -577,6 +577,13 @@ public enum ConfigKey {
   WARP_CREATED("warp.created", "$0Der Warp $3{{name}} $0wurde bei $3{{location}} $0erstellt."),
   WARP_DELETED("warp.deleted", "$0Der Warp $3{{name}} $0wurde $3gelöscht$0."),
   WARP_TELEPORTED("warp.teleported", "$0Du wurdest zum Warp $3{{name}} $0teleportiert."),
+  WARP_OVERWRITE_PREFIX(
+    "warp.overwrite.prefix",
+    "$0Der Warp $3{{name}} $0existiert bereits.",
+    "Soll dieser $3überschrieben $0werden?: "
+  ),
+  WARP_OVERWRITE_CANCELLED("warp.overwrite.cancelled", "$0Die Erstellung wurde $4abgebrochen$0."),
+  WARP_OVERWRITE_SAVED("warp.overwrite.saved", "$0Du hast den Warp $3{{name}} $0überschrieben."),
   WARP_LIST_PREFIX("warp.list.prefix", "$0Verfügbare Warps: "),
   WARP_LIST_NO_ITEMS("warp.list.no_items", "$4Keine Warps verfügbar"),
   WARP_LIST_ITEM_FORMAT("warp.list.item_format", "$3{{name}}$1"),

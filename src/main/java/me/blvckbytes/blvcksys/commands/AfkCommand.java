@@ -1,9 +1,12 @@
 package me.blvckbytes.blvcksys.commands;
 
 import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
+import me.blvckbytes.blvcksys.commands.exceptions.CooldownException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.events.IAfkListener;
+import me.blvckbytes.blvcksys.persistence.IPersistence;
+import me.blvckbytes.blvcksys.persistence.models.CooldownSessionModel;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -20,22 +23,22 @@ import org.bukkit.plugin.java.JavaPlugin;
 @AutoConstruct
 public class AfkCommand extends APlayerCommand {
 
-  // TODO: Connect to the persistence's way of handling cooldowns
-
   // Cooldown token for the AFK cooldown
   private static final String CT_AFK = "cmd_afk";
 
-  // Cooldown duration for the AFK cooldown
-  private static final long CD_AFK = 1000 * 60;
+  // Cooldown duration for the AFK command in seconds
+  private static final int CD_AFK = 60;
 
   private final IAfkListener afk;
+  private final IPersistence pers;
 
   public AfkCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
-    @AutoInject IAfkListener afk
+    @AutoInject IAfkListener afk,
+    @AutoInject IPersistence pers
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -45,6 +48,7 @@ public class AfkCommand extends APlayerCommand {
     );
 
     this.afk = afk;
+    this.pers = pers;
   }
 
   @Override
@@ -59,6 +63,18 @@ public class AfkCommand extends APlayerCommand {
       return;
     }
 
+    long cooldown = CooldownSessionModel.getCooldownRemaining(p, pers, CT_AFK);
+
+    // Command cooldown still active
+    if (cooldown > 0) {
+      throw new CooldownException(
+        cfg.get(ConfigKey.ERR_COOLDOWN)
+          .withPrefix(),
+        cooldown
+      );
+    }
+
+    pers.store(new CooldownSessionModel(p, CD_AFK, CT_AFK));
     afk.setAFK(p);
   }
 }

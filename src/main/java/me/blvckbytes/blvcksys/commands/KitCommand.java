@@ -30,8 +30,10 @@ import java.util.stream.Stream;
 @AutoConstruct
 public class KitCommand extends APlayerCommand {
 
-  private IPersistence pers;
-  private IGiveCommand give;
+  // TODO: Implement cooldowns
+
+  private final IPersistence pers;
+  private final IGiveCommand give;
 
   public KitCommand(
     @AutoInject JavaPlugin plugin,

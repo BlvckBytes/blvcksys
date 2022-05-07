@@ -5,6 +5,8 @@ import me.blvckbytes.blvcksys.commands.exceptions.*;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
+import me.blvckbytes.blvcksys.persistence.IPersistence;
+import me.blvckbytes.blvcksys.persistence.models.CooldownSessionModel;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
@@ -59,9 +61,6 @@ public abstract class APlayerCommand extends Command {
   @Getter
   private final PlayerPermission rootPerm;
 
-  // Mapping a player to their map of named cooldowns
-  private final Map<Player, Map<String, Long>> playerCooldowns;
-
   static {
     registeredCommands = new HashMap<>();
   }
@@ -107,8 +106,6 @@ public abstract class APlayerCommand extends Command {
     this.cfg = cfg;
     this.refl = refl;
     this.rootPerm = rootPerm;
-
-    this.playerCooldowns = new HashMap<>();
 
     // Register this command within the server's command map
     try {
@@ -223,6 +220,31 @@ public abstract class APlayerCommand extends Command {
       );
       return false;
     }
+  }
+
+  //=========================================================================//
+  //                                Cooldowns                                //
+  //=========================================================================//
+
+  /**
+   * Protect a section of code with a cooldown
+   * @param p Target player
+   * @param pers Persistence ref
+   * @param token Unique token representing this command
+   * @param duration Duration in seconds
+   */
+  protected void cooldownGuard(Player p, IPersistence pers, String token, int duration) throws CooldownException {
+    long cooldown = CooldownSessionModel.getCooldownRemaining(p, pers, token);
+
+    if (cooldown > 0) {
+      throw new CooldownException(
+        cfg.get(ConfigKey.ERR_COOLDOWN)
+          .withPrefix(),
+        cooldown
+      );
+    }
+
+    pers.store(new CooldownSessionModel(p, duration, token));
   }
 
   //=========================================================================//

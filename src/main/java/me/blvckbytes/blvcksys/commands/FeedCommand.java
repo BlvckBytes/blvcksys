@@ -1,9 +1,12 @@
 package me.blvckbytes.blvcksys.commands;
 
 import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
+import me.blvckbytes.blvcksys.commands.exceptions.CooldownException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
+import me.blvckbytes.blvcksys.persistence.IPersistence;
+import me.blvckbytes.blvcksys.persistence.models.CooldownSessionModel;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -22,11 +25,20 @@ import java.util.stream.Stream;
 @AutoConstruct
 public class FeedCommand extends APlayerCommand {
 
+  // Cooldown token for the feed cooldown
+  private static final String CT_FEED = "cmd_feed";
+
+  // Cooldown duration for the feed command in seconds
+  private static final int CD_FEED = 60;
+
+  private final IPersistence pers;
+
   public FeedCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
-    @AutoInject MCReflect refl
+    @AutoInject MCReflect refl,
+    @AutoInject IPersistence pers
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -35,6 +47,8 @@ public class FeedCommand extends APlayerCommand {
       PlayerPermission.FEED,
       new CommandArgument("[player]", "The player to feed", PlayerPermission.FEED_OTHERS)
     );
+
+    this.pers = pers;
   }
 
   //=========================================================================//
@@ -53,6 +67,19 @@ public class FeedCommand extends APlayerCommand {
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     Player target = onlinePlayer(args, 0, p);
     boolean isSelf = target.equals(p);
+
+    long cooldown = CooldownSessionModel.getCooldownRemaining(p, pers, CT_FEED);
+
+    // Command cooldown still active
+    if (cooldown > 0) {
+      throw new CooldownException(
+        cfg.get(ConfigKey.ERR_COOLDOWN)
+          .withPrefix(),
+        cooldown
+      );
+    }
+
+    pers.store(new CooldownSessionModel(p, CD_FEED, CT_FEED));
 
     // Apply the food level increase
     int before = target.getFoodLevel();

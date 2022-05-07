@@ -11,17 +11,14 @@ import me.blvckbytes.blvcksys.persistence.ModelProperty;
   coordinates as well as the world-name is stored for revival, used
   with the LocationTransformer.
 */
-@RequiredArgsConstructor
+@Getter
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class LocationModel extends APersistentModel {
 
-  @Getter
-  @NonNull
   @ModelProperty
   private double x, y, z, yaw, pitch;
 
-  @Getter
-  @NonNull
   @ModelProperty
   private String world;
 }

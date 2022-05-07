@@ -10,12 +10,11 @@ import me.blvckbytes.blvcksys.persistence.ModelProperty;
   An inventory which has a base64 encoded string of it's item contents that
   also contains the information about how many items are encoded within the string.
 */
-@RequiredArgsConstructor
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class InventoryModel extends APersistentModel {
 
   @Getter
-  @NonNull
   @ModelProperty
   private String base64Items;
 }

@@ -12,25 +12,18 @@ import org.bukkit.OfflinePlayer;
   A warping-point that corresponds a unique name to a
   specific point within a specific world.
 */
-@RequiredArgsConstructor
+@Getter
+@Setter
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class WarpModel extends APersistentModel {
 
-  @Getter
-  @Setter
-  @NonNull
   @ModelProperty(isUnique = true)
   private String name;
 
-  @Getter
-  @Setter
-  @NonNull
   @ModelProperty
   private Location loc;
 
-  @Getter
-  @Setter
-  @NonNull
   @ModelProperty
   private OfflinePlayer creator;
 }

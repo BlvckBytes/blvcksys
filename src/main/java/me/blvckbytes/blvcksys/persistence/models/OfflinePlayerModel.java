@@ -12,12 +12,11 @@ import java.util.UUID;
   An offline player where only their UUID is stored for revival,
   used with the OfflinePlayerTransformer.
 */
-@RequiredArgsConstructor
+@Getter
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class OfflinePlayerModel extends APersistentModel {
 
-  @Getter
-  @NonNull
   @ModelProperty
   private UUID uuid;
 }

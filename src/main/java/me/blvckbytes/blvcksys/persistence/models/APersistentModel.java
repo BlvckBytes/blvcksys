@@ -13,21 +13,19 @@ import java.util.UUID;
 
   The base of all models which hoists up common fields.
 */
+@Getter
 public abstract class APersistentModel {
 
   private static final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
 
-  @Getter
   @ModelProperty
-  private UUID id;
+  protected UUID id;
 
-  @Getter
   @ModelProperty(isInlineable = false)
-  private Date createdAt;
+  protected Date createdAt;
 
-  @Getter
   @ModelProperty(isInlineable = false, isNullable = true)
-  private Date updatedAt;
+  protected Date updatedAt;
 
   /**
    * Get the createdAt timestamp as a human readable string

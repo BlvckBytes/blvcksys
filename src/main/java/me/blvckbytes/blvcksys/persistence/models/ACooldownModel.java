@@ -4,13 +4,10 @@ import lombok.*;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
-import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
-import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import org.bukkit.OfflinePlayer;
 
 import java.lang.reflect.Field;
 import java.util.Date;
-import java.util.List;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -93,38 +90,6 @@ public abstract class ACooldownModel extends APersistentModel {
    * @return -1 if there's no active cooldown or the number of seconds remaining
    */
   public long getCooldownRemaining(OfflinePlayer holder, IPersistence pers) throws PersistenceException {
-    // Get all cooldowns from this player that match the current token
-    List<CooldownSessionModel> cooldowns = pers.find(
-      new QueryBuilder<>(
-        CooldownSessionModel.class,
-        "holder__uuid", EqualityOperation.EQ, holder.getUniqueId()
-      ).and("token", EqualityOperation.EQ, generateToken())
-    );
-
-    // This player has no cooldowns
-    if (cooldowns.isEmpty())
-      return -1;
-
-    long ret = -1;
-    for (CooldownSessionModel cooldown : cooldowns) {
-      // Calculate the remaining time in seconds
-      long remaining = (cooldown.getExpiresAt().getTime() - System.currentTimeMillis()) / 1000;
-
-      // Delete dead entries
-      if (remaining <= 0) {
-        pers.delete(cooldown);
-        continue;
-      }
-
-      // Only set the return value initially or on
-      // duplicate cooldowns that have a higher remaining
-      // duration (just to support for cases of errors where
-      // multiple entries got inserted, doesn't cost any extra)
-      if (ret < 0 || remaining > ret)
-        ret = remaining;
-    }
-
-    // Only had dead entries
-    return ret;
+    return CooldownSessionModel.getCooldownRemaining(holder, pers, generateToken());
   }
 }

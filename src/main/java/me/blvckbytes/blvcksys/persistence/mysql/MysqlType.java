@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.persistence.mysql;
 
+import com.google.common.primitives.Primitives;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
@@ -49,6 +50,18 @@ public enum MysqlType {
     new EqualityOperation[] {
       EqualityOperation.EQ,
       EqualityOperation.NEQ
+    }
+  ),
+
+  LONG(
+    "BIGINT", long.class, false,
+    new EqualityOperation[] {
+      EqualityOperation.EQ,
+      EqualityOperation.NEQ,
+      EqualityOperation.GT,
+      EqualityOperation.GTE,
+      EqualityOperation.LT,
+      EqualityOperation.LTE
     }
   ),
 
@@ -121,6 +134,9 @@ public enum MysqlType {
    * @return Optional MySQL type
    */
   public static Optional<MysqlType> fromJavaType(Class<?> javaType, boolean lengthRequired) {
+    if (Primitives.isWrapperType(javaType))
+      javaType = Primitives.unwrap(javaType);
+
     for (MysqlType type : MysqlType.values()) {
       if (type.javaEquivalent.equals(javaType) && (!lengthRequired || type.hasLength))
         return Optional.of(type);

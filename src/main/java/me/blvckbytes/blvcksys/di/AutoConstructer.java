@@ -165,6 +165,10 @@ public class AutoConstructer implements IAutoConstructer {
       if (r.inst instanceof IAutoConstructed a)
         a.initialize();
     }
+
+    ILogger logger = findLogger();
+    if (logger != null)
+      logger.logInfo("All resources have been instantiated");
   }
 
   /**

@@ -534,10 +534,10 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    * field=test, op=EQ, value=5 would yield: `test` == ? and add (INTEGER, 5) to params
    * @param query Query to stringify
    * @param table Table which this field has to be a member of
-   * @param params Modifyable map of parameters to add the value parameter
+   * @param params Modifyable list of parameters to add the value parameter
    * @return Stringified query
    */
-  private String stringifyFieldQuery(FieldQuery query, MysqlTable table, Map<MysqlType, Object> params) {
+  private String stringifyFieldQuery(FieldQuery query, MysqlTable table, List<Tuple<MysqlType, Object>> params) {
     MysqlColumn targCol = getColumnByName(table, query.field());
     Class<?> targType = targCol.getType().getJavaEquivalent();
     Class<?> queryType = query.value().getClass();
@@ -553,7 +553,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     if (targCol.getType().equals(MysqlType.UUID))
       ph = uuidToBin("?", false);
 
-    params.put(targCol.getType(), query.value());
+    params.add(new Tuple<>(targCol.getType(), query.value()));
 
     return switch (query.op()) {
       case EQ -> "`" + query.field() + "` = " + ph;
@@ -573,10 +573,10 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    * (`test` == ? AND test2 != ?) and add (INTEGER, 5), (INTEGER, 10) to params
    * @param group Query group to stringify
    * @param table Table which this field has to be a member of
-   * @param params Modifyable map of parameters to add the value parameter
+   * @param params Modifyable list of parameters to add the value parameter
    * @return Stringified query group
    */
-  private String stringifyFieldQueryGroup(FieldQueryGroup group, MysqlTable table, Map<MysqlType, Object> params) {
+  private String stringifyFieldQueryGroup(FieldQueryGroup group, MysqlTable table, List<Tuple<MysqlType, Object>> params) {
     StringBuilder groupStr = new StringBuilder("(");
 
     // Append the root (first entry with no connection prefix)
@@ -625,7 +625,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     }
 
     stmt.append(" FROM `").append(table.name()).append("`");
-    Map<MysqlType, Object> params = new HashMap<>();
+    List<Tuple<MysqlType, Object>> params = new ArrayList<>();
 
     if (query != null) {
 
@@ -650,8 +650,8 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     PreparedStatement ps = conn.prepareStatement(stmt + ";");
 
     int i = 0;
-    for (Map.Entry<MysqlType, Object> param : params.entrySet())
-      ps.setObject(++i, translateValue(param.getKey(), param.getValue()));
+    for (Tuple<MysqlType, Object> param : params)
+      ps.setObject(++i, translateValue(param.a(), param.b()));
 
     logger.logDebug(ps.toString());
 

@@ -18,7 +18,6 @@ import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.text.SimpleDateFormat;
 import java.util.List;
 
 /*
@@ -30,9 +29,6 @@ import java.util.List;
 */
 @AutoConstruct
 public class WarpsCommand extends APlayerCommand {
-
-  // Date format for created and updated timestamp displaying
-  private static final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
 
   private final IPersistence pers;
 
@@ -85,8 +81,8 @@ public class WarpsCommand extends APlayerCommand {
         HoverEvent.Action.SHOW_TEXT,
         new Text(
           cfg.get(ConfigKey.WARP_LIST_HOVER)
-            .withVariable("created_at", df.format(warp.getCreatedAt()))
-            .withVariable("updated_at", warp.getUpdatedAt() == null ? "/" : df.format(warp.getUpdatedAt()))
+            .withVariable("created_at", warp.getCreatedAtStr())
+            .withVariable("updated_at", warp.getUpdatedAtStr())
             .withVariable("creator", warp.getCreator().getName())
             .withVariable("world", w == null ? "?" : w.getName())
             .withVariable("location", "(" + l.getBlockX() + " | " + l.getBlockY() + " | " + l.getBlockZ() + ")")

@@ -63,18 +63,8 @@ public class AfkCommand extends APlayerCommand {
       return;
     }
 
-    long cooldown = CooldownSessionModel.getCooldownRemaining(p, pers, CT_AFK);
+    cooldownGuard(p, pers, CT_AFK, CD_AFK);
 
-    // Command cooldown still active
-    if (cooldown > 0) {
-      throw new CooldownException(
-        cfg.get(ConfigKey.ERR_COOLDOWN)
-          .withPrefix(),
-        cooldown
-      );
-    }
-
-    pers.store(new CooldownSessionModel(p, CD_AFK, CT_AFK));
     afk.setAFK(p);
   }
 }

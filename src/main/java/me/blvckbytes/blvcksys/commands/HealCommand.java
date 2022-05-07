@@ -5,6 +5,7 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.handlers.IObjectiveHandler;
+import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -25,6 +26,13 @@ import java.util.stream.Stream;
 @AutoConstruct
 public class HealCommand extends APlayerCommand {
 
+  // Cooldown token for the heal cooldown
+  private static final String CT_HEAL = "cmd_heal";
+
+  // Cooldown duration for the heal command in seconds
+  private static final int CD_HEAL = 60 * 5;
+
+  private final IPersistence pers;
   private final IObjectiveHandler obj;
 
   public HealCommand(
@@ -32,7 +40,8 @@ public class HealCommand extends APlayerCommand {
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
-    @AutoInject IObjectiveHandler obj
+    @AutoInject IObjectiveHandler obj,
+    @AutoInject IPersistence pers
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -43,6 +52,7 @@ public class HealCommand extends APlayerCommand {
     );
 
     this.obj = obj;
+    this.pers = pers;
   }
 
   //=========================================================================//
@@ -61,6 +71,8 @@ public class HealCommand extends APlayerCommand {
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     Player target = onlinePlayer(args, 0, p);
     boolean isSelf = target.equals(p);
+
+    cooldownGuard(p, pers, CT_HEAL, CD_HEAL);
 
     // Figure out what's the target's max health
     AttributeInstance maxHealth = target.getAttribute(Attribute.GENERIC_MAX_HEALTH);

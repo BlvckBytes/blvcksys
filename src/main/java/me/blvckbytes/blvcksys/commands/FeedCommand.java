@@ -68,18 +68,7 @@ public class FeedCommand extends APlayerCommand {
     Player target = onlinePlayer(args, 0, p);
     boolean isSelf = target.equals(p);
 
-    long cooldown = CooldownSessionModel.getCooldownRemaining(p, pers, CT_FEED);
-
-    // Command cooldown still active
-    if (cooldown > 0) {
-      throw new CooldownException(
-        cfg.get(ConfigKey.ERR_COOLDOWN)
-          .withPrefix(),
-        cooldown
-      );
-    }
-
-    pers.store(new CooldownSessionModel(p, CD_FEED, CT_FEED));
+    cooldownGuard(p, pers, CT_FEED, CD_FEED);
 
     // Apply the food level increase
     int before = target.getFoodLevel();

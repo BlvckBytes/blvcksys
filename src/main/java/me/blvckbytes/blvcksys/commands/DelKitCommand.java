@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.commands;
 
 import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
+import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
@@ -68,21 +69,31 @@ public class DelKitCommand extends APlayerCommand {
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     String name = argval(args, 0);
 
-    Optional<KitModel> kitO = pers.findFirst(
+    Optional<KitModel> res = pers.findFirst(
       new QueryBuilder<>(
         KitModel.class,
         "name", EqualityOperation.EQ_IC, name
       )
     );
 
-    if (kitO.isEmpty()) {
-      p.sendMessage("§cThe kit '" + name + "' does not exist!");
+    if (res.isEmpty()) {
+      p.sendMessage(
+        cfg.get(ConfigKey.KIT_NOT_EXISTING)
+          .withPrefix()
+          .withVariable("name", name)
+          .asScalar()
+      );
       return;
     }
 
-    KitModel kit = kitO.get();
-    pers.delete(kit);
+    KitModel kit = res.get();
 
-    p.sendMessage("§aKit '" + name + "' deleted!");
+    pers.delete(kit);
+    p.sendMessage(
+      cfg.get(ConfigKey.KIT_DELETED)
+        .withPrefix()
+        .withVariable("name", kit.getName())
+        .asScalar()
+    );
   }
 }

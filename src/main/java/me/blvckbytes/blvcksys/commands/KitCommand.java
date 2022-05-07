@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.commands;
 
 import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
+import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
@@ -67,6 +68,9 @@ public class KitCommand extends APlayerCommand {
         .filter(Objects::nonNull)
         .map(Object::toString);
 
+    if (currArg == 1)
+      return suggestOnlinePlayers(p, args, currArg, false);
+
     return super.onTabCompletion(p, args, currArg);
   }
 
@@ -83,26 +87,67 @@ public class KitCommand extends APlayerCommand {
     );
 
     if (kitO.isEmpty()) {
-      p.sendMessage("§cThe kit '" + name + "' does not exist!");
+      p.sendMessage(
+        cfg.get(ConfigKey.KIT_NOT_EXISTING)
+          .withPrefix()
+          .withVariable("name", name)
+          .asScalar()
+      );
       return;
     }
 
     KitModel kit = kitO.get();
-    int dropped = 0;
 
+    // Count the number of dropped items
+    int numDropped = 0;
     for (ItemStack item : kit.getItems().getContents()) {
       if (item == null || item.getType() == Material.AIR)
         continue;
 
-      dropped += give.giveItemsOrDrop(target, item);
+      numDropped += give.giveItemsOrDrop(target, item);
     }
 
-    if (p.equals(target))
-      p.sendMessage("§aYou received the kit '" + name + "'");
-    else
-      p.sendMessage("§aYou gave the kit '" + name + "' to " + target.getName());
+    if (p.equals(target)) {
+      p.sendMessage(
+        cfg.get(ConfigKey.KIT_CONSUMED_SELF)
+          .withPrefix()
+          .withVariable("name", name)
+          .asScalar()
+      );
+    } else {
+      p.sendMessage(
+        cfg.get(ConfigKey.KIT_CONSUMED_OTHERS_SENDER)
+          .withPrefix()
+          .withVariable("name", name)
+          .withVariable("target", target.getName())
+          .asScalar()
+      );
 
-    if (dropped > 0)
-      target.sendMessage("§c" + dropped + " items have been dropped!");
+      // Inform the sender about the drop too
+      if (numDropped > 0)
+        p.sendMessage(
+          cfg.get(ConfigKey.KIT_CONSUMED_DROPPED)
+            .withPrefix()
+            .withVariable("num_dropped", numDropped)
+            .asScalar()
+        );
+
+      target.sendMessage(
+        cfg.get(ConfigKey.KIT_CONSUMED_OTHERS_RECEIVER)
+          .withPrefix()
+          .withVariable("name", name)
+          .withVariable("issuer", p.getName())
+          .asScalar()
+      );
+    }
+
+    // Inform the target about the drop
+    if (numDropped > 0)
+      target.sendMessage(
+        cfg.get(ConfigKey.KIT_CONSUMED_DROPPED)
+          .withPrefix()
+          .withVariable("num_dropped", numDropped)
+          .asScalar()
+      );
   }
 }

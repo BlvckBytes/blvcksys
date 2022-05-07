@@ -1,13 +1,17 @@
 package me.blvckbytes.blvcksys.commands;
 
 import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
+import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
-import me.blvckbytes.blvcksys.persistence.exceptions.DuplicatePropertyException;
 import me.blvckbytes.blvcksys.persistence.models.KitModel;
+import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
+import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
+import me.blvckbytes.blvcksys.util.ChatButtons;
+import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.Material;
@@ -28,13 +32,15 @@ import java.util.stream.Stream;
 public class SetKitCommand extends APlayerCommand {
 
   private final IPersistence pers;
+  private final ChatUtil chat;
 
   public SetKitCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
-    @AutoInject IPersistence pers
+    @AutoInject IPersistence pers,
+    @AutoInject ChatUtil chat
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -47,6 +53,7 @@ public class SetKitCommand extends APlayerCommand {
     );
 
     this.pers = pers;
+    this.chat = chat;
   }
 
   //=========================================================================//
@@ -56,6 +63,9 @@ public class SetKitCommand extends APlayerCommand {
 
   @Override
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
+    if (currArg < 2)
+      return Stream.of(getArgumentPlaceholder(currArg));
+
     // Suggest cooldown units
     if (currArg == 2)
       return suggestEnum(args, currArg, CooldownUnit.class);
@@ -82,16 +92,86 @@ public class SetKitCommand extends APlayerCommand {
       return;
     }
 
-    int cooldownSecs = Math.round(unit.getSeconds() * cooldown);
-    KitModel kit = new KitModel(name, p.getInventory(), cooldownSecs);
 
-    try {
-      pers.store(kit);
-    } catch (DuplicatePropertyException e) {
-      p.sendMessage("§cA kit with the name '" + name + "' already exists!");
+    // Check if a kit with this name already exists
+    boolean exists = pers.count(
+      new QueryBuilder<>(
+        KitModel.class,
+        "name", EqualityOperation.EQ_IC, name
+      )
+    ) > 0;
+
+    if (exists) {
+      // Send out an overwrite confirmation prompt
+      chat.sendButtons(p, ChatButtons.buildYesNo(
+        cfg.get(ConfigKey.KIT_OVERWRITE_PREFIX)
+          .withVariable("name", name)
+          .withPrefixes()
+          .asScalar(),
+        plugin, cfg,
+
+        // Yes
+        () -> {
+
+          // Get the existing model
+          KitModel existing = pers.findFirst(
+            new QueryBuilder<>(
+              KitModel.class,
+              "name", EqualityOperation.EQ, name
+            )
+          ).orElse(null);
+
+          // Got deleted in the meantime
+          if (existing == null) {
+            p.sendMessage(
+              cfg.get(ConfigKey.KIT_NOT_EXISTING)
+                .withPrefix()
+                .withVariable("name", name)
+                .asScalar()
+            );
+
+            return;
+          }
+
+          // Update the items
+          existing.setItems(p.getInventory());
+          pers.store(existing);
+
+          p.sendMessage(
+            cfg.get(ConfigKey.KIT_OVERWRITE_SAVED)
+              .withPrefix()
+              .withVariable("name", name)
+              .withVariable("num_items", existing.getNumItems())
+              .asScalar()
+          );
+        },
+
+        // No
+        () -> {
+          p.sendMessage(
+            cfg.get(ConfigKey.KIT_OVERWRITE_CANCELLED)
+              .withPrefix()
+              .asScalar()
+          );
+        },
+
+        null
+      ));
+
       return;
     }
 
-    p.sendMessage("§aKit '" + name + "' created!");
+    // Create the new kit
+    int cooldownSecs = Math.round(unit.getSeconds() * cooldown);
+    KitModel kit = new KitModel(name, p.getInventory(), cooldownSecs, p);
+    pers.store(kit);
+
+    p.sendMessage(
+      cfg.get(ConfigKey.KIT_CREATED)
+        .withPrefix()
+        .withVariable("name", name)
+        .withVariable("num_items", kit.getNumItems())
+        .asScalar()
+    );
   }
 }

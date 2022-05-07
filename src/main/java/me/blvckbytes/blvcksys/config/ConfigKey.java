@@ -569,10 +569,39 @@ public enum ConfigKey {
   TIME_SET("time_set", "$0Der Spieler $3{{issuer}} $0hat die Zeit auf $3{{time}} $0gesetzt."),
 
   //=========================================================================//
+  //                                 KIT Command                             //
+  //=========================================================================//
+
+  KIT_NOT_EXISTING("kit.not_existing", "$0Es existiert kein Kit namens $4{{name}}$0!"),
+  KIT_CREATED("kit.created", "$0Das Kit $3{{name}} $0wurde mit $3{{num_items}} Items $0erstellt."),
+  KIT_DELETED("kit.deleted", "$0Das Kit $3{{name}} $0wurde $3gelöscht$0."),
+  KIT_CONSUMED_SELF("kit.consumed.self", "$0Du hast das Kit $3{{name}} $0erhalten."),
+  KIT_CONSUMED_DROPPED("kit.consumed.dropped", "$0Es wurden $4{{num_dropped}} Items $0fallen gelassen!"),
+  KIT_CONSUMED_OTHERS_SENDER("kit.consumed.others.sender", "$0Du hast das Kit $3{{name}} $0an $3{{target}} $0gesendet."),
+  KIT_CONSUMED_OTHERS_RECEIVER("kit.consumed.others.receiver", "$0Du hast das Kit $3{{name}} $0von $3{{issuer}} $0erhalten."),
+  KIT_OVERWRITE_PREFIX(
+    "kit.overwrite.prefix",
+    "$0Das Kit $3{{name}} $0existiert bereits.",
+    "Soll dieses $3überschrieben $0werden?: "
+  ),
+  KIT_OVERWRITE_CANCELLED("kit.overwrite.cancelled", "$0Die Erstellung wurde $4abgebrochen$0."),
+  KIT_OVERWRITE_SAVED("kit.overwrite.saved", "$0Du hast das Kit $3{{name}} $0mit $3{{num_items}} Items $0überschrieben."),
+  KIT_LIST_PREFIX("kit.list.prefix", "$0Verfügbare Kits ($3{{count}}$0): "),
+  KIT_LIST_NO_ITEMS("kit.list.no_items", "$4Keine Kits verfügbar"),
+  KIT_LIST_ITEM_FORMAT("kit.list.item_format", "$3{{name}}$1"),
+  KIT_LIST_HOVER(
+    "kit.list.hover",
+    "$0Erstellt am: $3{{created_at}}",
+    "$0Zuletzt geändert: $3{{updated_at}}",
+    "$0Erstellt von: $3{{creator}}",
+    "$0Items: $3{{num_items}}",
+    "$0Verfügbar in: $3{{cooldown_dur}}"
+  ),
+
+  //=========================================================================//
   //                               WARP Command                              //
   //=========================================================================//
 
-  WARP_EXISTS("warp.exists", "$0Es existiert bereits ein Warp namens $4{{name}}$0!"),
   WARP_NOT_EXISTING("warp.not_existing", "$0Es existiert kein Warp namens $4{{name}}$0!"),
   WARP_CREATED("warp.created", "$0Der Warp $3{{name}} $0wurde bei $3{{location}} $0erstellt."),
   WARP_DELETED("warp.deleted", "$0Der Warp $3{{name}} $0wurde $3gelöscht$0."),

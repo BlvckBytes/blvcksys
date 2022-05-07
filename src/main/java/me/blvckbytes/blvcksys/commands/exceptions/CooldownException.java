@@ -18,7 +18,7 @@ public class CooldownException extends CommandException {
                             MONTH_S = WEEK_S * 30;
 
   // Lookup "table" for timespan characters and timespan durations, in ascending order
-  private static final char[] spanC = new char[] { 's', 'h', 'm', 'd', 'w', 'm' };
+  private static final char[] spanC = new char[] { 's', 'm', 'h', 'd', 'w', 'm' };
   private static final long[] spanD = new long[] { 1, MIN_S, HOUR_S, DAY_S, WEEK_S, MONTH_S };
 
   /**

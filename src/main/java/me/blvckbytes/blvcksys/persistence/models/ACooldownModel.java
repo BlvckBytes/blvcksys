@@ -105,6 +105,7 @@ public abstract class ACooldownModel extends APersistentModel {
     if (cooldowns.isEmpty())
       return -1;
 
+    long ret = -1;
     for (CooldownSessionModel cooldown : cooldowns) {
       // Calculate the remaining time in seconds
       long remaining = (cooldown.getExpiresAt().getTime() - System.currentTimeMillis()) / 1000;
@@ -115,10 +116,15 @@ public abstract class ACooldownModel extends APersistentModel {
         continue;
       }
 
-      return remaining;
+      // Only set the return value initially or on
+      // duplicate cooldowns that have a higher remaining
+      // duration (just to support for cases of errors where
+      // multiple entries got inserted, doesn't cost any extra)
+      if (ret < 0 || remaining > ret)
+        ret = remaining;
     }
 
     // Only had dead entries
-    return -1;
+    return ret;
   }
 }

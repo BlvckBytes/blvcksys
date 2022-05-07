@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.commands;
 
 import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
+import me.blvckbytes.blvcksys.commands.exceptions.CooldownException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
@@ -29,8 +30,6 @@ import java.util.stream.Stream;
 */
 @AutoConstruct
 public class KitCommand extends APlayerCommand {
-
-  // TODO: Implement cooldowns
 
   private final IPersistence pers;
   private final IGiveCommand give;
@@ -99,6 +98,20 @@ public class KitCommand extends APlayerCommand {
     }
 
     KitModel kit = kitO.get();
+
+    // Check for active cooldowns
+    long cooldown = kit.getCooldownRemaining(p, pers);
+    if (cooldown > 0) {
+      throw new CooldownException(
+        cfg.get(ConfigKey.KIT_COOLDOWN)
+          .withPrefix()
+          .withVariable("name", kit.getName()),
+        cooldown
+      );
+    }
+
+    // Create a new cooldown
+    kit.storeCooldownFor(p, pers);
 
     // Count the number of dropped items
     int numDropped = 0;

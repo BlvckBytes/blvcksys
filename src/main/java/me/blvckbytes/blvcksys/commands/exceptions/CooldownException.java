@@ -1,7 +1,6 @@
 package me.blvckbytes.blvcksys.commands.exceptions;
 
-import me.blvckbytes.blvcksys.config.ConfigKey;
-import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.config.ConfigValue;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -22,24 +21,29 @@ public class CooldownException extends CommandException {
   private static final char[] spanC = new char[] { 's', 'h', 'm', 'd', 'w', 'm' };
   private static final long[] spanD = new long[] { 1, MIN_S, HOUR_S, DAY_S, WEEK_S, MONTH_S };
 
-  public CooldownException(IConfig cfg, long expiry) {
+  /**
+   * Create a new cooldown exception which automatically formats
+   * the provided duration in seconds to a more human readable time string
+   * @param cval Config value which supports the message to print to the user
+   * @param duration Duration in seconds
+   */
+  public CooldownException(ConfigValue cval, long duration) {
     super(
-      cfg.get(ConfigKey.ERR_COOLDOWN)
-        .withVariable("duration", formatDuration(expiry - System.currentTimeMillis()))
-        .withPrefix()
+      cval
+        .withVariable("duration", formatDuration(duration))
         .asScalar()
     );
   }
 
   /**
-   * Format a duration in milliseconds to a time string
+   * Format a duration in seconds to a time string
    * containing months, weeks, days, hours, minutes and seconds
-   * @param duration Duration in milliseconds
+   * @param duration Duration in seconds
    * @return Formatted duration string
    */
   private static String formatDuration(long duration) {
     StringBuilder sb = new StringBuilder();
-    long durS = duration / 1000;
+    long durS = duration;
 
     // Use min to not crash on uneven numbers of array entries
     for (int i = Math.min(spanC.length, spanD.length) - 1; i >= 0; i--) {

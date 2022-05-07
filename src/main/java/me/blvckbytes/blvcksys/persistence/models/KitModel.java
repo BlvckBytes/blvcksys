@@ -14,31 +14,25 @@ import org.bukkit.inventory.ItemStack;
   A kit that corresponds a unique name to a set of items a
   player can request after the cooldown has expired.
 */
-@RequiredArgsConstructor
+@Getter
+@Setter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class KitModel extends APersistentModel {
+public class KitModel extends ACooldownModel {
 
-  @Getter
-  @Setter
-  @NonNull
+  public KitModel(String name, Inventory items, int cooldownSeconds, OfflinePlayer creator) {
+    super(cooldownSeconds);
+
+    this.name = name;
+    this.items = items;
+    this.creator = creator;
+  }
+
   @ModelProperty(isUnique = true)
   private String name;
 
-  @Getter
-  @Setter
-  @NonNull
   @ModelProperty
   private Inventory items;
 
-  @Getter
-  @Setter
-  @NonNull
-  @ModelProperty
-  private int cooldownSeconds;
-
-  @Getter
-  @Setter
-  @NonNull
   @ModelProperty
   private OfflinePlayer creator;
 

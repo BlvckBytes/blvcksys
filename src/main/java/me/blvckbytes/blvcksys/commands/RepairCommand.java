@@ -4,6 +4,7 @@ import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
+import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -26,11 +27,20 @@ import java.util.stream.Stream;
 @AutoConstruct
 public class RepairCommand extends APlayerCommand {
 
+  // Cooldown token for the repair cooldown
+  private static final String CT_REPAIR = "cmd_repair";
+
+  // Cooldown duration for the repair command in seconds
+  private static final int CD_REPAIR = 60 * 5;
+
+  private final IPersistence pers;
+
   public RepairCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
-    @AutoInject MCReflect refl
+    @AutoInject MCReflect refl,
+    @AutoInject IPersistence pers
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -39,6 +49,8 @@ public class RepairCommand extends APlayerCommand {
       PlayerPermission.COMMAND_REPAIR,
       new CommandArgument("[all]", "Repair all items in your inventory", PlayerPermission.COMMAND_REPAIR_ALL)
     );
+
+    this.pers = pers;
   }
 
   //=========================================================================//
@@ -90,6 +102,8 @@ public class RepairCommand extends APlayerCommand {
       );
       return;
     }
+
+    cooldownGuard(p, pers, CT_REPAIR, CD_REPAIR);
 
     // Repair and inform about the process' result
     boolean success = repairItem(hand);

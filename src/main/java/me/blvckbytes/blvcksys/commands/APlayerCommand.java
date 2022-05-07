@@ -226,56 +226,6 @@ public abstract class APlayerCommand extends Command {
   }
 
   //=========================================================================//
-  //                                Cooldowns                                //
-  //=========================================================================//
-
-  /**
-   * Refresh a player's cooldown to start anew
-   * @param p Target player
-   * @param token Token that identifies this cooldown
-   * @param duration Duration of this cooldown in milliseconds
-   */
-  protected void refreshCooldown(Player p, String token, long duration) {
-    // Create empty cooldown map initially
-    if (!this.playerCooldowns.containsKey(p))
-      this.playerCooldowns.put(p, new HashMap<>());
-
-    // Register the new cooldown
-    this.playerCooldowns.get(p).put(token, System.currentTimeMillis() + duration);
-  }
-
-  /**
-   * Clear a player's cooldown so it ends now
-   * @param p Target player
-   * @param token Token that identifies this cooldown
-   */
-  protected void clearCooldown(Player p, String token) {
-    // Remove the entry if it exists
-    if (this.playerCooldowns.containsKey(p))
-      this.playerCooldowns.get(p).remove(token);
-  }
-
-  /**
-   * Checks if a player's cooldown has expired already and throws
-   * the matching parameterized exception if it hasn't
-   * @param p Target player
-   * @param token Token that identifies this cooldown
-   */
-  protected void cooldownGuard(Player p, String token) {
-    // Player not even registered yet
-    if (!this.playerCooldowns.containsKey(p))
-      return;
-
-    // Check if the timestamp is absent or expired
-    Long expiry = this.playerCooldowns.get(p).get(token);
-    if (expiry == null || System.currentTimeMillis() >= expiry)
-      return;
-
-    // Cooldown is active
-    throw new CooldownException(cfg, expiry);
-  }
-
-  //=========================================================================//
   //                            Internal Utilities                           //
   //=========================================================================//
 

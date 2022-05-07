@@ -20,8 +20,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 @AutoConstruct
 public class AfkCommand extends APlayerCommand {
 
+  // TODO: Connect to the persistence's way of handling cooldowns
+
   // Cooldown token for the AFK cooldown
-  private static final String CT_AFK = "AFK";
+  private static final String CT_AFK = "cmd_afk";
 
   // Cooldown duration for the AFK cooldown
   private static final long CD_AFK = 1000 * 60;
@@ -57,9 +59,6 @@ public class AfkCommand extends APlayerCommand {
       return;
     }
 
-    cooldownGuard(p, CT_AFK);
-
     afk.setAFK(p);
-    refreshCooldown(p, CT_AFK, CD_AFK);
   }
 }

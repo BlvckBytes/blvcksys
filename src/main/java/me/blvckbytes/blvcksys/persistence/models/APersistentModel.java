@@ -3,6 +3,7 @@ package me.blvckbytes.blvcksys.persistence.models;
 import lombok.Getter;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.UUID;
 
@@ -13,6 +14,8 @@ import java.util.UUID;
   The base of all models which hoists up common fields.
 */
 public abstract class APersistentModel {
+
+  private static final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
 
   @Getter
   @ModelProperty
@@ -26,4 +29,17 @@ public abstract class APersistentModel {
   @ModelProperty(isInlineable = false, isNullable = true)
   private Date updatedAt;
 
+  /**
+   * Get the createdAt timestamp as a human readable string
+   */
+  public String getCreatedAtStr() {
+    return createdAt == null ? "/" : df.format(createdAt);
+  }
+
+  /**
+   * Get the updatedAt timestamp as a human readable string
+   */
+  public String getUpdatedAtStr() {
+    return updatedAt == null ? "/" : df.format(updatedAt);
+  }
 }

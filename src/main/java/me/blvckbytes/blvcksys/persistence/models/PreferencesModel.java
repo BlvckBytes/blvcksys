@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.persistence.models;
 
 import lombok.*;
+import me.blvckbytes.blvcksys.persistence.MigrationDefault;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
 import org.bukkit.OfflinePlayer;
 
@@ -19,6 +20,9 @@ public class PreferencesModel extends APersistentModel {
   @ModelProperty
   private OfflinePlayer owner;
 
-  @ModelProperty
+  @ModelProperty(migrationDefault = MigrationDefault.FALSE)
   private boolean scoreboardHidden;
+
+  @ModelProperty(migrationDefault = MigrationDefault.FALSE)
+  private boolean chatHidden;
 }

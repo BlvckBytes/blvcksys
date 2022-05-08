@@ -27,4 +27,7 @@ public @interface ModelProperty {
 
   // Whether this field is inlined when using a transformer
   boolean isInlineable() default true;
+
+  // What value to use when migrating this column to an existing data-structure
+  MigrationDefault migrationDefault() default MigrationDefault.NULL;
 }

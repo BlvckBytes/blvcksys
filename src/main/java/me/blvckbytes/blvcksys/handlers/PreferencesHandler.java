@@ -26,6 +26,7 @@ public class PreferencesHandler implements IPreferencesHandler {
 
   // Default values of all preferences
   private final static boolean DEF_SCOREBOARD_HIDDEN = false;
+  private final static boolean DEF_CHAT_HIDDEN = false;
 
   private final IPersistence pers;
   private final Map<UUID, PreferencesModel> cache;
@@ -111,7 +112,8 @@ public class PreferencesHandler implements IPreferencesHandler {
 
     PreferencesModel prefs = new PreferencesModel(
       p,
-      DEF_SCOREBOARD_HIDDEN
+      DEF_SCOREBOARD_HIDDEN,
+      DEF_CHAT_HIDDEN
     );
     pers.store(prefs);
   }

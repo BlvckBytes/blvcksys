@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.handlers;
 
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.HologramLineModel;
+import net.minecraft.util.Tuple;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 
@@ -27,7 +28,7 @@ public interface IHologramHandler {
    * @return Zero on success, number of missing IDs when missing IDs
    * @throws PersistenceException {@link me.blvckbytes.blvcksys.persistence.exceptions.ModelNotFoundException} When the name doesn't exist
    */
-  int sortHologramLines(String name, int[] lineIdSequence) throws PersistenceException;
+  Tuple<HologramSortResult, Integer> sortHologramLines(String name, int[] lineIdSequence) throws PersistenceException;
 
   /**
    * Delete a hologram by deleting all of it's lines

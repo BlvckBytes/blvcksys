@@ -9,6 +9,7 @@ import me.blvckbytes.blvcksys.persistence.models.HologramLineModel;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.FieldQueryGroup;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
+import net.minecraft.util.Tuple;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 
@@ -39,9 +40,34 @@ public class HologramHandler implements IHologramHandler {
   }
 
   @Override
-  public int sortHologramLines(String name, int[] lineIdSequence) throws PersistenceException {
-    // TODO: Implement
-    return 0;
+  public Tuple<HologramSortResult, Integer> sortHologramLines(String name, int[] lineIdSequence) {
+    List<HologramLineModel> lines = getHologramLines(name)
+      .orElseThrow(() -> new ModelNotFoundException(HologramLineModel.class.getSimpleName(), name));
+
+    // There are some IDs missing
+    if (lines.size() > lineIdSequence.length)
+      return new Tuple<>(HologramSortResult.IDS_MISSING, lines.size() - lineIdSequence.length);
+
+    // Sort the holograms as specified by the ID-list
+    List<HologramLineModel> sorted = new ArrayList<>();
+    for (int sequenceId : lineIdSequence) {
+      if (sequenceId <= 0 || sequenceId > lines.size())
+        return new Tuple<>(HologramSortResult.ID_INVALID, sequenceId);
+      sorted.add(lines.get(sequenceId - 1));
+    }
+
+    // Change linked list pointers accordingly
+    for (int i = 0; i < sorted.size(); i++) {
+      HologramLineModel curr = sorted.get(i);
+      curr.setPreviousLine(i == 0 ? null : sorted.get(i - 1).getId());
+      curr.setNextLine(i == sorted.size() - 1 ? null : sorted.get(i + 1).getId());
+      pers.store(curr);
+    }
+
+    // Load the changes into cache
+    getHologramLines(name, true);
+
+    return new Tuple<>(HologramSortResult.SORTED, 0);
   }
 
   @Override

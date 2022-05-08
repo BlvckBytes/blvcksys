@@ -6,14 +6,17 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.handlers.HologramSortResult;
 import me.blvckbytes.blvcksys.handlers.IHologramHandler;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.exceptions.ModelNotFoundException;
 import me.blvckbytes.blvcksys.persistence.models.HologramLineModel;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import net.minecraft.util.Tuple;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.checkerframework.checker.units.qual.A;
 
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -95,23 +98,39 @@ public class HoloSortCommand extends APlayerCommand {
       }
 
       // Try to sort the lines and check if there were IDs missing
-      int numMissing = holo.sortHologramLines(name, ids);
-      if (numMissing != 0) {
-        p.sendMessage(
-          cfg.get(ConfigKey.COMMAND_HOLOSORT_MISSING_IDS)
-            .withPrefix()
-            .withVariable("num_missing", numMissing)
-            .asScalar()
-        );
-        return;
-      }
+      Tuple<HologramSortResult, Integer> result = holo.sortHologramLines(name, ids);
 
-      p.sendMessage(
-        cfg.get(ConfigKey.COMMAND_HOLOSORT_SORTED)
-          .withPrefix()
-          .withVariable("name", name)
-          .asScalar()
-      );
+      switch (result.a()) {
+        // Successfully sorted
+        case SORTED -> {
+          p.sendMessage(
+            cfg.get(ConfigKey.COMMAND_HOLOSORT_SORTED)
+              .withPrefix()
+              .withVariable("name", name)
+              .asScalar()
+          );
+        }
+
+        // One of the specified IDs was invalid
+        case ID_INVALID -> {
+          p.sendMessage(
+            cfg.get(ConfigKey.COMMAND_HOLOSORT_INVALID_ID)
+              .withPrefix()
+              .withVariable("invalid_id", result.b())
+              .asScalar()
+          );
+        }
+
+        // There are some IDs missing
+        case IDS_MISSING -> {
+          p.sendMessage(
+            cfg.get(ConfigKey.COMMAND_HOLOSORT_MISSING_IDS)
+              .withPrefix()
+              .withVariable("num_missing", result.b())
+              .asScalar()
+          );
+        }
+      }
     }
 
     // Specified a non-existing name

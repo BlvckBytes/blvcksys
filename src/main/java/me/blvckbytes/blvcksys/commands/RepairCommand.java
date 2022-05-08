@@ -103,7 +103,11 @@ public class RepairCommand extends APlayerCommand {
       return;
     }
 
-    cooldownGuard(p, pers, CT_REPAIR, CD_REPAIR, PlayerPermission.COMMAND_REPAIR_COOLDOWN_BYPASS);
+    cooldownGuard(
+      p, pers, CT_REPAIR,
+      PlayerPermission.COMMAND_REPAIR_COOLDOWN.getSuffixNumber(p, false).orElse(CD_REPAIR),
+      PlayerPermission.COMMAND_REPAIR_COOLDOWN_BYPASS
+    );
 
     // Repair and inform about the process' result
     boolean success = repairItem(hand);

@@ -3,6 +3,11 @@ package me.blvckbytes.blvcksys.config;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import org.bukkit.entity.Player;
+import org.bukkit.permissions.PermissionAttachmentInfo;
+
+import java.util.Comparator;
+import java.util.Objects;
+import java.util.Optional;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -96,6 +101,7 @@ public enum PlayerPermission {
 
   COMMAND_HEAL("bvs.heal"),
   COMMAND_HEAL_OTHERS("bvs.heal.others"),
+  COMMAND_HEAL_COOLDOWN("bvs.heal.cooldown"),
   COMMAND_HEAL_COOLDOWN_BYPASS("bvs.heal.cooldown.bypass"),
 
   //=========================================================================//
@@ -104,6 +110,7 @@ public enum PlayerPermission {
 
   COMMAND_FEED("bvs.feed"),
   COMMAND_FEED_OTHERS("bvs.feed.others"),
+  COMMAND_FEED_COOLDOWN("bvs.feed.cooldown"),
   COMMAND_FEED_COOLDOWN_BYPASS("bvs.feed.cooldown.bypass"),
 
   //=========================================================================//
@@ -244,6 +251,7 @@ public enum PlayerPermission {
 
   COMMAND_REPAIR("bvs.repair"),
   COMMAND_REPAIR_ALL("bvs.repair.all"),
+  COMMAND_REPAIR_COOLDOWN("bvs.repair.cooldown"),
   COMMAND_REPAIR_COOLDOWN_BYPASS("bvs.repair.cooldown.bypass"),
 
   //=========================================================================//
@@ -344,5 +352,31 @@ public enum PlayerPermission {
 
     // Just join the strings and the dot will match
     return a + b;
+  }
+
+  /**
+   * Get the highest available number (if any) that's suffixed onto
+   * the current permission, like: permission.number_suffix
+   * @return Highest ocurring number there was
+   */
+  public Optional<Integer> getSuffixNumber(Player p, boolean highest) {
+    String marker = getValue() + ".";
+
+    Integer result = p.getEffectivePermissions()
+      .stream()
+      .map(PermissionAttachmentInfo::getPermission)
+      .filter(perm -> perm.startsWith(marker))
+      .map(perm -> {
+        try {
+          return Integer.parseInt(perm.substring(marker.length()));
+        } catch (NumberFormatException e) {
+          return null;
+        }
+      })
+      .filter(Objects::nonNull)
+      .sorted(highest ? Comparator.naturalOrder() : Comparator.reverseOrder())
+      .reduce(null, (acc, curr) -> curr);
+
+    return result == null ? Optional.empty() : Optional.of(result);
   }
 }

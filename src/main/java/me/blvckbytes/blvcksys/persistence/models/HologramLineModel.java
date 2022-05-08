@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.persistence.models;
 
 import lombok.*;
+import me.blvckbytes.blvcksys.persistence.ForeignKeyAction;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
 import org.bukkit.Location;
 
@@ -30,9 +31,17 @@ public class HologramLineModel extends APersistentModel {
   @ModelProperty
   private String text;
 
-  @ModelProperty(foreignKey = HologramLineModel.class, isNullable = true)
+  @ModelProperty(
+    foreignKey = HologramLineModel.class,
+    isNullable = true,
+    foreignChanges = ForeignKeyAction.SET_NULL
+  )
   private UUID previousLine;
 
-  @ModelProperty(foreignKey = HologramLineModel.class, isNullable = true)
+  @ModelProperty(
+    foreignKey = HologramLineModel.class,
+    isNullable = true,
+    foreignChanges = ForeignKeyAction.SET_NULL
+  )
   private UUID nextLine;
 }

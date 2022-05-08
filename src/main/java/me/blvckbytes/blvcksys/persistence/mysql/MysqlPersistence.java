@@ -6,6 +6,7 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.di.IAutoConstructer;
+import me.blvckbytes.blvcksys.persistence.ForeignKeyAction;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.MigrationDefault;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
@@ -13,10 +14,7 @@ import me.blvckbytes.blvcksys.persistence.exceptions.DuplicatePropertyException;
 import me.blvckbytes.blvcksys.persistence.exceptions.ModelNotFoundException;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.APersistentModel;
-import me.blvckbytes.blvcksys.persistence.query.FieldQuery;
-import me.blvckbytes.blvcksys.persistence.query.FieldQueryGroup;
-import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
-import me.blvckbytes.blvcksys.persistence.query.QueryConnection;
+import me.blvckbytes.blvcksys.persistence.query.*;
 import me.blvckbytes.blvcksys.persistence.transformers.IDataTransformer;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
@@ -130,7 +128,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   @Override
   public <T extends APersistentModel> List<T> find(QueryBuilder<T> query) throws PersistenceException {
     try {
-      PreparedStatement ps = buildQuery(query.getModel(), query, false, false);
+      PreparedStatement ps = buildQuery(query.getModel(), query, false, false, false);
       ResultSet rs = ps.executeQuery();
       List<T> res = mapRows(query.getModel(), rs);
 
@@ -149,7 +147,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   @Override
   public <T extends APersistentModel> int count(QueryBuilder<T> query) throws PersistenceException {
     try {
-      PreparedStatement ps = buildQuery(query.getModel(), query, false, true);
+      PreparedStatement ps = buildQuery(query.getModel(), query, false, true, false);
       ResultSet rs = ps.executeQuery();
 
       if (!rs.next())
@@ -172,7 +170,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   @Override
   public <T extends APersistentModel> Optional<T> findFirst(QueryBuilder<T> query) throws PersistenceException {
     try {
-      PreparedStatement ps = buildQuery(query.getModel(), query, true, false);
+      PreparedStatement ps = buildQuery(query.getModel(), query, true, false, false);
       ResultSet rs = ps.executeQuery();
 
       if (!rs.next())
@@ -220,6 +218,22 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   public void delete(APersistentModel model) throws PersistenceException {
     delete(model.getClass(), model.getId());
     refl.setFieldByName(model, "id", null);
+  }
+
+  @Override
+  public <T extends APersistentModel> int delete(QueryBuilder<T> query) throws PersistenceException {
+    try {
+      PreparedStatement ps = buildQuery(query.getModel(), query, false, false, true);
+      int ret = ps.executeUpdate();
+
+      ps.close();
+      return ret;
+    } catch (PersistenceException e) {
+      throw e;
+    } catch (Exception e) {
+      logger.logError(e);
+      throw new PersistenceException("An internal error occurred");
+    }
   }
 
   @Override
@@ -399,7 +413,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
         if (type.get() != MysqlType.UUID)
           throw new PersistenceException("Unsupported identifier type " + f.getType() + " for field " + f.getName() + " of " + model);
 
-        columns.add(new MysqlColumn("id", type.get(), false, MigrationDefault.UNSPECIFIED, true, false, f, null, null));
+        columns.add(new MysqlColumn("id", type.get(), false, MigrationDefault.UNSPECIFIED, true, false, f, null, null, ForeignKeyAction.RESTRICT));
         continue;
       }
 
@@ -420,7 +434,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
       MysqlColumn col = new MysqlColumn(
         modelNameToDBName(f.getName()),
-        type.get(), mp.isNullable(), mp.migrationDefault(), mp.isUnique(), mp.isInlineable(), f, null, foreignKey
+        type.get(), mp.isNullable(), mp.migrationDefault(), mp.isUnique(), mp.isInlineable(), f, null, foreignKey, mp.foreignChanges()
       );
 
       columns.add(col);
@@ -585,7 +599,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
         if (col.getForeignKey() != null) {
           uPs = conn.prepareStatement(
             "ALTER TABLE `" + table.name() + "` " +
-              "ADD FOREIGN KEY (`" + col.getName() + "`) REFERENCES `" + col.getForeignKey().name() + "`(`id`);"
+            "ADD FOREIGN KEY (`" + col.getName() + "`) REFERENCES `" + col.getForeignKey().name() + "`(`id`) ON DELETE CASCADE;"
           );
 
           logger.logDebug(uPs.toString());
@@ -693,6 +707,14 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    * @return Built signature
    */
   private String buildColumnSignature(MysqlColumn column, boolean isModify) {
+    String foreignAction = "";
+    if (column.getForeignAction() == ForeignKeyAction.DELETE_CASCADE)
+      foreignAction = "ON DELETE CASCADE";
+    else if (column.getForeignAction() == ForeignKeyAction.SET_NULL)
+      foreignAction = "ON DELETE SET NULL";
+    else if (column.getForeignAction() == ForeignKeyAction.RESTRICT)
+      foreignAction = "ON DELETE RESTRICT";
+
     String ret = "`" + column.getName() + "`" + " " +
       // Type
       column.getType() + " " +
@@ -711,7 +733,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
     // Also append the foreign key constraint in a comma separated instruction
     if (column.getForeignKey() != null && !isModify)
-      ret += ", FOREIGN KEY (`" + column.getName() + "`) REFERENCES `" + column.getForeignKey().name() + "`(`id`)";
+      ret += ", FOREIGN KEY (`" + column.getName() + "`) REFERENCES `" + column.getForeignKey().name() + "`(`id`) " + foreignAction;
 
     return ret.trim();
   }
@@ -805,32 +827,38 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   private String stringifyFieldQuery(FieldQuery query, MysqlTable table, List<Tuple<MysqlType, Object>> params) {
     MysqlColumn targCol = getColumnByName(table, query.field());
 
-    for (Class<?> targType : targCol.getType().getJavaEquivalents()) {
-      Class<?> queryType = query.value().getClass();
-      if (targType != queryType)
-        throw new RuntimeException("The query field " + query.field() + " is of invalid type " + queryType + " instead of " + targType);
+    boolean isNull = query.value() == null;
+    if (!isNull) {
+      for (Class<?> targType : targCol.getType().getJavaEquivalents()) {
+        Class<?> queryType = query.value().getClass();
+        if (targType != queryType)
+          throw new RuntimeException("The query field " + query.field() + " is of invalid type " + queryType + " instead of " + targType);
+      }
     }
 
     if (!targCol.getType().supportsOp(query.op()))
-      throw new RuntimeException("The query field " + query.field() + " does not support the operation " + query.op());
+      throw new PersistenceException("The query field " + query.field() + " does not support the operation " + query.op());
 
     String ph = "?";
+    String field = modelNameToDBName(query.field());
 
     // UUIDs need to be converted to binary
     if (targCol.getType().equals(MysqlType.UUID))
       ph = uuidToBin("?", false);
 
-    params.add(new Tuple<>(targCol.getType(), query.value()));
+    // Only add placeholder values if there actually was a placeholder appended
+    if (!(isNull && (query.op() == EqualityOperation.EQ || query.op() == EqualityOperation.NEQ)))
+      params.add(new Tuple<>(targCol.getType(), query.value()));
 
     return switch (query.op()) {
-      case EQ -> "`" + query.field() + "` = " + ph;
-      case NEQ -> "`" + query.field() + "` != " + ph;
-      case EQ_IC -> "LOWER(`" + query.field() + "`) = LOWER(" + ph + ")";
-      case NEQ_IC -> "LOWER(`" + query.field() + "`) != LOWER(" + ph + ")";
-      case LT -> "`" + query.field() + "` < " + ph;
-      case LTE -> "`" + query.field() + "` <= " + ph;
-      case GT -> "`" + query.field() + "` > " + ph;
-      case GTE -> "`" + query.field() + "` >= " + ph;
+      case EQ -> "`" + field + "` " + (isNull ? "IS NULL" : "= " + ph);
+      case NEQ -> "`" + field + "` " + (isNull ? "IS NOT NULL" : "!= " + ph);
+      case EQ_IC -> "LOWER(`" + field + "`) = LOWER(" + ph + ")";
+      case NEQ_IC -> "LOWER(`" + field + "`) != LOWER(" + ph + ")";
+      case LT -> "`" + field + "` < " + ph;
+      case LTE -> "`" + field + "` <= " + ph;
+      case GT -> "`" + field + "` > " + ph;
+      case GTE -> "`" + field + "` >= " + ph;
     };
   }
 
@@ -871,25 +899,35 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     @Nullable QueryBuilder<?> query,
     boolean onlyFirst,
     boolean onlyCount,
+    boolean delete,
     String ...fields
   ) throws Exception {
     MysqlTable table = getTableFromModel(model, false);
 
-    StringBuilder stmt = new StringBuilder("SELECT ");
+    StringBuilder stmt = new StringBuilder();
 
-    if (onlyCount)
-      stmt.append("COUNT(*) AS `count`");
+    // Selection mode
+    if (!delete) {
+      stmt.append("SELECT ");
 
-    else if (fields.length == 0)
-      stmt.append("*");
+      if (onlyCount)
+        stmt.append("COUNT(*) AS `count`");
 
-    else {
-      for (int i = 0; i < fields.length; i++) {
-        String field = fields[i];
-        String name = getColumnByName(table, field).getName();
-        stmt.append("`").append(name).append("`").append(i != fields.length - 1 ? ", " : "");
+      else if (fields.length == 0)
+        stmt.append("*");
+
+      else {
+        for (int i = 0; i < fields.length; i++) {
+          String field = fields[i];
+          String name = getColumnByName(table, field).getName();
+          stmt.append("`").append(name).append("`").append(i != fields.length - 1 ? ", " : "");
+        }
       }
     }
+
+    // Deletion mode
+    else
+      stmt.append("DELETE");
 
     stmt.append(" FROM `").append(table.name()).append("`");
     List<Tuple<MysqlType, Object>> params = new ArrayList<>();
@@ -906,12 +944,14 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
         stmt.append(stringifyFieldQueryGroup(additional.b(), table, params));
       }
 
-      if (query.getLimit() != null || onlyFirst)
-        stmt.append(" LIMIT ").append(onlyFirst ? 1 : query.getLimit());
+      // Only append limit/offset when reading
+      if (!delete) {
+        if (query.getLimit() != null || onlyFirst)
+          stmt.append(" LIMIT ").append(onlyFirst ? 1 : query.getLimit());
 
-      if (query.getSkip() != null)
-        stmt.append(" OFFSET ").append(query.getSkip());
-
+        if (query.getSkip() != null)
+          stmt.append(" OFFSET ").append(query.getSkip());
+      }
     }
 
     PreparedStatement ps = conn.prepareStatement(stmt + ";");
@@ -941,7 +981,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   ) throws Exception {
     List<Map<String, Object>> res = new ArrayList<>();
 
-    PreparedStatement ps = buildQuery(model, query, false, false, columns);
+    PreparedStatement ps = buildQuery(model, query, false, false, false, columns);
     ResultSet rs = ps.executeQuery();
 
     while(rs.next())
@@ -997,6 +1037,10 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    * @return Transformed value
    */
   private Object translateValue(MysqlType type, Object value) {
+    // Leave null values as they are
+    if (value == null)
+      return null;
+
     if (type == MysqlType.UUID) {
       // Turn byte[]'s (binary columns) into UUIDs when reading
       if (value instanceof byte[] ba) {
@@ -1412,7 +1456,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
         .map(c -> new MysqlColumn(
           f.getName() + "__" + c.getName(),
           c.getType(), c.isNullable(), c.getMigrationDefault(),
-          c.isUnique(), true, f, c.getModelField(), c.getForeignKey()
+          c.isUnique(), true, f, c.getModelField(), c.getForeignKey(), c.getForeignAction()
         ))
         .toList()
     );

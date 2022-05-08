@@ -37,6 +37,12 @@ public interface IPersistence {
    void delete(APersistentModel model) throws PersistenceException;
 
   /**
+   * Delete models by a query
+   * @param query Query that specifies what to delete
+   */
+  <T extends APersistentModel> int delete(QueryBuilder<T> query) throws PersistenceException;
+
+  /**
    * Delete a previously created model by it's id
    * @param id ID of the model
    */

@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.persistence.mysql;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import me.blvckbytes.blvcksys.persistence.ForeignKeyAction;
 import me.blvckbytes.blvcksys.persistence.MigrationDefault;
 import me.blvckbytes.blvcksys.persistence.transformers.IDataTransformer;
 import org.jetbrains.annotations.Nullable;
@@ -35,6 +36,9 @@ public class MysqlColumn {
 
   // The table which this column references
   @Nullable private final MysqlTable foreignKey;
+
+  // Action to take when the foreign key changes
+  private final ForeignKeyAction foreignAction;
 
   // The "id" field is reserved for the primary key
   public boolean isPrimaryKey() {

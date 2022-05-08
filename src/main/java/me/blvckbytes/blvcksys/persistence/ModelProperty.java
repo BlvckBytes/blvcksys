@@ -35,4 +35,7 @@ public @interface ModelProperty {
 
   // Foreign key constraint target model, APersistentModel.class means none
   Class<? extends APersistentModel> foreignKey() default APersistentModel.class;
+
+  // Action to take when the foreign key changes
+  ForeignKeyAction foreignChanges() default ForeignKeyAction.RESTRICT;
 }

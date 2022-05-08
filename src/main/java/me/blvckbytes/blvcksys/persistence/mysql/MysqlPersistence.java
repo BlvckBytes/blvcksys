@@ -7,6 +7,7 @@ import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.di.IAutoConstructer;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
+import me.blvckbytes.blvcksys.persistence.MigrationDefault;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
 import me.blvckbytes.blvcksys.persistence.exceptions.DuplicatePropertyException;
 import me.blvckbytes.blvcksys.persistence.exceptions.ModelNotFoundException;
@@ -392,13 +393,13 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
         if (type.get() != MysqlType.UUID)
           throw new PersistenceException("Unsupported identifier type " + f.getType() + " for field " + f.getName() + " of " + model);
 
-        columns.add(new MysqlColumn("id", type.get(), false, true, false, f, null));
+        columns.add(new MysqlColumn("id", type.get(), false, MigrationDefault.UNSPECIFIED, true, false, f, null));
         continue;
       }
 
       columns.add(new MysqlColumn(
         modelNameToDBName(f.getName()),
-        type.get(), mp.isNullable(), mp.isUnique(), mp.isInlineable(), f, null
+        type.get(), mp.isNullable(), mp.migrationDefault(), mp.isUnique(), mp.isInlineable(), f, null
       ));
     }
 
@@ -446,12 +447,166 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   }
 
   /**
+   * Migrates any missing table columns by adding them with their default value
+   * @param table Table to migrate
+   */
+  private void migrateMissingTableColumns(MysqlTable table) throws SQLException {
+    PreparedStatement ps = conn.prepareStatement("DESC `" + table.name() + "`;");
+    logger.logDebug(ps.toString());
+
+    List<String> foundCols = new ArrayList<>();
+    ResultSet rs = ps.executeQuery();
+
+    while (rs.next()) {
+      String name = rs.getString("Field");
+      foundCols.add(name);
+
+      // Find the model's corresponding column type
+      Optional<MysqlColumn> modelCol = table.columns()
+          .stream()
+          .filter(col -> col.getName().equals(name))
+          .findFirst();
+
+      // Column exists in the database but is not known as a model property
+      // Just keep it and skip
+      if (modelCol.isEmpty())
+        continue;
+
+      MysqlColumn col = modelCol.get();
+
+      // Stringify "null" defaults
+      String def = rs.getString("Default");
+      if (def == null)
+        def = "null";
+
+      // Migrate type or null-ness mismatch
+      if (
+        !col.getType().matchesSQLTypeStr(rs.getString("Type")) ||
+        col.isNullable() != rs.getString("Null").equalsIgnoreCase("yes")
+      ) {
+        String newSig = buildColumnSignature(col, true);
+        PreparedStatement uPs = conn.prepareStatement(
+          "ALTER TABLE `" + table.name() + "` MODIFY " + newSig + ";"
+        );
+
+        logger.logDebug(uPs.toString());
+        uPs.executeUpdate();
+        uPs.close();
+
+        logger.logInfo("Migrated column " + col.getName() + " of " + table.name() + " type to \"" + newSig + "\"");
+      }
+
+      // Migrate column unique index mismatch
+      if (
+        col.isUnique() != rs.getString("Key").toLowerCase().contains("uni") &&
+        !col.getName().equalsIgnoreCase("id")
+      ) {
+        // Add unique index to the column
+        PreparedStatement uPs;
+        if (col.isUnique()) {
+          uPs = conn.prepareStatement(
+            "ALTER TABLE `" + table.name() + "` " +
+              "ADD UNIQUE (`" + col.getName() + "`);"
+          );
+
+          logger.logDebug(uPs.toString());
+          uPs.executeUpdate();
+        }
+
+        // Remove all unique indices from this column
+        else {
+          uPs = conn.prepareStatement(
+            "SHOW INDEX FROM `" + table.name() + "` WHERE `column_name` = '" + col.getName() + "';"
+          );
+
+          logger.logDebug(uPs.toString());
+          ResultSet uRs = uPs.executeQuery();
+          while (uRs.next()) {
+            PreparedStatement uPs2 = conn.prepareStatement(
+              "ALTER TABLE `" + table.name() + "` DROP INDEX `" + uRs.getString("key_name") + "`;"
+            );
+
+            logger.logDebug(uPs2.toString());
+            uPs2.executeUpdate();
+            uPs2.close();
+          }
+        }
+
+        uPs.close();
+        logger.logInfo("Migrated column " + col.getName() + " of " + table.name() + " uniqueness to " + col.isUnique());
+      }
+
+      // Migrate mismatching column default
+      if (
+        col.getMigrationDefault() != MigrationDefault.UNSPECIFIED &&
+        !col.getMigrationDefault().matchesSqlValue(def)
+      ) {
+        if (col.getMigrationDefault() == MigrationDefault.NULL && !col.isNullable())
+          throw new PersistenceException("Non-nullable column " + col.getName() + " of " + table.name() + " cannot have a null migration default");
+
+        if (!col.getMigrationDefault().matchesSqlType(col.getType()))
+          throw new PersistenceException("Column " + col.getName() + " of " + table.name() + " uses a type-mismatching migration default");
+
+        PreparedStatement uPs = conn.prepareStatement(
+          "ALTER TABLE `" + table.name() +
+          "` ALTER `" + col.getName() + "` " +
+          "SET DEFAULT " + col.getMigrationDefault().getSqlValues()[0] + ";"
+        );
+
+        logger.logDebug(uPs.toString());
+        uPs.executeUpdate();
+        uPs.close();
+
+        logger.logInfo("Migrated column " + col.getName() + " of " + table.name() + " default to " + col.getMigrationDefault());
+      }
+    }
+
+    // Create missing columns
+    for (MysqlColumn col : table.columns()) {
+      if (foundCols.contains(col.getName()))
+        continue;
+
+      PreparedStatement uPs = conn.prepareStatement(
+        "ALTER TABLE `" + table.name() + "` ADD " + buildColumnSignature(col, false) + ";"
+      );
+
+      logger.logDebug(uPs.toString());
+      uPs.executeUpdate();
+      uPs.close();
+
+      logger.logInfo("Created missing column " + col.getName() + " of " + table.name());
+    }
+
+    rs.close();
+    ps.close();
+  }
+
+  /**
+   * Build a column's signature from it's properties
+   * @param column Column to build for
+   * @param isModify Whether the result will be used in a column modification statement
+   * @return Built signature
+   */
+  private String buildColumnSignature(MysqlColumn column, boolean isModify) {
+    return
+      "`" + column.getName() + "`" + " " +
+      column.getType() + " " +
+      (column.isNullable() ? "NULL" : "NOT NULL") + " " +
+      (column.isPrimaryKey() ? "PRIMARY KEY " : "") +
+      (column.isUnique() && !isModify ? "UNIQUE " : "") +
+      (column.getMigrationDefault() != MigrationDefault.UNSPECIFIED ? "DEFAULT " + column.getMigrationDefault() : "")
+      .trim();
+  }
+
+  /**
    * Dispatches a table creation statement if the table doesn't yet exist
    * @param table Table to create
    */
   private void createTableIfNotExists(MysqlTable table) throws SQLException {
-    if (isTableExisting(table))
+    if (isTableExisting(table)) {
+      migrateMissingTableColumns(table);
       return;
+    }
 
     StringBuilder stmt = new StringBuilder("CREATE TABLE IF NOT EXISTS `" + table.name() + "`(");
 
@@ -459,15 +614,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     for (int i = 0; i < columns.size(); i++) {
       MysqlColumn col = columns.get(i);
       stmt
-        .append('`')
-        .append(col.getName())
-        .append("`")
-        .append(' ')
-        .append(col.getType())
-        .append(' ')
-        .append(col.isNullable() ? "NULL" : "NOT NULL")
-        .append(col.isPrimaryKey() ? " PRIMARY KEY" : "")
-        .append((col.isUnique() && !col.isPrimaryKey()) ? " UNIQUE" : "")
+        .append(buildColumnSignature(col, false))
         .append(i == columns.size() - 1 ? "" : ", ");
     }
 
@@ -539,10 +686,12 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    */
   private String stringifyFieldQuery(FieldQuery query, MysqlTable table, List<Tuple<MysqlType, Object>> params) {
     MysqlColumn targCol = getColumnByName(table, query.field());
-    Class<?> targType = targCol.getType().getJavaEquivalent();
-    Class<?> queryType = query.value().getClass();
-    if (targType != queryType)
-      throw new RuntimeException("The query field " + query.field() + " is of invalid type " + queryType + " instead of " + targType);
+
+    for (Class<?> targType : targCol.getType().getJavaEquivalents()) {
+      Class<?> queryType = query.value().getClass();
+      if (targType != queryType)
+        throw new RuntimeException("The query field " + query.field() + " is of invalid type " + queryType + " instead of " + targType);
+    }
 
     if (!targCol.getType().supportsOp(query.op()))
       throw new RuntimeException("The query field " + query.field() + " does not support the operation " + query.op());
@@ -1144,7 +1293,8 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
         // Create a clone of this column that has the foreign field's name as a prefix
         .map(c -> new MysqlColumn(
           f.getName() + "__" + c.getName(),
-          c.getType(), c.isNullable(), c.isUnique(), true, f, c.getModelField()
+          c.getType(), c.isNullable(), c.getMigrationDefault(),
+          c.isUnique(), true, f, c.getModelField()
         ))
         .toList()
     );

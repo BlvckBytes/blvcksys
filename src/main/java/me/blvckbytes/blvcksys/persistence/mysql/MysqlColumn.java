@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.persistence.mysql;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import me.blvckbytes.blvcksys.persistence.MigrationDefault;
 import me.blvckbytes.blvcksys.persistence.transformers.IDataTransformer;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,8 +19,8 @@ import java.lang.reflect.Field;
 public class MysqlColumn {
   private final String name;
   private final MysqlType type;
-
   private final boolean isNullable;
+  private final MigrationDefault migrationDefault;
   private final boolean isUnique;
 
   // Whether this column can be inlined when using transformers

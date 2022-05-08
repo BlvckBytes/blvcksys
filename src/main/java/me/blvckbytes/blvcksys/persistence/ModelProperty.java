@@ -29,5 +29,5 @@ public @interface ModelProperty {
   boolean isInlineable() default true;
 
   // What value to use when migrating this column to an existing data-structure
-  MigrationDefault migrationDefault() default MigrationDefault.NULL;
+  MigrationDefault migrationDefault() default MigrationDefault.UNSPECIFIED;
 }

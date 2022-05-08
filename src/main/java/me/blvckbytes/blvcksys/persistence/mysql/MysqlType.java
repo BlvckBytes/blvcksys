@@ -18,7 +18,13 @@ import java.util.Optional;
 @AllArgsConstructor
 public enum MysqlType {
   UUID(
-    "BINARY(16)", java.util.UUID.class, true,
+    new String[] {
+      "BINARY(16)"
+    },
+    new Class[] {
+      java.util.UUID.class
+    },
+    true,
     new EqualityOperation[] {
       EqualityOperation.EQ,
       EqualityOperation.NEQ
@@ -26,7 +32,13 @@ public enum MysqlType {
   ),
 
   TEXT(
-    "TEXT", String.class, false,
+    new String[] {
+      "TEXT"
+    },
+    new Class[] {
+      String.class
+    },
+    false,
     new EqualityOperation[] {
       EqualityOperation.EQ,
       EqualityOperation.NEQ,
@@ -36,7 +48,13 @@ public enum MysqlType {
   ),
 
   VARCHAR(
-    "VARCHAR(255)", String.class, true,
+    new String[] {
+    "VARCHAR(255)"
+    },
+    new Class[] {
+      String.class
+    },
+    true,
     new EqualityOperation[] {
       EqualityOperation.EQ,
       EqualityOperation.NEQ,
@@ -46,7 +64,13 @@ public enum MysqlType {
   ),
 
   BOOLEAN(
-    "BOOL", boolean.class, false,
+    new String[] {
+      "BOOL", "tinyint(1)"
+    },
+    new Class[] {
+      boolean.class
+    },
+    false,
     new EqualityOperation[] {
       EqualityOperation.EQ,
       EqualityOperation.NEQ
@@ -54,7 +78,13 @@ public enum MysqlType {
   ),
 
   LONG(
-    "BIGINT", long.class, false,
+    new String[] {
+      "BIGINT"
+    },
+    new Class[] {
+      long.class
+    },
+    false,
     new EqualityOperation[] {
       EqualityOperation.EQ,
       EqualityOperation.NEQ,
@@ -66,7 +96,13 @@ public enum MysqlType {
   ),
 
   INTEGER(
-    "INT", int.class, false,
+    new String[] {
+      "INT", "int"
+    },
+    new Class[] {
+      int.class
+    },
+    false,
     new EqualityOperation[] {
       EqualityOperation.EQ,
       EqualityOperation.NEQ,
@@ -78,7 +114,13 @@ public enum MysqlType {
   ),
 
   DOUBLE(
-    "DOUBLE", double.class, false,
+    new String[] {
+      "DOUBLE"
+    },
+    new Class[] {
+      double.class
+    },
+    false,
     new EqualityOperation[] {
       EqualityOperation.EQ,
       EqualityOperation.NEQ,
@@ -90,7 +132,13 @@ public enum MysqlType {
   ),
 
   FLOAT(
-    "FLOAT", float.class, false,
+    new String[] {
+      "FLOAT"
+    },
+    new Class[] {
+      float.class
+    },
+    false,
     new EqualityOperation[] {
       EqualityOperation.EQ,
       EqualityOperation.NEQ,
@@ -102,7 +150,13 @@ public enum MysqlType {
   ),
 
   DATETIME(
-    "DATETIME", Date.class, false,
+    new String[] {
+      "DATETIME"
+    },
+    new Class[] {
+      Date.class
+    },
+    false,
     new EqualityOperation[] {
       EqualityOperation.EQ,
       EqualityOperation.NEQ,
@@ -114,17 +168,35 @@ public enum MysqlType {
   )
   ;
 
-  private final String queryType;
+  private final String[] queryTypes;
 
   @Getter
-  private final Class<?> javaEquivalent;
+  private final Class<?>[] javaEquivalents;
 
   private final boolean hasLength;
   private final EqualityOperation[] supportedOps;
 
   @Override
   public String toString() {
-    return queryType;
+    // Just choose the first type, as multiple types are only used for "aliases"
+    return queryTypes[0];
+  }
+
+  /**
+   * Checks whether the provided sql type string (as spit out by the DESC command)
+   * matches the current type
+   * @param sqlTypeStr SQL type string
+   * @return True on match, false otherwise
+   */
+  public boolean matchesSQLTypeStr(String sqlTypeStr) {
+    sqlTypeStr = sqlTypeStr.toLowerCase().replace(" ", "");
+
+    for (String type : queryTypes) {
+      if (sqlTypeStr.equalsIgnoreCase(type))
+        return true;
+    }
+
+    return false;
   }
 
   /**
@@ -138,8 +210,10 @@ public enum MysqlType {
       javaType = Primitives.unwrap(javaType);
 
     for (MysqlType type : MysqlType.values()) {
-      if (type.javaEquivalent.equals(javaType) && (!lengthRequired || type.hasLength))
-        return Optional.of(type);
+      for (Class<?> javaEq : type.javaEquivalents) {
+        if (javaEq.equals(javaType) && (!lengthRequired || type.hasLength))
+          return Optional.of(type);
+      }
     }
     return Optional.empty();
   }

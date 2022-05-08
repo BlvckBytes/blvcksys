@@ -45,7 +45,7 @@ public class HologramHandler implements IHologramHandler {
     return pers.delete(
       new QueryBuilder<>(
         HologramLineModel.class,
-        "name", EqualityOperation.EQ, name
+        "name", EqualityOperation.EQ_IC, name
       )
     ) > 0;
   }
@@ -117,7 +117,7 @@ public class HologramHandler implements IHologramHandler {
     HologramLineModel tail = pers.findFirst(
       new QueryBuilder<>(
         HologramLineModel.class,
-        "name", EqualityOperation.EQ, name
+        "name", EqualityOperation.EQ_IC, name
       ).and(
         "nextLine", EqualityOperation.EQ, null
       )
@@ -207,7 +207,7 @@ public class HologramHandler implements IHologramHandler {
     List<HologramLineModel> unsortedLines = pers.find(
       new QueryBuilder<>(
         HologramLineModel.class,
-        "name", EqualityOperation.EQ, name
+        "name", EqualityOperation.EQ_IC, name
       )
     );
 

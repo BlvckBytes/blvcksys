@@ -45,8 +45,6 @@ import java.util.stream.Collectors;
 @AutoConstruct
 public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveHandler {
 
-  // TODO: Persist hidden sidebar state
-
   // Name of the sidebar objective
   private static final String NAME_SIDEBAR = "side";
 
@@ -60,6 +58,7 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
   private final JavaPlugin plugin;
   private final IConfig cfg;
   private final IObjectiveCommunicator oComm;
+  private final IPreferencesHandler prefs;
 
   // Previous sidebar lines, used for diffing and thus obsolete score deletion
   private final Map<Player, List<String>> prevSidebarLines;
@@ -73,23 +72,21 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
   // Each player has a bitmask of below name flags
   private final Map<Player, Integer> belowNameFlags;
 
-  // List of players that have hidden their sidebar objective
-  private final Set<UUID> hiddenSidebars;
-
   public ObjectiveHandler(
     @AutoInject JavaPlugin plugin,
     @AutoInject IConfig cfg,
-    @AutoInject IObjectiveCommunicator oComm
+    @AutoInject IObjectiveCommunicator oComm,
+    @AutoInject IPreferencesHandler prefs
   ) {
     this.prevSidebarLines = new HashMap<>();
     this.knownBelowNames = new HashMap<>();
     this.prevLevels = new HashMap<>();
     this.belowNameFlags = new HashMap<>();
-    this.hiddenSidebars = new HashSet<>();
 
     this.plugin = plugin;
     this.cfg = cfg;
     this.oComm = oComm;
+    this.prefs = prefs;
   }
 
   //=========================================================================//
@@ -240,20 +237,20 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
 
   @Override
   public boolean getSidebarVisibility(Player target) {
-    return !this.hiddenSidebars.contains(target.getUniqueId());
+    return !this.prefs.isScoreboardHidden(target);
   }
 
   @Override
   public void setSidebarVisibility(Player target, boolean status) {
     // Add the player to the disable-list and destory the objective
     if (!status) {
-      this.hiddenSidebars.add(target.getUniqueId());
+      this.prefs.setScoreboardHidden(target, true);
       clearSidebarObjective(target);
     }
 
     // Remove the player from the disable-list and re-create the objective
     else {
-      this.hiddenSidebars.remove(target.getUniqueId());
+      this.prefs.setScoreboardHidden(target, false);
       createSidebarObjective(target);
     }
   }
@@ -467,7 +464,7 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
    */
   private void updateSidebar(Player t) {
     // This player has disabled the sidebar
-    if (hiddenSidebars.contains(t.getUniqueId()))
+    if (this.prefs.isScoreboardHidden(t))
       return;
 
     // Get the templated list of scoreboard lines

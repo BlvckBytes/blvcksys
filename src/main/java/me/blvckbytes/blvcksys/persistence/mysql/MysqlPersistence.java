@@ -508,6 +508,10 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
       MysqlColumn col = modelCol.get();
 
+      // Primary key columns are never altered
+      if (col.isPrimaryKey())
+        continue;
+
       // Stringify "null" defaults
       String def = rs.getString("Default");
       if (def == null)
@@ -530,20 +534,10 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
         logger.logInfo("Migrated column " + col.getName() + " of " + table.name() + " type to \"" + newSig + "\"");
       }
 
-      // Migrate column unique index mismatch
       String key = rs.getString("Key");
-      if (
-        (
-          // Is unique and has no UNI or is not unique but has UNI
-          col.isUnique() != key.toLowerCase().contains("uni") ||
 
-          // Is foreign key and has no MUL or is no foreign key but has MUL
-          (col.getForeignKey() == null) == key.toLowerCase().contains("mul")
-        )
-
-        // Primary key columns are never altered
-        && !col.getName().equalsIgnoreCase("id")
-      ) {
+      // Is unique and has no UNI or is not unique but has UNI
+      if (col.isUnique() != key.toLowerCase().contains("uni")) {
         // Add unique index to the column
         PreparedStatement uPs;
         if (col.isUnique()) {
@@ -554,6 +548,8 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
           logger.logDebug(uPs.toString());
           uPs.executeUpdate();
+
+          logger.logInfo("Migrated column " + col.getName() + " of " + table.name() + " by adding a uniqueness constraint");
         }
 
         // Remove all unique indices from this column
@@ -573,7 +569,17 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
             uPs2.executeUpdate();
             uPs2.close();
           }
+
+          uRs.close();
+          logger.logInfo("Migrated column " + col.getName() + " of " + table.name() + " by removing all uniqueness constraints");
         }
+
+        uPs.close();
+      }
+
+      // Is foreign key and has no MUL or is no foreign key but has MUL
+      if((col.getForeignKey() == null) == key.toLowerCase().contains("mul")) {
+        PreparedStatement uPs;
 
         // Add foreign key constraint to column
         if (col.getForeignKey() != null) {
@@ -584,15 +590,17 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
           logger.logDebug(uPs.toString());
           uPs.executeUpdate();
+
+          logger.logInfo("Migrated column " + col.getName() + " of " + table.name() + " by adding a foreign key constraint");
         }
 
         // Remove all foreign  constraints from this column
         else {
           uPs = conn.prepareStatement(
             "SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE " +
-            "WHERE REFERENCED_TABLE_SCHEMA = '" + database + "' " +
-            "AND REFERENCED_TABLE_NAME IS NOT NULL " +
-            "AND COLUMN_NAME = '" + col.getName() + "';"
+              "WHERE REFERENCED_TABLE_SCHEMA = '" + database + "' " +
+              "AND REFERENCED_TABLE_NAME IS NOT NULL " +
+              "AND COLUMN_NAME = '" + col.getName() + "';"
           );
 
           logger.logDebug(uPs.toString());
@@ -608,6 +616,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
           }
 
           // Drop all indices that came with it
+          uRs.close();
           uPs.close();
           uPs = conn.prepareStatement(
             "SHOW INDEX FROM `" + table.name() + "` WHERE `column_name` = '" + col.getName() + "' AND `non_unique` = 1;"
@@ -624,10 +633,12 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
             uPs2.executeUpdate();
             uPs2.close();
           }
+
+          uRs.close();
+          logger.logInfo("Migrated column " + col.getName() + " of " + table.name() + " by deleting foreign key constraints");
         }
 
         uPs.close();
-        logger.logInfo("Migrated column " + col.getName() + " of " + table.name() + " by deleting foreign key constraints");
       }
 
       // Migrate mismatching column default

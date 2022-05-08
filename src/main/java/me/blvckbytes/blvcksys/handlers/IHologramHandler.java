@@ -5,6 +5,7 @@ import me.blvckbytes.blvcksys.persistence.models.HologramLineModel;
 import org.bukkit.Location;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 /*
@@ -44,4 +45,12 @@ public interface IHologramHandler {
    * @return Optional list of lines, empty if this hologram didn't yet exist
    */
   Optional<List<HologramLineModel>> getHologramLines(String name) throws PersistenceException;
+
+  /**
+   * Get a list of holograms (map from name to lines) which are near a specified location
+   * @param where Where to search at
+   * @param rangeRadius Max. distance between where and the hologram
+   * @return List of holograms that are within the radius
+   */
+  Map<String, List<HologramLineModel>> getNear(Location where, double rangeRadius) throws PersistenceException;
 }

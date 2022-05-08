@@ -7,6 +7,7 @@ import me.blvckbytes.blvcksys.persistence.exceptions.ModelNotFoundException;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.HologramLineModel;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
+import me.blvckbytes.blvcksys.persistence.query.FieldQueryGroup;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import org.bukkit.Location;
 
@@ -145,6 +146,50 @@ public class HologramHandler implements IHologramHandler {
   public Optional<List<HologramLineModel>> getHologramLines(String name) throws PersistenceException {
     // Return cached responses
     return getHologramLines(name, false);
+  }
+
+  @Override
+  public Map<String, List<HologramLineModel>> getNear(Location where, double rangeRadius) throws PersistenceException {
+    // This should never be the case...
+    if (where.getWorld() == null)
+      throw new PersistenceException("Cannot find any near holograms if no world has been provided");
+
+    Map<String, List<HologramLineModel>> ret = new HashMap<>();
+    List<HologramLineModel> res = pers.find(
+      new QueryBuilder<>(
+        // Has to be in the same world
+        HologramLineModel.class, "loc__world", EqualityOperation.EQ, where.getWorld().getName()
+      )
+        // X range constraint
+        .and(
+          new FieldQueryGroup("loc__x", EqualityOperation.GTE, where.getX() - rangeRadius)
+            .and("loc__x", EqualityOperation.LTE, where.getX() + rangeRadius)
+        )
+
+        // Y range constraint
+        .and(
+          new FieldQueryGroup("loc__y", EqualityOperation.GTE, where.getY() - rangeRadius)
+            .and("loc__y", EqualityOperation.LTE, where.getY() + rangeRadius)
+        )
+
+        // Z range constraint
+        .and(
+          new FieldQueryGroup("loc__z", EqualityOperation.GTE, where.getZ() - rangeRadius)
+            .and("loc__z", EqualityOperation.LTE, where.getZ() + rangeRadius)
+        )
+    );
+
+    // Group lines by their name for convenience
+    for (HologramLineModel line : res) {
+      // Create empty lists initially
+      if (!ret.containsKey(line.getName()))
+        ret.put(line.getName(), new ArrayList<>());
+
+      // Add the line to it's "name group"
+      ret.get(line.getName()).add(line);
+    }
+
+    return ret;
   }
 
   /**

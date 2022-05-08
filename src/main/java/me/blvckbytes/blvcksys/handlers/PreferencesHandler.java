@@ -58,6 +58,22 @@ public class PreferencesHandler implements IPreferencesHandler {
       });
   }
 
+  @Override
+  public boolean isChatHidden(Player p) {
+    return getOrCreatePreferences(p)
+      .map(PreferencesModel::isChatHidden)
+      .orElse(DEF_CHAT_HIDDEN);
+  }
+
+  @Override
+  public void setChatHidden(Player p, boolean hidden) {
+    getOrCreatePreferences(p)
+      .ifPresent(prefs -> {
+        prefs.setChatHidden(hidden);
+        pers.store(prefs);
+      });
+  }
+
   //=========================================================================//
   //                                 Utilities                               //
   //=========================================================================//

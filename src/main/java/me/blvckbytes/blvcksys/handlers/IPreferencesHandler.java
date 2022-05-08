@@ -22,4 +22,17 @@ public interface IPreferencesHandler {
    * @param hidden Whether the scoreboard should be hidden
    */
   void setScoreboardHidden(Player p, boolean hidden);
+
+  /**
+   * Get the chat hidden preference
+   * @param p Target player
+   */
+  boolean isChatHidden(Player p);
+
+  /**
+   * Set the chat hidden preference
+   * @param p Target player
+   * @param hidden Whether the scoreboard should be hidden
+   */
+  void setChatHidden(Player p, boolean hidden);
 }

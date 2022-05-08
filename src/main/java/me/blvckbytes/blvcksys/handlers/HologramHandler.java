@@ -39,6 +39,12 @@ public class HologramHandler implements IHologramHandler {
   }
 
   @Override
+  public int sortHologramLines(String name, int[] lineIdSequence) throws PersistenceException {
+    // TODO: Implement
+    return 0;
+  }
+
+  @Override
   public boolean deleteHologram(String name) throws PersistenceException {
     this.cache.remove(name);
 

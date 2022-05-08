@@ -18,6 +18,18 @@ import java.util.Optional;
 public interface IHologramHandler {
 
   /**
+   * Sort all lines of an existing hologram to the sequence of the
+   * provided line IDs, where 0 is the first line and n is the last
+   * line, handled as currently stored in persistence. All n IDs
+   * have to be present for this action to result in a success.
+   * @param name Name of the hologram
+   * @param lineIdSequence Sequence of line-IDs in the desired order
+   * @return Zero on success, number of missing IDs when missing IDs
+   * @throws PersistenceException {@link me.blvckbytes.blvcksys.persistence.exceptions.ModelNotFoundException} When the name doesn't exist
+   */
+  int sortHologramLines(String name, int[] lineIdSequence) throws PersistenceException;
+
+  /**
    * Delete a hologram by deleting all of it's lines
    * @param name Name of the target hologram
    * @return True on success, false if there was no hologram with this name

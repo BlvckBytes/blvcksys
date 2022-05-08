@@ -624,6 +624,14 @@ public enum ConfigKey {
   ),
 
   //=========================================================================//
+  //                             HOLOSORT Command                            //
+  //=========================================================================//
+
+  COMMAND_HOLOSORT_NOT_EXISTING("holosort.not_existing", "$0Es existiert kein Hologramm namens $4{{name}}$0!"),
+  COMMAND_HOLOSORT_MISSING_IDS("holosort.missing_ids", "$0Es fehlen $4{{num_missing}} IDs $0in der Sequenz!"),
+  COMMAND_HOLOSORT_SORTED("holosort.sorted", "$0Die Zeilen des Hologramms $3{{name}} $0wurden $3sortiert$0."),
+
+  //=========================================================================//
   //                               HOLO Command                              //
   //=========================================================================//
 

@@ -99,19 +99,12 @@ public class KitCommand extends APlayerCommand {
 
     KitModel kit = kitO.get();
 
-    // Check for active cooldowns
-    long cooldown = kit.getCooldownRemaining(p, pers);
-    if (cooldown > 0) {
-      throw new CooldownException(
-        cfg.get(ConfigKey.KIT_COOLDOWN)
-          .withPrefix()
-          .withVariable("name", kit.getName()),
-        cooldown
-      );
-    }
-
-    // Create a new cooldown
-    kit.storeCooldownFor(p, pers);
+    cooldownGuard(
+      p, pers, kit,
+      cfg.get(ConfigKey.KIT_COOLDOWN)
+        .withPrefix()
+        .withVariable("name", kit.getName())
+    );
 
     // Count the number of dropped items
     int numDropped = 0;

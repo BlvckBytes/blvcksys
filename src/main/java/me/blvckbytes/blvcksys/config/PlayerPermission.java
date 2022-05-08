@@ -14,12 +14,19 @@ import org.bukkit.entity.Player;
 public enum PlayerPermission {
 
   //=========================================================================//
+  //                                 AFK Command                             //
+  //=========================================================================//
+
+  AFK_COOLDOWN_BYPASS("bvs.afk.cooldown.bypass"),
+
+  //=========================================================================//
   //                                 KIT Command                             //
   //=========================================================================//
 
   SETKIT("bvs.setkit"),
   DELKIT("bvs.delkit"),
   KIT_OTHERS("bvs.kit.others"),
+  KIT_COOLDOWN_BYPASS("bvs.kit.cooldown.bypass"),
 
   //=========================================================================//
   //                                WARP Command                             //
@@ -89,6 +96,7 @@ public enum PlayerPermission {
 
   HEAL("bvs.heal"),
   HEAL_OTHERS("bvs.heal.others"),
+  HEAL_COOLDOWN_BYPASS("bvs.heal.cooldown.bypass"),
 
   //=========================================================================//
   //                                 FEED Command                            //
@@ -96,6 +104,7 @@ public enum PlayerPermission {
 
   FEED("bvs.feed"),
   FEED_OTHERS("bvs.feed.others"),
+  FEED_COOLDOWN_BYPASS("bvs.feed.cooldown.bypass"),
 
   //=========================================================================//
   //                                LEVEL Command                            //
@@ -235,6 +244,7 @@ public enum PlayerPermission {
 
   COMMAND_REPAIR("bvs.repair"),
   COMMAND_REPAIR_ALL("bvs.repair.all"),
+  COMMAND_REPAIR_COOLDOWN_BYPASS("bvs.repair.cooldown.bypass"),
 
   //=========================================================================//
   //                            BROADCAST Command                            //

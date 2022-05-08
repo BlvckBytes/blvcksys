@@ -4,6 +4,7 @@ import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.commands.exceptions.CooldownException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.events.IAfkListener;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.CooldownSessionModel;
@@ -63,7 +64,7 @@ public class AfkCommand extends APlayerCommand {
       return;
     }
 
-    cooldownGuard(p, pers, CT_AFK, CD_AFK);
+    cooldownGuard(p, pers, CT_AFK, CD_AFK, PlayerPermission.AFK_COOLDOWN_BYPASS);
 
     afk.setAFK(p);
   }

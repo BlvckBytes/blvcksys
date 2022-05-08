@@ -3,9 +3,11 @@ package me.blvckbytes.blvcksys.commands;
 import lombok.Getter;
 import me.blvckbytes.blvcksys.commands.exceptions.*;
 import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
+import me.blvckbytes.blvcksys.persistence.models.ACooldownModel;
 import me.blvckbytes.blvcksys.persistence.models.CooldownSessionModel;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
@@ -227,13 +229,45 @@ public abstract class APlayerCommand extends Command {
   //=========================================================================//
 
   /**
+   * Protect a section of code with a cooldown and allow for a
+   * bypass by providing a permission
+   * @param p Target player
+   * @param pers Persistence ref
+   * @param model Model to create the cooldown for
+   * @param message Message to display
+   */
+  protected void cooldownGuard(
+    Player p,
+    IPersistence pers,
+    ACooldownModel model,
+    ConfigValue message
+  ) throws CooldownException {
+    long cooldown = model.getCooldownRemaining(p, pers);
+
+    if (cooldown > 0)
+      throw new CooldownException(message, cooldown);
+
+    model.storeCooldownFor(p, pers);
+  }
+
+  /**
    * Protect a section of code with a cooldown
    * @param p Target player
    * @param pers Persistence ref
    * @param token Unique token representing this command
    * @param duration Duration in seconds
+   * @param bypassPermission Permission that allows the user to bypass this cooldown
    */
-  protected void cooldownGuard(Player p, IPersistence pers, String token, int duration) throws CooldownException {
+  protected void cooldownGuard(
+    Player p,
+    IPersistence pers,
+    String token,
+    int duration,
+    PlayerPermission bypassPermission
+  ) throws CooldownException {
+    if (bypassPermission.has(p))
+      return;
+
     long cooldown = CooldownSessionModel.getCooldownRemaining(p, pers, token);
 
     if (cooldown > 0) {

@@ -21,6 +21,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Stream;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -57,6 +58,16 @@ public class HolosCommand extends APlayerCommand {
   //=========================================================================//
   //                                 Handler                                 //
   //=========================================================================//
+
+
+  @Override
+  protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
+    // Suggest radius placeholder
+    if (currArg == 0)
+      return Stream.of(getArgumentPlaceholder(currArg));
+
+    return super.onTabCompletion(p, args, currArg);
+  }
 
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {

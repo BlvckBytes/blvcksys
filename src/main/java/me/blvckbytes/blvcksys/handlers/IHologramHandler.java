@@ -3,6 +3,7 @@ package me.blvckbytes.blvcksys.handlers;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.HologramLineModel;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 
 import java.util.List;
 import java.util.Map;
@@ -32,12 +33,13 @@ public interface IHologramHandler {
 
   /**
    * Create a new hologram line and populate it's links so it's added as a last node
+   * @param creator Player creating this hologram
    * @param name Name of the hologram
    * @param loc Location of the line
    * @param text Text of the line
    * @return Created model
    */
-  HologramLineModel createHologramLine(String name, Location loc, String text) throws PersistenceException;
+  HologramLineModel createHologramLine(OfflinePlayer creator, String name, Location loc, String text) throws PersistenceException;
 
   /**
    * Get all lines a hologram holds

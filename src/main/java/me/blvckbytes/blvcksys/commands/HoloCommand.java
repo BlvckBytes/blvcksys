@@ -97,7 +97,7 @@ public class HoloCommand extends APlayerCommand {
     }
 
     if (action == HoloAction.ADDLINE) {
-      holo.createHologramLine(name, p.getLocation(), argvar(args, 2));
+      holo.createHologramLine(p, name, p.getLocation(), argvar(args, 2));
       p.sendMessage("§aLine created");
       return;
     }

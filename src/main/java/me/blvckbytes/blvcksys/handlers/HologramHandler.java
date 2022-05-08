@@ -10,6 +10,7 @@ import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.FieldQueryGroup;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 
 import java.util.*;
 
@@ -111,7 +112,7 @@ public class HologramHandler implements IHologramHandler {
   }
 
   @Override
-  public HologramLineModel createHologramLine(String name, Location loc, String text) throws PersistenceException {
+  public HologramLineModel createHologramLine(OfflinePlayer creator, String name, Location loc, String text) throws PersistenceException {
     // Find the tail of the current list of lines
     HologramLineModel tail = pers.findFirst(
       new QueryBuilder<>(
@@ -128,7 +129,7 @@ public class HologramHandler implements IHologramHandler {
       previous = tail.getId();
 
     // Create a new line pointing at previous and having no successor
-    HologramLineModel line = new HologramLineModel(name, loc, text, previous, null);
+    HologramLineModel line = new HologramLineModel(creator, name, loc, text, previous, null);
     pers.store(line);
 
     // Update the "previous tail"'s next to the newly created ID

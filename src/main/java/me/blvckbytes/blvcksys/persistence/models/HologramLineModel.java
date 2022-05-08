@@ -2,8 +2,10 @@ package me.blvckbytes.blvcksys.persistence.models;
 
 import lombok.*;
 import me.blvckbytes.blvcksys.persistence.ForeignKeyAction;
+import me.blvckbytes.blvcksys.persistence.MigrationDefault;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 
 import java.util.UUID;
 
@@ -21,6 +23,9 @@ import java.util.UUID;
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class HologramLineModel extends APersistentModel {
+
+  @ModelProperty(migrationDefault = MigrationDefault.NULL)
+  private OfflinePlayer creator;
 
   @ModelProperty
   private String name;

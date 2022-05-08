@@ -16,6 +16,9 @@ public class OfflinePlayerTransformer implements IDataTransformer<OfflinePlayerM
 
   @Override
   public OfflinePlayer revive(OfflinePlayerModel data) {
+    if (data == null)
+      return null;
+
     return Bukkit.getOfflinePlayer(data.getUuid());
   }
 

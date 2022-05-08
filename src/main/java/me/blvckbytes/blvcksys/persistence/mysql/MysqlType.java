@@ -68,7 +68,7 @@ public enum MysqlType {
       "BOOL", "tinyint(1)"
     },
     new Class[] {
-      boolean.class
+      boolean.class, Boolean.class
     },
     false,
     new EqualityOperation[] {
@@ -82,7 +82,7 @@ public enum MysqlType {
       "BIGINT"
     },
     new Class[] {
-      long.class
+      long.class, Long.class
     },
     false,
     new EqualityOperation[] {
@@ -100,7 +100,7 @@ public enum MysqlType {
       "INT", "int"
     },
     new Class[] {
-      int.class
+      int.class, Integer.class
     },
     false,
     new EqualityOperation[] {
@@ -118,7 +118,7 @@ public enum MysqlType {
       "DOUBLE"
     },
     new Class[] {
-      double.class
+      double.class, Double.class
     },
     false,
     new EqualityOperation[] {
@@ -136,7 +136,7 @@ public enum MysqlType {
       "FLOAT"
     },
     new Class[] {
-      float.class
+      float.class, Float.class
     },
     false,
     new EqualityOperation[] {

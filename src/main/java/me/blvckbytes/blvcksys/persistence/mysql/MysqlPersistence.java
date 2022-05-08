@@ -829,11 +829,17 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
     boolean isNull = query.value() == null;
     if (!isNull) {
+      boolean anyMatch = false;
+      Class<?> queryType = query.value().getClass();
       for (Class<?> targType : targCol.getType().getJavaEquivalents()) {
-        Class<?> queryType = query.value().getClass();
-        if (targType != queryType)
-          throw new RuntimeException("The query field " + query.field() + " is of invalid type " + queryType + " instead of " + targType);
+        if (targType == queryType) {
+          anyMatch = true;
+          break;
+        }
       }
+
+      if (!anyMatch)
+        throw new RuntimeException("The query field " + query.field() + " is of invalid type " + queryType);
     }
 
     if (!targCol.getType().supportsOp(query.op()))
@@ -879,7 +885,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
     // Append all additional queries with their connection leading them
     for (Tuple<QueryConnection, FieldQuery> additional : group.getAdditionals()) {
-      groupStr.append(additional.a()).append(" ");
+      groupStr.append(" ").append(additional.a()).append(" ");
       groupStr.append(stringifyFieldQuery(additional.b(), table, params));
     }
 

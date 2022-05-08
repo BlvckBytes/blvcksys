@@ -8,7 +8,6 @@ import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IHologramHandler;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.HologramLineModel;
-import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.entity.Player;
@@ -26,8 +25,6 @@ import java.util.stream.Stream;
 */
 @AutoConstruct
 public class HoloCommand extends APlayerCommand {
-
-  // TODO: /holos [near] command to list existing holograms
 
   private final IHologramHandler holo;
   private final IPersistence pers;
@@ -66,7 +63,6 @@ public class HoloCommand extends APlayerCommand {
   //=========================================================================//
   //                                 Handler                                 //
   //=========================================================================//
-
 
   @Override
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {

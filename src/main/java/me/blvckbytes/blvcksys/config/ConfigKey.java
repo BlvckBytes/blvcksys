@@ -627,7 +627,15 @@ public enum ConfigKey {
   //                               HOLO Command                              //
   //=========================================================================//
 
-//  COMMAND_HOLO("holo.", ""),
+  COMMAND_HOLO_NOT_EXISTING("holo.not_existing", "$0Es existiert kein Hologramm namens $4{{name}}$0!"),
+  COMMAND_HOLO_DELETED("holo.deleted", "$0Das Hologramm $3{{name}} $0wurde $3gelöscht$0."),
+  COMMAND_HOLO_LINE_ADDED("holo.line_added", "$0Die $3Zeile $0wurde zum Hologramm $3{{name}} $0hinzugefügt."),
+  COMMAND_HOLO_LINE_UPDATED("holo.line_updated", "$0Die $3Zeile {{index}} $0vom Hologramm $3{{name}} $0wurde geändert."),
+  COMMAND_HOLO_INVALID_INDEX("holo.invalid_index", "$0Der Index $4{{index}} $0ist $4keine $0verfügbare Zeile!"),
+  COMMAND_HOLO_LINE_DISAPPEARED("holo.line_disappeared", "$0Die Zeile $4{{index}} $0wurde in der Zwischenzeit $4gelöscht$0!"),
+  COMMAND_HOLO_LINE_DELETED("holo.line_deleted", "$0Die $3Zeile {{index}} $0vom Hologramm $3{{name}} $0wurde gelöscht."),
+  COMMAND_HOLO_LINES_HEADER("holo.lines_header", "$0Zeilen vom Hologramm $3{{name}}$0:"),
+  COMMAND_HOLO_LINES_LINE_FORMAT("holo.line_format", "$0[$3{{index}}$0]: {{text}}"),
 
   //=========================================================================//
   //                               WARP Command                              //

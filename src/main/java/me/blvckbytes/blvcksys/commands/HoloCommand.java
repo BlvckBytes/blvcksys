@@ -11,6 +11,7 @@ import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.HologramLineModel;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -109,9 +110,18 @@ public class HoloCommand extends APlayerCommand {
       return;
     }
 
+    // Get all lines of the selected hologram
+    List<HologramLineModel> lines = holo.getHologramLines(name).orElse(null);
+
     // Add an individual line to the end of the hologram
     if (action == HoloAction.ADDLINE) {
-      holo.createHologramLine(p, name, p.getLocation(), argvar(args, 2));
+      // Set this new line's location either to the players location (when no
+      // hologram with this name yet exists) or to the location of the first
+      // existing line corresponding to this name (so that all lines have the
+      // exact same location, as laying lines out will be done at runtime).
+      Location loc = lines == null ? p.getLocation() : lines.get(0).getLoc();
+
+      holo.createHologramLine(p, name, loc, argvar(args, 2));
       p.sendMessage(
         cfg.get(ConfigKey.COMMAND_HOLO_LINE_ADDED)
           .withPrefix()
@@ -121,8 +131,6 @@ public class HoloCommand extends APlayerCommand {
       return;
     }
 
-    // Get all lines of the selected holograms for manipulation reasons
-    List<HologramLineModel> lines = holo.getHologramLines(name).orElse(null);
     if (lines == null) {
       p.sendMessage(
         cfg.get(ConfigKey.COMMAND_HOLO_NOT_EXISTING)

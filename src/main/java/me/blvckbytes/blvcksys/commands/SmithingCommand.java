@@ -35,7 +35,7 @@ public class SmithingCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "smithing",
       "Open a mobile smithing table",
-      PlayerPermission.SMITHING
+      PlayerPermission.COMMAND_SMITHING
     );
 
     this.container = container;

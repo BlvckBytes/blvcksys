@@ -49,7 +49,7 @@ public class LongChatCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "longchat,lc",
       "Send a really long chat message",
-      PlayerPermission.LONGCHAT
+      PlayerPermission.COMMAND_LONGCHAT
     );
 
     this.chat = chat;
@@ -102,7 +102,7 @@ public class LongChatCommand extends APlayerCommand {
 
     // Check whether this message can be sent by this player
     String message = joinPages(pages);
-    boolean canSend = message.length() <= MAX_LEN || PlayerPermission.LONGCHAT_LIMITLESS.has(p);
+    boolean canSend = message.length() <= MAX_LEN || PlayerPermission.COMMAND_LONGCHAT_LIMITLESS.has(p);
 
     // Send buttons to send, edit or cancel
     ChatButtons buttons = new ChatButtons(

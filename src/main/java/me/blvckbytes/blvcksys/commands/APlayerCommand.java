@@ -351,7 +351,7 @@ public abstract class APlayerCommand extends Command {
    * @return Stream of suggestions
    */
   protected Stream<String> suggestOnlinePlayers(Player p, String[] args, int currArg, boolean suggestAll, List<Player> exclude) {
-    boolean canSeeVanished = PlayerPermission.VANISH_BYPASS.has(p);
+    boolean canSeeVanished = PlayerPermission.COMMAND_VANISH_BYPASS.has(p);
 
     Stream<? extends Player> players = Bukkit.getOnlinePlayers()
       .stream()

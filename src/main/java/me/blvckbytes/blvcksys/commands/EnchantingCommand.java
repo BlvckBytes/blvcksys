@@ -35,7 +35,7 @@ public class EnchantingCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "enchanting",
       "Open a mobile enchanting table",
-      PlayerPermission.ENCHANTING
+      PlayerPermission.COMMAND_ENCHANTING
     );
 
     this.container = container;

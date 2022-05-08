@@ -63,7 +63,7 @@ public class TrashCommand extends APlayerCommand implements Listener, IAutoConst
       plugin, logger, cfg, refl,
       "trash",
       "A fast way to dispose of items",
-      PlayerPermission.TRASH
+      PlayerPermission.COMMAND_TRASH
     );
 
     this.chat = chat;

@@ -35,7 +35,7 @@ public class WorkbenchCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "workbench,wb",
       "Open a mobile workbench",
-      PlayerPermission.WORKBENCH
+      PlayerPermission.COMMAND_WORKBENCH
     );
 
     this.container = container;

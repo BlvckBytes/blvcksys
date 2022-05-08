@@ -37,7 +37,7 @@ public class ForwardCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "forward",
       "Go forward to your next teleport-location",
-      PlayerPermission.FORWARD
+      PlayerPermission.COMMAND_FORWARD
     );
 
     this.tel = tel;

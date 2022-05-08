@@ -32,9 +32,9 @@ public class TpCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "tp",
       "Teleport to a target instantly",
-      PlayerPermission.TP,
+      PlayerPermission.COMMAND_TP,
       new CommandArgument("<target>", "Whom to teleport to"),
-      new CommandArgument("[player]", "Player to teleport, defaults to yourself", PlayerPermission.TP_OTHERS)
+      new CommandArgument("[player]", "Player to teleport, defaults to yourself", PlayerPermission.COMMAND_TP_OTHERS)
     );
   }
 

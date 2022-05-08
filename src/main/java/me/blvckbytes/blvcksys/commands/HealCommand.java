@@ -47,8 +47,8 @@ public class HealCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "heal",
       "Heal yourself or others",
-      PlayerPermission.HEAL,
-      new CommandArgument("[player]", "The player to heal", PlayerPermission.HEAL_OTHERS)
+      PlayerPermission.COMMAND_HEAL,
+      new CommandArgument("[player]", "The player to heal", PlayerPermission.COMMAND_HEAL_OTHERS)
     );
 
     this.obj = obj;
@@ -72,7 +72,7 @@ public class HealCommand extends APlayerCommand {
     Player target = onlinePlayer(args, 0, p);
     boolean isSelf = target.equals(p);
 
-    cooldownGuard(p, pers, CT_HEAL, CD_HEAL, PlayerPermission.HEAL_COOLDOWN_BYPASS);
+    cooldownGuard(p, pers, CT_HEAL, CD_HEAL, PlayerPermission.COMMAND_HEAL_COOLDOWN_BYPASS);
 
     // Figure out what's the target's max health
     AttributeInstance maxHealth = target.getAttribute(Attribute.GENERIC_MAX_HEALTH);

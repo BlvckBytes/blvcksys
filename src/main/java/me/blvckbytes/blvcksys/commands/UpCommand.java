@@ -36,7 +36,7 @@ public class UpCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "up",
       "Teleport to the next block above you",
-      PlayerPermission.UP
+      PlayerPermission.COMMAND_UP
     );
 
     this.top = top;

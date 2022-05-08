@@ -36,7 +36,7 @@ public class DownCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "down",
       "Teleport to the next block below you",
-      PlayerPermission.DOWN
+      PlayerPermission.COMMAND_DOWN
     );
 
     this.top = top;

@@ -36,7 +36,7 @@ public class BottomCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "bottom",
       "Teleport to the lowest block below you",
-      PlayerPermission.BOTTOM
+      PlayerPermission.COMMAND_BOTTOM
     );
 
     this.top = top;

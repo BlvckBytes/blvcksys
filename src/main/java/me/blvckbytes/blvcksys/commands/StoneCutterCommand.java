@@ -35,7 +35,7 @@ public class StoneCutterCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "stonecutter",
       "Open a mobile stonecutter",
-      PlayerPermission.STONECUTTER
+      PlayerPermission.COMMAND_STONECUTTER
     );
 
     this.container = container;

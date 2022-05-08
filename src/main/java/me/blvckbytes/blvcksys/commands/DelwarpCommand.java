@@ -41,7 +41,7 @@ public class DelwarpCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "delwarp",
       "Delete an existing warp",
-      PlayerPermission.DELWARP,
+      PlayerPermission.COMMAND_DELWARP,
       new CommandArgument("<name>", "Name of the warp")
     );
 

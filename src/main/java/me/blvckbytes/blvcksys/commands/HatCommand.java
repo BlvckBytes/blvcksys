@@ -39,7 +39,7 @@ public class HatCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "hat",
       "Wear an item as a hat",
-      PlayerPermission.HAT
+      PlayerPermission.COMMAND_HAT
     );
 
     this.give = give;

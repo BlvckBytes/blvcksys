@@ -35,7 +35,7 @@ public class AnvilCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "anvil",
       "Open a mobile anvil",
-      PlayerPermission.ANVIL
+      PlayerPermission.COMMAND_ANVIL
     );
 
     this.anvil = anvil;

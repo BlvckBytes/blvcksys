@@ -35,7 +35,7 @@ public class LoomCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "loom",
       "Open a mobile loom",
-      PlayerPermission.LOOM
+      PlayerPermission.COMMAND_LOOM
     );
 
     this.container = container;

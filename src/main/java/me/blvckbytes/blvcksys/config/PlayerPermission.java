@@ -23,177 +23,177 @@ public enum PlayerPermission {
   //                                 KIT Command                             //
   //=========================================================================//
 
-  SETKIT("bvs.setkit"),
-  DELKIT("bvs.delkit"),
-  KIT_OTHERS("bvs.kit.others"),
-  KIT_COOLDOWN_BYPASS("bvs.kit.cooldown.bypass"),
+  COMMAND_SETKIT("bvs.setkit"),
+  COMMAND_DELKIT("bvs.delkit"),
+  COMMAND_KIT_OTHERS("bvs.kit.others"),
+  COMMAND_KIT_COOLDOWN_BYPASS("bvs.kit.cooldown.bypass"),
 
   //=========================================================================//
   //                                WARP Command                             //
   //=========================================================================//
 
-  SETWARP("bvs.setwarp"),
-  DELWARP("bvs.delwarp"),
+  COMMAND_SETWARP("bvs.setwarp"),
+  COMMAND_DELWARP("bvs.delwarp"),
 
   //=========================================================================//
   //                              GAMEMODE Command                           //
   //=========================================================================//
 
-  GAMEMODE("bvs.gamemode"),
-  GAMEMODE_OTHERS("bvs.gamemode.others"),
+  COMMAND_GAMEMODE("bvs.gamemode"),
+  COMMAND_GAMEMODE_OTHERS("bvs.gamemode.others"),
 
   //=========================================================================//
   //                               FORWARD Command                           //
   //=========================================================================//
 
-  FORWARD("bvs.forward"),
+  COMMAND_FORWARD("bvs.forward"),
 
   //=========================================================================//
   //                                BACK Command                             //
   //=========================================================================//
 
-  BACK("bvs.back"),
+  COMMAND_BACK("bvs.back"),
 
   //=========================================================================//
   //                                  UP Command                             //
   //=========================================================================//
 
-  UP("bvs.up"),
+  COMMAND_UP("bvs.up"),
 
   //=========================================================================//
   //                                 DOWN Command                            //
   //=========================================================================//
 
-  DOWN("bvs.down"),
+  COMMAND_DOWN("bvs.down"),
 
   //=========================================================================//
   //                                 HAT Command                             //
   //=========================================================================//
 
-  HAT("bvs.hat"),
+  COMMAND_HAT("bvs.hat"),
 
   //=========================================================================//
   //                                 TOP Command                             //
   //=========================================================================//
 
-  TOP("bvs.top"),
+  COMMAND_TOP("bvs.top"),
 
   //=========================================================================//
   //                                BOTTOM Command                           //
   //=========================================================================//
 
-  BOTTOM("bvs.bottom"),
+  COMMAND_BOTTOM("bvs.bottom"),
 
   //=========================================================================//
   //                                TPALL Command                            //
   //=========================================================================//
 
-  TPALL("bvs.tpall"),
+  COMMAND_TPALL("bvs.tpall"),
 
   //=========================================================================//
   //                                 HEAL Command                            //
   //=========================================================================//
 
-  HEAL("bvs.heal"),
-  HEAL_OTHERS("bvs.heal.others"),
-  HEAL_COOLDOWN_BYPASS("bvs.heal.cooldown.bypass"),
+  COMMAND_HEAL("bvs.heal"),
+  COMMAND_HEAL_OTHERS("bvs.heal.others"),
+  COMMAND_HEAL_COOLDOWN_BYPASS("bvs.heal.cooldown.bypass"),
 
   //=========================================================================//
   //                                 FEED Command                            //
   //=========================================================================//
 
-  FEED("bvs.feed"),
-  FEED_OTHERS("bvs.feed.others"),
-  FEED_COOLDOWN_BYPASS("bvs.feed.cooldown.bypass"),
+  COMMAND_FEED("bvs.feed"),
+  COMMAND_FEED_OTHERS("bvs.feed.others"),
+  COMMAND_FEED_COOLDOWN_BYPASS("bvs.feed.cooldown.bypass"),
 
   //=========================================================================//
   //                                LEVEL Command                            //
   //=========================================================================//
 
-  LEVEL("bvs.level"),
-  LEVEL_OTHERS("bvs.level.others"),
+  COMMAND_LEVEL("bvs.level"),
+  COMMAND_LEVEL_OTHERS("bvs.level.others"),
 
   //=========================================================================//
   //                              SMITHING Command                           //
   //=========================================================================//
 
-  SMITHING("bvs.smithing"),
+  COMMAND_SMITHING("bvs.smithing"),
 
   //=========================================================================//
   //                            STONECUTTER Command                          //
   //=========================================================================//
 
-  STONECUTTER("bvs.stonecutter"),
+  COMMAND_STONECUTTER("bvs.stonecutter"),
 
   //=========================================================================//
   //                               LOOM Command                             //
   //=========================================================================//
 
-  LOOM("bvs.loom"),
+  COMMAND_LOOM("bvs.loom"),
 
   //=========================================================================//
   //                            GRINDSTONE Command                           //
   //=========================================================================//
 
-  GRINDSTONE("bvs.grindstone"),
+  COMMAND_GRINDSTONE("bvs.grindstone"),
 
   //=========================================================================//
   //                           ENCHANTING Command                            //
   //=========================================================================//
 
-  ENCHANTING("bvs.enchanting"),
+  COMMAND_ENCHANTING("bvs.enchanting"),
 
   //=========================================================================//
   //                            WORKBENCH Command                            //
   //=========================================================================//
 
-  WORKBENCH("bvs.workbench"),
+  COMMAND_WORKBENCH("bvs.workbench"),
 
   //=========================================================================//
   //                              ANVIL Command                              //
   //=========================================================================//
 
-  ANVIL("bvs.anvil"),
+  COMMAND_ANVIL("bvs.anvil"),
 
   //=========================================================================//
   //                              TRASH Command                              //
   //=========================================================================//
 
-  TRASH("bvs.trash"),
+  COMMAND_TRASH("bvs.trash"),
 
   //=========================================================================//
   //                               KILL Command                              //
   //=========================================================================//
 
-  KILL("bvs.kill"),
+  COMMAND_KILL("bvs.kill"),
 
   //=========================================================================//
   //                                TP Command                               //
   //=========================================================================//
 
-  TP("bvs.tp"),
-  TP_OTHERS("bvs.tp.others"),
+  COMMAND_TP("bvs.tp"),
+  COMMAND_TP_OTHERS("bvs.tp.others"),
 
   //=========================================================================//
   //                             LongChat Command                            //
   //=========================================================================//
 
-  LONGCHAT("bvs.longchat"),
-  LONGCHAT_LIMITLESS("bvs.longchat.limitless"),
+  COMMAND_LONGCHAT("bvs.longchat"),
+  COMMAND_LONGCHAT_LIMITLESS("bvs.longchat.limitless"),
 
   //=========================================================================//
   //                         ClearInventory Command                          //
   //=========================================================================//
 
-  CLEARINVENTORY_SELF("bvs.clearinventory"),
-  CLEARINVENTORY_OTHERS("bvs.clearinventory.others"),
+  COMMAND_CLEARINVENTORY_SELF("bvs.clearinventory"),
+  COMMAND_CLEARINVENTORY_OTHERS("bvs.clearinventory.others"),
 
   //=========================================================================//
   //                            ClearChat Command                            //
   //=========================================================================//
 
-  CLEARCHAT_SELF("bvs.clearchat"),
-  CLEARCHAT_GLOBAL("bvs.clearchat.global"),
+  COMMAND_CLEARCHAT_SELF("bvs.clearchat"),
+  COMMAND_CLEARCHAT_GLOBAL("bvs.clearchat.global"),
 
   //=========================================================================//
   //                             SignEdit Command                            //
@@ -205,8 +205,8 @@ public enum PlayerPermission {
   //                            VANISH Command                               //
   //=========================================================================//
 
-  VANISH("bvs.vanish"),
-  VANISH_BYPASS("bvs.vanish.bypass"),
+  COMMAND_VANISH("bvs.vanish"),
+  COMMAND_VANISH_BYPASS("bvs.vanish.bypass"),
 
   //=========================================================================//
   //                           PWEATHER Command                              //

@@ -1,7 +1,6 @@
 package me.blvckbytes.blvcksys.commands;
 
 import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
-import me.blvckbytes.blvcksys.commands.exceptions.CooldownException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
@@ -48,7 +47,7 @@ public class KitCommand extends APlayerCommand {
       "Obtain a specific kit by it's name",
       null,
       new CommandArgument("<name>", "Name of the kit"),
-      new CommandArgument("[player]", "Player to give the kit to", PlayerPermission.KIT_OTHERS)
+      new CommandArgument("[player]", "Player to give the kit to", PlayerPermission.COMMAND_KIT_OTHERS)
     );
 
     this.pers = pers;

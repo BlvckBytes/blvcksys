@@ -49,7 +49,7 @@ public class VanishCommand extends APlayerCommand implements IAutoConstructed, L
       plugin, logger, cfg, refl,
       "vanish",
       "Hide yourself from all players",
-      PlayerPermission.VANISH
+      PlayerPermission.COMMAND_VANISH
     );
 
     this.team = team;
@@ -107,7 +107,7 @@ public class VanishCommand extends APlayerCommand implements IAutoConstructed, L
 
   @EventHandler
   public void onJoin(PlayerJoinEvent e) {
-    if (PlayerPermission.VANISH_BYPASS.has(e.getPlayer()))
+    if (PlayerPermission.COMMAND_VANISH_BYPASS.has(e.getPlayer()))
       return;
 
     // Hide all vanished players for the newly joined player
@@ -119,7 +119,7 @@ public class VanishCommand extends APlayerCommand implements IAutoConstructed, L
   public void onPermissionsChange(PlayerPermissionsChangedEvent e) {
     // Update the visibility for all vanished players for the player
     // that just received a permission update
-    boolean canSeeVanished = PlayerPermission.VANISH_BYPASS.has(e.getPlayer());
+    boolean canSeeVanished = PlayerPermission.COMMAND_VANISH_BYPASS.has(e.getPlayer());
 
     for (Player vanish : vanished) {
       if (canSeeVanished)
@@ -143,7 +143,7 @@ public class VanishCommand extends APlayerCommand implements IAutoConstructed, L
     // Hide for all other players
     for (Player t : Bukkit.getOnlinePlayers()) {
       // Skip self or bypassing players
-      if (t.equals(p) || PlayerPermission.VANISH_BYPASS.has(t))
+      if (t.equals(p) || PlayerPermission.COMMAND_VANISH_BYPASS.has(t))
         continue;
 
       if (state) {

@@ -1,12 +1,10 @@
 package me.blvckbytes.blvcksys.commands;
 
 import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
-import me.blvckbytes.blvcksys.commands.exceptions.CooldownException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
-import me.blvckbytes.blvcksys.persistence.models.CooldownSessionModel;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -44,8 +42,8 @@ public class FeedCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "feed",
       "Feed yourself or others",
-      PlayerPermission.FEED,
-      new CommandArgument("[player]", "The player to feed", PlayerPermission.FEED_OTHERS)
+      PlayerPermission.COMMAND_FEED,
+      new CommandArgument("[player]", "The player to feed", PlayerPermission.COMMAND_FEED_OTHERS)
     );
 
     this.pers = pers;
@@ -68,7 +66,7 @@ public class FeedCommand extends APlayerCommand {
     Player target = onlinePlayer(args, 0, p);
     boolean isSelf = target.equals(p);
 
-    cooldownGuard(p, pers, CT_FEED, CD_FEED, PlayerPermission.FEED_COOLDOWN_BYPASS);
+    cooldownGuard(p, pers, CT_FEED, CD_FEED, PlayerPermission.COMMAND_FEED_COOLDOWN_BYPASS);
 
     // Apply the food level increase
     int before = target.getFoodLevel();

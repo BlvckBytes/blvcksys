@@ -41,7 +41,7 @@ public class DelKitCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "delkit",
       "Delete an existing kit",
-      PlayerPermission.DELKIT,
+      PlayerPermission.COMMAND_DELKIT,
       new CommandArgument("<name>", "Name of the kit")
     );
 

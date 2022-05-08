@@ -46,6 +46,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   private final Map<Class<? extends APersistentModel>, MysqlTable> tables;
   private final List<IDataTransformer<?, ?>> transformers;
   private Connection conn;
+  private String database;
 
   private final ILogger logger;
   private final MCReflect refl;
@@ -242,7 +243,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     String user = cfg.get(ConfigKey.DB_USERNAME).toString();
     String host = cfg.get(ConfigKey.DB_HOST).toString();
     String port = cfg.get(ConfigKey.DB_PORT).toString();
-    String database = cfg.get(ConfigKey.DB_DATABASE).toString();
+    database = cfg.get(ConfigKey.DB_DATABASE).toString();
 
     String resource = host + ":" + port + "/" + database;
 
@@ -353,7 +354,12 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    * @param model Model to parse
    */
   private void parseTable(Class<? extends APersistentModel> model) throws Exception {
+    // Table already parsed
+    if (tables.containsKey(model))
+      return;
+
     List<MysqlColumn> columns = new ArrayList<>();
+    List<MysqlColumn> selfRefCols = new ArrayList<>();
 
     for (Field f : refl.findAllFields(model)) {
 
@@ -393,14 +399,35 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
         if (type.get() != MysqlType.UUID)
           throw new PersistenceException("Unsupported identifier type " + f.getType() + " for field " + f.getName() + " of " + model);
 
-        columns.add(new MysqlColumn("id", type.get(), false, MigrationDefault.UNSPECIFIED, true, false, f, null));
+        columns.add(new MysqlColumn("id", type.get(), false, MigrationDefault.UNSPECIFIED, true, false, f, null, null));
         continue;
       }
 
-      columns.add(new MysqlColumn(
+      MysqlTable foreignKey = null;
+      Class<? extends APersistentModel> fkC = mp.foreignKey();
+
+      // Look up the foreign key table (if not self)
+      // The base class's class is the "none" placeholder
+      if (mp.foreignKey() != APersistentModel.class && fkC != model) {
+        if (!tables.containsKey(fkC))
+          parseTable(fkC);
+
+        foreignKey = tables.get(fkC);
+
+        if (foreignKey == null)
+          throw new PersistenceException("Unknown foreign key class: " + fkC);
+      }
+
+      MysqlColumn col = new MysqlColumn(
         modelNameToDBName(f.getName()),
-        type.get(), mp.isNullable(), mp.migrationDefault(), mp.isUnique(), mp.isInlineable(), f, null
-      ));
+        type.get(), mp.isNullable(), mp.migrationDefault(), mp.isUnique(), mp.isInlineable(), f, null, foreignKey
+      );
+
+      columns.add(col);
+
+      // Add to a list to later update the self-ref foreign key field
+      if (fkC == model)
+        selfRefCols.add(col);
     }
 
     // No primary key field provided
@@ -417,15 +444,21 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       break;
     }
 
-    // Register this table with it's model-class
-    tables.put(
-      model,
-      new MysqlTable(
-        modelNameToDBName(model.getSimpleName()),
-        columns,
-        isTransformer
-      )
+    MysqlTable table = new MysqlTable(
+      modelNameToDBName(model.getSimpleName()),
+      columns,
+      isTransformer
     );
+
+    // Update private foreign key fields to self
+    for (MysqlColumn selfRef : selfRefCols) {
+      Field f = selfRef.getClass().getDeclaredField("foreignKey");
+      f.setAccessible(true);
+      f.set(selfRef, table);
+    }
+
+    // Register this table with it's model-class
+    tables.put(model, table);
   }
 
   /**
@@ -448,9 +481,10 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
   /**
    * Migrates any missing table columns by adding them with their default value
+   * or alter existing columns that differ from what's specified in the model
    * @param table Table to migrate
    */
-  private void migrateMissingTableColumns(MysqlTable table) throws SQLException {
+  private void migrateTableColumns(MysqlTable table) throws SQLException {
     PreparedStatement ps = conn.prepareStatement("DESC `" + table.name() + "`;");
     logger.logDebug(ps.toString());
 
@@ -497,9 +531,18 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       }
 
       // Migrate column unique index mismatch
+      String key = rs.getString("Key");
       if (
-        col.isUnique() != rs.getString("Key").toLowerCase().contains("uni") &&
-        !col.getName().equalsIgnoreCase("id")
+        (
+          // Is unique and has no UNI or is not unique but has UNI
+          col.isUnique() != key.toLowerCase().contains("uni") ||
+
+          // Is foreign key and has no MUL or is no foreign key but has MUL
+          (col.getForeignKey() == null) == key.toLowerCase().contains("mul")
+        )
+
+        // Primary key columns are never altered
+        && !col.getName().equalsIgnoreCase("id")
       ) {
         // Add unique index to the column
         PreparedStatement uPs;
@@ -516,7 +559,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
         // Remove all unique indices from this column
         else {
           uPs = conn.prepareStatement(
-            "SHOW INDEX FROM `" + table.name() + "` WHERE `column_name` = '" + col.getName() + "';"
+            "SHOW INDEX FROM `" + table.name() + "` WHERE `column_name` = '" + col.getName() + "' AND `non_unique` = 0;"
           );
 
           logger.logDebug(uPs.toString());
@@ -532,8 +575,59 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
           }
         }
 
+        // Add foreign key constraint to column
+        if (col.getForeignKey() != null) {
+          uPs = conn.prepareStatement(
+            "ALTER TABLE `" + table.name() + "` " +
+              "ADD FOREIGN KEY (`" + col.getName() + "`) REFERENCES `" + col.getForeignKey().name() + "`(`id`);"
+          );
+
+          logger.logDebug(uPs.toString());
+          uPs.executeUpdate();
+        }
+
+        // Remove all foreign  constraints from this column
+        else {
+          uPs = conn.prepareStatement(
+            "SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE " +
+            "WHERE REFERENCED_TABLE_SCHEMA = '" + database + "' " +
+            "AND REFERENCED_TABLE_NAME IS NOT NULL " +
+            "AND COLUMN_NAME = '" + col.getName() + "';"
+          );
+
+          logger.logDebug(uPs.toString());
+          ResultSet uRs = uPs.executeQuery();
+          while (uRs.next()) {
+            PreparedStatement uPs2 = conn.prepareStatement(
+              "ALTER TABLE `" + table.name() + "` DROP FOREIGN KEY `" + uRs.getString("constraint_name") + "`;"
+            );
+
+            logger.logDebug(uPs2.toString());
+            uPs2.executeUpdate();
+            uPs2.close();
+          }
+
+          // Drop all indices that came with it
+          uPs.close();
+          uPs = conn.prepareStatement(
+            "SHOW INDEX FROM `" + table.name() + "` WHERE `column_name` = '" + col.getName() + "' AND `non_unique` = 1;"
+          );
+
+          logger.logDebug(uPs.toString());
+          uRs = uPs.executeQuery();
+          while (uRs.next()) {
+            PreparedStatement uPs2 = conn.prepareStatement(
+              "ALTER TABLE `" + table.name() + "` DROP INDEX `" + uRs.getString("key_name") + "`;"
+            );
+
+            logger.logDebug(uPs2.toString());
+            uPs2.executeUpdate();
+            uPs2.close();
+          }
+        }
+
         uPs.close();
-        logger.logInfo("Migrated column " + col.getName() + " of " + table.name() + " uniqueness to " + col.isUnique());
+        logger.logInfo("Migrated column " + col.getName() + " of " + table.name() + " by deleting foreign key constraints");
       }
 
       // Migrate mismatching column default
@@ -588,14 +682,27 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    * @return Built signature
    */
   private String buildColumnSignature(MysqlColumn column, boolean isModify) {
-    return
-      "`" + column.getName() + "`" + " " +
+    String ret = "`" + column.getName() + "`" + " " +
+      // Type
       column.getType() + " " +
+
+      // Nullability
       (column.isNullable() ? "NULL" : "NOT NULL") + " " +
+
+      // Primary key
       (column.isPrimaryKey() ? "PRIMARY KEY " : "") +
+
+      // Uniqueness
       (column.isUnique() && !isModify ? "UNIQUE " : "") +
-      (column.getMigrationDefault() != MigrationDefault.UNSPECIFIED ? "DEFAULT " + column.getMigrationDefault() : "")
-      .trim();
+
+      // Column default
+      (column.getMigrationDefault() != MigrationDefault.UNSPECIFIED ? "DEFAULT " + column.getMigrationDefault() : "");
+
+    // Also append the foreign key constraint in a comma separated instruction
+    if (column.getForeignKey() != null && !isModify)
+      ret += ", FOREIGN KEY (`" + column.getName() + "`) REFERENCES `" + column.getForeignKey().name() + "`(`id`)";
+
+    return ret.trim();
   }
 
   /**
@@ -604,7 +711,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    */
   private void createTableIfNotExists(MysqlTable table) throws SQLException {
     if (isTableExisting(table)) {
-      migrateMissingTableColumns(table);
+      migrateTableColumns(table);
       return;
     }
 
@@ -1198,7 +1305,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     // Fill all placeholder values
     int i = 0;
     for (MysqlColumn column : columns) {
-      Object value = null;
+      Object value;
 
       // Generate a new UUID for the PK
       if (column.isPrimaryKey()) {
@@ -1294,7 +1401,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
         .map(c -> new MysqlColumn(
           f.getName() + "__" + c.getName(),
           c.getType(), c.isNullable(), c.getMigrationDefault(),
-          c.isUnique(), true, f, c.getModelField()
+          c.isUnique(), true, f, c.getModelField(), c.getForeignKey()
         ))
         .toList()
     );

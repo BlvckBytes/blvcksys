@@ -33,6 +33,9 @@ public class MysqlColumn {
   // through this cloned column, null for non-transformed fields
   @Nullable private final Field knownModelField;
 
+  // The table which this column references
+  @Nullable private final MysqlTable foreignKey;
+
   // The "id" field is reserved for the primary key
   public boolean isPrimaryKey() {
     return name.equals("id");

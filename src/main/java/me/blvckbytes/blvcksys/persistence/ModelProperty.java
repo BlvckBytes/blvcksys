@@ -1,5 +1,7 @@
 package me.blvckbytes.blvcksys.persistence;
 
+import me.blvckbytes.blvcksys.persistence.models.APersistentModel;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -30,4 +32,7 @@ public @interface ModelProperty {
 
   // What value to use when migrating this column to an existing data-structure
   MigrationDefault migrationDefault() default MigrationDefault.UNSPECIFIED;
+
+  // Foreign key constraint target model, APersistentModel.class means none
+  Class<? extends APersistentModel> foreignKey() default APersistentModel.class;
 }

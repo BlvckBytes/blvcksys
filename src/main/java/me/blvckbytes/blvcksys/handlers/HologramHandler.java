@@ -2,6 +2,8 @@ package me.blvckbytes.blvcksys.handlers;
 
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.di.IAutoConstructed;
+import me.blvckbytes.blvcksys.packets.communicators.hologram.IHologramCommunicator;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.exceptions.ModelNotFoundException;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
@@ -10,8 +12,10 @@ import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.FieldQueryGroup;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import net.minecraft.util.Tuple;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
 
@@ -24,20 +28,38 @@ import java.util.*;
   this underlying fact for all callers.
 */
 @AutoConstruct
-public class HologramHandler implements IHologramHandler {
+public class HologramHandler implements IHologramHandler, IAutoConstructed {
+
+  // Specifies the time between hologram update triggers in ticks
+  private static final long UPDATE_INTERVAL_TICKS = 20;
 
   // Local cache for hologram lines, mapping the hologram name to a list of lines
   // This is crucial, as holograms will be accessed a lot for drawing, updating, commands, ...
   private final Map<String, List<HologramLineModel>> cache;
+  private final Map<String, MultilineHologram> holograms;
+  private int intervalHandle;
 
   private final IPersistence pers;
+  private final JavaPlugin plugin;
+  private final IHologramCommunicator holoComm;
 
   public HologramHandler(
-    @AutoInject IPersistence pers
+    @AutoInject IPersistence pers,
+    @AutoInject JavaPlugin plugin,
+    @AutoInject IHologramCommunicator holoComm
   ) {
     this.pers = pers;
+    this.plugin = plugin;
+    this.holoComm = holoComm;
+    this.intervalHandle = -1;
+
     this.cache = new HashMap<>();
+    this.holograms = new HashMap<>();
   }
+
+  //=========================================================================//
+  //                                   API                                   //
+  //=========================================================================//
 
   @Override
   public Tuple<HologramSortResult, Integer> sortHologramLines(String name, int[] lineIdSequence) {
@@ -72,7 +94,11 @@ public class HologramHandler implements IHologramHandler {
 
   @Override
   public boolean deleteHologram(String name) throws PersistenceException {
-    this.cache.remove(name);
+    // Remove this entry from the cache
+    this.cache.remove(name.toLowerCase());
+
+    // Remove this entry from the list of active holograms and destroy it for all players
+    this.holograms.remove(name.toLowerCase()).destroy();
 
     return pers.delete(
       new QueryBuilder<>(
@@ -225,6 +251,33 @@ public class HologramHandler implements IHologramHandler {
     return ret;
   }
 
+  @Override
+  public void cleanup() {
+    // Stop the ticker task
+    if (this.intervalHandle > 0)
+      Bukkit.getScheduler().cancelTask(this.intervalHandle);
+
+    // Destroy all created holograms
+    for (MultilineHologram holo : holograms.values())
+      holo.destroy();
+  }
+
+  @Override
+  public void initialize() {
+    // Load all existing holograms into memory on load
+    loadAllHolograms();
+
+    // Start the ticker interval
+    this.intervalHandle = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
+      for (MultilineHologram holo : holograms.values())
+        holo.tick();
+    }, 0L, UPDATE_INTERVAL_TICKS);
+  }
+
+  //=========================================================================//
+  //                                Utilities                                //
+  //=========================================================================//
+
   /**
    * Get all lines a hologram holds and cache results
    * @param name Name of the hologram
@@ -247,33 +300,104 @@ public class HologramHandler implements IHologramHandler {
     if (unsortedLines.size() == 0)
       return Optional.empty();
 
-    List<HologramLineModel> sortedLines = new ArrayList<>();
+    List<HologramLineModel> sortedLines = sortLinkedHologramLines(name, unsortedLines);
+
+    // Keep the hologram instances in sync
+    createOrUpdateHolograms(name, sortedLines);
+
+    // Cache result
+    this.cache.put(name.toLowerCase(), sortedLines);
+    return Optional.of(sortedLines);
+  }
+
+  /**
+   * Load all globally existing hologram lines into memory, group them, sort them and
+   * write them into the cache. Then, create {@link MultilineHologram}'s for all names.
+   */
+  private void loadAllHolograms() {
+    List<HologramLineModel> lines = pers.list(HologramLineModel.class);
+    Map<String, List<HologramLineModel>> groupedLines = new HashMap<>();
+
+    // Group all lines by name locally
+    for (HologramLineModel line : lines) {
+      String name = line.getName().toLowerCase();
+
+      if (!groupedLines.containsKey(name))
+        groupedLines.put(name, new ArrayList<>());
+
+      groupedLines.get(name).add(line);
+    }
+
+    // Sort all lines and write them into the cache
+    for (Map.Entry<String, List<HologramLineModel>> groupedLine : groupedLines.entrySet()) {
+      String name = groupedLine.getKey();
+      this.cache.put(name, sortLinkedHologramLines(name, groupedLine.getValue()));
+    }
+
+    // Create initial hologram instances from the cache entries
+    for (Map.Entry<String, List<HologramLineModel>> hologram : cache.entrySet())
+      createOrUpdateHolograms(hologram.getKey(), hologram.getValue());
+  }
+
+  /**
+   * Sort an unsorted list of hologram lines based on their links (prev, next)
+   * @param name Name of the hologram
+   * @param unsorted Unsorted list of lines
+   * @return Sorted list of lines
+   */
+  private List<HologramLineModel> sortLinkedHologramLines(String name, List<HologramLineModel> unsorted) {
+    List<HologramLineModel> sorted = new ArrayList<>();
 
     // Find the head node (which has no previous line)
-    HologramLineModel head = unsortedLines
+    HologramLineModel head = unsorted
       .stream()
       .filter(line -> line.getPreviousLine() == null)
       .findFirst()
       .orElseThrow(() -> new PersistenceException("Invalid linked list for hologram '" + name + "'"));
 
     // Add the head
-    sortedLines.add(head);
+    sorted.add(head);
 
     // Just navigate the head till' the end
     while (head.getNextLine() != null) {
       UUID next = head.getNextLine();
-      head = unsortedLines
+      head = unsorted
         .stream()
         .filter(line -> line.getId().equals(next))
         .findFirst()
         .orElseThrow(() -> new PersistenceException("Invalid linked list for hologram '" + name + "'"));
 
       // Add the next entry
-      sortedLines.add(head);
+      sorted.add(head);
     }
 
-    // Cache result
-    this.cache.put(name.toLowerCase(), sortedLines);
-    return Optional.of(sortedLines);
+    return sorted;
+  }
+
+  /**
+   * Either create a new {@link MultilineHologram} instance to manage the hologram or
+   * update an existing instance with the new values
+   * @param name Name of the hologram
+   * @param lines List of sorted lines to display
+   */
+  private void createOrUpdateHolograms(String name, List<HologramLineModel> lines) {
+    // Transform the hologram lines to their text contents
+    List<String> strLines = lines.stream()
+      .map(HologramLineModel::getName)
+      .toList();
+
+    // Get the location of the first line
+    Location loc = lines.get(0).getLoc();
+
+    // Hologram didn't yet exist, create it
+    if (!this.holograms.containsKey(name.toLowerCase()))
+      this.holograms.put(name.toLowerCase(), new MultilineHologram(name, loc, strLines, holoComm));
+
+      // Update the existing hologram
+    else {
+      MultilineHologram holo = this.holograms.get(name.toLowerCase());
+      holo.setLines(strLines);
+      holo.setLoc(loc);
+    }
   }
 }

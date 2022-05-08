@@ -569,6 +569,13 @@ public enum ConfigKey {
   TIME_SET("time_set", "$0Der Spieler $3{{issuer}} $0hat die Zeit auf $3{{time}} $0gesetzt."),
 
   //=========================================================================//
+  //                             TOGGLECHAT Command                          //
+  //=========================================================================//
+
+  TOGGLECHAT_ENABLED("togglechat.enabled", "$0Du empfängst nun $3wieder $0Chat-Nachrichten von Spielern."),
+  TOGGLECHAT_DISABLED("togglechat.disabled", "$0Du empfängst nun $3keine $0Chat-Nachrichten von Spielern mehr."),
+
+  //=========================================================================//
   //                                 KIT Command                             //
   //=========================================================================//
 

@@ -3,6 +3,7 @@ package me.blvckbytes.blvcksys.events;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
+import me.blvckbytes.blvcksys.handlers.IPreferencesHandler;
 import me.blvckbytes.blvcksys.handlers.ITeamHandler;
 import me.blvckbytes.blvcksys.packets.communicators.team.TeamGroup;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
@@ -32,13 +33,16 @@ public class ChatListener implements Listener, IChatListener {
 
   private final IConfig cfg;
   private final ITeamHandler teams;
+  private final IPreferencesHandler prefs;
 
   public ChatListener(
     @AutoInject IConfig cfg,
-    @AutoInject ITeamHandler teams
+    @AutoInject ITeamHandler teams,
+    @AutoInject IPreferencesHandler prefs
   ) {
     this.cfg = cfg;
     this.teams = teams;
+    this.prefs = prefs;
   }
 
   //=========================================================================//
@@ -52,7 +56,20 @@ public class ChatListener implements Listener, IChatListener {
     String prefix = tg.map(TeamGroup::prefix).orElse("§r");
 
     // Broadcast to all receivers
+    boolean senderBypassesToggleChat = PlayerPermission.TOGGLECHAT_BYPASS.has(sender);
     for(Player receiver : receivers) {
+
+      // Don't send messages to players who have disabled their
+      // chat, except for important messages from bypassing players
+      if (
+        prefs.isChatHidden(receiver) &&
+        !senderBypassesToggleChat &&
+
+        // Skip blocking self
+        receiver != sender
+      )
+        continue;
+
       // Override the default message
       receiver.sendMessage(
         cfg.get(ConfigKey.CHAT_FORMAT)

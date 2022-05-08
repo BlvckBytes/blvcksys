@@ -607,6 +607,29 @@ public enum ConfigKey {
   ),
 
   //=========================================================================//
+  //                              HOLOS Command                              //
+  //=========================================================================//
+
+  COMMAND_HOLOS_LIST_NONE("holos.none", "$4Keine Hologramme gefunden"),
+  COMMAND_HOLOS_LIST_PREFIX("holos.header", "$0Hologramme im Radius von $3{{radius}} $0Blöcken: "),
+  COMMAND_HOLOS_LIST_FORMAT("holos.list.format", "$3{{name}}$1"),
+  COMMAND_HOLOS_LIST_HOVER_CREATORS_FORMAT("holos.list.hover.creators_format", "$3{{creator}}$1"),
+  COMMAND_HOLOS_LIST_HOVER_TEXT(
+    "holos.list.hover.text",
+    "$0Erstellt am: $3{{created_at}}",
+    "$0Ersteller: $3{{creators}}",
+    "$0Zeilen: $3{{num_lines}}",
+    "$0Position: $3{{location}}",
+    "$0Distanz: $3{{distance}} Blöcke"
+  ),
+
+  //=========================================================================//
+  //                               HOLO Command                              //
+  //=========================================================================//
+
+//  COMMAND_HOLO("holo.", ""),
+
+  //=========================================================================//
   //                               WARP Command                              //
   //=========================================================================//
 

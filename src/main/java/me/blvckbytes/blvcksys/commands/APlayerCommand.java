@@ -601,8 +601,22 @@ public abstract class APlayerCommand extends Command {
    * @return Parsed float
    */
   protected float parseFloat(String[] args, int index) throws CommandException {
-    if (index >= args.length)
+    return parseFloat(args, index, null);
+  }
+
+  /**
+   * Try to parse a floating point value from a string
+   * @param args Arguments of the command
+   * @param index Index within the arguments to use
+   * @param argcFallback Fallback value to use
+   * @return Parsed float
+   */
+  protected float parseFloat(String[] args, int index, Float argcFallback) throws CommandException {
+    if (index >= args.length) {
+      if (argcFallback != null)
+        return argcFallback;
       throw new UsageMismatchException(cfg, buildAdvancedUsage(index));
+    }
 
     try {
       return Float.parseFloat(args[index].replace(",", "."));

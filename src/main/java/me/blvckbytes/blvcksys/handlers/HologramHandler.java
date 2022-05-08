@@ -10,10 +10,7 @@ import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import org.bukkit.Location;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -26,7 +23,9 @@ import java.util.UUID;
 @AutoConstruct
 public class HologramHandler implements IHologramHandler {
 
-  // TODO: Implement a cache that caches holo-lines for fast access (commands, drawing, ...)
+  // Local cache for hologram lines, mapping the hologram name to a list of lines
+  // This is crucial, as holograms will be accessed a lot for drawing, updating, commands, ...
+  private final Map<String, List<HologramLineModel>> cache;
 
   private final IPersistence pers;
 
@@ -34,10 +33,13 @@ public class HologramHandler implements IHologramHandler {
     @AutoInject IPersistence pers
   ) {
     this.pers = pers;
+    this.cache = new HashMap<>();
   }
 
   @Override
   public boolean deleteHologram(String name) throws PersistenceException {
+    this.cache.remove(name);
+
     return pers.delete(
       new QueryBuilder<>(
         HologramLineModel.class,
@@ -93,9 +95,14 @@ public class HologramHandler implements IHologramHandler {
     // Otherwise: was the only node, nothing to change
 
     try {
+      String name = line.getName();
+
       // Delete the item which is now not used in
       // any other foreign keys anymore
       pers.delete(line);
+
+      // Load the changes into cache
+      getHologramLines(name, true);
       return true;
     } catch (ModelNotFoundException e) {
       return false;
@@ -129,11 +136,28 @@ public class HologramHandler implements IHologramHandler {
       pers.store(tail);
     }
 
+    // Load the changes into cache
+    getHologramLines(name, true);
     return line;
   }
 
   @Override
   public Optional<List<HologramLineModel>> getHologramLines(String name) throws PersistenceException {
+    // Return cached responses
+    return getHologramLines(name, false);
+  }
+
+  /**
+   * Get all lines a hologram holds and cache results
+   * @param name Name of the hologram
+   * @param invalidateCache Whether or not to invalidate the cache and force an update
+   * @return Optional list of lines, empty if this hologram didn't yet exist
+   */
+  private Optional<List<HologramLineModel>> getHologramLines(String name, boolean invalidateCache) throws PersistenceException {
+    // Respond from cache
+    if (!invalidateCache && cache.containsKey(name.toLowerCase()))
+      return Optional.of(cache.get(name.toLowerCase()));
+
     List<HologramLineModel> unsortedLines = pers.find(
       new QueryBuilder<>(
         HologramLineModel.class,
@@ -170,6 +194,8 @@ public class HologramHandler implements IHologramHandler {
       sortedLines.add(head);
     }
 
+    // Cache result
+    this.cache.put(name.toLowerCase(), sortedLines);
     return Optional.of(sortedLines);
   }
 }

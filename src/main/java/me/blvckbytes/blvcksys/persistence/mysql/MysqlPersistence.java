@@ -19,6 +19,7 @@ import me.blvckbytes.blvcksys.persistence.transformers.IDataTransformer;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.util.Tuple;
+import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,7 +97,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       MysqlTable table = getTableFromModel(type, false);
       PreparedStatement ps = conn.prepareStatement("SELECT * FROM `" + table.name() + "`");
 
-      logger.logDebug(ps.toString());
+      logStatement(ps);
 
       ResultSet rs = ps.executeQuery();
       List<T> res = mapRows(type, rs);
@@ -485,7 +486,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     ResultSet rs = ps.executeQuery();
     boolean exists = rs.next();
 
-    logger.logDebug(ps.toString());
+    logStatement(ps);
 
     rs.close();
     ps.close();
@@ -500,7 +501,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    */
   private void migrateTableColumns(MysqlTable table) throws SQLException {
     PreparedStatement ps = conn.prepareStatement("DESC `" + table.name() + "`;");
-    logger.logDebug(ps.toString());
+    logStatement(ps);
 
     List<String> foundCols = new ArrayList<>();
     ResultSet rs = ps.executeQuery();
@@ -541,7 +542,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
           "ALTER TABLE `" + table.name() + "` MODIFY " + newSig + ";"
         );
 
-        logger.logDebug(uPs.toString());
+        logStatement(uPs);
         uPs.executeUpdate();
         uPs.close();
 
@@ -560,7 +561,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
               "ADD UNIQUE (`" + col.getName() + "`);"
           );
 
-          logger.logDebug(uPs.toString());
+          logStatement(uPs);
           uPs.executeUpdate();
 
           logger.logInfo("Migrated column " + col.getName() + " of " + table.name() + " by adding a uniqueness constraint");
@@ -572,14 +573,14 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
             "SHOW INDEX FROM `" + table.name() + "` WHERE `column_name` = '" + col.getName() + "' AND `non_unique` = 0;"
           );
 
-          logger.logDebug(uPs.toString());
+          logStatement(uPs);
           ResultSet uRs = uPs.executeQuery();
           while (uRs.next()) {
             PreparedStatement uPs2 = conn.prepareStatement(
               "ALTER TABLE `" + table.name() + "` DROP INDEX `" + uRs.getString("key_name") + "`;"
             );
 
-            logger.logDebug(uPs2.toString());
+            logStatement(uPs2);
             uPs2.executeUpdate();
             uPs2.close();
           }
@@ -602,7 +603,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
             "ADD FOREIGN KEY (`" + col.getName() + "`) REFERENCES `" + col.getForeignKey().name() + "`(`id`) ON DELETE CASCADE;"
           );
 
-          logger.logDebug(uPs.toString());
+          logStatement(uPs);
           uPs.executeUpdate();
 
           logger.logInfo("Migrated column " + col.getName() + " of " + table.name() + " by adding a foreign key constraint");
@@ -617,14 +618,14 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
               "AND COLUMN_NAME = '" + col.getName() + "';"
           );
 
-          logger.logDebug(uPs.toString());
+          logStatement(uPs);
           ResultSet uRs = uPs.executeQuery();
           while (uRs.next()) {
             PreparedStatement uPs2 = conn.prepareStatement(
               "ALTER TABLE `" + table.name() + "` DROP FOREIGN KEY `" + uRs.getString("constraint_name") + "`;"
             );
 
-            logger.logDebug(uPs2.toString());
+            logStatement(uPs2);
             uPs2.executeUpdate();
             uPs2.close();
           }
@@ -636,14 +637,14 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
             "SHOW INDEX FROM `" + table.name() + "` WHERE `column_name` = '" + col.getName() + "' AND `non_unique` = 1;"
           );
 
-          logger.logDebug(uPs.toString());
+          logStatement(uPs);
           uRs = uPs.executeQuery();
           while (uRs.next()) {
             PreparedStatement uPs2 = conn.prepareStatement(
               "ALTER TABLE `" + table.name() + "` DROP INDEX `" + uRs.getString("key_name") + "`;"
             );
 
-            logger.logDebug(uPs2.toString());
+            logStatement(uPs2);
             uPs2.executeUpdate();
             uPs2.close();
           }
@@ -672,7 +673,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
           "SET DEFAULT " + col.getMigrationDefault().getSqlValues()[0] + ";"
         );
 
-        logger.logDebug(uPs.toString());
+        logStatement(uPs);
         uPs.executeUpdate();
         uPs.close();
 
@@ -689,7 +690,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
         "ALTER TABLE `" + table.name() + "` ADD " + buildColumnSignature(col, false) + ";"
       );
 
-      logger.logDebug(uPs.toString());
+      logStatement(uPs);
       uPs.executeUpdate();
       uPs.close();
 
@@ -760,7 +761,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
     stmt.append(");");
     PreparedStatement ps = this.conn.prepareStatement(stmt.toString());
-    logger.logDebug(ps.toString());
+    logStatement(ps);
 
     ps.executeUpdate();
     ps.close();
@@ -966,7 +967,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     for (Tuple<MysqlType, Object> param : params)
       ps.setObject(++i, translateValue(param.a(), param.b()));
 
-    logger.logDebug(ps.toString());
+    logStatement(ps);
 
     return ps;
   }
@@ -1158,7 +1159,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       "DELETE FROM `" + table.name() + "` WHERE `id` = " + uuidToBin(id) + ";"
     );
 
-    logger.logDebug(ps.toString());
+    logStatement(ps);
 
     if (ps.executeUpdate() == 0)
       throw new ModelNotFoundException(dbNameToModelName(table.name(), true), idStr);
@@ -1236,7 +1237,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       );
 
       ps.setObject(1, value);
-      logger.logDebug(ps.toString());
+      logStatement(ps);
 
       ResultSet rs = ps.executeQuery();
 
@@ -1405,7 +1406,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       ps.setObject(++i, value);
     }
 
-    logger.logDebug(ps.toString());
+    logStatement(ps);
     ps.executeUpdate();
   }
 
@@ -1514,5 +1515,14 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
     // Return the method's result
     return revive.invoke(transformer, input);
+  }
+
+  /**
+   * Logs the prepared statement and makes sure that all color codes
+   * are replaced so they don't affect printing
+   * @param ps Statement to log
+   */
+  private void logStatement(PreparedStatement ps) {
+    logger.logDebug(ps.toString().replace('§', '&'));
   }
 }

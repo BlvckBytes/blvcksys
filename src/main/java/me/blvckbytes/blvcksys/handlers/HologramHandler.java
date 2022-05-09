@@ -383,7 +383,7 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
   private void createOrUpdateHolograms(String name, List<HologramLineModel> lines) {
     // Transform the hologram lines to their text contents
     List<String> strLines = lines.stream()
-      .map(HologramLineModel::getName)
+      .map(HologramLineModel::getText)
       .toList();
 
     // Get the location of the first line

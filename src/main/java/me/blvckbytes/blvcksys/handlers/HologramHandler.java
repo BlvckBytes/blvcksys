@@ -109,6 +109,27 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
   }
 
   @Override
+  public boolean moveHologram(String name, Location loc) throws PersistenceException {
+    List<HologramLineModel> lines = getHologramLines(name)
+      .orElse(null);
+
+    // Hologram did not exist
+    if (lines == null)
+      return false;
+
+    // Update the location for all lines
+    for (HologramLineModel line : lines) {
+      line.setLoc(loc);
+      pers.store(line);
+    }
+
+    // Load the changes into cache
+    getHologramLines(name, true);
+
+    return true;
+  }
+
+  @Override
   public boolean deleteHologramLine(HologramLineModel line) throws PersistenceException {
     // Find the predecessor which points to the line by "nextLine"
     HologramLineModel predecessor = pers.findFirst(
@@ -393,7 +414,7 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
     if (!this.holograms.containsKey(name.toLowerCase()))
       this.holograms.put(name.toLowerCase(), new MultilineHologram(name, loc, strLines, holoComm));
 
-      // Update the existing hologram
+    // Update the existing hologram
     else {
       MultilineHologram holo = this.holograms.get(name.toLowerCase());
       holo.setLines(strLines);

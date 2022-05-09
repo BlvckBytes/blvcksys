@@ -38,6 +38,9 @@ public class HologramCommunicator implements IHologramCommunicator {
   @Override
   public Entity createLine(Player p, Location loc, String line) {
     try {
+      // Subtract the length between the armor stand's bottom plate and it's name (round about)
+      loc = loc.clone().add(0, -2.5, 0);
+
       // Create a new armor stand entity using craftbukkit's wrapper
       EntityArmorStand eas = (EntityArmorStand) refl.invokeMethodByName(p.getWorld(), "createEntity", new Class[]{ Location.class, Class.class, boolean.class }, loc, EntityType.ARMOR_STAND.getEntityClass(), false);
       Object ent = refl.invokeMethodByName(eas, "getBukkitEntity", new Class[] {});

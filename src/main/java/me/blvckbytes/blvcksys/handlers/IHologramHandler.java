@@ -38,6 +38,13 @@ public interface IHologramHandler {
   boolean deleteHologram(String name) throws PersistenceException;
 
   /**
+   * Move a hologram by moving all of it's lines
+   * @param name Name of the target hologram
+   * @return True on success, false if there was no hologram with this name
+   */
+  boolean moveHologram(String name, Location loc) throws PersistenceException;
+
+  /**
    * Delete a single hologram line and update it's neighbors links
    * @param line Hologram line to delete
    * @return True on success, false if there was no hologram line that matched the model

@@ -11,6 +11,7 @@ import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.HologramLineModel;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -36,6 +37,7 @@ public class HoloCommand extends APlayerCommand {
     REMOVELINE,
     CHANGELINE,
     LISTLINES,
+    MOVEHERE,
     DELETE
   }
 
@@ -110,6 +112,27 @@ public class HoloCommand extends APlayerCommand {
       return;
     }
 
+    // Move the whole hologram
+    if (action == HoloAction.MOVEHERE) {
+      if (!holo.moveHologram(name, p.getLocation())) {
+        p.sendMessage(
+          cfg.get(ConfigKey.COMMAND_HOLO_NOT_EXISTING)
+            .withPrefix()
+            .withVariable("name", name)
+            .asScalar()
+        );
+        return;
+      }
+
+      p.sendMessage(
+        cfg.get(ConfigKey.COMMAND_HOLO_MOVED)
+          .withPrefix()
+          .withVariable("name", name)
+          .asScalar()
+      );
+      return;
+    }
+
     // Get all lines of the selected hologram
     List<HologramLineModel> lines = holo.getHologramLines(name).orElse(null);
 
@@ -121,7 +144,7 @@ public class HoloCommand extends APlayerCommand {
       // exact same location, as laying lines out will be done at runtime).
       Location loc = lines == null ? p.getLocation() : lines.get(0).getLoc();
 
-      holo.createHologramLine(p, name, loc, argvar(args, 2));
+      holo.createHologramLine(p, name, loc, ChatColor.translateAlternateColorCodes('&', argvar(args, 2)));
       p.sendMessage(
         cfg.get(ConfigKey.COMMAND_HOLO_LINE_ADDED)
           .withPrefix()
@@ -178,7 +201,7 @@ public class HoloCommand extends APlayerCommand {
 
     // Change a line by it's index
     if (action == HoloAction.CHANGELINE) {
-      line.setText(argvar(args, 3));
+      line.setText(ChatColor.translateAlternateColorCodes('&', argvar(args, 3)));
       pers.store(line);
 
       p.sendMessage(

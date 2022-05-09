@@ -42,16 +42,19 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
   private final IPersistence pers;
   private final JavaPlugin plugin;
   private final IHologramCommunicator holoComm;
+  private final IHologramVariableSupplier varSupp;
 
   public HologramHandler(
     @AutoInject IPersistence pers,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IHologramCommunicator holoComm
+    @AutoInject IHologramCommunicator holoComm,
+    @AutoInject IHologramVariableSupplier varSupp
   ) {
     this.pers = pers;
     this.plugin = plugin;
     this.holoComm = holoComm;
     this.intervalHandle = -1;
+    this.varSupp = varSupp;
 
     this.cache = new HashMap<>();
     this.holograms = new HashMap<>();
@@ -220,6 +223,15 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
     // Load the changes into cache
     getHologramLines(name, true);
     return line;
+  }
+
+  @Override
+  public void changeHologramLine(HologramLineModel line, String newLine) {
+    line.setText(newLine);
+    pers.store(line);
+
+    // Load the changes into cache
+    getHologramLines(line.getName(), true);
   }
 
   @Override
@@ -412,7 +424,7 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
 
     // Hologram didn't yet exist, create it
     if (!this.holograms.containsKey(name.toLowerCase()))
-      this.holograms.put(name.toLowerCase(), new MultilineHologram(name, loc, strLines, holoComm));
+      this.holograms.put(name.toLowerCase(), new MultilineHologram(name, loc, strLines, holoComm, varSupp));
 
     // Update the existing hologram
     else {

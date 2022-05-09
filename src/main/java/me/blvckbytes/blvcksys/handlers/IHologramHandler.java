@@ -62,6 +62,13 @@ public interface IHologramHandler {
   HologramLineModel createHologramLine(OfflinePlayer creator, String name, Location loc, String text) throws PersistenceException;
 
   /**
+   * Change a hologram line's text content
+   * @param line Line to change
+   * @param newLine New line contents
+   */
+  void changeHologramLine(HologramLineModel line, String newLine);
+
+  /**
    * Get all lines a hologram holds
    * @param name Name of the hologram
    * @return Optional list of lines, empty if this hologram didn't yet exist

@@ -7,6 +7,7 @@ import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 /*
@@ -28,22 +29,25 @@ public class MultilineHologram {
   private static final double RECIPIENT_MAX_DIST_SQ = Math.pow(30, 2);
 
   private final Map<Player, List<Entity>> entities;
-  private final IHologramCommunicator holoComm;
   private final String name;
-
   private Location loc;
   private List<String> lines;
+
+  private final IHologramCommunicator holoComm;
+  private final IHologramVariableSupplier varSupp;
 
   public MultilineHologram(
     String name,
     Location loc,
     List<String> lines,
-    IHologramCommunicator holoComm
+    IHologramCommunicator holoComm,
+    IHologramVariableSupplier varSupp
   ) {
     this.name = name;
     this.loc = loc;
     this.lines = lines;
     this.holoComm = holoComm;
+    this.varSupp = varSupp;
 
     this.entities = new HashMap<>();
   }
@@ -125,8 +129,72 @@ public class MultilineHologram {
     for (int i = 0; i < Math.min(pEnts.size(), lines.size()); i++) {
       String lineText = lines.get(i);
       Entity ent = pEnts.get(i);
-      holoComm.updateLine(p, ent, lineText);
+      holoComm.updateLine(p, ent, processLineTemplate(p, lineText));
     }
+  }
+
+  /**
+   * Process a line template for a given player
+   * @param p Target player
+   * @param line Line template
+   * @return Templated line
+   */
+  private String processLineTemplate(Player p, String line) {
+    StringBuilder sb = new StringBuilder();
+
+    // TODO: Cache this operation to shrink processing to a minimum
+
+    // Char iteration state machine
+    int lastOpenCurly = -1;
+
+    char[] lineChars = line.toCharArray();
+    for (int i = 0; i < lineChars.length; i++) {
+      char c = lineChars[i];
+
+      // Found a variable notation begin
+      if (c == '{') {
+
+        // Already found a previous begin, push that range
+        if (lastOpenCurly >= 0)
+          sb.append(line, lastOpenCurly, i);
+
+        lastOpenCurly = i;
+
+        // Only continue if '{' isn't the whole string
+        if (lineChars.length != 1)
+          continue;
+      }
+
+      // Currently, there's an open curly bracket waiting for being closed
+      if (lastOpenCurly >= 0) {
+
+        // Variable notation found in range [lastOpenCurly,i]
+        if (c == '}') {
+          String varNotation = line.substring(lastOpenCurly, i + 1);
+          HologramVariable var = HologramVariable.fromPlaceholder(varNotation);
+
+          // Variable unknown, append unaltered notation
+          if (var == null)
+            sb.append(varNotation);
+
+            // Substitute variable
+          else
+            sb.append(varSupp.resolveVariable(p, var));
+
+          lastOpenCurly = -1;
+        }
+
+        // The last open curly never closed again, just add that range as is
+        else if (i == lineChars.length - 1)
+          sb.append(line.substring(lastOpenCurly));
+      }
+
+      // Append all chars outside of variables
+      else
+        sb.append(c);
+    }
+
+    return sb.toString();
   }
 
   /**

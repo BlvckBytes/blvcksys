@@ -201,9 +201,7 @@ public class HoloCommand extends APlayerCommand {
 
     // Change a line by it's index
     if (action == HoloAction.CHANGELINE) {
-      line.setText(ChatColor.translateAlternateColorCodes('&', argvar(args, 3)));
-      pers.store(line);
-
+      holo.changeHologramLine(line, ChatColor.translateAlternateColorCodes('&', argvar(args, 3)));
       p.sendMessage(
         cfg.get(ConfigKey.COMMAND_HOLO_LINE_UPDATED)
           .withPrefix()

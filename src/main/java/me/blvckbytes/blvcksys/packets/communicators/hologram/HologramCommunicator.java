@@ -39,7 +39,7 @@ public class HologramCommunicator implements IHologramCommunicator {
   public Entity createLine(Player p, Location loc, String line) {
     try {
       // Create a new armor stand entity using craftbukkit's wrapper
-      EntityArmorStand eas = (EntityArmorStand) refl.invokeMethodByName(p.getWorld(), "createEntity", new Class[]{ Location.class, Class.class, boolean.class }, p.getLocation(), EntityType.ARMOR_STAND.getEntityClass(), false);
+      EntityArmorStand eas = (EntityArmorStand) refl.invokeMethodByName(p.getWorld(), "createEntity", new Class[]{ Location.class, Class.class, boolean.class }, loc, EntityType.ARMOR_STAND.getEntityClass(), false);
       Object ent = refl.invokeMethodByName(eas, "getBukkitEntity", new Class[] {});
       refl.invokeMethodByName(ent, "setCustomNameVisible", new Class[] { boolean.class }, true);
       refl.invokeMethodByName(ent, "setCustomName", new Class[] { String.class }, line);

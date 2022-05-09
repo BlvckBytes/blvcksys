@@ -7,7 +7,6 @@ import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 /*
@@ -31,7 +30,8 @@ public class MultilineHologram {
   private final Map<Player, List<Entity>> entities;
   private final String name;
   private Location loc;
-  private List<String> lines;
+
+  private List<List<Object>> lineTemplates;
 
   private final IHologramCommunicator holoComm;
   private final IHologramVariableSupplier varSupp;
@@ -45,11 +45,11 @@ public class MultilineHologram {
   ) {
     this.name = name;
     this.loc = loc;
-    this.lines = lines;
     this.holoComm = holoComm;
     this.varSupp = varSupp;
-
     this.entities = new HashMap<>();
+
+    this.setLines(lines);
   }
 
   //=========================================================================//
@@ -57,7 +57,10 @@ public class MultilineHologram {
   //=========================================================================//
 
   public void setLines(List<String> lines) {
-    this.lines = lines;
+    // Build a list of line templates from the string lines
+    this.lineTemplates = lines.stream()
+      .map(this::buildLineTemplate)
+      .toList();
 
     for (Player p : Bukkit.getOnlinePlayers()) {
       destroyLineEntities(p);
@@ -126,23 +129,71 @@ public class MultilineHologram {
 
     // Update all lines for this player
     List<Entity> pEnts = entities.get(p);
-    for (int i = 0; i < Math.min(pEnts.size(), lines.size()); i++) {
-      String lineText = lines.get(i);
+    for (int i = 0; i < Math.min(pEnts.size(), lineTemplates.size()); i++) {
+      List<Object> lineTemplate = lineTemplates.get(i);
       Entity ent = pEnts.get(i);
-      holoComm.updateLine(p, ent, processLineTemplate(p, lineText));
+      holoComm.updateLine(p, ent, evaluateLineTemplate(p, lineTemplate));
     }
   }
 
   /**
-   * Process a line template for a given player
+   * Evaluate a line template consisting of strings and variable
+   * type placeholders for a given player
    * @param p Target player
+   * @param template Template to evaluate
+   * @return Resulting string to display
+   */
+  private String evaluateLineTemplate(Player p, List<Object> template) {
+    StringBuilder sb = new StringBuilder();
+
+    // Iterate all parts of this template
+    for (Object part : template) {
+      // Append the string as is
+      if (part instanceof String s) {
+        sb.append(s);
+        continue;
+      }
+
+      // Resolve this variable and append the result
+      if (part instanceof HologramVariable hv)
+        sb.append(varSupp.resolveVariable(p, hv));
+    }
+
+    return sb.toString();
+  }
+
+  /**
+   * Append an object (String or variable type) to a list of objects (the template)
+   * @param template Template to append to
+   * @param append Object to append
+   */
+  private void appendToTemplate(List<Object> template, Object append) {
+    // Append the initial element or variables as they are
+    if (template.size() == 0 || !(append instanceof String sc)) {
+      template.add(append);
+      return;
+    }
+
+    // Concat the last entry with the new, current entry
+    int lastIndex = template.size() - 1;
+    if (template.get(lastIndex) instanceof String sl) {
+      String newLast = sl + sc;
+      template.remove(lastIndex);
+      template.add(newLast);
+    }
+
+    // Last entry was no string, just append
+    else
+      template.add(sc);
+  }
+
+  /**
+   * Build a line template for a given player
    * @param line Line template
    * @return Templated line
    */
-  private String processLineTemplate(Player p, String line) {
-    StringBuilder sb = new StringBuilder();
-
-    // TODO: Cache this operation to shrink processing to a minimum
+  private List<Object> buildLineTemplate(String line) {
+    List<Object> res = new ArrayList<>();
 
     // Char iteration state machine
     int lastOpenCurly = -1;
@@ -156,7 +207,7 @@ public class MultilineHologram {
 
         // Already found a previous begin, push that range
         if (lastOpenCurly >= 0)
-          sb.append(line, lastOpenCurly, i);
+          appendToTemplate(res, line.substring(lastOpenCurly, i));
 
         lastOpenCurly = i;
 
@@ -175,26 +226,26 @@ public class MultilineHologram {
 
           // Variable unknown, append unaltered notation
           if (var == null)
-            sb.append(varNotation);
+            appendToTemplate(res, varNotation);
 
-            // Substitute variable
+          // Add variable type as placeholder
           else
-            sb.append(varSupp.resolveVariable(p, var));
+            appendToTemplate(res, var);
 
           lastOpenCurly = -1;
         }
 
         // The last open curly never closed again, just add that range as is
         else if (i == lineChars.length - 1)
-          sb.append(line.substring(lastOpenCurly));
+          appendToTemplate(res, line.substring(lastOpenCurly));
       }
 
       // Append all chars outside of variables
       else
-        sb.append(c);
+        appendToTemplate(res, String.valueOf(c));
     }
 
-    return sb.toString();
+    return res;
   }
 
   /**
@@ -207,8 +258,8 @@ public class MultilineHologram {
 
     // Make lines grow downwards from the head
     Location head = loc.clone();
-    for (String line : lines) {
-      ents.add(holoComm.createLine(p, head, line));
+    for (List<Object> lineTemplate : lineTemplates) {
+      ents.add(holoComm.createLine(p, head, evaluateLineTemplate(p, lineTemplate)));
       head.add(0, -INTER_LINE_SPACING, 0);
     }
 

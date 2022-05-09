@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.handlers;
 
 import lombok.Getter;
+import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.util.Tuple;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -34,6 +35,7 @@ public class ItemFrameGroup {
   private static final int MAP_SIZE = 128;
 
   private final Map<Player, Color[][]> framebuffers;
+  private final ILogger logger;
 
   // Width and height in frames of this group
   @Getter
@@ -41,7 +43,8 @@ public class ItemFrameGroup {
 
   private ItemFrame[][] frameGrid;
 
-  public ItemFrameGroup(Location loc) {
+  public ItemFrameGroup(Location loc, ILogger logger) {
+    this.logger = logger;
     this.framebuffers = new HashMap<>();
 
     Tuple<BlockFace, Set<ItemFrame>> ret = findMembers(loc);
@@ -96,13 +99,14 @@ public class ItemFrameGroup {
       // Copy all pixels into the local framebuffer
       for (int x = 0; x < pWidth; x++) {
         for (int y = 0; y < pHeight; y++) {
-          fbuf[x][y] = new Color(image.getRGB(x, pHeight - 1 - y));
+          // TODO: I read that #getRGB() is immensely inefficient, come up with something else here
+          fbuf[x][y] = new Color(image.getRGB(x, pHeight - 1 - y), true);
         }
       }
 
       framebuffers.put(p, fbuf);
     } catch (Exception e) {
-      e.printStackTrace();
+      logger.logError(e);
       framebuffers.remove(p);
     }
   }
@@ -205,7 +209,12 @@ public class ItemFrameGroup {
    */
   private void removeRenderer(ItemFrame frame) {
     ItemStack stack = frame.getItem();
+
+    // Remove the map item
     frame.setItem(null);
+
+    // Restore frame visibility
+    frame.setVisible(true);
 
     MapMeta meta = (MapMeta) stack.getItemMeta();
     if (meta == null || !meta.hasMapView())
@@ -215,6 +224,7 @@ public class ItemFrameGroup {
     if (view == null)
       return;
 
+    // Clear all renderers so they stop getting called
     view.getRenderers().clear();
   }
 
@@ -271,6 +281,9 @@ public class ItemFrameGroup {
     meta.setMapView(view);
     stack.setItemMeta(meta);
     frame.setItem(stack);
+
+    // Make the frame invisible to allow for true transparency
+    frame.setVisible(false);
   }
 
   /**

@@ -1,7 +1,9 @@
 package me.blvckbytes.blvcksys.handlers;
 
 import me.blvckbytes.blvcksys.di.AutoConstruct;
+import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
+import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
@@ -25,8 +27,12 @@ import java.util.List;
 public class ImageFrameHandler implements IAutoConstructed, Listener {
 
   private final List<ItemFrameGroup> groups;
+  private final ILogger logger;
 
-  public ImageFrameHandler() {
+  public ImageFrameHandler(
+    @AutoInject ILogger logger
+  ) {
+    this.logger = logger;
     this.groups = new ArrayList<>();
   }
 
@@ -40,7 +46,7 @@ public class ImageFrameHandler implements IAutoConstructed, Listener {
   public void initialize() {
     // Hardcoded location for dev phase
     Location loc = new Location(Bukkit.getWorld("world"), 407, 124, -220);
-    ItemFrameGroup group = new ItemFrameGroup(loc);
+    ItemFrameGroup group = new ItemFrameGroup(loc, logger);
     this.groups.add(group);
 
     for (Player t : Bukkit.getOnlinePlayers())

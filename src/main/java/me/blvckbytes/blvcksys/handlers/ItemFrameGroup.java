@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.handlers;
 
+import lombok.Getter;
 import net.minecraft.util.Tuple;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -14,6 +15,7 @@ import org.bukkit.map.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.util.*;
 
 /*
@@ -28,10 +30,15 @@ public class ItemFrameGroup {
   // Radius to search in for item-frames when scanning for the main member
   private static final double LOC_SEARCH_RAD = 1.0D;
 
+  // The size of a map's edge in pixels
+  private static final int MAP_SIZE = 128;
+
   private final Map<Player, Color[][]> framebuffers;
 
   // Width and height in frames of this group
+  @Getter
   private int width, height;
+
   private ItemFrame[][] frameGrid;
 
   public ItemFrameGroup(Location loc) {
@@ -68,6 +75,39 @@ public class ItemFrameGroup {
   }
 
   /**
+   * Set a custom framebuffer for a given player using an image
+   * directly, which will be resized to fit internally
+   * @param p Player to set the framebuffer for
+   * @param image Image to display
+   */
+  public void setFramebuffer(Player p, BufferedImage image) {
+    if (image == null) {
+      framebuffers.remove(p);
+      return;
+    }
+
+    try {
+      int pWidth = width * MAP_SIZE, pHeight = height * MAP_SIZE;
+      Color[][] fbuf = new Color[pWidth][pHeight];
+
+      // Resize the image to fit exactly on the canvas
+      image = resizeToFit(image);
+
+      // Copy all pixels into the local framebuffer
+      for (int x = 0; x < pWidth; x++) {
+        for (int y = 0; y < pHeight; y++) {
+          fbuf[x][y] = new Color(image.getRGB(x, pHeight - 1 - y));
+        }
+      }
+
+      framebuffers.put(p, fbuf);
+    } catch (Exception e) {
+      e.printStackTrace();
+      framebuffers.remove(p);
+    }
+  }
+
+  /**
    * Clear a custom framebuffer for a given player
    * @param p Player to clear the framebuffer for
    */
@@ -78,6 +118,20 @@ public class ItemFrameGroup {
   //=========================================================================//
   //                                 Utilities                               //
   //=========================================================================//
+
+  /**
+   * Resize a image to fit the group's dimensions
+   * @param img Image to resize
+   * @return Resized image
+   */
+  private BufferedImage resizeToFit(BufferedImage img) {
+    Image tmp = img.getScaledInstance(width * MAP_SIZE, height * MAP_SIZE, Image.SCALE_SMOOTH);
+    BufferedImage resized = new BufferedImage(width * MAP_SIZE, height * MAP_SIZE, img.getType());
+    Graphics2D g2d = resized.createGraphics();
+    g2d.drawImage(tmp, 0, 0, null);
+    g2d.dispose();
+    return resized;
+  }
 
   /**
    * Create a two-dimensional grid of all item frames, as they're
@@ -189,11 +243,10 @@ public class ItemFrameGroup {
           return;
 
         // Calculate framebuffer offsets based on this frame's coordinates
-        // Every frame can display 128 x 128 pixels
-        int xOff = x * 128, yOff = y * 128;
+        int xOff = x * MAP_SIZE, yOff = y * MAP_SIZE;
 
-        for (int cx = 0; cx <= 127; cx++) {
-          for (int cy = 0; cy <= 127; cy++) {
+        for (int cx = 0; cx < MAP_SIZE; cx++) {
+          for (int cy = 0; cy < MAP_SIZE; cy++) {
             int fbX = xOff + cx, fbY = yOff + cy;
 
             // No framebuffer entry for the current pixel, set to transparent
@@ -208,7 +261,7 @@ public class ItemFrameGroup {
             }
 
             // Set pixel from framebuffer
-            cv.setPixel(cx, cy, MapPalette.matchColor(framebuffer[fbX][fbY]));
+            cv.setPixel(cx, MAP_SIZE - 1 - cy, MapPalette.matchColor(framebuffer[fbX][fbY]));
           }
         }
       }

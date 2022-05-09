@@ -9,7 +9,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 
-import java.awt.*;
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,29 +44,27 @@ public class ImageFrameHandler implements IAutoConstructed, Listener {
     this.groups.add(group);
 
     for (Player t : Bukkit.getOnlinePlayers())
-      group.setFramebuffer(t, genFrameBuf());
+      group.setFramebuffer(t, getAvatar(t));
   }
 
   @EventHandler
   public void onJoin(PlayerJoinEvent e) {
     for (ItemFrameGroup group : groups)
-      group.setFramebuffer(e.getPlayer(), genFrameBuf());
+      group.setFramebuffer(e.getPlayer(), getAvatar(e.getPlayer()));
   }
 
-  // Just displays green with red lines at the edges of individual frames (tile pattern)
-  private Color[][] genFrameBuf() {
-    int width = 4, height = 3;
-    int pWidth = width * 128, pHeight = 128 * height;
-
-    Color[][] fbuf = new Color[pWidth][pHeight];
-
-    for (int x = 0; x < pWidth; x++) {
-      for (int y = 0; y < pHeight; y++) {
-        boolean isEdge = x % 128 == 0 || y % 128 == 0;
-        fbuf[x][y] = new Color(isEdge ? 255 : 0, isEdge ? 0 : 255, 0);
-      }
+  /**
+   * Get the player's rendered avatar from an API
+   * @param p Target player
+   * @return Avatar image or null on errors
+   */
+  private BufferedImage getAvatar(Player p) {
+    try {
+      String url = "https://crafatar.com/renders/body/" + p.getUniqueId() + "?scale=10";
+      return ImageIO.read(new URL(url));
+    } catch (Exception e) {
+      e.printStackTrace();
+      return null;
     }
-
-    return fbuf;
   }
 }

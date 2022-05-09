@@ -15,17 +15,18 @@ import lombok.Getter;
 public enum HologramVariable {
 
   // Player specific
-  PLAYER_NAME("{player_name}"),
-  PLAYER_EXPERIENCE("{player_experience}"),
-  WORLD_NAME("{world_name}"),
+  PLAYER_NAME("{player_name}", Long.MAX_VALUE),
+  PLAYER_EXPERIENCE("{player_experience}", 20 * 5),
+  WORLD_NAME("{world_name}", Long.MAX_VALUE),
 
   // Date and time
-  CURRENT_TIME("{current_time}"),
-  CURRENT_DATE("{current_date}"),
-  CURRENT_DAY("{current_day}"),
+  CURRENT_TIME("{current_time}", 20),
+  CURRENT_DATE("{current_date}", 20 * 10),
+  CURRENT_DAY("{current_day}", 20 * 10),
   ;
 
   private final String placeholder;
+  private final long updatePeriodTicks;
 
   /**
    * Find a hologram variable by it's placeholder

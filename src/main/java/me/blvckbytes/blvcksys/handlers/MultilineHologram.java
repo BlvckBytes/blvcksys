@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.handlers;
 
 import lombok.Getter;
 import me.blvckbytes.blvcksys.packets.communicators.hologram.IHologramCommunicator;
+import net.minecraft.util.Tuple;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
@@ -31,7 +32,7 @@ public class MultilineHologram {
   private final String name;
   private Location loc;
 
-  private List<List<Object>> lineTemplates;
+  private List<Tuple<Long, List<Object>>> lineTemplates;
 
   private final IHologramCommunicator holoComm;
   private final IHologramVariableSupplier varSupp;
@@ -80,11 +81,12 @@ public class MultilineHologram {
   /**
    * Called whenever there's a chance to update this hologram, which
    * doesn't mean that on every tick changes have to occur.
+   * @param time Relative time in ticks since start
    */
-  public void tick() {
+  public void tick(long time) {
     for (Player t : Bukkit.getOnlinePlayers()) {
       if (isRecipient(t))
-        tickPlayer(t);
+        tickPlayer(t, time);
 
       // Don't keep players which are out of reach in memory
       else
@@ -121,8 +123,9 @@ public class MultilineHologram {
   /**
    * Called whenever the hologram should update for a specific player
    * @param p Target player
+   * @param time Relative time in ticks since start
    */
-  private void tickPlayer(Player p) {
+  private void tickPlayer(Player p, long time) {
     // Make sure that the line entities exist for this player
     if (!this.entities.containsKey(p))
       createLineEntities(p);
@@ -130,9 +133,19 @@ public class MultilineHologram {
     // Update all lines for this player
     List<Entity> pEnts = entities.get(p);
     for (int i = 0; i < Math.min(pEnts.size(), lineTemplates.size()); i++) {
-      List<Object> lineTemplate = lineTemplates.get(i);
+      Tuple<Long, List<Object>> lineTemplate = lineTemplates.get(i);
+
+      // Is a static line, doesn't need refreshing
+      if (lineTemplate.a() < 0)
+        continue;
+
+      // Period did not yet elapse
+      if (time % lineTemplate.a() != 0)
+        continue;
+
+      // Update this line
       Entity ent = pEnts.get(i);
-      holoComm.updateLine(p, ent, evaluateLineTemplate(p, lineTemplate));
+      holoComm.updateLine(p, ent, evaluateLineTemplate(p, lineTemplate.b()));
     }
   }
 
@@ -190,10 +203,11 @@ public class MultilineHologram {
   /**
    * Build a line template for a given player
    * @param line Line template
-   * @return Templated line
+   * @return A tuple of the minimum update period (-1 for no variables) and the template part-list
    */
-  private List<Object> buildLineTemplate(String line) {
+  private Tuple<Long, List<Object>> buildLineTemplate(String line) {
     List<Object> res = new ArrayList<>();
+    long minUpdatePeriod = -1;
 
     // Char iteration state machine
     int lastOpenCurly = -1;
@@ -229,8 +243,14 @@ public class MultilineHologram {
             appendToTemplate(res, varNotation);
 
           // Add variable type as placeholder
-          else
+          else {
             appendToTemplate(res, var);
+
+            // Update the minimum update period either initially or if the current
+            // variable requires a tighter time-frame
+            if (minUpdatePeriod < 0 || var.getUpdatePeriodTicks() < minUpdatePeriod)
+              minUpdatePeriod = var.getUpdatePeriodTicks();
+          }
 
           lastOpenCurly = -1;
         }
@@ -245,7 +265,7 @@ public class MultilineHologram {
         appendToTemplate(res, String.valueOf(c));
     }
 
-    return res;
+    return new Tuple<>(minUpdatePeriod, res);
   }
 
   /**
@@ -258,8 +278,8 @@ public class MultilineHologram {
 
     // Make lines grow downwards from the head
     Location head = loc.clone();
-    for (List<Object> lineTemplate : lineTemplates) {
-      ents.add(holoComm.createLine(p, head, evaluateLineTemplate(p, lineTemplate)));
+    for (Tuple<Long, List<Object>> lineTemplate : lineTemplates) {
+      ents.add(holoComm.createLine(p, head, evaluateLineTemplate(p, lineTemplate.b())));
       head.add(0, -INTER_LINE_SPACING, 0);
     }
 

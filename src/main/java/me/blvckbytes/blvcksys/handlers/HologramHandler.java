@@ -301,9 +301,16 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
     loadAllHolograms();
 
     // Start the ticker interval
-    this.intervalHandle = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
-      for (MultilineHologram holo : holograms.values())
-        holo.tick();
+    this.intervalHandle = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
+
+      long time = 0;
+
+      @Override
+      public void run() {
+        for (MultilineHologram holo : holograms.values())
+          holo.tick(time);
+        time += UPDATE_INTERVAL_TICKS;
+      }
     }, 0L, UPDATE_INTERVAL_TICKS);
   }
 

@@ -13,6 +13,7 @@ import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.*;
 import org.jetbrains.annotations.NotNull;
 
+import java.awt.*;
 import java.util.*;
 
 /*
@@ -27,11 +28,15 @@ public class ItemFrameGroup {
   // Radius to search in for item-frames when scanning for the main member
   private static final double LOC_SEARCH_RAD = 1.0D;
 
+  private final Map<Player, Color[][]> framebuffers;
+
   // Width and height in frames of this group
   private int width, height;
   private ItemFrame[][] frameGrid;
 
   public ItemFrameGroup(Location loc) {
+    this.framebuffers = new HashMap<>();
+
     Tuple<BlockFace, Set<ItemFrame>> ret = findMembers(loc);
     if (ret != null)
       createGrid(ret.a(), ret.b());
@@ -51,6 +56,23 @@ public class ItemFrameGroup {
         removeRenderer(frame);
       }
     }
+  }
+
+  /**
+   * Set a custom framebuffer for a given player
+   * @param p Player to set the framebuffer for
+   * @param framebuffer Framebuffer to display
+   */
+  public void setFramebuffer(Player p, Color[][] framebuffer) {
+    this.framebuffers.put(p, framebuffer);
+  }
+
+  /**
+   * Clear a custom framebuffer for a given player
+   * @param p Player to clear the framebuffer for
+   */
+  public void clearFramebuffer(Player p) {
+    this.framebuffers.remove(p);
   }
 
   //=========================================================================//
@@ -121,14 +143,6 @@ public class ItemFrameGroup {
       this.frameGrid[x][y] = frame;
       attachRenderer(frame, x, y);
     }
-
-    // Quick little debugging visualization
-    for (int y = height - 1; y >= 0; y--) {
-      for (int x = 0; x < width; x++) {
-        System.out.print(this.frameGrid[x][y] == null ? "O " : "X ");
-      }
-      System.out.println();
-    }
   }
 
   /**
@@ -169,17 +183,34 @@ public class ItemFrameGroup {
 
       @Override
       public void render(@NotNull MapView mv, @NotNull MapCanvas cv, @NotNull Player p) {
-        // Fill red for contrast
-        for (int i = 0; i <= 127; i++) {
-          for (int i1 = 0; i1 <= 127; i1++)
-            cv.setPixel(i, i1, MapPalette.matchColor(255, 0, 0));
+        // Get the current player's custom framebuffer
+        Color[][] framebuffer = framebuffers.get(p);
+        if (framebuffer == null)
+          return;
+
+        // Calculate framebuffer offsets based on this frame's coordinates
+        // Every frame can display 128 x 128 pixels
+        int xOff = x * 128, yOff = y * 128;
+
+        for (int cx = 0; cx <= 127; cx++) {
+          for (int cy = 0; cy <= 127; cy++) {
+            int fbX = xOff + cx, fbY = yOff + cy;
+
+            // No framebuffer entry for the current pixel, set to transparent
+            if (
+              framebuffer.length == 0 ||
+              framebuffer[0].length == 0 ||
+              fbX >= framebuffer.length ||
+              fbY >= framebuffer[0].length
+            ) {
+              cv.setPixel(cx, cy, (byte) 0);
+              continue;
+            }
+
+            // Set pixel from framebuffer
+            cv.setPixel(cx, cy, MapPalette.matchColor(framebuffer[fbX][fbY]));
+          }
         }
-
-        // TODO: Draw a segment of a local framebuffer
-
-        // Draw the frame's coordinates and the player's name for now
-        cv.drawText(10, 10, MinecraftFont.Font, "(" + x + "|" + y + ")");
-        cv.drawText(10, 30, MinecraftFont.Font, p.getName());
       }
     });
 

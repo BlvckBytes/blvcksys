@@ -14,6 +14,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.MapMeta;
 import org.bukkit.map.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
@@ -63,6 +64,11 @@ public class ItemFrameGroup {
     for (int x = 0; x < width; x++) {
       for (int y = 0; y < height; y++) {
         ItemFrame frame = frameGrid[x][y];
+
+        // No frame in that slot
+        if (frame == null)
+          continue;
+
         removeRenderer(frame);
       }
     }
@@ -83,7 +89,7 @@ public class ItemFrameGroup {
    * @param p Player to set the framebuffer for
    * @param image Image to display
    */
-  public void setFramebuffer(Player p, BufferedImage image) {
+  public void setFramebuffer(Player p, @Nullable BufferedImage image) {
     if (image == null) {
       framebuffers.remove(p);
       return;

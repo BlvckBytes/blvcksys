@@ -3,6 +3,7 @@ package me.blvckbytes.blvcksys.handlers;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
+import me.blvckbytes.blvcksys.util.SkinSection;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -50,24 +51,28 @@ public class ImageFrameHandler implements IAutoConstructed, Listener {
     this.groups.add(group);
 
     for (Player t : Bukkit.getOnlinePlayers())
-      group.setFramebuffer(t, getAvatar(t));
+      group.setFramebuffer(t, getHead(t));
   }
 
   @EventHandler
   public void onJoin(PlayerJoinEvent e) {
     for (ItemFrameGroup group : groups)
-      group.setFramebuffer(e.getPlayer(), getAvatar(e.getPlayer()));
+      group.setFramebuffer(e.getPlayer(), getHead(e.getPlayer()));
   }
 
   /**
-   * Get the player's rendered avatar from an API
+   * Get the player's head as an image
    * @param p Target player
-   * @return Avatar image or null on errors
+   * @return Head image or null on errors
    */
-  private BufferedImage getAvatar(Player p) {
+  private BufferedImage getHead(Player p) {
     try {
-      String url = "https://crafatar.com/renders/body/" + p.getUniqueId() + "?scale=10";
-      return ImageIO.read(new URL(url));
+      URL skin = p.getPlayerProfile().getTextures().getSkin();
+
+      if (skin == null)
+        return null;
+
+      return SkinSection.HEAD_FRONT.cut(ImageIO.read(skin));
     } catch (Exception e) {
       e.printStackTrace();
       return null;

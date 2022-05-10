@@ -21,7 +21,7 @@ import java.util.UUID;
 @Getter
 @Setter
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class HologramLineModel extends ASequencedModel<HologramLineModel> {
+public class HologramLineModel extends ASequencedModel {
 
   @ModelProperty(migrationDefault = MigrationDefault.NULL)
   private OfflinePlayer creator;

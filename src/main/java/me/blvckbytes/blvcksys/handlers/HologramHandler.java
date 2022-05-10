@@ -134,19 +134,19 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
 
   @Override
   public boolean deleteHologramLine(HologramLineModel line) throws PersistenceException {
-    // Find the predecessor which points to the line by "nextLine"
+    // Find the predecessor which points to the line by "next"
     HologramLineModel predecessor = pers.findFirst(
       new QueryBuilder<>(
         HologramLineModel.class,
-        "nextLine", EqualityOperation.EQ, line.getId()
+        "next", EqualityOperation.EQ, line.getId()
       )
     ).orElse(null);
 
-    // Find the successor which points to the line by "previousLine"
+    // Find the successor which points to the line by "previous"
     HologramLineModel successor = pers.findFirst(
       new QueryBuilder<>(
         HologramLineModel.class,
-        "previousLine", EqualityOperation.EQ, line.getId()
+        "previous", EqualityOperation.EQ, line.getId()
       )
     ).orElse(null);
 
@@ -201,7 +201,7 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
         HologramLineModel.class,
         "name", EqualityOperation.EQ_IC, name
       ).and(
-        "nextLine", EqualityOperation.EQ, null
+        "next", EqualityOperation.EQ, null
       )
     ).orElse(null);
 
@@ -340,7 +340,7 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
     if (unsortedLines.size() == 0)
       return Optional.empty();
 
-    List<HologramLineModel> sortedLines = sortLinkedHologramLines(name, unsortedLines);
+    List<HologramLineModel> sortedLines = HologramLineModel.sequentize(unsortedLines);
 
     // Keep the hologram instances in sync
     createOrUpdateHolograms(name, sortedLines);
@@ -371,47 +371,12 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
     // Sort all lines and write them into the cache
     for (Map.Entry<String, List<HologramLineModel>> groupedLine : groupedLines.entrySet()) {
       String name = groupedLine.getKey();
-      this.cache.put(name, sortLinkedHologramLines(name, groupedLine.getValue()));
+      this.cache.put(name, HologramLineModel.sequentize(groupedLine.getValue()));
     }
 
     // Create initial hologram instances from the cache entries
     for (Map.Entry<String, List<HologramLineModel>> hologram : cache.entrySet())
       createOrUpdateHolograms(hologram.getKey(), hologram.getValue());
-  }
-
-  /**
-   * Sort an unsorted list of hologram lines based on their links (prev, next)
-   * @param name Name of the hologram
-   * @param unsorted Unsorted list of lines
-   * @return Sorted list of lines
-   */
-  private List<HologramLineModel> sortLinkedHologramLines(String name, List<HologramLineModel> unsorted) {
-    List<HologramLineModel> sorted = new ArrayList<>();
-
-    // Find the head node (which has no previous line)
-    HologramLineModel head = unsorted
-      .stream()
-      .filter(line -> line.getPrevious() == null)
-      .findFirst()
-      .orElseThrow(() -> new PersistenceException("Invalid linked list for hologram '" + name + "'"));
-
-    // Add the head
-    sorted.add(head);
-
-    // Just navigate the head till' the end
-    while (head.getNext() != null) {
-      UUID next = head.getNext();
-      head = unsorted
-        .stream()
-        .filter(line -> line.getId().equals(next))
-        .findFirst()
-        .orElseThrow(() -> new PersistenceException("Invalid linked list for hologram '" + name + "'"));
-
-      // Add the next entry
-      sorted.add(head);
-    }
-
-    return sorted;
   }
 
   /**

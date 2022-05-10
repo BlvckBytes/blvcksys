@@ -6,7 +6,7 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
-import me.blvckbytes.blvcksys.handlers.HologramSortResult;
+import me.blvckbytes.blvcksys.persistence.models.SequenceSortResult;
 import me.blvckbytes.blvcksys.handlers.IHologramHandler;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.exceptions.ModelNotFoundException;
@@ -16,7 +16,6 @@ import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.util.Tuple;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.checkerframework.checker.units.qual.A;
 
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -98,7 +97,7 @@ public class HoloSortCommand extends APlayerCommand {
       }
 
       // Try to sort the lines and check if there were IDs missing
-      Tuple<HologramSortResult, Integer> result = holo.sortHologramLines(name, ids);
+      Tuple<SequenceSortResult, Integer> result = holo.sortHologramLines(name, ids);
 
       switch (result.a()) {
         // Successfully sorted

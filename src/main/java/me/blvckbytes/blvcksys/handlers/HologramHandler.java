@@ -8,6 +8,7 @@ import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.exceptions.ModelNotFoundException;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.HologramLineModel;
+import me.blvckbytes.blvcksys.persistence.models.SequenceSortResult;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.FieldQueryGroup;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
@@ -65,34 +66,19 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
   //=========================================================================//
 
   @Override
-  public Tuple<HologramSortResult, Integer> sortHologramLines(String name, int[] lineIdSequence) {
-    List<HologramLineModel> lines = getHologramLines(name)
-      .orElseThrow(() -> new ModelNotFoundException(HologramLineModel.class.getSimpleName(), name));
+  public Tuple<SequenceSortResult, Integer> sortHologramLines(String name, int[] lineIdSequence) {
+    Tuple<SequenceSortResult, Integer> res = HologramLineModel.alterSequence(
+      new QueryBuilder<>(
+        HologramLineModel.class,
+        "name", EqualityOperation.EQ_IC, name
+      ), lineIdSequence, pers
+    );
 
-    // There are some IDs missing
-    if (lines.size() > lineIdSequence.length)
-      return new Tuple<>(HologramSortResult.IDS_MISSING, lines.size() - lineIdSequence.length);
+    // Load the changes into cache on success
+    if (res.a() == SequenceSortResult.SORTED)
+      getHologramLines(name, true);
 
-    // Sort the holograms as specified by the ID-list
-    List<HologramLineModel> sorted = new ArrayList<>();
-    for (int sequenceId : lineIdSequence) {
-      if (sequenceId <= 0 || sequenceId > lines.size())
-        return new Tuple<>(HologramSortResult.ID_INVALID, sequenceId);
-      sorted.add(lines.get(sequenceId - 1));
-    }
-
-    // Change linked list pointers accordingly
-    for (int i = 0; i < sorted.size(); i++) {
-      HologramLineModel curr = sorted.get(i);
-      curr.setPrevious(i == 0 ? null : sorted.get(i - 1).getId());
-      curr.setNext(i == sorted.size() - 1 ? null : sorted.get(i + 1).getId());
-      pers.store(curr);
-    }
-
-    // Load the changes into cache
-    getHologramLines(name, true);
-
-    return new Tuple<>(HologramSortResult.SORTED, 0);
+    return res;
   }
 
   @Override
@@ -128,62 +114,14 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
 
     // Load the changes into cache
     getHologramLines(name, true);
-
     return true;
   }
 
   @Override
   public boolean deleteHologramLine(HologramLineModel line) throws PersistenceException {
-    // Find the predecessor which points to the line by "next"
-    HologramLineModel predecessor = pers.findFirst(
-      new QueryBuilder<>(
-        HologramLineModel.class,
-        "next", EqualityOperation.EQ, line.getId()
-      )
-    ).orElse(null);
-
-    // Find the successor which points to the line by "previous"
-    HologramLineModel successor = pers.findFirst(
-      new QueryBuilder<>(
-        HologramLineModel.class,
-        "previous", EqualityOperation.EQ, line.getId()
-      )
-    ).orElse(null);
-
-    // Node inbetween two other elements
-    if (predecessor != null && successor != null) {
-      // The predecessor now points to the successor for next
-      // and the successor now points to the predecessor for previous,
-      // effectively skipping the node to delete
-      predecessor.setNext(successor.getId());
-      successor.setPrevious(predecessor.getId());
-
-      pers.store(predecessor);
-      pers.store(successor);
-    }
-
-    // No successor, is a tail node
-    else if (predecessor != null) {
-      // Now the predecessor becomes the new tail node
-      predecessor.setNext(null);
-      pers.store(predecessor);
-    }
-
-    // No predecessor, is a head node
-    else if (successor != null) {
-      // Now the successor becomes the new head node
-      successor.setPrevious(null);
-      pers.store(successor);
-    }
-
-    // Otherwise: was the only node, nothing to change
-
     try {
       String name = line.getName();
-
-      // Delete the item which is now not used in
-      // any other foreign keys anymore
-      pers.delete(line);
+      HologramLineModel.deleteSequenceMember(line, pers);
 
       // Load the changes into cache
       getHologramLines(name, true);
@@ -195,30 +133,18 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
 
   @Override
   public HologramLineModel createHologramLine(OfflinePlayer creator, String name, Location loc, String text) throws PersistenceException {
-    // Find the tail of the current list of lines
-    HologramLineModel tail = pers.findFirst(
+    // Create a new line, holding the passed parameters
+    HologramLineModel line = new HologramLineModel(creator, name, loc, text);
+
+    // Push it to the existing sequence identified by this name
+    HologramLineModel.pushSequenceMember(
+      line,
       new QueryBuilder<>(
         HologramLineModel.class,
         "name", EqualityOperation.EQ_IC, name
-      ).and(
-        "next", EqualityOperation.EQ, null
-      )
-    ).orElse(null);
-
-    // Decide whether previous is null (new is first entry) or the tail's ID
-    UUID previous = null;
-    if (tail != null)
-      previous = tail.getId();
-
-    // Create a new line pointing at previous and having no successor
-    HologramLineModel line = new HologramLineModel(creator, name, loc, text, previous, null);
-    pers.store(line);
-
-    // Update the "previous tail"'s next to the newly created ID
-    if (tail != null) {
-      tail.setNext(line.getId());
-      pers.store(tail);
-    }
+      ),
+      pers
+    );
 
     // Load the changes into cache
     getHologramLines(name, true);

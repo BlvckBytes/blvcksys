@@ -1,13 +1,10 @@
 package me.blvckbytes.blvcksys.persistence.models;
 
 import lombok.*;
-import me.blvckbytes.blvcksys.persistence.ForeignKeyAction;
 import me.blvckbytes.blvcksys.persistence.MigrationDefault;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
-
-import java.util.UUID;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -20,6 +17,7 @@ import java.util.UUID;
 */
 @Getter
 @Setter
+@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public class HologramLineModel extends ASequencedModel {
 
@@ -35,19 +33,4 @@ public class HologramLineModel extends ASequencedModel {
   @ModelProperty
   private String text;
 
-  public HologramLineModel(
-    OfflinePlayer creator,
-    String name,
-    Location loc,
-    String text,
-    UUID previous,
-    UUID next
-  ) {
-    super(previous, next);
-
-    this.creator = creator;
-    this.name = name;
-    this.loc = loc;
-    this.text = text;
-  }
 }

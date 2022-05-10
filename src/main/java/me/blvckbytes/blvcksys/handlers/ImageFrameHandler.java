@@ -3,17 +3,17 @@ package me.blvckbytes.blvcksys.handlers;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
-import me.blvckbytes.blvcksys.util.SkinSection;
+import me.blvckbytes.blvcksys.util.PlayerSkin;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.profile.PlayerTextures;
 
-import javax.imageio.ImageIO;
-import java.awt.image.BufferedImage;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -50,32 +50,13 @@ public class ImageFrameHandler implements IAutoConstructed, Listener {
     ItemFrameGroup group = new ItemFrameGroup(loc, logger);
     this.groups.add(group);
 
+    // Each player should see their own skin
     try {
-
-      Map<Player, BufferedImage> imgs = new HashMap<>();
-      for (Player t : Bukkit.getOnlinePlayers())
-        imgs.put(t, ImageIO.read(Objects.requireNonNull(t.getPlayerProfile().getTextures().getSkin())));
-
-      SkinSection[] sections = SkinSection.values();
-
-      Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
-
-        int i = 0;
-
-        @Override
-        public void run() {
-          for (Player t : imgs.keySet()) {
-            BufferedImage img = imgs.get(t);
-            SkinSection sec = sections[i % sections.length];
-
-            group.setFramebuffer(t, sec.cut(img));
-            t.sendMessage(sec.name());
-
-            i++;
-          }
-        }
-      }, 0L, 40L);
-
+      for (Player t : Bukkit.getOnlinePlayers()) {
+        PlayerTextures textures = t.getPlayerProfile().getTextures();
+        PlayerSkin skin = new PlayerSkin(textures.getSkin(), textures.getSkinModel());
+        group.setFramebuffer(t, skin.getFullRender());
+      }
     } catch (Exception e) {
       e.printStackTrace();
     }

@@ -20,9 +20,8 @@ import java.util.UUID;
 */
 @Getter
 @Setter
-@AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class HologramLineModel extends APersistentModel {
+public class HologramLineModel extends ASequencedModel<HologramLineModel> {
 
   @ModelProperty(migrationDefault = MigrationDefault.NULL)
   private OfflinePlayer creator;
@@ -36,17 +35,19 @@ public class HologramLineModel extends APersistentModel {
   @ModelProperty
   private String text;
 
-  @ModelProperty(
-    foreignKey = HologramLineModel.class,
-    isNullable = true,
-    foreignChanges = ForeignKeyAction.SET_NULL
-  )
-  private UUID previousLine;
+  public HologramLineModel(
+    OfflinePlayer creator,
+    String name,
+    Location loc,
+    String text,
+    UUID previous,
+    UUID next
+  ) {
+    super(previous, next);
 
-  @ModelProperty(
-    foreignKey = HologramLineModel.class,
-    isNullable = true,
-    foreignChanges = ForeignKeyAction.SET_NULL
-  )
-  private UUID nextLine;
+    this.creator = creator;
+    this.name = name;
+    this.loc = loc;
+    this.text = text;
+  }
 }

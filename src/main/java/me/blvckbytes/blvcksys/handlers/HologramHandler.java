@@ -84,8 +84,8 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
     // Change linked list pointers accordingly
     for (int i = 0; i < sorted.size(); i++) {
       HologramLineModel curr = sorted.get(i);
-      curr.setPreviousLine(i == 0 ? null : sorted.get(i - 1).getId());
-      curr.setNextLine(i == sorted.size() - 1 ? null : sorted.get(i + 1).getId());
+      curr.setPrevious(i == 0 ? null : sorted.get(i - 1).getId());
+      curr.setNext(i == sorted.size() - 1 ? null : sorted.get(i + 1).getId());
       pers.store(curr);
     }
 
@@ -155,8 +155,8 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
       // The predecessor now points to the successor for next
       // and the successor now points to the predecessor for previous,
       // effectively skipping the node to delete
-      predecessor.setNextLine(successor.getId());
-      successor.setPreviousLine(predecessor.getId());
+      predecessor.setNext(successor.getId());
+      successor.setPrevious(predecessor.getId());
 
       pers.store(predecessor);
       pers.store(successor);
@@ -165,14 +165,14 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
     // No successor, is a tail node
     else if (predecessor != null) {
       // Now the predecessor becomes the new tail node
-      predecessor.setNextLine(null);
+      predecessor.setNext(null);
       pers.store(predecessor);
     }
 
     // No predecessor, is a head node
     else if (successor != null) {
       // Now the successor becomes the new head node
-      successor.setPreviousLine(null);
+      successor.setPrevious(null);
       pers.store(successor);
     }
 
@@ -216,7 +216,7 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
 
     // Update the "previous tail"'s next to the newly created ID
     if (tail != null) {
-      tail.setNextLine(line.getId());
+      tail.setNext(line.getId());
       pers.store(tail);
     }
 
@@ -391,7 +391,7 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
     // Find the head node (which has no previous line)
     HologramLineModel head = unsorted
       .stream()
-      .filter(line -> line.getPreviousLine() == null)
+      .filter(line -> line.getPrevious() == null)
       .findFirst()
       .orElseThrow(() -> new PersistenceException("Invalid linked list for hologram '" + name + "'"));
 
@@ -399,8 +399,8 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
     sorted.add(head);
 
     // Just navigate the head till' the end
-    while (head.getNextLine() != null) {
-      UUID next = head.getNextLine();
+    while (head.getNext() != null) {
+      UUID next = head.getNext();
       head = unsorted
         .stream()
         .filter(line -> line.getId().equals(next))

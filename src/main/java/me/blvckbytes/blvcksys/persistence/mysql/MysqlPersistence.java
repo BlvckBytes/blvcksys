@@ -19,13 +19,13 @@ import me.blvckbytes.blvcksys.persistence.transformers.IDataTransformer;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.util.Tuple;
-import org.bukkit.ChatColor;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.nio.ByteBuffer;
 import java.sql.*;
 import java.time.LocalDateTime;
@@ -420,6 +420,11 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
       MysqlTable foreignKey = null;
       Class<? extends APersistentModel> fkC = mp.foreignKey();
+
+      // The foreign key type has been pointing at an abstraction, thus
+      // just assume the current model as it's actual implementation
+      if (fkC != APersistentModel.class && Modifier.isAbstract(fkC.getModifiers()))
+        fkC = model;
 
       // Look up the foreign key table (if not self)
       // The base class's class is the "none" placeholder

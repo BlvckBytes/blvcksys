@@ -1082,7 +1082,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    * @param rs ResultSet containing the row to be mapped
    * @return Model with fields containing the row's data
    */
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked", "rawtypes"})
   private<T extends APersistentModel> T mapRow(
     Class<T> model,
     ResultSet rs
@@ -1127,8 +1127,15 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
         continue;
       }
 
+      Object value = rs.getObject(col.getName());
+      Class<?> fieldType = col.getModelField().getType();
+
+      // Revive enum fields
+      if (fieldType.isEnum() && value instanceof String valS)
+        value = Enum.valueOf((Class<Enum>) fieldType, valS);
+
       // Directly set the model's field value to the corresponding column's value
-      col.getModelField().set(inst, translateValue(col.getType(), rs.getObject(col.getName())));
+      col.getModelField().set(inst, translateValue(col.getType(), value));
       remainingColumns.remove(col);
     }
 

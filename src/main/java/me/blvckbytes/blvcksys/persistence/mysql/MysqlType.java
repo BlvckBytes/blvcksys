@@ -52,7 +52,7 @@ public enum MysqlType {
     "VARCHAR(255)"
     },
     new Class[] {
-      String.class
+      String.class, Enum.class
     },
     true,
     new EqualityOperation[] {
@@ -211,7 +211,7 @@ public enum MysqlType {
 
     for (MysqlType type : MysqlType.values()) {
       for (Class<?> javaEq : type.javaEquivalents) {
-        if (javaEq.equals(javaType) && (!lengthRequired || type.hasLength))
+        if (javaEq.isAssignableFrom(javaType) && (!lengthRequired || type.hasLength))
           return Optional.of(type);
       }
     }

@@ -5,6 +5,13 @@ import me.blvckbytes.blvcksys.persistence.ModelProperty;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 05/12/2022
+
+  A frame which is used to display graphics ingame and is the main
+  member of it's corresponding frame group.
+*/
 @Getter
 @Setter
 @AllArgsConstructor

@@ -88,6 +88,22 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
     return Math.round(kd * 100) / 100D;
   }
 
+  ///////////////////////////////// MONEY ////////////////////////////////////
+
+  @Override
+  public int getMoney(Player p) {
+    return getStats(p).getMoney();
+  }
+
+  @Override
+  public void setMoney(Player p, int amount) {
+    PlayerStatsModel stats = getStats(p);
+    stats.setMoney(amount);
+    pers.store(stats);
+
+    callInterest(PlayerStatistic.MONEY, p);
+  }
+
   @Override
   public void cleanup() {}
 
@@ -204,6 +220,10 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
    * @param origin Target player
    */
   private void callInterest(PlayerStatistic statistic, Player origin) {
+    // No interests registered yet
+    if (!updateInterests.containsKey(statistic))
+      return;
+
     for (Consumer<Player> interest : updateInterests.get(statistic))
       interest.accept(origin);
   }

@@ -277,6 +277,7 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
 
     stats.registerUpdateInterest(PlayerStatistic.KILLS, this::updateSidebar);
     stats.registerUpdateInterest(PlayerStatistic.DEATHS, this::updateSidebar);
+    stats.registerUpdateInterest(PlayerStatistic.MONEY, this::updateSidebar);
   }
 
   @Override
@@ -480,6 +481,7 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
       .withVariable("num_slots", plugin.getServer().getMaxPlayers())
       .withVariable("kills", stats.getKills(t))
       .withVariable("deaths", stats.getDeaths(t))
+      .withVariable("money", stats.getMoney(t))
       .withVariable("kd", stats.calculateKD(t))
       .asList();
 

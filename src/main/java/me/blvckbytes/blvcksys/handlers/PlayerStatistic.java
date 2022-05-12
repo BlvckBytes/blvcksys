@@ -8,5 +8,6 @@ package me.blvckbytes.blvcksys.handlers;
 */
 public enum PlayerStatistic {
   KILLS,
-  DEATHS
+  DEATHS,
+  MONEY
 }

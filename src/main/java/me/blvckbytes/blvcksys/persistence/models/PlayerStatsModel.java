@@ -25,7 +25,10 @@ public class PlayerStatsModel extends APersistentModel {
   @ModelProperty
   private int deaths;
 
+  @ModelProperty
+  private int money;
+
   public static PlayerStatsModel createDefault(OfflinePlayer owner) {
-    return new PlayerStatsModel(owner, 0, 0);
+    return new PlayerStatsModel(owner, 0, 0, 0);
   }
 }

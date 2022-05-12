@@ -39,4 +39,18 @@ public interface IPlayerStatsHandler {
    * @return KD value, rounded
    */
   double calculateKD(Player p);
+
+  /**
+   * Get the amount of money a player currently owns
+   * @param p Target player
+   * @return Amount of money
+   */
+  int getMoney(Player p);
+
+  /**
+   * Set the amount of money a player owns
+   * @param p Target player
+   * @param amount Amount of money
+   */
+  void setMoney(Player p, int amount);
 }

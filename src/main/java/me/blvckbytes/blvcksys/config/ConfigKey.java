@@ -85,7 +85,7 @@ public enum ConfigKey {
     "$4Soon",
     " ",
     "Münzen:",
-    "$4Soon",
+    "$2{{money}}",
     " ",
     "Kills/Deaths:",
     "$2{{kills}} $1| $2{{deaths}} $1| $2{{kd}}KD",
@@ -242,6 +242,16 @@ public enum ConfigKey {
   TPALL_CONFIRMATION_PREFIX("tpall.confirmation_prefix", "$0Bist du sicher, dass du $3alle Spieler $0zu dir teleportieren möchtest?: "),
   TPALL_BROADCAST("tpall.broadcast", "$0Der Spieler $3{{issuer}} $0hat $3alle Spieler $0zu sich teleportiert!"),
   TPALL_CANCELLED("tpall.cancelled", "$0Die Teleportation wurde $3abgebrochen$0!"),
+
+  //=========================================================================//
+  //                                MONEY Command                            //
+  //=========================================================================//
+
+  MONEY_GET_SELF("money.get.self", "$0Du hast $3{{money}} Coins$0."),
+  MONEY_GET_OTHERS("money.get.others", "$3{{target}} $0hat $3{{money}} Coins$0."),
+  MONEY_SET_SELF("money.set.self", "$0Dein Konto wurde auf $3{{money}} Coins $0gesetzt ($3{{delta}} &6₵$0)."),
+  MONEY_SET_OTHERS_SENDER("money.set.others.sender", "$0Du hast das Konto von $3{{target}} $0auf $3{{money}} Coins $0gesetzt ($3{{delta}} &6₵$0)."),
+  MONEY_SET_OTHERS_RECEIVER("money.set.others.receiver", "$0Dein Konto wurde von $3{{issuer}} $0auf $3{{money}} Coins $0gesetzt ($3{{delta}} &6₵$0)."),
 
   //=========================================================================//
   //                               LEVELS Command                            //

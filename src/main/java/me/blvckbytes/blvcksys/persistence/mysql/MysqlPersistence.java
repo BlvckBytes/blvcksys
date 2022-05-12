@@ -1229,41 +1229,34 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     MysqlTable table,
     Map<String, Object> replaceCache
   ) throws Exception {
-    boolean hasId = model.getId() != null;
-
+    // Loop all unique keys
     for (MysqlColumn column : table.columns()) {
       if (column.isPrimaryKey() || !column.isUnique())
         continue;
 
+      EqualityOperation op = EqualityOperation.EQ;
+
+      // String columns that are unique are always ignoring the casing
+      if (column.getType() == MysqlType.VARCHAR || column.getType() == MysqlType.TEXT)
+        op = EqualityOperation.EQ_IC;
+
       Object value = resolveColumnValue(column, model, replaceCache);
 
-      PreparedStatement ps = conn.prepareStatement(
-        "SELECT COUNT(*) FROM `" +
-        table.name() +
-        "` WHERE `" +
-        column.getName() +
-        "` = ?" +
-        // Skip self, if the model already has an ID
-        (hasId ? " AND `id` != " + uuidToBin(model.getId()) : "") +
-        ";"
+      // Build a query based on the unique column
+      QueryBuilder<?> query = new QueryBuilder<>(
+        model.getClass(),
+        column.getName(),
+        op, value
       );
 
-      ps.setObject(1, value);
-      logStatement(ps);
-
-      ResultSet rs = ps.executeQuery();
-
-      // There was a result (where there shouldn't be), throw
-      if (rs.next()) {
-        if (rs.getInt(1) > 0)
-          throw new DuplicatePropertyException(
-            dbNameToModelName(table.name(), true),
-            dbNameToModelName(column.getName(), false),
-            value
-          );
+      // There's already a column with this unique field
+      if (count(query) > 0) {
+        throw new DuplicatePropertyException(
+          dbNameToModelName(table.name(), true),
+          dbNameToModelName(column.getName(), false),
+          value
+        );
       }
-
-      ps.close();
     }
   }
   /**
@@ -1414,6 +1407,10 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       // UUIDs always need to be stringified
       if (column.getType().equals(MysqlType.UUID) && value != null)
         value = value.toString();
+
+      // Save enums as a string by writing their constant's name
+      else if (value != null && column.getModelField().getType().isEnum())
+        value = ((Enum<?>) value).name();
 
       ps.setObject(++i, value);
     }

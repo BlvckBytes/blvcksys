@@ -800,8 +800,14 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     );
 
     // Parse them into tables
-    for (Class<? extends APersistentModel> model : models)
+    for (Class<? extends APersistentModel> model : models) {
+
+      // Don't create abstract class tables
+      if (Modifier.isAbstract(model.getModifiers()))
+        continue;
+
       parseTable(model);
+    }
   }
 
   ///////////////////////////////// Query Builder /////////////////////////////////////

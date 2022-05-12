@@ -23,6 +23,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.profile.PlayerTextures;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,13 +46,16 @@ public class ImageFrameHandler implements IImageFrameHandler, IAutoConstructed, 
 
   private final IPersistence pers;
   private final ILogger logger;
+  private final JavaPlugin plugin;
 
   public ImageFrameHandler(
     @AutoInject ILogger logger,
-    @AutoInject IPersistence pers
+    @AutoInject IPersistence pers,
+    @AutoInject JavaPlugin plugin
   ) {
     this.logger = logger;
     this.pers = pers;
+    this.plugin = plugin;
 
     this.groups = new HashMap<>();
     this.cache = new HashMap<>();
@@ -249,8 +253,10 @@ public class ImageFrameHandler implements IImageFrameHandler, IAutoConstructed, 
         }
 
         case FILE_IMAGE -> {
-          if (resource != null)
-            group.setFramebuffer(p, ImageIO.read(new File(resource)));
+          if (resource != null) {
+            String path = plugin.getDataFolder().getAbsolutePath() + "/imageframes/" + resource;
+            group.setFramebuffer(p, ImageIO.read(new File(path)));
+          }
         }
       }
     } catch (Exception e) {

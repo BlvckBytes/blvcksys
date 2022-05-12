@@ -36,7 +36,8 @@ public class ImageFrameCommand extends APlayerCommand {
 
   private enum FrameAction {
     CREATE,
-    DELETE
+    DELETE,
+    RELOAD
   }
 
   public ImageFrameCommand(
@@ -107,6 +108,26 @@ public class ImageFrameCommand extends APlayerCommand {
 
       p.sendMessage(
         cfg.get(ConfigKey.IMAGEFRAME_GROUP_DELETED)
+          .withPrefix()
+          .withVariable("name", name)
+          .asScalar()
+      );
+      return;
+    }
+
+    if (action == FrameAction.RELOAD) {
+      if (!iframe.reloadGroup(name)) {
+        p.sendMessage(
+          cfg.get(ConfigKey.IMAGEFRAME_GROUP_NOT_FOUND)
+            .withPrefix()
+            .withVariable("name", name)
+            .asScalar()
+        );
+        return;
+      }
+
+      p.sendMessage(
+        cfg.get(ConfigKey.IMAGEFRAME_GROUP_RELOADED)
           .withPrefix()
           .withVariable("name", name)
           .asScalar()

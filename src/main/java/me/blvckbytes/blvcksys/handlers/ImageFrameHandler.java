@@ -156,6 +156,19 @@ public class ImageFrameHandler implements IImageFrameHandler, IAutoConstructed, 
     return ret;
   }
 
+  @Override
+  public boolean reloadGroup(String name) {
+    ItemFrameGroup group = groups.get(name.toLowerCase());
+
+    if (group == null)
+      return false;
+
+    for (Player t : Bukkit.getOnlinePlayers())
+      loadContent(group, t);
+
+    return true;
+  }
+
   //=========================================================================//
   //                                 Listener                                //
   //=========================================================================//

@@ -64,4 +64,11 @@ public interface IImageFrameHandler {
    * @return True on success, false if there was no group with this name
    */
   boolean deleteGroup(String name) throws PersistenceException;
+
+  /**
+   * Force-reload a group by it's name
+   * @param name Name of the target group
+   * @return True on success, false if there was no group with this name
+   */
+  boolean reloadGroup(String name);
 }

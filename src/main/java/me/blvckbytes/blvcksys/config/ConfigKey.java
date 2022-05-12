@@ -384,6 +384,7 @@ public enum ConfigKey {
   IMAGEFRAME_GROUP_EXISTS("imageframe.group_exists", "$0Es existiert bereits eine Gruppe namens $4{{name}}$0!"),
   IMAGEFRAME_GROUP_CREATED("imageframe.group_created", "$0Die Gruppe $3{{name}} $0wurde angelegt."),
   IMAGEFRAME_GROUP_DELETED("imageframe.group_deleted", "$0Die Gruppe $3{{name}} $0wurde gelöscht."),
+  IMAGEFRAME_GROUP_RELOADED("imageframe.group_reloaded", "$0Die Gruppe $3{{name}} $0wurde neu geladen."),
 
   //=========================================================================//
   //                              Repair Command                             //

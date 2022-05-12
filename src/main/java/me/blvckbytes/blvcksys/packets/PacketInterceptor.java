@@ -405,6 +405,9 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
         }
       );
 
+      // Wrap this proxied list in a synchronizer
+      proxiedList = Collections.synchronizedList((List<? extends Object>) proxiedList);
+
       // Set the field's value to the proxied list
       // and save the vanilla ref
       nmlf.set(sc, proxiedList);

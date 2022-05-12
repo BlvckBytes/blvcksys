@@ -87,11 +87,9 @@ public enum ConfigKey {
     "Münzen:",
     "$4Soon",
     " ",
-    "Freunde:",
-    "$4Soon",
-    " ",
-    "Dein Name:",
-    "$2{{name}}"
+    "Kills/Deaths:",
+    "$2{{kills}} $1| $2{{deaths}} $1| $2{{kd}}KD",
+    " "
   ),
 
   //=========================================================================//

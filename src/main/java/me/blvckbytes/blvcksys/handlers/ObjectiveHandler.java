@@ -59,6 +59,7 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
   private final IConfig cfg;
   private final IObjectiveCommunicator oComm;
   private final IPreferencesHandler prefs;
+  private final IPlayerStatsHandler stats;
 
   // Previous sidebar lines, used for diffing and thus obsolete score deletion
   private final Map<Player, List<String>> prevSidebarLines;
@@ -76,13 +77,15 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
     @AutoInject JavaPlugin plugin,
     @AutoInject IConfig cfg,
     @AutoInject IObjectiveCommunicator oComm,
-    @AutoInject IPreferencesHandler prefs
+    @AutoInject IPreferencesHandler prefs,
+    @AutoInject IPlayerStatsHandler stats
   ) {
     this.prevSidebarLines = new HashMap<>();
     this.knownBelowNames = new HashMap<>();
     this.prevLevels = new HashMap<>();
     this.belowNameFlags = new HashMap<>();
 
+    this.stats = stats;
     this.plugin = plugin;
     this.cfg = cfg;
     this.oComm = oComm;
@@ -271,6 +274,9 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
         createBelowNameObjective(t, t2);
       }
     }
+
+    stats.registerUpdateInterest(PlayerStatistic.KILLS, this::updateSidebar);
+    stats.registerUpdateInterest(PlayerStatistic.DEATHS, this::updateSidebar);
   }
 
   @Override
@@ -472,6 +478,9 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
       .withVariable("num_online", Bukkit.getOnlinePlayers().size())
       .withVariable("name", t.getName())
       .withVariable("num_slots", plugin.getServer().getMaxPlayers())
+      .withVariable("kills", stats.getKills(t))
+      .withVariable("deaths", stats.getDeaths(t))
+      .withVariable("kd", stats.calculateKD(t))
       .asList();
 
     // Uniquify all lines to avoid collisions (multiple lines collapsing into a single score)

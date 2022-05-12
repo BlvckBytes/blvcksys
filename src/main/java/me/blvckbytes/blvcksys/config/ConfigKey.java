@@ -375,6 +375,18 @@ public enum ConfigKey {
   TPA_RECEIVED_PREFIX("tpa.received_prefix", "$2{{sender}} $0möchte sich zu dir teleportieren: "),
 
   //=========================================================================//
+  //                            IMAGEFRAME Command                           //
+  //=========================================================================//
+
+  IMAGEFRAME_NO_BLOCK("imageframe.no_block", "$0Es befindet sich $4kein Block $0auf deinem Fadenkreuz!"),
+  IMAGEFRAME_NO_FRAME("imageframe.no_frame", "$0Es befindet sich $4kein Rahmen $0auf deinem Fadenkreuz!"),
+  IMAGEFRAME_ALREADY_REGISTERED("imageframe.already_registered", "$0Dieser Rahmen ist bereits als $4{{name}} $0registriert!"),
+  IMAGEFRAME_GROUP_NOT_FOUND("imageframe.group_not_found", "$0Es existiert keine Gruppe namens $4{{name}}$0!"),
+  IMAGEFRAME_GROUP_EXISTS("imageframe.group_exists", "$0Es existiert bereits eine Gruppe namens $4{{name}}$0!"),
+  IMAGEFRAME_GROUP_CREATED("imageframe.group_created", "$0Die Gruppe $3{{name}} $0wurde angelegt."),
+  IMAGEFRAME_GROUP_DELETED("imageframe.group_deleted", "$0Die Gruppe $3{{name}} $0wurde gelöscht."),
+
+  //=========================================================================//
   //                              Repair Command                             //
   //=========================================================================//
 
@@ -604,6 +616,27 @@ public enum ConfigKey {
     "$0Erstellt von: $3{{creator}}",
     "$0Items: $3{{num_items}}",
     "$0Verfügbar in: $3{{cooldown_dur}}"
+  ),
+
+  //=========================================================================//
+  //                            IMAGEFRAMES Command                          //
+  //=========================================================================//
+
+  COMMAND_IMAGEFRAMES_LIST_NONE("imageframes.none", "$4Keine Image-Frames gefunden"),
+  COMMAND_IMAGEFRAMES_LIST_PREFIX("imageframes.header", "$0Image-Frames im Radius von $3{{radius}} $0Blöcken: "),
+  COMMAND_IMAGEFRAMES_LIST_FORMAT("imageframes.list.format", "$3{{name}}$1"),
+  COMMAND_IMAGEFRAMES_LIST_HOVER_CREATORS_FORMAT("imageframes.list.hover.creators_format", "$3{{creator}}$1"),
+  COMMAND_IMAGEFRAMES_LIST_HOVER_TEXT(
+    "imageframes.list.hover.text",
+    "$0Erstellt am: $3{{created_at}}",
+    "$0Zuletzt geändert: $3{{updated_at}}",
+    "$0Erstellt von: $3{{creator}}",
+    "$0Rahmen: $3{{num_members}}",
+    "$0Abmessungen: $3{{dimensions}}",
+    "$0Typ: $3{{type}}",
+    "$0Resource: $3{{resource}}",
+    "$0Position: $3{{location}}",
+    "$0Distanz: $3{{distance}} Blöcke"
   ),
 
   //=========================================================================//

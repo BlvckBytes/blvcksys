@@ -38,14 +38,21 @@ public class ItemFrameGroup {
   private final Map<Player, Color[][]> framebuffers;
   private final ILogger logger;
 
-  // Width and height in frames of this group
   @Getter
-  private int width, height;
+  private int width, height, numMembers;
 
   private ItemFrame[][] frameGrid;
 
-  public ItemFrameGroup(Location loc, ILogger logger) {
+  @Getter
+  public String name;
+
+  public ItemFrameGroup(
+    Location loc,
+    String name,
+    ILogger logger
+  ) {
     this.logger = logger;
+    this.name = name;
     this.framebuffers = new HashMap<>();
 
     Tuple<BlockFace, Set<ItemFrame>> ret = findMembers(loc);
@@ -70,8 +77,47 @@ public class ItemFrameGroup {
           continue;
 
         removeRenderer(frame);
+        frameGrid[x][y] = null;
       }
     }
+  }
+
+  /**
+   * Check whether any member of this group is near a given location
+   * @param loc Location to check at
+   * @param radius Radius to still be considered near
+   * @return True if any member was near enough
+   */
+  public boolean isNear(Location loc, double radius) {
+    for (int x = 0; x < width; x++) {
+      for (int y = 0; y < height; y++) {
+        ItemFrame frame = frameGrid[x][y];
+
+        if (frame == null)
+          continue;
+
+        if (frame.getLocation().distanceSquared(loc) <= Math.pow(radius, 2))
+          return true;
+      }
+    }
+
+    return false;
+  }
+
+  /**
+   * Checks whether the provided frame is a member of this group
+   * @param frame Frame to check for
+   * @return True if it's a member, false otherwise
+   */
+  public boolean isMember(ItemFrame frame) {
+    for (int x = 0; x < width; x++) {
+      for (int y = 0; y < height; y++) {
+        if (frame.equals(frameGrid[x][y]))
+          return true;
+      }
+    }
+
+    return false;
   }
 
   /**
@@ -155,6 +201,8 @@ public class ItemFrameGroup {
       width = height = 0;
       return;
     }
+
+    numMembers = members.size();
 
     // Find the min- and max values of all three axies
     double[] minMaxAx = {

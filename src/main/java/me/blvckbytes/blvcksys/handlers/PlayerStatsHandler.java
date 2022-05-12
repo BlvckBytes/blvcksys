@@ -109,7 +109,7 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
   @EventHandler
   public void onQuit(PlayerQuitEvent e) {
     // Save and remove this player from the cache
-    save(this.cache.remove(e.getPlayer().getUniqueId()));
+    this.cache.remove(e.getPlayer().getUniqueId());
   }
 
   @EventHandler

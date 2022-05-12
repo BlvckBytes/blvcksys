@@ -10,6 +10,8 @@ import me.blvckbytes.blvcksys.handlers.IImageFrameHandler;
 import me.blvckbytes.blvcksys.handlers.ImageFrameHandler;
 import me.blvckbytes.blvcksys.handlers.ItemFrameGroup;
 import me.blvckbytes.blvcksys.persistence.models.ImageFrameModel;
+import me.blvckbytes.blvcksys.util.ChatButtons;
+import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.md_5.bungee.api.chat.HoverEvent;
@@ -36,13 +38,15 @@ public class ImageFramesCommand extends APlayerCommand {
   private static final float RADIUS_FALLBACK = 50;
 
   private final IImageFrameHandler iframe;
+  private final ChatUtil chat;
 
   public ImageFramesCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
-    @AutoInject ImageFrameHandler iframe
+    @AutoInject ImageFrameHandler iframe,
+    @AutoInject ChatUtil chat
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -53,6 +57,7 @@ public class ImageFramesCommand extends APlayerCommand {
     );
 
     this.iframe = iframe;
+    this.chat = chat;
   }
 
   //=========================================================================//
@@ -86,16 +91,27 @@ public class ImageFramesCommand extends APlayerCommand {
       ImageFrameModel model = groups.get(i).a();
       ItemFrameGroup group = groups.get(i).b();
 
-      // Displayed text
-      TextComponent groupComp = new TextComponent(
-        cfg.get(ConfigKey.COMMAND_IMAGEFRAMES_LIST_FORMAT)
-          .withVariable("name", group.getName())
-          .asScalar()
-          + (i == groups.size() - 1 ? "" : ", ")
-      );
-
       Location l = model.getLoc();
       String r = model.getResource();
+
+      // Make the displayed text teleport the player on click
+      ChatButtons btn = ChatButtons.buildSimple(
+        cfg.get(ConfigKey.COMMAND_IMAGEFRAMES_LIST_FORMAT)
+          .withVariable("name", group.getName())
+          .withVariable("sep", i == groups.size() - 1 ? "" : ", "),
+        plugin, cfg, () -> {
+          p.teleport(l);
+          p.sendMessage(
+            cfg.get(ConfigKey.COMMAND_IMAGEFRAMES_LIST_TELEPORTED)
+              .withPrefix()
+              .withVariable("name", group.getName())
+              .asScalar()
+          );
+        }
+      );
+
+      TextComponent groupComp = btn.buildComponent();
+      chat.registerButtons(p, btn);
 
       // Text when hovering
       groupComp.setHoverEvent(new HoverEvent(

@@ -36,7 +36,6 @@ public enum ConfigKey {
   //=========================================================================//
 
   CHATBUTTONS_EXPIRED("chatbuttons.expired", "$0Dieser Button ist bereits $4abgelaufen$0!"),
-  CHATBUTTONS_HOVER("chatbuttons.hover", "$0Klicken um auszuführen"),
   CHATBUTTONS_YES("chatbuttons.yes", "$1[&aJa$1]"),
   CHATBUTTONS_NO("chatbuttons.no", "$1[&cNein$1]"),
   CHATBUTTONS_EDIT("chatbuttons.edit", "$1[&6Bearbeiten$1]"),
@@ -624,7 +623,8 @@ public enum ConfigKey {
 
   COMMAND_IMAGEFRAMES_LIST_NONE("imageframes.none", "$4Keine Image-Frames gefunden"),
   COMMAND_IMAGEFRAMES_LIST_PREFIX("imageframes.header", "$0Image-Frames im Radius von $3{{radius}} $0Blöcken: "),
-  COMMAND_IMAGEFRAMES_LIST_FORMAT("imageframes.list.format", "$3{{name}}$1"),
+  COMMAND_IMAGEFRAMES_LIST_FORMAT("imageframes.list.format", "$3{{name}}$1{{sep}}"),
+  COMMAND_IMAGEFRAMES_LIST_TELEPORTED("imageframes.teleported", "$0Du wurdest zum Image-Frame $3{{name}} $0teleportiert."),
   COMMAND_IMAGEFRAMES_LIST_HOVER_CREATORS_FORMAT("imageframes.list.hover.creators_format", "$3{{creator}}$1"),
   COMMAND_IMAGEFRAMES_LIST_HOVER_TEXT(
     "imageframes.list.hover.text",
@@ -644,8 +644,9 @@ public enum ConfigKey {
   //=========================================================================//
 
   COMMAND_HOLOS_LIST_NONE("holos.none", "$4Keine Hologramme gefunden"),
+  COMMAND_HOLOS_LIST_TELEPORTED("holos.teleported", "$0Du wurdest zum Hologramm $3{{name}} $0teleportiert."),
   COMMAND_HOLOS_LIST_PREFIX("holos.header", "$0Hologramme im Radius von $3{{radius}} $0Blöcken: "),
-  COMMAND_HOLOS_LIST_FORMAT("holos.list.format", "$3{{name}}$1"),
+  COMMAND_HOLOS_LIST_FORMAT("holos.list.format", "$3{{name}}$1{{sep}}"),
   COMMAND_HOLOS_LIST_HOVER_CREATORS_FORMAT("holos.list.hover.creators_format", "$3{{creator}}$1"),
   COMMAND_HOLOS_LIST_HOVER_TEXT(
     "holos.list.hover.text",

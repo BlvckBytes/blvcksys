@@ -41,17 +41,24 @@ public class ChatUtil implements Listener {
   }
 
   /**
+   * Register buttons for a player
+   * @param p Target player
+   * @param btns Previously built set of buttons
+   */
+  public void registerButtons(Player p, ChatButtons btns) {
+    // Register this instance of buttons
+    if (!buttonSessions.containsKey(p))
+      buttonSessions.put(p, new ArrayList<>());
+    buttonSessions.get(p).add(btns);
+  }
+
+  /**
    * Register and send buttons to a player
    * @param p Target player
    * @param btns Previously built set of buttons
    */
   public void sendButtons(Player p, ChatButtons btns) {
-    // Register this instance of buttons
-    if (!buttonSessions.containsKey(p))
-      buttonSessions.put(p, new ArrayList<>());
-    buttonSessions.get(p).add(btns);
-
-    // Send the buttons to the player
+    registerButtons(p, btns);
     p.spigot().sendMessage(btns.buildComponent());
   }
 

@@ -115,7 +115,7 @@ public class LongChatCommand extends APlayerCommand {
 
     // Send this message
     if (canSend) {
-      buttons.addButton(ConfigKey.CHATBUTTONS_YES, () -> {
+      buttons.addButton(cfg.get(ConfigKey.CHATBUTTONS_YES), () -> {
         chat.sendChatMessage(p, Bukkit.getOnlinePlayers(), message);
       });
 
@@ -129,12 +129,12 @@ public class LongChatCommand extends APlayerCommand {
     }
 
     // Edit this message
-    buttons.addButton(ConfigKey.CHATBUTTONS_EDIT, () -> {
+    buttons.addButton(cfg.get(ConfigKey.CHATBUTTONS_EDIT), () -> {
       handleEditor(p, pages);
     });
 
       // Cancel sending
-    buttons.addButton(ConfigKey.CHATBUTTONS_CANCEL, () -> {
+    buttons.addButton(cfg.get(ConfigKey.CHATBUTTONS_CANCEL), () -> {
       p.sendMessage(
         cfg.get(ConfigKey.LONGCHAT_CANCELLED)
           .withPrefix()

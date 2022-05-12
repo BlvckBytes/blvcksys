@@ -8,6 +8,8 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IHologramHandler;
 import me.blvckbytes.blvcksys.persistence.models.HologramLineModel;
+import me.blvckbytes.blvcksys.util.ChatButtons;
+import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.Triple;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
@@ -36,13 +38,15 @@ public class HolosCommand extends APlayerCommand {
   private static final float RADIUS_FALLBACK = 50;
 
   private final IHologramHandler holo;
+  private final ChatUtil chat;
 
   public HolosCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
-    @AutoInject IHologramHandler holo
+    @AutoInject IHologramHandler holo,
+    @AutoInject ChatUtil chat
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -53,6 +57,7 @@ public class HolosCommand extends APlayerCommand {
     );
 
     this.holo = holo;
+    this.chat = chat;
   }
 
   //=========================================================================//
@@ -97,13 +102,27 @@ public class HolosCommand extends APlayerCommand {
     for (int i = 0; i < holograms.size(); i++) {
       Triple<String, Double, List<HologramLineModel>> hologram = holograms.get(i);
 
-      // Displayed text
-      TextComponent holoComp = new TextComponent(
+      // Display the location of the first line
+      Location l = hologram.c().get(0).getLoc();
+
+      // Make the displayed text teleport the player on click
+      ChatButtons btn = ChatButtons.buildSimple(
         cfg.get(ConfigKey.COMMAND_HOLOS_LIST_FORMAT)
           .withVariable("name", hologram.a())
-          .asScalar()
-          + (i == holograms.size() - 1 ? "" : ", ")
+          .withVariable("sep", i == holograms.size() - 1 ? "" : ", "),
+        plugin, cfg, () -> {
+          p.teleport(l);
+          p.sendMessage(
+            cfg.get(ConfigKey.COMMAND_HOLOS_LIST_TELEPORTED)
+              .withPrefix()
+              .withVariable("name", hologram.a())
+              .asScalar()
+          );
+        }
       );
+
+      TextComponent holoComp = btn.buildComponent();
+      chat.registerButtons(p, btn);
 
       // Build the list of creators by making a unique list
       // from all line creators and joining all the names into a single string
@@ -133,9 +152,6 @@ public class HolosCommand extends APlayerCommand {
             .asScalar()
         ).append(j == hologram.c().size() - 1 ? "" : ", ");
       }
-
-      // Display the location of the first line
-      Location l = hologram.c().get(0).getLoc();
 
       // Text when hovering
       holoComp.setHoverEvent(new HoverEvent(

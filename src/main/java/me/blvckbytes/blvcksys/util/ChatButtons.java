@@ -2,11 +2,10 @@ package me.blvckbytes.blvcksys.util;
 
 import lombok.AllArgsConstructor;
 import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.HoverEvent;
 import net.md_5.bungee.api.chat.TextComponent;
-import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -74,16 +73,16 @@ public class ChatButtons {
 
   /**
    * Add a new button to the set of buttons
-   * @param key Key for the button's template
+   * @param cfgVal Value for the button's template
    * @param action Action to run on click
    */
-  public ChatButtons addButton(ConfigKey key, Runnable action) {
+  public ChatButtons addButton(ConfigValue cfgVal, Runnable action) {
     // Generate a new, random command name
     String tmpCmd = UUID.randomUUID().toString();
 
     // Register this button
     this.buttons.add(
-      new CommandButton(tmpCmd, cfg.get(key).asScalar(), action)
+      new CommandButton(tmpCmd, cfgVal.asScalar(), action)
     );
 
     return this;
@@ -103,12 +102,6 @@ public class ChatButtons {
 
       // Bind the temporary command to it's click listener
       btn.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + button.tempCommand));
-
-      // Bind a hover event for info purposes
-      btn.setHoverEvent(new HoverEvent(
-        HoverEvent.Action.SHOW_TEXT,
-        new Text(cfg.get(ConfigKey.CHATBUTTONS_HOVER).asScalar()
-      )));
 
       // Append to head
       head.addExtra(btn);
@@ -182,7 +175,25 @@ public class ChatButtons {
     @Nullable Function<Exception, String> exceptionMapper
   ) {
     return new ChatButtons(prefix, true, plugin, cfg, exceptionMapper)
-      .addButton(ConfigKey.CHATBUTTONS_YES, yes)
-      .addButton(ConfigKey.CHATBUTTONS_NO, no);
+      .addButton(cfg.get(ConfigKey.CHATBUTTONS_YES), yes)
+      .addButton(cfg.get(ConfigKey.CHATBUTTONS_NO), no);
+  }
+
+  /**
+   * Build a simple button without a prefix or any exception mapping
+   * @param text Text to display
+   * @param plugin Plugin reference
+   * @param cfg Config reference
+   * @param clicked Called when clicked
+   * @return ChatButtons instance
+   */
+  public static ChatButtons buildSimple(
+    ConfigValue text,
+    JavaPlugin plugin,
+    IConfig cfg,
+    Runnable clicked
+  ) {
+    return new ChatButtons("", true, plugin, cfg, null)
+      .addButton(text, clicked);
   }
 }

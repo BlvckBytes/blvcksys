@@ -11,6 +11,7 @@ import me.blvckbytes.blvcksys.persistence.models.ACooldownModel;
 import me.blvckbytes.blvcksys.persistence.models.CooldownSessionModel;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
+import me.blvckbytes.blvcksys.util.TimeUtil;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.api.chat.ClickEvent;
@@ -58,6 +59,9 @@ public abstract class APlayerCommand extends Command {
   // Used to remove vanished players from suggestions for non-bypassing players
   @AutoInjectLate
   private IVanishCommand vanish;
+
+  @AutoInjectLate
+  private TimeUtil timeUtil;
 
   // The top level permission of this command
   @Getter
@@ -244,8 +248,12 @@ public abstract class APlayerCommand extends Command {
   ) throws CooldownException {
     long cooldown = model.getCooldownRemaining(p, pers);
 
-    if (cooldown > 0)
-      throw new CooldownException(message, cooldown);
+    if (cooldown > 0) {
+      throw new CooldownException(
+        message,
+        timeUtil == null ? "?" : timeUtil.formatDuration(cooldown)
+      );
+    }
 
     model.storeCooldownFor(p, pers);
   }
@@ -274,7 +282,7 @@ public abstract class APlayerCommand extends Command {
       throw new CooldownException(
         cfg.get(ConfigKey.ERR_COOLDOWN)
           .withPrefix(),
-        cooldown
+        timeUtil == null ? "?" : timeUtil.formatDuration(cooldown)
       );
     }
 
@@ -590,6 +598,33 @@ public abstract class APlayerCommand extends Command {
       throw new UnknownTargetException(cfg, args[index]);
 
     return res.get();
+  }
+
+  ///////////////////////////// Parsing: Durations ///////////////////////////////
+
+  /**
+   * Parse a duration into seconds
+   * @param args Arguments of the command
+   * @param index Index within the arguments to use
+   * @param argcFallback Fallback value to use
+   * @return Parsed duration in seconds
+   */
+  protected int parseDuration(String[] args, int index, Integer argcFallback) throws CommandException {
+    if (index >= args.length) {
+      if (argcFallback != null)
+        return argcFallback;
+      throw new UsageMismatchException(cfg, buildAdvancedUsage(index));
+    }
+
+    if (timeUtil == null)
+      throw new CommandException("The duration parser is not available.");
+
+    int dur = timeUtil.parseDuration(args[index]);
+
+    if (dur < 0)
+      throw new InvalidDurationException(cfg, args[index]);
+
+    return dur;
   }
 
   ///////////////////////////// Parsing: Numbers ///////////////////////////////

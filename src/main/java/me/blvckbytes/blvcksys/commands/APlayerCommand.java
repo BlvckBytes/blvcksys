@@ -8,7 +8,11 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.ACooldownModel;
+import me.blvckbytes.blvcksys.persistence.models.APersistentModel;
 import me.blvckbytes.blvcksys.persistence.models.CooldownSessionModel;
+import me.blvckbytes.blvcksys.persistence.models.WarpModel;
+import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
+import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.util.TimeUtil;
@@ -294,6 +298,36 @@ public abstract class APlayerCommand extends Command {
   //=========================================================================//
 
   /////////////////////////////// Suggestions //////////////////////////////////
+
+  /**
+   * Create a stream of suggestions based on a list of models who's named
+   * field contains the currently typed out argument, ignoring casing.
+   * @param args Already typed out arguments
+   * @param currArg Currently focused argument
+   * @param model Model to search for
+   * @param field Target field of the model
+   * @param pers Persistence ref
+   * @return Stream of suggestions
+   */
+  protected Stream<String> suggestModels(
+    String[] args,
+    int currArg,
+    Class<? extends APersistentModel> model,
+    String field,
+    IPersistence pers
+  ) {
+    return pers.findRaw(
+        new QueryBuilder<>(
+          WarpModel.class,
+          field, EqualityOperation.CONT_IC, args[currArg]
+        )
+          .limit(10), field
+      )
+      .stream()
+      .map(warp -> warp.get(field))
+      .filter(Objects::nonNull)
+      .map(Objects::toString);
+  }
 
   /**
    * Suggest an enum's values as autocompletion, used with {@link #onTabCompletion}

@@ -61,11 +61,7 @@ public class HoloSortCommand extends APlayerCommand {
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
     // Suggest existing holograms
     if (currArg == 0)
-      return pers.listRaw(HologramLineModel.class, "name")
-        .stream()
-        .map(e -> e.get("name"))
-        .filter(Objects::nonNull)
-        .map(Object::toString);
+      return suggestModels(args, currArg, HologramLineModel.class, "name", pers);
 
     // Suggest ids placeholder
     return Stream.of(getArgumentPlaceholder(currArg));

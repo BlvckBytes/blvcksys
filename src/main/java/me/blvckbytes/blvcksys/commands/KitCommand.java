@@ -17,7 +17,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -60,13 +59,8 @@ public class KitCommand extends APlayerCommand {
 
   @Override
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
-    // Suggest existing kits
     if (currArg == 0)
-      return pers.listRaw(KitModel.class, "name")
-        .stream()
-        .map(k -> k.get("name"))
-        .filter(Objects::nonNull)
-        .map(Object::toString);
+      return suggestModels(args, currArg, KitModel.class, "name", pers);
 
     if (currArg == 1)
       return suggestOnlinePlayers(p, args, currArg, false);

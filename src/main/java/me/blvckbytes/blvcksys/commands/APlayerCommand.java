@@ -324,7 +324,7 @@ public abstract class APlayerCommand extends Command {
           .limit(10), field
       )
       .stream()
-      .map(warp -> warp.get(field))
+      .map(m -> m.get(field))
       .filter(Objects::nonNull)
       .map(Objects::toString);
   }

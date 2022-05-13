@@ -864,13 +864,46 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     if (targCol.getType().equals(MysqlType.UUID))
       ph = uuidToBin("?", false);
 
+    Object value = query.value();
+
+    // Is a wildcard operation
+    if (
+      query.op() == EqualityOperation.CONT ||
+      query.op() == EqualityOperation.CONT_IC ||
+      query.op() == EqualityOperation.STARTS ||
+      query.op() == EqualityOperation.STARTS_IC ||
+      query.op() == EqualityOperation.ENDS ||
+      query.op() == EqualityOperation.ENDS_IC
+    ) {
+      // Escape all reserved wildcard characters using bang as an escape character
+      value = value.toString()
+        .replace("!", "!!")
+        .replace("%", "!%")
+        .replace("_", "!_")
+        .replace("[", "![");
+
+      // Contains (any<value>any)
+      if (query.op() == EqualityOperation.CONT || query.op() == EqualityOperation.CONT_IC)
+        value = "%" + value + "%";
+
+      // Starts with (<value>any)
+      if (query.op() == EqualityOperation.STARTS || query.op() == EqualityOperation.STARTS_IC)
+        value = value + "%";
+
+      // Ends with (any<value>)
+      if (query.op() == EqualityOperation.ENDS || query.op() == EqualityOperation.ENDS_IC)
+        value = "%" + value;
+    }
+
     // Only add placeholder values if there actually was a placeholder appended
     if (!(isNull && (query.op() == EqualityOperation.EQ || query.op() == EqualityOperation.NEQ)))
-      params.add(new Tuple<>(targCol.getType(), query.value()));
+      params.add(new Tuple<>(targCol.getType(), value));
 
     return switch (query.op()) {
       case EQ -> "`" + field + "` " + (isNull ? "IS NULL" : "= " + ph);
       case NEQ -> "`" + field + "` " + (isNull ? "IS NOT NULL" : "!= " + ph);
+      case CONT, STARTS, ENDS -> "`" + field + "` LIKE " + ph + " ESCAPE '!'";
+      case CONT_IC, STARTS_IC, ENDS_IC -> "LOWER(`" + field + "`) LIKE LOWER(" + ph + ") ESCAPE '!'";
       case EQ_IC -> "LOWER(`" + field + "`) = LOWER(" + ph + ")";
       case NEQ_IC -> "LOWER(`" + field + "`) != LOWER(" + ph + ")";
       case LT -> "`" + field + "` < " + ph;

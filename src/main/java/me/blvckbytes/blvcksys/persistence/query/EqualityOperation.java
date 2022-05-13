@@ -13,6 +13,24 @@ public enum EqualityOperation {
   // Equals ignorecase
   EQ_IC,
 
+  // Contains
+  CONT,
+
+  // Contains ignorecase
+  CONT_IC,
+
+  // Starts with
+  STARTS,
+
+  // Starts with ignorecase
+  STARTS_IC,
+
+  // Ends with
+  ENDS,
+
+  // Ends with ignorecase
+  ENDS_IC,
+
   // Not equals
   NEQ,
 

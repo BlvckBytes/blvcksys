@@ -43,7 +43,13 @@ public enum MysqlType {
       EqualityOperation.EQ,
       EqualityOperation.NEQ,
       EqualityOperation.EQ_IC,
-      EqualityOperation.NEQ_IC
+      EqualityOperation.NEQ_IC,
+      EqualityOperation.CONT,
+      EqualityOperation.CONT_IC,
+      EqualityOperation.STARTS,
+      EqualityOperation.STARTS_IC,
+      EqualityOperation.ENDS,
+      EqualityOperation.ENDS_IC
     }
   ),
 
@@ -59,7 +65,13 @@ public enum MysqlType {
       EqualityOperation.EQ,
       EqualityOperation.NEQ,
       EqualityOperation.EQ_IC,
-      EqualityOperation.NEQ_IC
+      EqualityOperation.NEQ_IC,
+      EqualityOperation.CONT,
+      EqualityOperation.CONT_IC,
+      EqualityOperation.STARTS,
+      EqualityOperation.STARTS_IC,
+      EqualityOperation.ENDS,
+      EqualityOperation.ENDS_IC
     }
   ),
 

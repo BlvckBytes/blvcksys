@@ -16,7 +16,7 @@ import java.util.UUID;
 @Getter
 public abstract class APersistentModel {
 
-  private static final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
+  protected static final SimpleDateFormat df = new SimpleDateFormat("dd.MM.yyyy HH:mm:ss");
 
   @ModelProperty
   protected UUID id;

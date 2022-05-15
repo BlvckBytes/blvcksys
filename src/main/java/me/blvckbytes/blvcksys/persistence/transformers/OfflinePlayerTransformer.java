@@ -24,6 +24,9 @@ public class OfflinePlayerTransformer implements IDataTransformer<OfflinePlayerM
 
   @Override
   public OfflinePlayerModel replace(OfflinePlayer data) {
+    if (data == null)
+      return null;
+
     return new OfflinePlayerModel(data.getUniqueId());
   }
 

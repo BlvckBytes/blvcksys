@@ -181,6 +181,8 @@ public enum ConfigKey {
   BAN_DURATION_PERMANENT("ban.duration_permanent", "&cPermanent"),
   BAN_REMAINING_PERMANENT("ban.remaining_permanent", "&c/"),
   BAN_NO_REASON("ban.no_reason", "&cKein Grund angegeben"),
+  BAN_NO_ADDRESS("ban.no_address", "&c/"),
+  BAN_NOT_REVOKED("ban.not_revoked", "&c/"),
   BAN_SCREEN(
     "ban.screen",
     "$0Du wurdest &cgebannt$0.",
@@ -191,6 +193,28 @@ public enum ConfigKey {
     "$0Grund: $3{{reason}}"
   ),
   BAN_ALREADY_BANNED("ban.already_banned", "$0Der Spieler $4{{target}} $0besitzt bereits einen $4aktiven $0Bann!"),
+  BAN_LIST_HEADLINE(
+    "ban.list.headline",
+    "$3{{type}} $0Bans von $3{{target}}$0:",
+    "$3Ersteller $1| $3Datum $1| $3Dauer $1| $3IP $1| $3Aktiv $1| $3Zurückgezogen"
+  ),
+  BAN_LIST_ENTRY("ban.list.entry", "$0{{creator}} $1| $0{{created_at}} $1| $0{{duration}} $1| $0{{has_ip}} $1| $0{{is_active}} $1| $0{{is_revoked}}"),
+  BAN_LIST_HOVER("ban.list.hover", "$0Klick für weitere Details"),
+  BAN_LIST_YES("ban.list.yes", "&aJa"),
+  BAN_LIST_NO("ban.list.no", "&cNein"),
+  BAN_INFO_UNKNOWN("ban.info.unknown", "$0Es existiert kein Bann mit der ID $3{{id}}$0!"),
+  BAN_INFO_SCREEN(
+    "ban.info.screen",
+    "$0Bann mit der ID $3{{id}}$0:",
+    "$0Ziel: $3{{target}}",
+    "$0Ersteller: $3{{creator}}",
+    "$0Dauer: $3{{duration}}",
+    "$0Verbleibend: $3{{remaining}}",
+    "$0IP: $3{{ip}}",
+    "$0Grund: $3{{reason}}",
+    "$0Zurückgezogen von: $3{{revoker}}",
+    "$0Zurückgezogen am: $3{{revoked_at}}"
+  ),
 
   //=========================================================================//
   //                              GAMEMODE Command                           //
@@ -754,6 +778,7 @@ public enum ConfigKey {
 
   ERR_INTERNAL("errors.internal", "$5Es trat ein interner Fehler auf!"),
   ERR_INTPARSE("errors.intparse", "$4Die Eingabe $5{{number}} $4ist keine Ganzzahl!"),
+  ERR_UUIDPARSE("errors.uuidparse", "$4Die Eingabe $5{{uuid}} $4ist keine UUID!"),
   ERR_FLOATPARSE("errors.floatparse", "$4Die Eingabe $5{{duration}} $4ist keine Kommazahl!"),
   ERR_DURATIONPARSE("errors.durationparse", "$4Die Eingabe $5{{number}} $4ist keine gültige Dauer (<Anzahl><y/m/w/d/h/m/s>!"),
   ERR_PERMISSION("errors.permission", "$4Dir fehlt das Recht $5{{permission}} $4um diesen Befehl ausführen zu können!"),

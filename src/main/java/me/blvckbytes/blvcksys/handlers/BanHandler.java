@@ -130,6 +130,62 @@ public class BanHandler implements IBanHandler, Listener {
       });
   }
 
+  @Override
+  public Map<Pattern, String> buildBanVariables(BanModel ban) {
+    int remaining = 0;
+
+    // Remaining: (createdAt + durationSections) - now
+    if (ban.getDurationSeconds() != null) {
+      remaining = (int) Math.max(0,
+        (ban.getCreatedAt().getTime() / 1000 + ban.getDurationSeconds()) -
+          (System.currentTimeMillis() / 1000)
+      );
+    }
+
+    return ConfigValue.makeEmpty()
+      .withVariable("creator", ban.getCreator().getName())
+      .withVariable("target", ban.getTarget().getName())
+      .withVariable(
+        "duration",
+        ban.getDurationSeconds() == null ?
+          cfg.get(ConfigKey.BAN_DURATION_PERMANENT).asScalar() :
+          time.formatDuration(ban.getDurationSeconds())
+      )
+      .withVariable(
+        "remaining",
+        ban.getDurationSeconds() == null ?
+          cfg.get(ConfigKey.BAN_REMAINING_PERMANENT).asScalar() :
+          time.formatDuration(remaining)
+      )
+      .withVariable(
+        "reason",
+        ban.getReason() == null ?
+          cfg.get(ConfigKey.BAN_NO_REASON).asScalar() :
+          ban.getReason()
+      )
+      .withVariable(
+        "ip",
+        ban.getIpAddress() == null ?
+          cfg.get(ConfigKey.BAN_NO_ADDRESS).asScalar() :
+          ban.getIpAddress()
+      )
+      .withVariable("id", ban.getId())
+      .withVariable("target", ban.getTarget().getName())
+      .withVariable(
+        "revoker",
+        ban.getRevoker() == null ?
+          cfg.get(ConfigKey.BAN_NOT_REVOKED).asScalar() :
+          ban.getRevoker().getName()
+      )
+      .withVariable(
+        "revoked_at",
+        ban.getRevokedAt() == null ?
+          cfg.get(ConfigKey.BAN_NOT_REVOKED).asScalar() :
+          ban.getRevokedAtStr()
+      )
+      .exportVariables();
+  }
+
   //=========================================================================//
   //                                 Listeners                               //
   //=========================================================================//
@@ -202,47 +258,6 @@ public class BanHandler implements IBanHandler, Listener {
     }
 
     return query;
-  }
-
-  /**
-   * Build a map of variables to be imported when creating
-   * config messages in regards to a specific ban model
-   * @param ban Ban model to use as a variable value supplier
-   * @return Variable map
-   */
-  private Map<Pattern, String> buildBanVariables(BanModel ban) {
-    int remaining = 0;
-
-    // Remaining: (createdAt + durationSections) - now
-    if (ban.getDurationSeconds() != null) {
-      remaining = (int) Math.max(0,
-        (ban.getCreatedAt().getTime() / 1000 + ban.getDurationSeconds()) -
-        (System.currentTimeMillis() / 1000)
-      );
-    }
-
-    return ConfigValue.makeEmpty()
-      .withVariable("creator", ban.getCreator().getName())
-      .withVariable("target", ban.getTarget().getName())
-      .withVariable(
-        "duration",
-        ban.getDurationSeconds() == null ?
-          cfg.get(ConfigKey.BAN_DURATION_PERMANENT).asScalar() :
-          time.formatDuration(ban.getDurationSeconds())
-      )
-      .withVariable(
-        "remaining",
-        ban.getDurationSeconds() == null ?
-          cfg.get(ConfigKey.BAN_REMAINING_PERMANENT).asScalar() :
-          time.formatDuration(remaining)
-      )
-      .withVariable(
-        "reason",
-        ban.getReason() == null ?
-          cfg.get(ConfigKey.BAN_NO_REASON).asScalar() :
-          ban.getReason()
-      )
-      .exportVariables();
   }
 
   /**

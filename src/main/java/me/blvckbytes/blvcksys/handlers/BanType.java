@@ -11,5 +11,7 @@ public enum BanType {
   IPBAN,
   TEMPBAN,
   TEMPIPBAN,
+  ACTIVE,
+  REVOKED,
   ALL
 }

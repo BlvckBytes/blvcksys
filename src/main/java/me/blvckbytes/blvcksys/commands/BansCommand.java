@@ -1,17 +1,26 @@
 package me.blvckbytes.blvcksys.commands;
 
 import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
+import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.BanType;
+import me.blvckbytes.blvcksys.handlers.IBanHandler;
+import me.blvckbytes.blvcksys.persistence.models.BanModel;
 import me.blvckbytes.blvcksys.util.MCReflect;
+import me.blvckbytes.blvcksys.util.TimeUtil;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 /*
@@ -23,26 +32,33 @@ import java.util.stream.Stream;
 @AutoConstruct
 public class BansCommand extends APlayerCommand {
 
+  private final IBanHandler bans;
+  private final TimeUtil time;
+
   public BansCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
-    @AutoInject MCReflect refl
+    @AutoInject MCReflect refl,
+    @AutoInject IBanHandler bans,
+    @AutoInject TimeUtil time
   ) {
     super(
       plugin, logger, cfg, refl,
-      "punishments",
-      "List punishments of a player",
+      "bans",
+      "List all bans of a player",
       PlayerPermission.COMMAND_BANS,
       new CommandArgument("<name>", "Name of the target player"),
-      new CommandArgument("<type>", "Type of punishments to list")
+      new CommandArgument("<type>", "Type of ban to list")
     );
+
+    this.bans = bans;
+    this.time = time;
   }
 
   //=========================================================================//
   //                                 Handler                                 //
   //=========================================================================//
-
 
   @Override
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
@@ -59,5 +75,60 @@ public class BansCommand extends APlayerCommand {
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     OfflinePlayer target = offlinePlayer(args, 0);
     BanType type = parseEnum(BanType.class, args, 1, null);
+
+    List<BanModel> list = switch (type) {
+      case BAN -> bans.listBans(target, true, false, null, null);
+      case IPBAN -> bans.listBans(target, true, true, null, null);
+      case TEMPBAN -> bans.listBans(target, false, false, null, null);
+      case TEMPIPBAN -> bans.listBans(target, false, true, null, null);
+      case ACTIVE -> bans.listBans(target, null, null, null, true);
+      case REVOKED -> bans.listBans(target, null, null, true, null);
+      case ALL -> bans.listBans(target, null, null, null, null);
+    };
+
+    TextComponent head = new TextComponent(
+      cfg.get(ConfigKey.BAN_LIST_HEADLINE)
+        .withPrefixes()
+        .withVariable("type", type.name())
+        .withVariable("target", target.getName())
+        .asScalar() + "\n"
+    );
+
+    String yesStr = cfg.get(ConfigKey.BAN_LIST_YES).asScalar();
+    String noStr = cfg.get(ConfigKey.BAN_LIST_NO).asScalar();
+
+    for (int i = 0; i < list.size(); i++) {
+      BanModel ban = list.get(i);
+
+      TextComponent banComp = new TextComponent(
+        cfg.get(ConfigKey.BAN_LIST_ENTRY)
+          .withPrefix()
+          .withVariable("creator", ban.getCreator().getName())
+          .withVariable("created_at", ban.getCreatedAtStr(true))
+          .withVariable(
+            "duration",
+            ban.getDurationSeconds() == null ?
+              cfg.get(ConfigKey.BAN_DURATION_PERMANENT) :
+              time.formatDuration(ban.getDurationSeconds())
+          )
+          .withVariable("has_ip", ban.getIpAddress() == null ? noStr : yesStr)
+          .withVariable("is_active", ban.isActive() ? yesStr : noStr)
+          .withVariable("is_revoked", ban.getRevoker() != null ? yesStr : noStr)
+          .asScalar()
+        + (i == list.size() - 1 ? "" : "\n")
+      );
+
+      banComp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(
+        cfg.get(
+          ConfigKey.BAN_LIST_HOVER
+        ).asScalar()
+      )));
+
+      banComp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/baninfo " + ban.getId()));
+
+      head.addExtra(banComp);
+    }
+
+    p.spigot().sendMessage(head);
   }
 }

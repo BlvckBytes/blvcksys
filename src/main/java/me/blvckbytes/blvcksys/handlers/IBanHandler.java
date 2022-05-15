@@ -7,7 +7,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.InetAddress;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -64,4 +66,12 @@ public interface IBanHandler {
    * @return The active ban if the player's banned, empty if the player's free to join
    */
   Optional<BanModel> isCurrentlyBanned(OfflinePlayer target, @Nullable InetAddress addr);
+
+  /**
+   * Build a map of variables to be imported when creating
+   * config messages in regards to a specific ban model
+   * @param ban Ban model to use as a variable value supplier
+   * @return Variable map
+   */
+  Map<Pattern, String> buildBanVariables(BanModel ban);
 }

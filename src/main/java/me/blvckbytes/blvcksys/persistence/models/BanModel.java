@@ -56,6 +56,24 @@ public class BanModel extends APersistentModel {
    * Get the revokedAt timestamp as a human readable string
    */
   public String getRevokedAtStr() {
-    return revokedAt == null ? "/" : df.format(revokedAt);
+    return getRevokedAtStr(false);
+  }
+
+  /**
+   * Get the revokedAt timestamp as a human readable string
+   * @param shortFormat Whether to display only the date without the time
+   */
+  public String getRevokedAtStr(boolean shortFormat) {
+    return revokedAt == null ? "/" : (shortFormat ? dfShort : df).format(revokedAt);
+  }
+
+  /**
+   * Get whether this ban is currently active
+   */
+  public boolean isActive() {
+    return revokedAt == null && (
+      durationSeconds == null ||
+      ((createdAt.getTime() / 1000) + durationSeconds) - (System.currentTimeMillis() / 1000) > 0
+    );
   }
 }

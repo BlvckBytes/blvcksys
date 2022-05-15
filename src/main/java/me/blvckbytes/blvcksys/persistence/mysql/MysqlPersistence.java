@@ -401,7 +401,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       if (type.isEmpty()) {
 
         // Try to resolve this field through a known transformer
-        Optional<List<MysqlColumn>> transformed = inlineTransformedField(f);
+        Optional<List<MysqlColumn>> transformed = inlineTransformedField(f, mp);
         if (transformed.isPresent()) {
           columns.addAll(transformed.get());
           continue;
@@ -1141,6 +1141,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
         Class<? extends APersistentModel> knownModel = (Class<? extends APersistentModel>) knownField.getDeclaringClass();
         MysqlTable knownTable = getTableFromModel(knownModel, true);
         Object knownInst = newEmpty(knownModel);
+        boolean knownHasNullFields = false;
 
         // Loop all columns from the known table and set the known instance's fields accordingly
         for (MysqlColumn knownCol : knownTable.columns()) {
@@ -1156,13 +1157,24 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
           // Directly set the known model's field value to the corresponding column's value
           Object value = translateValue(col.getType(), rs.getObject(targRemCol.getName()));
+
+          if (value == null)
+            knownHasNullFields = true;
+
           knownCol.getModelField().set(knownInst, value);
           remainingColumns.remove(targRemCol);
         }
 
+        // If any of the transformed field's is null, the whole known model becomes null
+        if (knownHasNullFields)
+          col.getModelField().set (inst, null);
+
         // Call the reviver on this known model to receive the foreign value to write to the row's model
-        IDataTransformer<?, ?> dt = getTransformerByKnownField(knownField);
-        col.getModelField().set(inst, callTransformerRevive(dt, knownInst));
+        else {
+          IDataTransformer<?, ?> dt = getTransformerByKnownField(knownField);
+          col.getModelField().set(inst, callTransformerRevive(dt, knownInst));
+        }
+
         continue;
       }
 
@@ -1251,6 +1263,10 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       replaced = callTransformerReplace(transformer, value);
       replaceCache.put(fieldName, replaced);
     }
+
+    // The replacer returned null, thus all of it's fields are null
+    if (replaced == null)
+      return null;
 
     // Get the transformer column's value from the model the value just got replaced into
     return knownModelField.get(replaced);
@@ -1477,9 +1493,10 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    * known class describes. Parses transformer's known models into tables on
    * demand if they're not yet loaded.
    * @param f The field that's trying to be inlined
+   * @param mp Original field's properties
    * @return Optional list of inlined columns, empty if no transformer supports this type
    */
-  private Optional<List<MysqlColumn>> inlineTransformedField(Field f) throws Exception {
+  private Optional<List<MysqlColumn>> inlineTransformedField(Field f, ModelProperty mp) throws Exception {
     IDataTransformer<?, ?> match = null;
     for (IDataTransformer<?, ?> dt : transformers) {
       if (!dt.getForeignClass().equals(f.getType()))
@@ -1508,10 +1525,11 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
         .filter(MysqlColumn::isInlineable)
 
         // Create a clone of this column that has the foreign field's name as a prefix
+        // Use the nullable as well as the unique flags from the original column
         .map(c -> new MysqlColumn(
-          f.getName() + "__" + c.getName(),
-          c.getType(), c.isNullable(), c.getMigrationDefault(),
-          c.isUnique(), true, f, c.getModelField(), c.getForeignKey(), c.getForeignAction()
+            f.getName() + "__" + c.getName(),
+            c.getType(), mp.isNullable(), c.getMigrationDefault(),
+            mp.isUnique(), true, f, c.getModelField(), c.getForeignKey(), c.getForeignAction()
         ))
         .toList()
     );

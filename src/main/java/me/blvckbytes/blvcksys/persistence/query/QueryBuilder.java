@@ -34,6 +34,18 @@ public class QueryBuilder<T extends APersistentModel> {
   }
 
   /**
+   * Create a new query, starting of with an initial field query
+   * @param fieldA Field A of the field operation
+   * @param fOp Operation between field A and B
+   * @param fieldB Field B of the field operation
+   * @param eqOp Equality operation
+   * @param value Target value of the operation
+   */
+  public QueryBuilder(Class<T> model, String fieldA, FieldOperation fOp, String fieldB, EqualityOperation eqOp, Object value) {
+    this(model, new FieldQueryGroup(fieldA, fOp, fieldB, eqOp, value));
+  }
+
+  /**
    * Create a new query, starting of with an initial query group
    * @param group Field query group
    */
@@ -55,6 +67,19 @@ public class QueryBuilder<T extends APersistentModel> {
   }
 
   /**
+   * Add a new field query to the last query, connected with a logical AND
+   * @param fieldA Field A of the field operation
+   * @param fOp Operation between field A and B
+   * @param fieldB Field B of the field operation
+   * @param eqOp Equality operation
+   * @param value Target value of the operation
+   */
+  public QueryBuilder<T> and(String fieldA, FieldOperation fOp, String fieldB, EqualityOperation eqOp, Object value) {
+    additionals.add(new Tuple<>(QueryConnection.AND, new FieldQueryGroup(fieldA, fOp, fieldB, eqOp, value)));
+    return this;
+  }
+
+  /**
    * Add a new field query group to the last query, connected with a logical AND
    * @param group Field query group
    */
@@ -71,6 +96,19 @@ public class QueryBuilder<T extends APersistentModel> {
    */
   public QueryBuilder<T> or(String field, EqualityOperation op, Object value) {
     additionals.add(new Tuple<>(QueryConnection.OR, new FieldQueryGroup(field, op, value)));
+    return this;
+  }
+
+  /**
+   * Add a new field query to the last query, connected with a logical OR
+   * @param fieldA Field A of the field operation
+   * @param fOp Operation between field A and B
+   * @param fieldB Field B of the field operation
+   * @param eqOp Equality operation
+   * @param value Target value of the operation
+   */
+  public QueryBuilder<T> or(String fieldA, FieldOperation fOp, String fieldB, EqualityOperation eqOp, Object value) {
+    additionals.add(new Tuple<>(QueryConnection.OR, new FieldQueryGroup(fieldA, fOp, fieldB, eqOp, value)));
     return this;
   }
 

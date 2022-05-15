@@ -24,6 +24,7 @@ public enum MysqlType {
     new Class[] {
       java.util.UUID.class
     },
+    new Class[]{},
     true,
     new EqualityOperation[] {
       EqualityOperation.EQ,
@@ -38,6 +39,7 @@ public enum MysqlType {
     new Class[] {
       String.class
     },
+    new Class[]{},
     false,
     new EqualityOperation[] {
       EqualityOperation.EQ,
@@ -60,6 +62,7 @@ public enum MysqlType {
     new Class[] {
       String.class, Enum.class
     },
+    new Class[]{},
     true,
     new EqualityOperation[] {
       EqualityOperation.EQ,
@@ -82,6 +85,7 @@ public enum MysqlType {
     new Class[] {
       boolean.class, Boolean.class
     },
+    new Class[] {},
     false,
     new EqualityOperation[] {
       EqualityOperation.EQ,
@@ -95,6 +99,12 @@ public enum MysqlType {
     },
     new Class[] {
       long.class, Long.class
+    },
+    new Class[] {
+      int.class, Integer.class,
+      float.class, Float.class,
+      long.class, Long.class,
+      double.class, Double.class
     },
     false,
     new EqualityOperation[] {
@@ -114,6 +124,12 @@ public enum MysqlType {
     new Class[] {
       int.class, Integer.class
     },
+    new Class[] {
+      int.class, Integer.class,
+      float.class, Float.class,
+      double.class, Double.class,
+      long.class, Long.class
+    },
     false,
     new EqualityOperation[] {
       EqualityOperation.EQ,
@@ -131,6 +147,12 @@ public enum MysqlType {
     },
     new Class[] {
       double.class, Double.class
+    },
+    new Class[] {
+      int.class, Integer.class,
+      float.class, Float.class,
+      double.class, Double.class,
+      long.class, Long.class
     },
     false,
     new EqualityOperation[] {
@@ -150,6 +172,12 @@ public enum MysqlType {
     new Class[] {
       float.class, Float.class
     },
+    new Class[] {
+      int.class, Integer.class,
+      float.class, Float.class,
+      double.class, Double.class,
+      long.class, Long.class
+    },
     false,
     new EqualityOperation[] {
       EqualityOperation.EQ,
@@ -168,6 +196,10 @@ public enum MysqlType {
     new Class[] {
       Date.class
     },
+    new Class[] {
+      long.class, Long.class,
+      int.class, Integer.class
+    },
     false,
     new EqualityOperation[] {
       EqualityOperation.EQ,
@@ -184,6 +216,9 @@ public enum MysqlType {
 
   @Getter
   private final Class<?>[] javaEquivalents;
+
+  @Getter
+  private final Class<?>[] javaEquivalentsForFieldOps;
 
   private final boolean hasLength;
   private final EqualityOperation[] supportedOps;

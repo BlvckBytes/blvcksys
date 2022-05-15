@@ -813,11 +813,14 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   ///////////////////////////////// Query Builder /////////////////////////////////////
 
   /**
-   * Get a table's column by it's name
+   * Get a table's column by it's name, if the name is null, the column will be null
    * @param table Table containing the column
    * @param name Name of the target column
    */
   private MysqlColumn getColumnByName(MysqlTable table, String name) {
+    if (name == null)
+      return null;
+
     return table.columns().stream()
       .filter(
         c -> dbNameToModelName(c.getName(), false).equals(name)
@@ -829,6 +832,43 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   }
 
   /**
+   * Validate that a query field type is valid
+   * @param col Column which specifies the type
+   * @param field Name of the field, used for exceptions
+   * @param value Value that has to conform to the specified type
+   * @param isInFieldOp Whether this field is inside of a field operation
+   */
+  private void validateQueryFieldType(MysqlColumn col, String field, Object value, boolean isInFieldOp) {
+    boolean anyMatch = false;
+    Class<?> queryType = value.getClass();
+
+    Class<?>[] validTypes = isInFieldOp ? col.getType().getJavaEquivalentsForFieldOps() : col.getType().getJavaEquivalents();
+    for (Class<?> targType : validTypes) {
+      if (targType == queryType) {
+        anyMatch = true;
+        break;
+      }
+    }
+
+    if (!anyMatch)
+      throw new RuntimeException("The query field " + field + " is of invalid type " + queryType);
+  }
+
+  /**
+   * Wrap a column name by a transformating function in order
+   * to make it compatible with simple field operations
+   * @param column Column to wrap
+   * @return Column name wrapped in a transformating function, if necessary
+   */
+  private String wrapColumnForOp(MysqlColumn column) {
+    return switch (column.getType()) {
+      case DATETIME -> "UNIX_TIMESTAMP(`" + column.getName() + "`)";
+      case INTEGER, DOUBLE, FLOAT -> "`" + column.getName() + "`";
+      default -> throw new PersistenceException("The type " + column.getType() + " doesn't support field operations");
+    };
+  }
+
+  /**
    * Stringify a field query to a partial statement, for example:
    * field=test, op=EQ, value=5 would yield: `test` == ? and add (INTEGER, 5) to params
    * @param query Query to stringify
@@ -837,43 +877,48 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    * @return Stringified query
    */
   private String stringifyFieldQuery(FieldQuery query, MysqlTable table, List<Tuple<MysqlType, Object>> params) {
-    MysqlColumn targCol = getColumnByName(table, query.field());
+    MysqlColumn targColA = getColumnByName(table, query.getFieldA());
+    MysqlColumn targColB = getColumnByName(table, query.getFieldB());
 
-    boolean isNull = query.value() == null;
+    boolean isNull = query.getValue() == null;
+
+    // Validate that the column's types are compatible with the value's java type
     if (!isNull) {
-      boolean anyMatch = false;
-      Class<?> queryType = query.value().getClass();
-      for (Class<?> targType : targCol.getType().getJavaEquivalents()) {
-        if (targType == queryType) {
-          anyMatch = true;
-          break;
-        }
-      }
+      validateQueryFieldType(targColA, query.getFieldA(), query.getValue(), targColB != null);
 
-      if (!anyMatch)
-        throw new RuntimeException("The query field " + query.field() + " is of invalid type " + queryType);
+      if (targColB != null)
+        validateQueryFieldType(targColB, query.getFieldB(), query.getValue(), true);
     }
 
-    if (!targCol.getType().supportsOp(query.op()))
-      throw new PersistenceException("The query field " + query.field() + " does not support the operation " + query.op());
+    if (!targColA.getType().supportsOp(query.getEqOp()))
+      throw new PersistenceException("The query field " + query.getFieldA() + " does not support the operation " + query.getEqOp());
+
+    if (targColB != null && !targColB.getType().supportsOp(query.getEqOp()))
+      throw new PersistenceException("The query field " + query.getFieldB() + " does not support the operation " + query.getEqOp());
 
     String ph = "?";
-    String field = modelNameToDBName(query.field());
+    String fieldExpr;
+
+    // When using operators, wrap columns with transformation functions (if necessary)
+    if (query.getFieldOp() != null && targColB != null)
+      fieldExpr = wrapColumnForOp(targColA) + " " + query.getFieldOp() + " " + wrapColumnForOp(targColB);
+    else
+      fieldExpr = "`" + targColA.getName() + "`";
 
     // UUIDs need to be converted to binary
-    if (targCol.getType().equals(MysqlType.UUID))
+    if (targColA.getType().equals(MysqlType.UUID))
       ph = uuidToBin("?", false);
 
-    Object value = query.value();
+    Object value = query.getValue();
 
     // Is a wildcard operation
     if (
-      query.op() == EqualityOperation.CONT ||
-      query.op() == EqualityOperation.CONT_IC ||
-      query.op() == EqualityOperation.STARTS ||
-      query.op() == EqualityOperation.STARTS_IC ||
-      query.op() == EqualityOperation.ENDS ||
-      query.op() == EqualityOperation.ENDS_IC
+      query.getEqOp() == EqualityOperation.CONT ||
+      query.getEqOp() == EqualityOperation.CONT_IC ||
+      query.getEqOp() == EqualityOperation.STARTS ||
+      query.getEqOp() == EqualityOperation.STARTS_IC ||
+      query.getEqOp() == EqualityOperation.ENDS ||
+      query.getEqOp() == EqualityOperation.ENDS_IC
     ) {
       // Escape all reserved wildcard characters using bang as an escape character
       value = value.toString()
@@ -883,33 +928,33 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
         .replace("[", "![");
 
       // Contains (any<value>any)
-      if (query.op() == EqualityOperation.CONT || query.op() == EqualityOperation.CONT_IC)
+      if (query.getEqOp() == EqualityOperation.CONT || query.getEqOp() == EqualityOperation.CONT_IC)
         value = "%" + value + "%";
 
       // Starts with (<value>any)
-      if (query.op() == EqualityOperation.STARTS || query.op() == EqualityOperation.STARTS_IC)
+      if (query.getEqOp() == EqualityOperation.STARTS || query.getEqOp() == EqualityOperation.STARTS_IC)
         value = value + "%";
 
       // Ends with (any<value>)
-      if (query.op() == EqualityOperation.ENDS || query.op() == EqualityOperation.ENDS_IC)
+      if (query.getEqOp() == EqualityOperation.ENDS || query.getEqOp() == EqualityOperation.ENDS_IC)
         value = "%" + value;
     }
 
     // Only add placeholder values if there actually was a placeholder appended
-    if (!(isNull && (query.op() == EqualityOperation.EQ || query.op() == EqualityOperation.NEQ)))
-      params.add(new Tuple<>(targCol.getType(), value));
+    if (!(isNull && (query.getEqOp() == EqualityOperation.EQ || query.getEqOp() == EqualityOperation.NEQ)))
+      params.add(new Tuple<>(targColA.getType(), value));
 
-    return switch (query.op()) {
-      case EQ -> "`" + field + "` " + (isNull ? "IS NULL" : "= " + ph);
-      case NEQ -> "`" + field + "` " + (isNull ? "IS NOT NULL" : "!= " + ph);
-      case CONT, STARTS, ENDS -> "`" + field + "` LIKE " + ph + " ESCAPE '!'";
-      case CONT_IC, STARTS_IC, ENDS_IC -> "LOWER(`" + field + "`) LIKE LOWER(" + ph + ") ESCAPE '!'";
-      case EQ_IC -> "LOWER(`" + field + "`) = LOWER(" + ph + ")";
-      case NEQ_IC -> "LOWER(`" + field + "`) != LOWER(" + ph + ")";
-      case LT -> "`" + field + "` < " + ph;
-      case LTE -> "`" + field + "` <= " + ph;
-      case GT -> "`" + field + "` > " + ph;
-      case GTE -> "`" + field + "` >= " + ph;
+    return switch (query.getEqOp()) {
+      case EQ -> fieldExpr + " " + (isNull ? "IS NULL" : "= " + ph);
+      case NEQ -> fieldExpr + " " + (isNull ? "IS NOT NULL" : "!= " + ph);
+      case CONT, STARTS, ENDS -> fieldExpr + " LIKE " + ph + " ESCAPE '!'";
+      case CONT_IC, STARTS_IC, ENDS_IC -> "LOWER(" + fieldExpr + ") LIKE LOWER(" + ph + ") ESCAPE '!'";
+      case EQ_IC -> "LOWER(" + fieldExpr + ") = LOWER(" + ph + ")";
+      case NEQ_IC -> "LOWER(" + fieldExpr + ") != LOWER(" + ph + ")";
+      case LT -> fieldExpr + " < " + ph;
+      case LTE -> fieldExpr + " <= " + ph;
+      case GT -> fieldExpr + " > " + ph;
+      case GTE -> fieldExpr + " >= " + ph;
     };
   }
 

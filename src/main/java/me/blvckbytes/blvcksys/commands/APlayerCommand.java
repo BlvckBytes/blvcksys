@@ -725,6 +725,23 @@ public abstract class APlayerCommand extends Command {
     }
   }
 
+  /**
+   * Try to parse a UUID value from a string
+   * @param args Arguments of the command
+   * @param index Index within the arguments to use
+   * @return Parsed UUID
+   */
+  protected UUID parseUUID(String[] args, int index) throws CommandException {
+    if (index >= args.length)
+      throw new UsageMismatchException(cfg, buildAdvancedUsage(index));
+
+    try {
+      return UUID.fromString(args[index]);
+    } catch (IllegalArgumentException e) {
+      throw new InvalidUUIDException(cfg, args[index]);
+    }
+  }
+
   ////////////////////////////// Parsing: Enum ////////////////////////////////
 
   /**

@@ -168,6 +168,31 @@ public enum ConfigKey {
   PLAYERLIST_VERSION_MISMATCH("playerlist.version_mismatch", "$2Version {{version}}"),
 
   //=========================================================================//
+  //                                BAN Commands                             //
+  //=========================================================================//
+
+  BAN_CASTED_BROADCAST(
+    "ban.casted_broadcast",
+    "$0Der Spieler $3{{target}} $0wurde $3gebannt$0!",
+    "$0Von: $3{{creator}}",
+    "$0Dauer: $3{{duration}}",
+    "$0Grund: $3{{reason}}"
+  ),
+  BAN_DURATION_PERMANENT("ban.duration_permanent", "&cPermanent"),
+  BAN_REMAINING_PERMANENT("ban.remaining_permanent", "&c/"),
+  BAN_NO_REASON("ban.no_reason", "&cKein Grund angegeben"),
+  BAN_SCREEN(
+    "ban.screen",
+    "$0Du wurdest &cgebannt$0.",
+    " ",
+    "$0Von: $3{{creator}}",
+    "$0Dauer: $3{{duration}}",
+    "$0Verbleibend: $3{{remaining}}",
+    "$0Grund: $3{{reason}}"
+  ),
+  BAN_ALREADY_BANNED("ban.already_banned", "$0Der Spieler $4{{target}} $0besitzt bereits einen $4aktiven $0Bann!"),
+
+  //=========================================================================//
   //                              GAMEMODE Command                           //
   //=========================================================================//
 

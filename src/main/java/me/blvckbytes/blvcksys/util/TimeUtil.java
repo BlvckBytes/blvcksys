@@ -96,9 +96,12 @@ public class TimeUtil {
       long currQuot = durS / currD;
       durS = durS % currD;
 
-      // Do not display zero quotients
-      if (currQuot == 0)
-        continue;
+      // Do not display zero quotients, except for seconds, but
+      // don't display zero seconds if any other span has been >0
+      if (currQuot == 0) {
+        if (!(i == 0 && sb.isEmpty()))
+          continue;
+      }
 
       // Append <space><quotient><span character>
       sb.append(' ');

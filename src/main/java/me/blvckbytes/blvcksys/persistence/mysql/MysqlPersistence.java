@@ -1134,6 +1134,9 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
       stmt.append(" WHERE ");
 
+      if (query.getRoot() == null)
+        throw new PersistenceException("Cannot perform an empty query");
+
       stmt.append(stringifyFieldQueryGroup(query.getRoot(), table, params));
 
       // Append all additional query groups with their connection leading them
@@ -1448,36 +1451,30 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     MysqlTable table,
     Map<String, Object> replaceCache
   ) throws Exception {
+
+    QueryBuilder<?> query = new QueryBuilder<>(model.getClass());
+    List<Tuple<String, Object>> uniqueVals = new ArrayList<>();
+
     // Loop all unique keys
     for (MysqlColumn column : table.columns()) {
       if (column.isPrimaryKey() || !column.isUnique())
         continue;
 
-      EqualityOperation op = EqualityOperation.EQ;
-
       // String columns that are unique are always ignoring the casing
+      EqualityOperation op = EqualityOperation.EQ;
       if (column.getType() == MysqlType.VARCHAR || column.getType() == MysqlType.TEXT)
         op = EqualityOperation.EQ_IC;
 
       Object value = resolveColumnValue(column, model, replaceCache);
-
-      // Build a query based on the unique column
-      QueryBuilder<?> query = new QueryBuilder<>(
-        model.getClass(),
-        column.getName(),
-        op, value
-      );
-
-      // There's already a column with this unique field
-      if (count(query) > 0) {
-        throw new DuplicatePropertyException(
-          dbNameToModelName(table.name(), true),
-          dbNameToModelName(column.getName(), false),
-          value
-        );
-      }
+      query.and(column.getName(), op, value);
+      uniqueVals.add(new Tuple<>(column.getName(), value));
     }
+
+    // There's already a column with this unique field
+    if (count(query) > 0)
+      throw new DuplicatePropertyException(dbNameToModelName(table.name(), true), uniqueVals);
   }
+
   /**
    * Conversion of a UUID (dash-separated) to a 16 byte binary number
    * @param u UUID value

@@ -3,6 +3,7 @@ package me.blvckbytes.blvcksys.persistence.query;
 import lombok.Getter;
 import me.blvckbytes.blvcksys.persistence.models.APersistentModel;
 import net.minecraft.util.Tuple;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,7 +20,7 @@ import java.util.Map;
 public class QueryBuilder<T extends APersistentModel> {
 
   private final Class<T> model;
-  private final FieldQueryGroup root;
+  private @Nullable FieldQueryGroup root;
   private final List<Tuple<QueryConnection, FieldQueryGroup>> additionals;
   private final Map<String, Boolean> sorting;
 
@@ -52,11 +53,18 @@ public class QueryBuilder<T extends APersistentModel> {
    * Create a new query, starting of with an initial query group
    * @param group Field query group
    */
-  public QueryBuilder(Class<T> model, FieldQueryGroup group) {
+  public QueryBuilder(Class<T> model, @Nullable FieldQueryGroup group) {
     this.additionals = new ArrayList<>();
     this.sorting = new HashMap<>();
     this.model = model;
     this.root = group;
+  }
+
+  /**
+   * Create a new query, without an initial query group
+   */
+  public QueryBuilder(Class<T> model) {
+    this(model, null);
   }
 
   /**
@@ -66,7 +74,7 @@ public class QueryBuilder<T extends APersistentModel> {
    * @param value Target value of the operation
    */
   public QueryBuilder<T> and(String field, EqualityOperation op, Object value) {
-    additionals.add(new Tuple<>(QueryConnection.AND, new FieldQueryGroup(field, op, value)));
+    addOrUseAsRoot(new FieldQueryGroup(field, op, value), QueryConnection.AND);
     return this;
   }
 
@@ -79,7 +87,7 @@ public class QueryBuilder<T extends APersistentModel> {
    * @param value Target value of the operation
    */
   public QueryBuilder<T> and(String fieldA, FieldOperation fOp, String fieldB, EqualityOperation eqOp, Object value) {
-    additionals.add(new Tuple<>(QueryConnection.AND, new FieldQueryGroup(fieldA, fOp, fieldB, eqOp, value)));
+    addOrUseAsRoot(new FieldQueryGroup(fieldA, fOp, fieldB, eqOp, value), QueryConnection.AND);
     return this;
   }
 
@@ -88,7 +96,7 @@ public class QueryBuilder<T extends APersistentModel> {
    * @param group Field query group
    */
   public QueryBuilder<T> and(FieldQueryGroup group) {
-    additionals.add(new Tuple<>(QueryConnection.AND, group));
+    addOrUseAsRoot(group, QueryConnection.AND);
     return this;
   }
 
@@ -99,7 +107,7 @@ public class QueryBuilder<T extends APersistentModel> {
    * @param value Target value of the operation
    */
   public QueryBuilder<T> or(String field, EqualityOperation op, Object value) {
-    additionals.add(new Tuple<>(QueryConnection.OR, new FieldQueryGroup(field, op, value)));
+    addOrUseAsRoot(new FieldQueryGroup(field, op, value), QueryConnection.OR);
     return this;
   }
 
@@ -112,7 +120,7 @@ public class QueryBuilder<T extends APersistentModel> {
    * @param value Target value of the operation
    */
   public QueryBuilder<T> or(String fieldA, FieldOperation fOp, String fieldB, EqualityOperation eqOp, Object value) {
-    additionals.add(new Tuple<>(QueryConnection.OR, new FieldQueryGroup(fieldA, fOp, fieldB, eqOp, value)));
+    addOrUseAsRoot(new FieldQueryGroup(fieldA, fOp, fieldB, eqOp, value), QueryConnection.OR);
     return this;
   }
 
@@ -121,7 +129,7 @@ public class QueryBuilder<T extends APersistentModel> {
    * @param group Field query group
    */
   public QueryBuilder<T> or(FieldQueryGroup group) {
-    additionals.add(new Tuple<>(QueryConnection.OR, group));
+    addOrUseAsRoot(group, QueryConnection.OR);
     return this;
   }
 
@@ -157,5 +165,20 @@ public class QueryBuilder<T extends APersistentModel> {
   public QueryBuilder<T> orderBy(String field, boolean ascending) {
     this.sorting.put(field, ascending);
     return this;
+  }
+
+  /**
+   * Add another field query group to the list of additional groups or
+   * use it as root, if root is still null
+   * @param group Group to add
+   * @param conn Connection to add it with
+   */
+  private void addOrUseAsRoot(FieldQueryGroup group, QueryConnection conn) {
+    if (this.root == null) {
+      this.root = group;
+      return;
+    }
+
+    this.additionals.add(new Tuple<>(conn, group));
   }
 }

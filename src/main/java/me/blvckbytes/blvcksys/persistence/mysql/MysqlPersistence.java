@@ -1003,6 +1003,27 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   }
 
   /**
+   * Stringify a sorting table (mapping field name to sorting direction), for example:
+   * fieldA ASC, fieldB DESC
+   * @param table Table which the sorting fields are members of
+   * @param columns Columns and their sorting direction
+   * @return Stringified order by clause content
+   */
+  private String stringifySorting(MysqlTable table, Map<String, Boolean> columns) {
+    StringBuilder sortStr = new StringBuilder();
+
+    int i = 0;
+    for (Map.Entry<String, Boolean> column : columns.entrySet()) {
+      MysqlColumn col = getColumnByName(table, column.getKey());
+      sortStr.append("`").append(col.getName()).append("` ")
+        .append(column.getValue() ? "ASC" : "DESC")
+        .append(i++ != columns.size() - 1 ? ", " : "");
+    }
+
+    return sortStr.toString();
+  }
+
+  /**
    * Build a selecting query from a query builder's state
    * @param query Query builder to build from, leave at null to have no WHERE clause
    * @param onlyFirst Whether to only query for the first result
@@ -1060,13 +1081,18 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
         stmt.append(stringifyFieldQueryGroup(additional.b(), table, params));
       }
 
-      // Only append limit/offset when reading
+      // Only append limit/offset and ordering when reading
       if (!delete) {
         if (query.getLimit() != null || onlyFirst)
           stmt.append(" LIMIT ").append(onlyFirst ? 1 : query.getLimit());
 
         if (query.getSkip() != null)
           stmt.append(" OFFSET ").append(query.getSkip());
+
+        if (query.getSorting().size() > 0) {
+          stmt.append(" ORDER BY ");
+          stmt.append(stringifySorting(table, query.getSorting()));
+        }
       }
     }
 

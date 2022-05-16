@@ -296,6 +296,9 @@ public class BanHandler implements IBanHandler, Listener {
       );
     }
 
+    query.orderBy("updatedAt", false);
+    query.orderBy("createdAt", false);
+
     return query;
   }
 

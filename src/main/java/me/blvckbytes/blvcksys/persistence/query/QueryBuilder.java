@@ -5,7 +5,9 @@ import me.blvckbytes.blvcksys.persistence.models.APersistentModel;
 import net.minecraft.util.Tuple;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -19,6 +21,7 @@ public class QueryBuilder<T extends APersistentModel> {
   private final Class<T> model;
   private final FieldQueryGroup root;
   private final List<Tuple<QueryConnection, FieldQueryGroup>> additionals;
+  private final Map<String, Boolean> sorting;
 
   private Integer limit = null;
   private Integer skip = null;
@@ -51,6 +54,7 @@ public class QueryBuilder<T extends APersistentModel> {
    */
   public QueryBuilder(Class<T> model, FieldQueryGroup group) {
     this.additionals = new ArrayList<>();
+    this.sorting = new HashMap<>();
     this.model = model;
     this.root = group;
   }
@@ -142,6 +146,16 @@ public class QueryBuilder<T extends APersistentModel> {
       throw new IllegalArgumentException("Cannot limit to a negative amount of results: " + maxResults);
 
     this.limit = maxResults;
+    return this;
+  }
+
+  /**
+   * Order the results by a specific field
+   * @param field Field to order by
+   * @param ascending Whether to sort in ascending order (true) or descending order (false)
+   */
+  public QueryBuilder<T> orderBy(String field, boolean ascending) {
+    this.sorting.put(field, ascending);
     return this;
   }
 }

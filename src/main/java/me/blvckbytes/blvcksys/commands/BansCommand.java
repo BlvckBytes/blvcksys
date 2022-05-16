@@ -10,6 +10,7 @@ import me.blvckbytes.blvcksys.handlers.BanType;
 import me.blvckbytes.blvcksys.handlers.IBanHandler;
 import me.blvckbytes.blvcksys.persistence.models.BanModel;
 import me.blvckbytes.blvcksys.util.MCReflect;
+import me.blvckbytes.blvcksys.util.TidyTable;
 import me.blvckbytes.blvcksys.util.TimeUtil;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.md_5.bungee.api.chat.ClickEvent;
@@ -34,6 +35,7 @@ public class BansCommand extends APlayerCommand {
 
   private final IBanHandler bans;
   private final TimeUtil time;
+  private final IFontWidthTable fwTable;
 
   public BansCommand(
     @AutoInject JavaPlugin plugin,
@@ -41,7 +43,8 @@ public class BansCommand extends APlayerCommand {
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
     @AutoInject IBanHandler bans,
-    @AutoInject TimeUtil time
+    @AutoInject TimeUtil time,
+    @AutoInject IFontWidthTable fwTable
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -54,6 +57,7 @@ public class BansCommand extends APlayerCommand {
 
     this.bans = bans;
     this.time = time;
+    this.fwTable = fwTable;
   }
 
   //=========================================================================//
@@ -86,21 +90,22 @@ public class BansCommand extends APlayerCommand {
       case ALL -> bans.listBans(target, null, null, null, null);
     };
 
-    TextComponent head = new TextComponent(
+    TidyTable table = new TidyTable("|", fwTable);
+
+    table.addLines(
       cfg.get(ConfigKey.BAN_LIST_HEADLINE)
         .withPrefixes()
         .withVariable("type", type.name())
         .withVariable("target", target.getName())
-        .asScalar() + "\n"
+        .asScalar()
     );
 
     String yesStr = cfg.get(ConfigKey.BAN_LIST_YES).asScalar();
     String noStr = cfg.get(ConfigKey.BAN_LIST_NO).asScalar();
 
-    for (int i = 0; i < list.size(); i++) {
-      BanModel ban = list.get(i);
-
-      TextComponent banComp = new TextComponent(
+    for (BanModel ban : list) {
+      TextComponent banComp = table.addLine(
+        (ban.getRevoker() == null ? "" : "§m") +
         cfg.get(ConfigKey.BAN_LIST_ENTRY)
           .withPrefix()
           .withVariable("creator", ban.getCreator().getName())
@@ -113,9 +118,7 @@ public class BansCommand extends APlayerCommand {
           )
           .withVariable("has_ip", ban.getIpAddress() == null ? noStr : yesStr)
           .withVariable("is_active", ban.isActive() ? yesStr : noStr)
-          .withVariable("is_revoked", ban.getRevoker() != null ? yesStr : noStr)
           .asScalar()
-        + (i == list.size() - 1 ? "" : "\n")
       );
 
       banComp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(
@@ -125,10 +128,8 @@ public class BansCommand extends APlayerCommand {
       )));
 
       banComp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/baninfo " + ban.getId()));
-
-      head.addExtra(banComp);
     }
 
-    p.spigot().sendMessage(head);
+    table.displayTo(p);
   }
 }

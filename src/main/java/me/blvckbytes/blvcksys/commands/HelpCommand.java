@@ -28,7 +28,7 @@ import java.util.List;
   colored and hoverable usages within a book that's automatically opened.
  */
 @AutoConstruct
-public class HelpCommand extends APlayerCommand {
+public class HelpCommand extends APlayerCommand implements IFontWidthTable {
 
   // Lines per page of a written book
   private static final int LINES_PER_PAGE = 14;
@@ -249,7 +249,7 @@ public class HelpCommand extends APlayerCommand {
    * @param c Character to check for
    * @return Width in dots, zero means unprintable
    */
-  private int getDotWidth(char c) {
+  public int getDotWidth(char c) {
     // Unprintable, thus 0
     if (c < 32 || c == 127)
       return 0;

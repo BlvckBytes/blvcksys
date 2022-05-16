@@ -143,6 +143,7 @@ public class BanHandler implements IBanHandler, Listener {
     return ConfigValue.makeEmpty()
       .withVariable("creator", ban.getCreator().getName())
       .withVariable("target", ban.getTarget().getName())
+      .withVariable("created_at", ban.getCreatedAtStr())
       .withVariable(
         "duration",
         ban.getDurationSeconds() == null ?

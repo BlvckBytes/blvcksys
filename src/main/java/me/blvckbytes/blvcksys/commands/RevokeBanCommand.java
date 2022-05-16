@@ -70,6 +70,9 @@ public class RevokeBanCommand extends APlayerCommand {
     String reason = argvar(args, 1, "");
     Optional<BanModel> ban = bans.findById(id);
 
+    if (reason.isBlank())
+      reason = null;
+
     if (ban.isEmpty()) {
       p.sendMessage(
         cfg.get(ConfigKey.BAN_UNKNOWN)

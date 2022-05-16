@@ -219,13 +219,15 @@ public enum ConfigKey {
     "ban.info.screen",
     "$0Bann mit der ID $3{{id}}$0:",
     "$0Ziel: $3{{target}}",
+    "$0Erstellt am: $3{{created_at}}",
     "$0Ersteller: $3{{creator}}",
     "$0Dauer: $3{{duration}}",
     "$0Verbleibend: $3{{remaining}}",
     "$0IP: $3{{ip}}",
     "$0Grund: $3{{reason}}",
     "$0Aufgehoben von: $3{{revoker}}",
-    "$0Aufgehoben am: $3{{revoked_at}}"
+    "$0Aufgehoben am: $3{{revoked_at}}",
+    "$0Aufhebegrund: $3{{revocation_reason}}"
   ),
 
   //=========================================================================//

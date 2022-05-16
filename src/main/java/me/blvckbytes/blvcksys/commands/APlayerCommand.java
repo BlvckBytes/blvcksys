@@ -318,7 +318,7 @@ public abstract class APlayerCommand extends Command {
   ) {
     return pers.findRaw(
         new QueryBuilder<>(
-          WarpModel.class,
+          model,
           field, EqualityOperation.CONT_IC, args[currArg]
         )
           .limit(10), field

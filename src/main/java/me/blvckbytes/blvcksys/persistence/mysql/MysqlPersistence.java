@@ -32,6 +32,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.*;
 import java.util.Date;
+import java.util.stream.Collectors;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -500,6 +501,146 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   }
 
   /**
+   * Migrates missing constraints like unique and foreign key, where constraints
+   * are dropped if they don't appear in the local model and being created if they're
+   * missing in the database
+   * @param table Table to use as a diffing reference
+   */
+  private void migrateTableConstraints(MysqlTable table) throws SQLException {
+    PreparedStatement ps = conn.prepareStatement("""
+      SELECT
+      a.CONSTRAINT_NAME,
+      a.CONSTRAINT_TYPE,
+      b.COLUMN_NAME,
+      b.REFERENCED_TABLE_NAME
+      FROM INFORMATION_SCHEMA.TABLE_CONSTRAINTS AS a
+      LEFT JOIN INFORMATION_SCHEMA.KEY_COLUMN_USAGE AS b
+      ON a.CONSTRAINT_NAME = b.CONSTRAINT_NAME
+      AND a.TABLE_NAME = b.TABLE_NAME
+      WHERE a.TABLE_NAME = '%s'
+      AND a.TABLE_SCHEMA = '%s';
+      """.formatted(table.name(), database).stripIndent());
+
+    // Mapping unique constraint names to their affected columns
+    Map<String, List<String>> uniques = new HashMap<>();
+
+    // Mapping foreign constraint names to (col, refTable)
+    Map<String, Tuple<String, String>> foreigns = new HashMap<>();
+
+    ResultSet rs = ps.executeQuery();
+    while(rs.next()) {
+      String type = rs.getString("CONSTRAINT_TYPE");
+      String constrName = rs.getString("CONSTRAINT_NAME");
+      String col = rs.getString("COLUMN_NAME");
+
+      if (type.equals("UNIQUE")) {
+        if (!uniques.containsKey(constrName))
+          uniques.put(constrName, new ArrayList<>());
+        uniques.get(constrName).add(col);
+        continue;
+      }
+
+      if (type.equals("FOREIGN KEY")) {
+        String refTable = rs.getString("REFERENCED_TABLE_NAME");
+        foreigns.put(constrName, new Tuple<>(col, refTable));
+        continue;
+      }
+    }
+
+    List<String> uniqueModelCols = table.columns().stream()
+      .filter(c -> !c.isPrimaryKey())
+      .filter(MysqlColumn::isUnique)
+      .map(MysqlColumn::getName)
+      .collect(Collectors.toList());
+
+    boolean dropUniConstrs = (
+      // There are only obsolete unique constraints, drop all
+      uniqueModelCols.size() == 0 && uniques.size() > 0 ||
+      // This system will always only have a single unique constraint
+      uniques.size() != 1
+    );
+
+    // If nothing matched to drop until now, check if the existing (first) constraint
+    // is really containing all unique columns from the model
+    if (!dropUniConstrs) {
+      List<String> uniqueConstrCols = uniques.get(uniques.keySet().iterator().next());
+
+      if (uniqueConstrCols != null) {
+        Collections.sort(uniqueConstrCols);
+        Collections.sort(uniqueModelCols);
+        // The existing constraint didn't provide all unique model columns
+        dropUniConstrs = !uniqueConstrCols.equals(uniqueModelCols);
+      }
+    }
+
+    if (dropUniConstrs) {
+      // Drop all unique constraints
+      for (String constrName : uniques.keySet()) {
+        PreparedStatement ps2 = this.conn.prepareStatement("ALTER TABLE `" + table.name() + "` DROP INDEX " + constrName + ";");
+        logStatement(ps2);
+        ps2.executeUpdate();
+        ps2.close();
+      }
+
+      if (uniques.size() > 0)
+        logger.logDebug("Dropped " + uniques.size() + " unique constraint from " + table.name());
+
+      // Create a single unique constraint containing all unique columns
+      if (uniqueModelCols.size() > 0) {
+        PreparedStatement ps2 = this.conn.prepareStatement("ALTER TABLE `" + table.name() + "` ADD " + buildUniqueConstraint(table));
+        logStatement(ps2);
+        ps2.executeUpdate();
+        ps2.close();
+        logger.logDebug("Created unique constraint on " + table.name());
+      }
+    }
+
+    List<Tuple<String, String>> foreignModelCols = table.columns().stream()
+      .filter(c -> c.getForeignKey() != null)
+      .map(c -> new Tuple<>(c.getName(), c.getForeignKey().name()))
+      .collect(Collectors.toList());
+
+    // Loop all existing foreign key columns
+    for (Map.Entry<String, Tuple<String, String>> foreignConstr : foreigns.entrySet()) {
+      Tuple<String, String> tableForeign = foreignConstr.getValue();
+
+      // Check if the model has this foreign key
+      boolean modelHas = false;
+      for (Iterator<Tuple<String, String>> foreignModelIt = foreignModelCols.listIterator(); foreignModelIt.hasNext();) {
+        Tuple<String, String> modelForeign = foreignModelIt.next();
+
+        // If so, remove it from the local list
+        if (modelForeign.a().equals(tableForeign.a()) && modelForeign.b().equals(tableForeign.b())) {
+          foreignModelIt.remove();
+          modelHas = true;
+          break;
+        }
+      }
+
+      // The model doesn't have this foreign key, drop it
+      if (!modelHas) {
+        PreparedStatement ps2 = conn.prepareStatement("ALTER TABLE `" + table.name() + "` DROP FOREIGN KEY " + foreignConstr.getKey() + ";");
+        logStatement(ps2);
+        ps2.executeUpdate();
+        ps2.close();
+        logger.logDebug("Dropped foreign key for column " + tableForeign.b() + " for " + table.name());
+      }
+    }
+
+    // All still remaining columns weren't found in db and thus need to be created
+    for (Tuple<String, String> foreignCol : foreignModelCols) {
+      PreparedStatement ps2 = conn.prepareStatement("ALTER TABLE `" + table.name() + "` ADD FOREIGN KEY (`" + foreignCol.a() + "`) REFERENCES `" + foreignCol.b() + "`(`id`);");
+      logStatement(ps2);
+      ps2.executeUpdate();
+      ps2.close();
+      logger.logDebug("Created foreign key on " + table.name() + " from " + foreignCol.a() + " to " + foreignCol.b() + "(id)");
+    }
+
+    rs.close();
+    ps.close();
+  }
+
+  /**
    * Migrates any missing table columns by adding them with their default value
    * or alter existing columns that differ from what's specified in the model
    * @param table Table to migrate
@@ -554,113 +695,6 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
         logger.logInfo("Migrated column " + col.getName() + " of " + table.name() + " type to \"" + newSig + "\"");
       }
 
-      String key = rs.getString("Key");
-
-      // Is unique and has no UNI or is not unique but has UNI
-      if (col.isUnique() != key.toLowerCase().contains("uni")) {
-        // Add unique index to the column
-        PreparedStatement uPs;
-        if (col.isUnique()) {
-          uPs = conn.prepareStatement(
-            "ALTER TABLE `" + table.name() + "` " +
-              "ADD UNIQUE (`" + col.getName() + "`);"
-          );
-
-          logStatement(uPs);
-          uPs.executeUpdate();
-
-          logger.logInfo("Migrated column " + col.getName() + " of " + table.name() + " by adding a uniqueness constraint");
-        }
-
-        // Remove all unique indices from this column
-        else {
-          uPs = conn.prepareStatement(
-            "SHOW INDEX FROM `" + table.name() + "` WHERE `column_name` = '" + col.getName() + "' AND `non_unique` = 0;"
-          );
-
-          logStatement(uPs);
-          ResultSet uRs = uPs.executeQuery();
-          while (uRs.next()) {
-            PreparedStatement uPs2 = conn.prepareStatement(
-              "ALTER TABLE `" + table.name() + "` DROP INDEX `" + uRs.getString("key_name") + "`;"
-            );
-
-            logStatement(uPs2);
-            uPs2.executeUpdate();
-            uPs2.close();
-          }
-
-          uRs.close();
-          logger.logInfo("Migrated column " + col.getName() + " of " + table.name() + " by removing all uniqueness constraints");
-        }
-
-        uPs.close();
-      }
-
-      // Is foreign key and has no MUL or is no foreign key but has MUL
-      if((col.getForeignKey() == null) == key.toLowerCase().contains("mul")) {
-        PreparedStatement uPs;
-
-        // Add foreign key constraint to column
-        if (col.getForeignKey() != null) {
-          uPs = conn.prepareStatement(
-            "ALTER TABLE `" + table.name() + "` " +
-            "ADD FOREIGN KEY (`" + col.getName() + "`) REFERENCES `" + col.getForeignKey().name() + "`(`id`) ON DELETE CASCADE;"
-          );
-
-          logStatement(uPs);
-          uPs.executeUpdate();
-
-          logger.logInfo("Migrated column " + col.getName() + " of " + table.name() + " by adding a foreign key constraint");
-        }
-
-        // Remove all foreign  constraints from this column
-        else {
-          uPs = conn.prepareStatement(
-            "SELECT * FROM INFORMATION_SCHEMA.KEY_COLUMN_USAGE " +
-              "WHERE REFERENCED_TABLE_SCHEMA = '" + database + "' " +
-              "AND REFERENCED_TABLE_NAME IS NOT NULL " +
-              "AND COLUMN_NAME = '" + col.getName() + "';"
-          );
-
-          logStatement(uPs);
-          ResultSet uRs = uPs.executeQuery();
-          while (uRs.next()) {
-            PreparedStatement uPs2 = conn.prepareStatement(
-              "ALTER TABLE `" + table.name() + "` DROP FOREIGN KEY `" + uRs.getString("constraint_name") + "`;"
-            );
-
-            logStatement(uPs2);
-            uPs2.executeUpdate();
-            uPs2.close();
-          }
-
-          // Drop all indices that came with it
-          uRs.close();
-          uPs.close();
-          uPs = conn.prepareStatement(
-            "SHOW INDEX FROM `" + table.name() + "` WHERE `column_name` = '" + col.getName() + "' AND `non_unique` = 1;"
-          );
-
-          logStatement(uPs);
-          uRs = uPs.executeQuery();
-          while (uRs.next()) {
-            PreparedStatement uPs2 = conn.prepareStatement(
-              "ALTER TABLE `" + table.name() + "` DROP INDEX `" + uRs.getString("key_name") + "`;"
-            );
-
-            logStatement(uPs2);
-            uPs2.executeUpdate();
-            uPs2.close();
-          }
-
-          uRs.close();
-          logger.logInfo("Migrated column " + col.getName() + " of " + table.name() + " by deleting foreign key constraints");
-        }
-
-        uPs.close();
-      }
-
       // Migrate mismatching column default
       if (
         col.getMigrationDefault() != MigrationDefault.UNSPECIFIED &&
@@ -702,6 +736,9 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       logger.logInfo("Created missing column " + col.getName() + " of " + table.name());
     }
 
+    // Migrate missing / out-of-date constraints
+    migrateTableConstraints(table);
+
     rs.close();
     ps.close();
   }
@@ -731,9 +768,6 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       // Primary key
       (column.isPrimaryKey() ? "PRIMARY KEY " : "") +
 
-      // Uniqueness
-      (column.isUnique() && !isModify ? "UNIQUE " : "") +
-
       // Column default
       (column.getMigrationDefault() != MigrationDefault.UNSPECIFIED ? "DEFAULT " + column.getMigrationDefault() : "");
 
@@ -742,6 +776,29 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       ret += ", FOREIGN KEY (`" + column.getName() + "`) REFERENCES `" + column.getForeignKey().name() + "`(`id`) " + foreignAction;
 
     return ret.trim();
+  }
+
+  /**
+   * Build a unique constraint which includes all unique columns of a table
+   * @param table Table who's columns to use
+   * @return Unique constraint, null if there's no unique column
+   */
+  private String buildUniqueConstraint(MysqlTable table) {
+    if (table.columns().stream().noneMatch(MysqlColumn::isUnique))
+      return null;
+
+    List<String> tarColNames = table.columns().stream()
+      .filter(MysqlColumn::isUnique)
+      .filter(col -> !col.isPrimaryKey())
+      .map(MysqlColumn::getName)
+      .toList();
+
+    // Triple underscore separates columns, since the single underscore
+    // is reserved for casing and the dual for inlining columns
+    String name = String.join("___", tarColNames);
+
+    return "UNIQUE " + name + " (" + tarColNames.stream()
+      .collect(Collectors.joining("`, `", "`", "`")) + ")";
   }
 
   /**
@@ -763,6 +820,10 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
         .append(buildColumnSignature(col, false))
         .append(i == columns.size() - 1 ? "" : ", ");
     }
+
+    String uniqueConstr = buildUniqueConstraint(table);
+    if (uniqueConstr != null)
+      stmt.append(", ").append(uniqueConstr);
 
     stmt.append(");");
     PreparedStatement ps = this.conn.prepareStatement(stmt.toString());

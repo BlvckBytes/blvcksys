@@ -18,7 +18,8 @@ import java.lang.annotation.Target;
 public @interface ModelProperty {
 
   // Whether this property's value has to be unique accross
-  // all models of the same type
+  // all models of the same type. When a single model has multiple
+  // unique fields, they're combined into a single unique constraint
   boolean isUnique() default false;
 
   // Whether this field can be set to a NULL value

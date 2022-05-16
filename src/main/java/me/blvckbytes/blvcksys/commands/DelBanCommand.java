@@ -20,17 +20,17 @@ import java.util.stream.Stream;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
-  Created On: 05/13/2022
+  Created On: 05/16/2022
 
-  Revoke an existing, previously casted ban.
+  Completely delete an existing ban.
 */
 @AutoConstruct
-public class RevokeBanCommand extends APlayerCommand {
+public class DelBanCommand extends APlayerCommand {
 
   private final IBanHandler bans;
   private final IPersistence pers;
 
-  public RevokeBanCommand(
+  public DelBanCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
@@ -40,11 +40,10 @@ public class RevokeBanCommand extends APlayerCommand {
   ) {
     super(
       plugin, logger, cfg, refl,
-      "revokeban",
-      "Revoke a previously casted ban",
-      PlayerPermission.COMMAND_BANREVOKE,
-      new CommandArgument("<id>", "ID of the ban"),
-      new CommandArgument("[reason]", "Reason of this revocation")
+      "delban",
+      "Delete a non-active ban completely",
+      PlayerPermission.COMMAND_DELBAN,
+      new CommandArgument("<id>", "ID of the ban")
     );
 
     this.bans = bans;
@@ -60,14 +59,12 @@ public class RevokeBanCommand extends APlayerCommand {
     // Suggest all possible UUIDs
     if (currArg == 0)
       return suggestModels(args, currArg, BanModel.class, "id", pers);
-
-    return Stream.of(getArgumentPlaceholder(currArg));
+    return super.onTabCompletion(p, args, currArg);
   }
 
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     UUID id = parseUUID(args, 0);
-    String reason = argvar(args, 1, "");
     Optional<BanModel> ban = bans.findById(id);
 
     if (ban.isEmpty()) {
@@ -80,11 +77,9 @@ public class RevokeBanCommand extends APlayerCommand {
       return;
     }
 
-    BanModel revoked = bans.revokeBan(ban.get(), p, reason);
-
-    if (revoked == null) {
+    if (ban.get().isActive()) {
       p.sendMessage(
-        cfg.get(ConfigKey.BAN_ALREADY_REVOKED)
+        cfg.get(ConfigKey.BAN_STILL_ACTIVE)
           .withPrefix()
           .withVariable("id", id)
           .asScalar()
@@ -92,6 +87,13 @@ public class RevokeBanCommand extends APlayerCommand {
       return;
     }
 
-    bans.broadcastRevoke(revoked);
+    pers.delete(ban.get());
+
+    p.sendMessage(
+      cfg.get(ConfigKey.BAN_DELETED)
+        .withPrefix()
+        .withVariable("id", id)
+        .asScalar()
+    );
   }
 }

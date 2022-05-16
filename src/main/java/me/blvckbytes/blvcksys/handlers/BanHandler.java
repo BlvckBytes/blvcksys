@@ -24,9 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /*
@@ -164,6 +162,12 @@ public class BanHandler implements IBanHandler, Listener {
           ban.getReason()
       )
       .withVariable(
+        "revocation_reason",
+        ban.getRevocationReason() == null ?
+          cfg.get(ConfigKey.BAN_NO_REASON).asScalar() :
+          ban.getRevocationReason()
+      )
+      .withVariable(
         "ip",
         ban.getIpAddress() == null ?
           cfg.get(ConfigKey.BAN_NO_ADDRESS).asScalar() :
@@ -174,16 +178,50 @@ public class BanHandler implements IBanHandler, Listener {
       .withVariable(
         "revoker",
         ban.getRevoker() == null ?
-          cfg.get(ConfigKey.BAN_NOT_REVOKED).asScalar() :
+          cfg.get(ConfigKey.BAN_NO_REVOKED).asScalar() :
           ban.getRevoker().getName()
       )
       .withVariable(
         "revoked_at",
         ban.getRevokedAt() == null ?
-          cfg.get(ConfigKey.BAN_NOT_REVOKED).asScalar() :
+          cfg.get(ConfigKey.BAN_NO_REVOKED).asScalar() :
           ban.getRevokedAtStr()
       )
       .exportVariables();
+  }
+
+  @Override
+  public Optional<BanModel> findById(UUID id) {
+    return pers.findFirst(
+      new QueryBuilder<>(
+        BanModel.class,
+        "id", EqualityOperation.EQ, id
+      )
+    );
+  }
+
+  @Override
+  public BanModel revokeBan(BanModel ban, Player revoker, @Nullable String reason) {
+    if (ban.getRevoker() != null)
+      return null;
+
+    ban.setRevokedAt(new Date());
+    ban.setRevoker(revoker);
+    ban.setRevocationReason(reason);
+    pers.store(ban);
+
+    return ban;
+  }
+
+  @Override
+  public void broadcastRevoke(BanModel ban) {
+    chat.broadcastMessage(
+      Bukkit.getOnlinePlayers(),
+      cfg.get(ConfigKey.BAN_REVOKED_BROADCAST)
+        .withPrefixes()
+        .withVariables(buildBanVariables(ban))
+        .asScalar()
+    );
   }
 
   //=========================================================================//

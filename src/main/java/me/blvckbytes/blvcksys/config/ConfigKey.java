@@ -171,6 +171,12 @@ public enum ConfigKey {
   //                                BAN Commands                             //
   //=========================================================================//
 
+  BAN_REVOKED_BROADCAST(
+    "ban.revoked_broadcast",
+    "$0Der Bann vom Spieler $3{{target}} $0wurde $3aufgehoben$0!",
+    "$0Von: $3{{revoker}}",
+    "$0Grund: $3{{revocation_reason}}"
+  ),
   BAN_CASTED_BROADCAST(
     "ban.casted_broadcast",
     "$0Der Spieler $3{{target}} $0wurde $3gebannt$0!",
@@ -182,7 +188,7 @@ public enum ConfigKey {
   BAN_REMAINING_PERMANENT("ban.remaining_permanent", "&c/"),
   BAN_NO_REASON("ban.no_reason", "&cKein Grund angegeben"),
   BAN_NO_ADDRESS("ban.no_address", "&c/"),
-  BAN_NOT_REVOKED("ban.not_revoked", "&c/"),
+  BAN_NO_REVOKED("ban.no_revoked", "&c/"),
   BAN_SCREEN(
     "ban.screen",
     "$0Du wurdest &cgebannt$0.",
@@ -202,7 +208,13 @@ public enum ConfigKey {
   BAN_LIST_HOVER("ban.list.hover", "$0Klick: $3{{command}}"),
   BAN_LIST_YES("ban.list.yes", "&aJa"),
   BAN_LIST_NO("ban.list.no", "&cNein"),
-  BAN_INFO_UNKNOWN("ban.info.unknown", "$0Es existiert kein Bann mit der ID $3{{id}}$0!"),
+  BAN_UNKNOWN("ban.unknown", "$0Es existiert kein Bann mit der ID $4{{id}}$0!"),
+  BAN_STILL_ACTIVE("ban.still_active", "$0Dieser Bann mit der ID $4{{id}} $0ist noch $4aktiv $0und kann daher nicht gelöscht werden."),
+  BAN_DELETED("ban.deleted", "$0Dieser Bann mit der ID $3{{id}} $0wurde $3gelöscht$0!"),
+  BAN_ALREADY_REVOKED("ban.already_revoked", "$0Der Bann mit der ID $4{{id}} $0wurde bereits aufgehoben!"),
+  BAN_EDIT_SAVED("ban.edit_saved", "$0Die Änderungen für den Bann mit der ID $3{{id}} $0wurden $3gespeichert$0."),
+  BAN_NOT_REVOKED("ban.not_revoked", "$0Der Bann mit der ID $4{{id}} $0wurde $4noch nicht $0aufgehoben!"),
+  BAN_IS_PERMANENT("ban.is_permanent", "$0Der Bann mit der ID $4{{id}} $0ist $4permanent!"),
   BAN_INFO_SCREEN(
     "ban.info.screen",
     "$0Bann mit der ID $3{{id}}$0:",
@@ -212,8 +224,8 @@ public enum ConfigKey {
     "$0Verbleibend: $3{{remaining}}",
     "$0IP: $3{{ip}}",
     "$0Grund: $3{{reason}}",
-    "$0Zurückgezogen von: $3{{revoker}}",
-    "$0Zurückgezogen am: $3{{revoked_at}}"
+    "$0Aufgehoben von: $3{{revoker}}",
+    "$0Aufgehoben am: $3{{revoked_at}}"
   ),
 
   //=========================================================================//

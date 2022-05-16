@@ -3,12 +3,14 @@ package me.blvckbytes.blvcksys.handlers;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.BanModel;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.InetAddress;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 /*
@@ -74,4 +76,21 @@ public interface IBanHandler {
    * @return Variable map
    */
   Map<Pattern, String> buildBanVariables(BanModel ban);
+
+  Optional<BanModel> findById(UUID id);
+
+  /**
+   * Revoke an existing ban
+   * @param ban Ban to revoke
+   * @param revoker Player revoking the ban
+   * @param reason Reason of the revocation
+   * @return The revoked model or null if the model has already been revoked
+   */
+  BanModel revokeBan(BanModel ban, Player revoker, @Nullable String reason);
+
+  /**
+   * Broadcast a ban's revocation in the chat to all online players
+   * @param ban Revoked ban to broadcast
+   */
+  void broadcastRevoke(BanModel ban);
 }

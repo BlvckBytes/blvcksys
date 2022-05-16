@@ -9,14 +9,11 @@ import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IBanHandler;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.BanModel;
-import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
-import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -69,17 +66,11 @@ public class BanInfoCommand extends APlayerCommand {
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     UUID id = parseUUID(args, 0);
-
-    Optional<BanModel> ban = pers.findFirst(
-      new QueryBuilder<>(
-        BanModel.class,
-        "id", EqualityOperation.EQ, id
-      )
-    );
+    Optional<BanModel> ban = bans.findById(id);
 
     if (ban.isEmpty()) {
       p.sendMessage(
-        cfg.get(ConfigKey.BAN_INFO_UNKNOWN)
+        cfg.get(ConfigKey.BAN_UNKNOWN)
           .withPrefix()
           .withVariable("id", id)
           .asScalar()

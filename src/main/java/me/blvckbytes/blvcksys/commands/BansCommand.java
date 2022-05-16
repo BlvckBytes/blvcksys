@@ -90,6 +90,17 @@ public class BansCommand extends APlayerCommand {
       case ALL -> bans.listBans(target, null, null, null, null);
     };
 
+    if (list.size() == 0) {
+      p.sendMessage(
+        cfg.get(ConfigKey.BAN_LIST_EMPTY)
+          .withPrefix()
+          .withVariable("type", type.name())
+          .withVariable("target", target.getName())
+          .asScalar()
+      );
+      return;
+    }
+
     TidyTable table = new TidyTable("|", fwTable);
 
     table.addLines(

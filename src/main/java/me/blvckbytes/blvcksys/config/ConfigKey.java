@@ -204,6 +204,7 @@ public enum ConfigKey {
     "$3{{type}} $0Bans von $3{{target}}$0:",
     "$1| $3Ersteller $1| $3Datum $1| $3Dauer $1| $3IP $1| $3Aktiv $1|"
   ),
+  BAN_LIST_EMPTY("ban.list.empty", "$0Der Spieler $4{{target}} $0hat noch keine Bans ($4{{type}}$0) erhalten!"),
   BAN_LIST_ENTRY("ban.list.entry", "$1| $0{{creator}} $1| $0{{created_at}} $1| $0{{duration}} $1| $0{{has_ip}} $1| $0{{is_active}} $1|"),
   BAN_LIST_HOVER("ban.list.hover", "$0Klick: $3{{command}}"),
   BAN_LIST_YES("ban.list.yes", "&aJa"),

@@ -273,7 +273,7 @@ public class BanHandler implements IBanHandler, Listener {
     QueryBuilder<BanModel> query = new QueryBuilder<>(BanModel.class, targetQuery);
 
     if (isPermanent != null)
-      query.and("durationSeconds", isPermanent ? EqualityOperation.NEQ : EqualityOperation.EQ, null);
+      query.and("durationSeconds", isPermanent ? EqualityOperation.EQ : EqualityOperation.NEQ, null);
 
     if (hasIpAddress != null)
       query.and("ipAddress", hasIpAddress ? EqualityOperation.NEQ : EqualityOperation.EQ, null);

@@ -199,7 +199,7 @@ public enum ConfigKey {
     "$1| $3Ersteller $1| $3Datum $1| $3Dauer $1| $3IP $1| $3Aktiv $1|"
   ),
   BAN_LIST_ENTRY("ban.list.entry", "$1| $0{{creator}} $1| $0{{created_at}} $1| $0{{duration}} $1| $0{{has_ip}} $1| $0{{is_active}} $1|"),
-  BAN_LIST_HOVER("ban.list.hover", "$0Klick für weitere Details"),
+  BAN_LIST_HOVER("ban.list.hover", "$0Klick: $3{{command}}"),
   BAN_LIST_YES("ban.list.yes", "&aJa"),
   BAN_LIST_NO("ban.list.no", "&cNein"),
   BAN_INFO_UNKNOWN("ban.info.unknown", "$0Es existiert kein Bann mit der ID $3{{id}}$0!"),

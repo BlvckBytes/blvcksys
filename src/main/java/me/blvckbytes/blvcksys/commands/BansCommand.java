@@ -121,13 +121,15 @@ public class BansCommand extends APlayerCommand {
           .asScalar()
       );
 
+      String command = "/baninfo " + ban.getId();
+
       banComp.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(
-        cfg.get(
-          ConfigKey.BAN_LIST_HOVER
-        ).asScalar()
+        cfg.get(ConfigKey.BAN_LIST_HOVER)
+          .withVariable("command", command)
+          .asScalar()
       )));
 
-      banComp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/baninfo " + ban.getId()));
+      banComp.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, command));
     }
 
     table.displayTo(p);

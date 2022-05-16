@@ -16,6 +16,7 @@ import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
@@ -58,8 +59,10 @@ public class BanInfoCommand extends APlayerCommand {
 
   @Override
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
+    // Suggest all possible UUIDs
     if (currArg == 0)
-      return Stream.of(getArgumentPlaceholder(currArg));
+      return suggestModels(args, currArg, BanModel.class, "id", pers);
+
     return super.onTabCompletion(p, args, currArg);
   }
 

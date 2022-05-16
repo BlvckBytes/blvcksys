@@ -837,8 +837,19 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    * @param field Name of the field, used for exceptions
    * @param value Value that has to conform to the specified type
    * @param isInFieldOp Whether this field is inside of a field operation
+   * @param isWildcard Whether this field is used with a wildcard equality operation
    */
-  private void validateQueryFieldType(MysqlColumn col, String field, Object value, boolean isInFieldOp) {
+  private void validateQueryFieldType(
+    MysqlColumn col,
+    String field,
+    Object value,
+    boolean isInFieldOp,
+    boolean isWildcard
+  ) {
+    // UUIDs are allowed to be compared with strings when using wildcard equality
+    if (isWildcard && col.getType() == MysqlType.UUID && value.getClass() == String.class)
+      return;
+
     boolean anyMatch = false;
     Class<?> queryType = value.getClass();
 
@@ -882,12 +893,21 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
     boolean isNull = query.getValue() == null;
 
+    // Check if this will be a wildcard operation
+    boolean isWildcard =
+      query.getEqOp() == EqualityOperation.CONT ||
+      query.getEqOp() == EqualityOperation.CONT_IC ||
+      query.getEqOp() == EqualityOperation.STARTS ||
+      query.getEqOp() == EqualityOperation.STARTS_IC ||
+      query.getEqOp() == EqualityOperation.ENDS ||
+      query.getEqOp() == EqualityOperation.ENDS_IC;
+
     // Validate that the column's types are compatible with the value's java type
     if (!isNull) {
-      validateQueryFieldType(targColA, query.getFieldA(), query.getValue(), targColB != null);
+      validateQueryFieldType(targColA, query.getFieldA(), query.getValue(), targColB != null, isWildcard);
 
       if (targColB != null)
-        validateQueryFieldType(targColB, query.getFieldB(), query.getValue(), true);
+        validateQueryFieldType(targColB, query.getFieldB(), query.getValue(), true, isWildcard);
     }
 
     if (!targColA.getType().supportsOp(query.getEqOp()))
@@ -905,21 +925,17 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     else
       fieldExpr = "`" + targColA.getName() + "`";
 
-    // UUIDs need to be converted to binary
-    if (targColA.getType().equals(MysqlType.UUID))
-      ph = uuidToBin("?", false);
-
     Object value = query.getValue();
 
-    // Is a wildcard operation
-    if (
-      query.getEqOp() == EqualityOperation.CONT ||
-      query.getEqOp() == EqualityOperation.CONT_IC ||
-      query.getEqOp() == EqualityOperation.STARTS ||
-      query.getEqOp() == EqualityOperation.STARTS_IC ||
-      query.getEqOp() == EqualityOperation.ENDS ||
-      query.getEqOp() == EqualityOperation.ENDS_IC
-    ) {
+    if (isWildcard) {
+      // UUIDs need to be "stringified" to allow for wildcard OPs
+      // When turning the binary columns to hex, there are no dashes, thus
+      // strip all dashes off the value's UUID
+      if (targColA.getType() == MysqlType.UUID) {
+        fieldExpr = "HEX(`" + targColA.getName() + "`)";
+        value = value.toString().replace("-", "");
+      }
+
       // Escape all reserved wildcard characters using bang as an escape character
       value = value.toString()
         .replace("!", "!!")
@@ -939,6 +955,10 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       if (query.getEqOp() == EqualityOperation.ENDS || query.getEqOp() == EqualityOperation.ENDS_IC)
         value = "%" + value;
     }
+
+    // If it's not a wildcard query: UUIDs need to be converted to binary
+    else if (targColA.getType().equals(MysqlType.UUID))
+      ph = uuidToBin("?", false);
 
     // Only add placeholder values if there actually was a placeholder appended
     if (!(isNull && (query.getEqOp() == EqualityOperation.EQ || query.getEqOp() == EqualityOperation.NEQ)))
@@ -1067,21 +1087,26 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    * Read a ResultSet's rows of data as raw k-v pairs and collect these maps into a list
    * @param model Model used to represent the individual result rows
    * @param query Query builder to build from, leave at null to have no WHERE clause
-   * @param columns Columns to select
+   * @param properties Properties to select
    * @return List of raw k-v pairs, as many as available rows
    */
   private<T extends APersistentModel> List<Map<String, Object>> readRowsRaw(
     Class<T> model,
     @Nullable QueryBuilder<T> query,
-    String[] columns
+    String[] properties
   ) throws Exception {
     List<Map<String, Object>> res = new ArrayList<>();
+    MysqlTable table = getTableFromModel(model, false);
 
-    PreparedStatement ps = buildQuery(model, query, false, false, false, columns);
+    PreparedStatement ps = buildQuery(model, query, false, false, false, properties);
     ResultSet rs = ps.executeQuery();
 
+    List<String> colNames = Arrays.stream(properties)
+      .map(this::modelNameToDBName)
+      .toList();
+
     while(rs.next())
-      res.add(readRowRaw(rs, columns));
+      res.add(readRowRaw(table, rs, colNames));
 
     rs.close();
     ps.close();
@@ -1092,15 +1117,22 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   /**
    * Read an individual row (the one currently selected by the ResultSet's
    * cursor) into a raw k-v map
+   * @param table Table of the model reading from
    * @param rs ResultSet containing the row to be mapped
    * @param columns Selected columns that this ResultSet contains
    * @return Model with fields containing the row's data
    */
-  private Map<String, Object> readRowRaw(ResultSet rs, String[] columns) throws SQLException {
+  private Map<String, Object> readRowRaw(MysqlTable table, ResultSet rs, List<String> columns) throws SQLException {
    Map<String, Object> res = new HashMap<>();
 
-   for (String property : columns)
-     res.put(property, rs.getObject(property));
+   for (String property : columns) {
+     MysqlColumn matchingCol = table.columns().stream()
+       .filter(col -> col.getName().equals(property))
+       .findFirst()
+       .orElseThrow(() -> new PersistenceException("Invalid column for reading raw: " + property));
+
+     res.put(property, translateValue(matchingCol.getType(), rs.getObject(property)));
+   }
 
    return res;
   }

@@ -28,7 +28,13 @@ public enum MysqlType {
     true,
     new EqualityOperation[] {
       EqualityOperation.EQ,
-      EqualityOperation.NEQ
+      EqualityOperation.NEQ,
+      EqualityOperation.CONT,
+      EqualityOperation.CONT_IC,
+      EqualityOperation.STARTS,
+      EqualityOperation.STARTS_IC,
+      EqualityOperation.ENDS,
+      EqualityOperation.ENDS_IC
     }
   ),
 

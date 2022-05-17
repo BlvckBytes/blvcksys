@@ -17,12 +17,12 @@ import me.blvckbytes.blvcksys.util.TimeUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /*
@@ -32,7 +32,9 @@ import java.util.regex.Pattern;
   Manages creating, updating and deleting mutes.
 */
 @AutoConstruct
-public class MuteHandler implements IMuteHandler {
+public class MuteHandler implements IMuteHandler, Listener {
+
+  private final Map<OfflinePlayer, MuteModel> cache;
 
   private final IPersistence pers;
   private final IChatListener chat;
@@ -45,6 +47,8 @@ public class MuteHandler implements IMuteHandler {
     @AutoInject IConfig cfg,
     @AutoInject TimeUtil time
   ) {
+    this.cache = new HashMap<>();
+
     this.pers = pers;
     this.chat = chat;
     this.cfg = cfg;
@@ -64,6 +68,7 @@ public class MuteHandler implements IMuteHandler {
   ) throws PersistenceException {
     MuteModel mute = new MuteModel(creator, target, durationSeconds, reason);
     pers.store(mute);
+    cache.remove(mute.getTarget());
     return mute;
   }
 
@@ -89,8 +94,22 @@ public class MuteHandler implements IMuteHandler {
 
   @Override
   public Optional<MuteModel> isCurrentlyMuted(OfflinePlayer target) {
-    // TODO: This should be cached
-    return pers.findFirst(buildQuery(target, false, true));
+    MuteModel mute = cache.get(target);
+
+    if (mute != null) {
+      if (mute.isRevoked() || !mute.isActive()) {
+        cache.remove(target);
+        return Optional.empty();
+      }
+
+      return Optional.of(mute);
+    }
+
+    return pers.findFirst(buildQuery(target, false, true))
+      .map(res -> {
+        cache.put(target, res);
+        return res;
+      });
   }
 
   @Override
@@ -152,6 +171,7 @@ public class MuteHandler implements IMuteHandler {
 
     mute.setRevoked(revoker, reason);
     pers.store(mute);
+    cache.remove(mute.getTarget());
 
     return mute;
   }
@@ -172,6 +192,15 @@ public class MuteHandler implements IMuteHandler {
     return cfg.get(ConfigKey.MUTE_SCREEN)
       .withVariables(buildMuteVariables(mute))
       .asScalar();
+  }
+
+  //=========================================================================//
+  //                                    API                                  //
+  //=========================================================================//
+
+  @EventHandler
+  public void onQuit(PlayerQuitEvent e) {
+    cache.remove(e.getPlayer());
   }
 
   //=========================================================================//

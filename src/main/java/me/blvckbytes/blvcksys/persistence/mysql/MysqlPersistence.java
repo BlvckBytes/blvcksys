@@ -1470,6 +1470,9 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       uniqueVals.add(new Tuple<>(column.getName(), value));
     }
 
+    // And is not self
+    query.and("id", EqualityOperation.NEQ, model.getId());
+
     // There's already a column with this unique field
     if (count(query) > 0)
       throw new DuplicatePropertyException(dbNameToModelName(table.name(), true), uniqueVals);

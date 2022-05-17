@@ -1124,7 +1124,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       }
 
       // This model also requires the selection of it's row number
-      if (INumberedModel.class.isAssignableFrom(model))
+      if (!onlyCount && INumberedModel.class.isAssignableFrom(model))
         stmt.append(", ROW_NUMBER() OVER (").append(orderBy).append(") AS __ROW_NUMBER");
     }
 

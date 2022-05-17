@@ -1147,16 +1147,16 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
       // Only append limit/offset and ordering when reading
       if (!delete) {
+        if (query.getSorting().size() > 0) {
+          stmt.append(" ORDER BY ");
+          stmt.append(stringifySorting(table, query.getSorting()));
+        }
+
         if (query.getLimit() != null || onlyFirst)
           stmt.append(" LIMIT ").append(onlyFirst ? 1 : query.getLimit());
 
         if (query.getSkip() != null)
           stmt.append(" OFFSET ").append(query.getSkip());
-
-        if (query.getSorting().size() > 0) {
-          stmt.append(" ORDER BY ");
-          stmt.append(stringifySorting(table, query.getSorting()));
-        }
       }
     }
 

@@ -115,6 +115,7 @@ public class MutesCommand extends APlayerCommand {
         cfg.get(ConfigKey.MUTE_LIST_ENTRY)
           .withPrefix()
           .withVariables(mutes.buildMuteVariables(mute))
+          .withVariable("created_at", mute.getCreatedAtStr(true))
           .withVariable("is_active", mute.isActive() ? yesStr : noStr)
           .asScalar()
           .replaceAll("(§.)", mute.isRevoked() ? "$1§m" : "$1")

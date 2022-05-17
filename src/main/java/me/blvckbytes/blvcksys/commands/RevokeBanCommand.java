@@ -83,6 +83,16 @@ public class RevokeBanCommand extends APlayerCommand {
       return;
     }
 
+    if (!ban.get().isActive()) {
+      p.sendMessage(
+        cfg.get(ConfigKey.BAN_NOT_ACTIVE)
+          .withPrefix()
+          .withVariable("id", id)
+          .asScalar()
+      );
+      return;
+    }
+
     BanModel revoked = bans.revokeBan(ban.get(), p, reason);
 
     if (revoked == null) {

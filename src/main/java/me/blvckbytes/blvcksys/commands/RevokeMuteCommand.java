@@ -83,6 +83,16 @@ public class RevokeMuteCommand extends APlayerCommand {
       return;
     }
 
+    if (!mute.get().isActive()) {
+      p.sendMessage(
+        cfg.get(ConfigKey.MUTE_NOT_ACTIVE)
+          .withPrefix()
+          .withVariable("id", id)
+          .asScalar()
+      );
+      return;
+    }
+
     MuteModel revoked = mutes.revokeMute(mute.get(), p, reason);
 
     if (revoked == null) {

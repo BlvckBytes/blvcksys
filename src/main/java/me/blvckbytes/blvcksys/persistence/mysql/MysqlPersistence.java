@@ -1455,8 +1455,17 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     QueryBuilder<?> query = new QueryBuilder<>(model.getClass());
     List<Tuple<String, Object>> uniqueVals = new ArrayList<>();
 
+    List<MysqlColumn> columns = table.columns().stream()
+      .filter(c -> !c.isPrimaryKey())
+      .filter(MysqlColumn::isUnique)
+      .toList();
+
+    // Has no unique columns
+    if (columns.size() == 0)
+      return;
+
     // Loop all unique keys
-    for (MysqlColumn column : table.columns()) {
+    for (MysqlColumn column : columns) {
       if (column.isPrimaryKey() || !column.isUnique())
         continue;
 
@@ -1470,8 +1479,9 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       uniqueVals.add(new Tuple<>(column.getName(), value));
     }
 
-    // And is not self
-    query.and("id", EqualityOperation.NEQ, model.getId());
+    // And is not self (on updates)
+    if (model.getId() != null)
+      query.and("id", EqualityOperation.NEQ, model.getId());
 
     // There's already a column with this unique field
     if (count(query) > 0)

@@ -178,7 +178,7 @@ public class BanHandler implements IBanHandler, Listener {
       .withVariable("target", ban.getTarget().getName())
       .withVariable(
         "revoker",
-        ban.getRevoker() == null ?
+        !ban.isRevoked() ?
           cfg.get(ConfigKey.BAN_NO_REVOKED).asScalar() :
           ban.getRevoker().getName()
       )
@@ -203,12 +203,10 @@ public class BanHandler implements IBanHandler, Listener {
 
   @Override
   public BanModel revokeBan(BanModel ban, Player revoker, @Nullable String reason) {
-    if (ban.getRevoker() != null)
+    if (ban.isRevoked())
       return null;
 
-    ban.setRevokedAt(new Date());
-    ban.setRevoker(revoker);
-    ban.setRevocationReason(reason);
+    ban.setRevoked(revoker, reason);
     pers.store(ban);
 
     return ban;

@@ -111,7 +111,7 @@ public class EditBanCommand extends APlayerCommand {
         ban.setDurationSeconds(time.parseDuration(value));
       }
       case REVOCATION_REASON -> {
-        if (ban.getRevoker() == null) {
+        if (!ban.isRevoked()) {
           p.sendMessage(
             cfg.get(ConfigKey.BAN_NOT_REVOKED)
               .withPrefix()

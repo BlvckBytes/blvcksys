@@ -85,7 +85,7 @@ public class BansCommand extends APlayerCommand {
       case IPBAN -> bans.listBans(target, true, true, null, null);
       case TEMPBAN -> bans.listBans(target, false, false, null, null);
       case TEMPIPBAN -> bans.listBans(target, false, true, null, null);
-      case ACTIVE -> bans.listBans(target, null, null, null, true);
+      case ACTIVE -> bans.listBans(target, null, null, false, true);
       case REVOKED -> bans.listBans(target, null, null, true, null);
       case ALL -> bans.listBans(target, null, null, null, null);
     };
@@ -116,7 +116,6 @@ public class BansCommand extends APlayerCommand {
 
     for (BanModel ban : list) {
       TextComponent banComp = table.addLine(
-        (ban.getRevoker() == null ? "" : "§m") +
         cfg.get(ConfigKey.BAN_LIST_ENTRY)
           .withPrefix()
           .withVariable("creator", ban.getCreator().getName())
@@ -130,6 +129,7 @@ public class BansCommand extends APlayerCommand {
           .withVariable("has_ip", ban.getIpAddress() == null ? noStr : yesStr)
           .withVariable("is_active", ban.isActive() ? yesStr : noStr)
           .asScalar()
+          .replaceAll("(§.)", ban.isRevoked() ? "$1§m" : "$1")
       );
 
       String command = "/baninfo " + ban.getId();

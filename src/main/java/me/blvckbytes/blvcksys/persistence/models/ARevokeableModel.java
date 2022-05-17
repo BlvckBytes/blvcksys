@@ -3,6 +3,7 @@ package me.blvckbytes.blvcksys.persistence.models;
 import lombok.*;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
 import org.bukkit.OfflinePlayer;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Date;
 
@@ -13,7 +14,6 @@ import java.util.Date;
   Represents a model that can be revoked, separately to being deleted,
   in order to still remain in history but not have any further effect.
 */
-@Setter
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -29,8 +29,27 @@ public abstract class ARevokeableModel extends APersistentModel {
   protected Date revokedAt;
 
   // The reason of revocation, null means that the model hasn't yet been revoked
+  @Setter
   @ModelProperty(isNullable = true)
   protected String revocationReason;
+
+  /**
+   * Set this model to be revoked by an executing player
+   * @param revoker Player that executes the revocation
+   * @param revocationReason Reason of the revocation, optional
+   */
+  public void setRevoked(OfflinePlayer revoker, @Nullable String revocationReason) {
+    this.revoker = revoker;
+    this.revocationReason = revocationReason;
+    this.revokedAt = new Date();
+  }
+
+  /**
+   * Check whether or not this model has been revoked already
+   */
+  public boolean isRevoked() {
+    return revoker != null;
+  }
 
   /**
    * Get the revokedAt timestamp as a human readable string

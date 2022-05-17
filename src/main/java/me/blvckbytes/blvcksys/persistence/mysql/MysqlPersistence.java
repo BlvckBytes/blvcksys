@@ -14,6 +14,7 @@ import me.blvckbytes.blvcksys.persistence.exceptions.DuplicatePropertyException;
 import me.blvckbytes.blvcksys.persistence.exceptions.ModelNotFoundException;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.APersistentModel;
+import me.blvckbytes.blvcksys.persistence.models.INumberedModel;
 import me.blvckbytes.blvcksys.persistence.query.*;
 import me.blvckbytes.blvcksys.persistence.transformers.IDataTransformer;
 import me.blvckbytes.blvcksys.util.MCReflect;
@@ -95,9 +96,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   @Override
   public<T extends APersistentModel> List<T> list(Class<T> type) throws PersistenceException {
     try {
-      MysqlTable table = getTableFromModel(type, false);
-      PreparedStatement ps = conn.prepareStatement("SELECT * FROM `" + table.name() + "`");
-
+      PreparedStatement ps = buildQuery(type, null, false, false, false);
       logStatement(ps);
 
       ResultSet rs = ps.executeQuery();
@@ -1101,8 +1100,10 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     String ...fields
   ) throws Exception {
     MysqlTable table = getTableFromModel(model, false);
-
     StringBuilder stmt = new StringBuilder();
+
+    // Stringify the order by clause ahead of time, as it may be required in SELECT as well as after WHERE
+    String orderBy = query == null ? "" : "ORDER BY " + stringifySorting(table, query.getSorting());
 
     // Selection mode
     if (!delete) {
@@ -1121,6 +1122,10 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
           stmt.append("`").append(name).append("`").append(i != fields.length - 1 ? ", " : "");
         }
       }
+
+      // This model also requires the selection of it's row number
+      if (INumberedModel.class.isAssignableFrom(model))
+        stmt.append(", ROW_NUMBER() OVER (").append(orderBy).append(") AS __ROW_NUMBER");
     }
 
     // Deletion mode
@@ -1147,10 +1152,8 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
       // Only append limit/offset and ordering when reading
       if (!delete) {
-        if (query.getSorting().size() > 0) {
-          stmt.append(" ORDER BY ");
-          stmt.append(stringifySorting(table, query.getSorting()));
-        }
+        if (query.getSorting().size() > 0)
+          stmt.append(" ").append(orderBy);
 
         if (query.getLimit() != null || onlyFirst)
           stmt.append(" LIMIT ").append(onlyFirst ? 1 : query.getLimit());
@@ -1355,6 +1358,16 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       // Directly set the model's field value to the corresponding column's value
       col.getModelField().set(inst, translateValue(col.getType(), value));
       remainingColumns.remove(col);
+    }
+
+    // This model requires it's row number
+    if (inst instanceof INumberedModel nm) {
+      try {
+        nm.setResultNumber(rs.getInt("__ROW_NUMBER"));
+      } catch (SQLException e) {
+        nm.setResultNumber(-1);
+        logger.logError(e);
+      }
     }
 
     return inst;

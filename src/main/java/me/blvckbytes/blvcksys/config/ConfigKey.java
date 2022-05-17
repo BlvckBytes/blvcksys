@@ -168,6 +168,66 @@ public enum ConfigKey {
   PLAYERLIST_VERSION_MISMATCH("playerlist.version_mismatch", "$2Version {{version}}"),
 
   //=========================================================================//
+  //                               MUTE Commands                             //
+  //=========================================================================//
+
+  MUTE_REVOKED_BROADCAST(
+    "mute.revoked_broadcast",
+    "$0Der Mute vom Spieler $3{{target}} $0wurde $3aufgehoben$0!",
+    "$0Von: $3{{revoker}}",
+    "$0Grund: $3{{revocation_reason}}"
+  ),
+  MUTE_CASTED_BROADCAST(
+    "mute.casted_broadcast",
+    "$0Der Spieler $3{{target}} $0wurde $3gemuted$0!",
+    "$0Von: $3{{creator}}",
+    "$0Dauer: $3{{duration}}",
+    "$0Grund: $3{{reason}}"
+  ),
+  MUTE_NO_REASON("mute.no_reason", "&cKein Grund angegeben"),
+  MUTE_NO_REVOKED("mute.no_revoked", "&c/"),
+  MUTE_SCREEN(
+    "mute.screen",
+    " ",
+    "$0Du bist &cgemuted$0.",
+    "$0Von: $3{{creator}}",
+    "$0Dauer: $3{{duration}}",
+    "$0Verbleibend: $3{{remaining}}",
+    "$0Grund: $3{{reason}}",
+    " "
+  ),
+  MUTE_ALREADY_MUTED("mute.already_muted", "$0Der Spieler $4{{target}} $0besitzt bereits einen $4aktiven $0Mute!"),
+  MUTE_UNKNOWN("mute.unknown", "$0Es existiert kein Mute mit der ID $4{{id}}$0!"),
+  MUTE_ALREADY_REVOKED("mute.already_revoked", "$0Der Mute mit der ID $4{{id}} $0wurde bereits aufgehoben!"),
+  MUTE_INFO_SCREEN(
+    "mute.info.screen",
+    "$0Mute mit der ID $3{{id}}$0:",
+    "$0Ziel: $3{{target}}",
+    "$0Erstellt am: $3{{created_at}}",
+    "$0Ersteller: $3{{creator}}",
+    "$0Dauer: $3{{duration}}",
+    "$0Verbleibend: $3{{remaining}}",
+    "$0Grund: $3{{reason}}",
+    "$0Aufgehoben von: $3{{revoker}}",
+    "$0Aufgehoben am: $3{{revoked_at}}",
+    "$0Aufhebegrund: $3{{revocation_reason}}"
+  ),
+  MUTE_NOT_REVOKED("mute.not_revoked", "$0Der Mute mit der ID $4{{id}} $0wurde $4noch nicht $0aufgehoben!"),
+  MUTE_EDIT_SAVED("mute.edit_saved", "$0Die Änderungen für den Mute mit der ID $3{{id}} $0wurden $3gespeichert$0."),
+  MUTE_STILL_ACTIVE("mute.still_active", "$0Dieser Mute mit der ID $4{{id}} $0ist noch $4aktiv $0und kann daher nicht gelöscht werden."),
+  MUTE_DELETED("mute.deleted", "$0Dieser Mute mit der ID $3{{id}} $0wurde $3gelöscht$0!"),
+  MUTE_LIST_EMPTY("mute.list.empty", "$0Der Spieler $4{{target}} $0hat keine $4{{type}} $0Mutes!"),
+  MUTE_LIST_HEADLINE(
+    "mute.list.headline",
+    "$3{{type}} $0Mutes von $3{{target}}$0:",
+    "$1| $3Ersteller $1| $3Datum $1| $3Dauer $1| $3Aktiv $1|"
+  ),
+  MUTE_LIST_YES("mute.list.yes", "&aJa"),
+  MUTE_LIST_NO("mute.list.no", "&cNein"),
+  MUTE_LIST_ENTRY("mute.list.entry", "$1| $0{{creator}} $1| $0{{created_at}} $1| $0{{duration}} $1| $0{{is_active}} $1|"),
+  MUTE_LIST_HOVER("mute.list.hover", "$0Klick: $3{{command}}"),
+
+  //=========================================================================//
   //                                BAN Commands                             //
   //=========================================================================//
 
@@ -204,7 +264,7 @@ public enum ConfigKey {
     "$3{{type}} $0Bans von $3{{target}}$0:",
     "$1| $3Ersteller $1| $3Datum $1| $3Dauer $1| $3IP $1| $3Aktiv $1|"
   ),
-  BAN_LIST_EMPTY("ban.list.empty", "$0Der Spieler $4{{target}} $0hat noch keine Bans ($4{{type}}$0) erhalten!"),
+  BAN_LIST_EMPTY("ban.list.empty", "$0Der Spieler $4{{target}} $0hat keine $4{{type}} $0Bans!"),
   BAN_LIST_ENTRY("ban.list.entry", "$1| $0{{creator}} $1| $0{{created_at}} $1| $0{{duration}} $1| $0{{has_ip}} $1| $0{{is_active}} $1|"),
   BAN_LIST_HOVER("ban.list.hover", "$0Klick: $3{{command}}"),
   BAN_LIST_YES("ban.list.yes", "&aJa"),

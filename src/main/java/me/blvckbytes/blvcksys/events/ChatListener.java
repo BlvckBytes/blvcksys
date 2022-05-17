@@ -3,11 +3,14 @@ package me.blvckbytes.blvcksys.events;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
+import me.blvckbytes.blvcksys.di.AutoInjectLate;
+import me.blvckbytes.blvcksys.handlers.IMuteHandler;
 import me.blvckbytes.blvcksys.handlers.IPreferencesHandler;
 import me.blvckbytes.blvcksys.handlers.ITeamHandler;
 import me.blvckbytes.blvcksys.packets.communicators.team.TeamGroup;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.persistence.models.MuteModel;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -34,6 +37,9 @@ public class ChatListener implements Listener, IChatListener {
   private final IConfig cfg;
   private final ITeamHandler teams;
   private final IPreferencesHandler prefs;
+
+  @AutoInjectLate
+  private IMuteHandler mutes;
 
   public ChatListener(
     @AutoInject IConfig cfg,
@@ -103,6 +109,17 @@ public class ChatListener implements Listener, IChatListener {
 
     // Cancel the vanilla event
     e.setCancelled(true);
+
+    if (mutes != null) {
+
+      MuteModel mute = mutes.isCurrentlyMuted(p).orElse(null);
+
+      // Check if the user is muted
+      if (mute != null) {
+        p.sendMessage(mutes.buildMuteScreen(mute));
+        return;
+      }
+    }
 
     // Send using custom formatting
     sendChatMessage(p, new ArrayList<>(e.getRecipients()), e.getMessage());

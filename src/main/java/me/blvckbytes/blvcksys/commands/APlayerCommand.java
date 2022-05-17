@@ -12,6 +12,7 @@ import me.blvckbytes.blvcksys.persistence.models.APersistentModel;
 import me.blvckbytes.blvcksys.persistence.models.CooldownSessionModel;
 import me.blvckbytes.blvcksys.persistence.models.WarpModel;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
+import me.blvckbytes.blvcksys.persistence.query.FieldQueryGroup;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
@@ -316,13 +317,38 @@ public abstract class APlayerCommand extends Command {
     String field,
     IPersistence pers
   ) {
-    return pers.findRaw(
-        new QueryBuilder<>(
-          model,
-          field, EqualityOperation.CONT_IC, args[currArg]
-        )
-          .limit(10), field
-      )
+    return suggestModels(args, currArg, model, field, pers, null);
+  }
+
+  /**
+   * Create a stream of suggestions based on a list of models who's named
+   * field contains the currently typed out argument, ignoring casing.
+   * @param args Already typed out arguments
+   * @param currArg Currently focused argument
+   * @param model Model to search for
+   * @param field Target field of the model
+   * @param pers Persistence ref
+   * @param additional Additional search constraint
+   * @return Stream of suggestions
+   */
+  protected Stream<String> suggestModels(
+    String[] args,
+    int currArg,
+    Class<? extends APersistentModel> model,
+    String field,
+    IPersistence pers,
+    @Nullable FieldQueryGroup additional
+  ) {
+    QueryBuilder<?> query = new QueryBuilder<>(
+      model,
+      field, EqualityOperation.CONT_IC, args[currArg]
+    )
+      .limit(10);
+
+    if (additional != null)
+      query.and(additional);
+
+    return pers.findRaw(query, field)
       .stream()
       .map(m -> m.get(field))
       .filter(Objects::nonNull)
@@ -615,8 +641,20 @@ public abstract class APlayerCommand extends Command {
    * @param index Index within the arguments to use
    */
   protected OfflinePlayer offlinePlayer(String[] args, int index) throws CommandException {
+    return offlinePlayer(args, index, null);
+  }
+
+  /**
+   * Get a player that has played before by their name
+   * @param args Arguments of the command
+   * @param index Index within the arguments to use
+   * @param argcFallback Fallback value to use
+   */
+  protected OfflinePlayer offlinePlayer(String[] args, int index, OfflinePlayer argcFallback) throws CommandException {
     // Index out of range
     if (index >= args.length) {
+      if (argcFallback != null)
+        return argcFallback;
       // Focus arg
       throw new UsageMismatchException(cfg, buildAdvancedUsage(index));
     }

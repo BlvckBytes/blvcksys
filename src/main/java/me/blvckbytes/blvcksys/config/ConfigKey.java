@@ -755,6 +755,30 @@ public enum ConfigKey {
   COMMAND_HOLO_LINES_LINE_FORMAT("holo.line_format", "$0[$3{{index}}$0]: {{text}}"),
 
   //=========================================================================//
+  //                              HOMES Command                              //
+  //=========================================================================//
+
+  HOMES_LIST_PREFIX_SELF("homes.list.prefix.self", "$0Deine Homes ($3{{count}}$0): "),
+  HOMES_LIST_PREFIX_OTHERS("homes.list.prefix.others", "$3{{target}}'s $0Homes ($3{{count}}$0): "),
+  HOMES_LIST_NO_ITEMS("homes.list.no_items", "$4Keine Homes verfügbar"),
+  HOMES_LIST_ITEM_FORMAT("homes.list.item_format", "$3{{name}}$1"),
+  HOMES_LIST_HOVER(
+    "homes.list.hover",
+    "$0Erstellt am: $3{{created_at}}",
+    "$0Zuletzt geändert: $3{{updated_at}}",
+    "$0Welt: $3{{world}}",
+    "$0Position: $3{{location}}"
+  ),
+  HOMES_NOT_FOUND("homes.not_found", "$0Es existiert kein Home mit dem Namen $4{{name}}$0!"),
+  HOMES_TELEPORTED_SELF("homes.teleported.self", "$0Du hast dich zum Home $3{{name}} $0teleportiert!"),
+  HOMES_TELEPORTED_OTHERS("homes.teleported.others", "$0Du hast dich zum Home $3{{name}} $0von $3{{owner}} $0teleportiert!"),
+  HOMES_EXISTING("homes.existing", "$0Es existiert bereits ein Home mit dem Namen $4{{name}}$0!"),
+  HOMES_DELETED("homes.deleted", "$0Das Home $3{{name}} $0wurde gelöscht."),
+  HOMES_CREATED("homes.created", "$0Das Home $3{{name}} $0wurde erstellt."),
+  HOMES_MOVED("homes.moved", "$0Das Home $3{{name}} $0wurde zu deiner Position $3bewegt$0."),
+  HOMES_MAX_REACHED("homes.max_reached", "$0Du hast deine $4maximale Anzahl $0an Homes von $4{{num_max_homes}} $0erreicht!"),
+
+  //=========================================================================//
   //                               WARP Command                              //
   //=========================================================================//
 

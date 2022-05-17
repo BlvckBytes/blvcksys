@@ -77,6 +77,11 @@ public interface IBanHandler {
    */
   Map<Pattern, String> buildBanVariables(BanModel ban);
 
+  /**
+   * Find a specific ban by it's ID
+   * @param id ID of the target ban
+   * @return Ban model, empty if there was no such ID
+   */
   Optional<BanModel> findById(UUID id);
 
   /**

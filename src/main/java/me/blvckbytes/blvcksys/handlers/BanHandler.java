@@ -112,6 +112,7 @@ public class BanHandler implements IBanHandler, Listener {
 
   @Override
   public Optional<BanModel> isCurrentlyBanned(OfflinePlayer target, @Nullable InetAddress addr) {
+    // TODO: This should be cached
     // Non-revoked, still active (if temporary) bans
     return pers.find(buildQuery(target, addr, null, null, false, true))
       .stream()

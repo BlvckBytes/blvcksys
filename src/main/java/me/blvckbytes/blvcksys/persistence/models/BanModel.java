@@ -4,8 +4,6 @@ import lombok.*;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
 import org.bukkit.OfflinePlayer;
 
-import java.util.Date;
-
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 05/13/2022
@@ -18,7 +16,7 @@ import java.util.Date;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class BanModel extends APersistentModel {
+public class BanModel extends ARevokeableModel {
 
   @ModelProperty
   private OfflinePlayer creator;
@@ -38,34 +36,6 @@ public class BanModel extends APersistentModel {
   // Null means that the creator didn't provide a reason
   @ModelProperty(isNullable = true)
   private String reason;
-
-  // The player that revoked this ban prematurely, null means that the ban
-  // hasn't yet been revoked
-  @ModelProperty(isNullable = true)
-  private OfflinePlayer revoker;
-
-  // The date of revocation, null means that the ban hasn't yet been revoked
-  @ModelProperty(isNullable = true)
-  private Date revokedAt;
-
-  // The reason of revocation, null means that the ban hasn't yet been revoked
-  @ModelProperty(isNullable = true)
-  private String revocationReason;
-
-  /**
-   * Get the revokedAt timestamp as a human readable string
-   */
-  public String getRevokedAtStr() {
-    return getRevokedAtStr(false);
-  }
-
-  /**
-   * Get the revokedAt timestamp as a human readable string
-   * @param shortFormat Whether to display only the date without the time
-   */
-  public String getRevokedAtStr(boolean shortFormat) {
-    return revokedAt == null ? "/" : (shortFormat ? dfShort : df).format(revokedAt);
-  }
 
   /**
    * Get whether this ban is currently active

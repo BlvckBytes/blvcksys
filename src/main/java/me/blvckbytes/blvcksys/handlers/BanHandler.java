@@ -66,7 +66,7 @@ public class BanHandler implements IBanHandler, Listener {
     @Nullable String ipAddress,
     @Nullable String reason
   ) throws PersistenceException {
-    BanModel ban = new BanModel(creator, target, durationSeconds, ipAddress, reason, null, null, null);
+    BanModel ban = new BanModel(creator, target, durationSeconds, ipAddress, reason);
     pers.store(ban);
 
     String banScreen = buildBanScreen(ban);

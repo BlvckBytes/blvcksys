@@ -17,6 +17,7 @@ import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import net.minecraft.network.chat.ChatComponentText;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.PacketPlayOutPlayerListHeaderFooter;
+import net.minecraft.util.Tuple;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -477,7 +478,7 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
         new ChatComponentText(""), new ChatComponentText("")
       );
 
-    Map<Pattern, String> vars = ConfigValue.makeEmpty()
+    Map<String, Tuple<Pattern, String>> vars = ConfigValue.makeEmpty()
       .withVariable("player", p.getName())
       .withVariable("num_online", Bukkit.getOnlinePlayers().size())
       .withVariable("num_slots", plugin.getServer().getMaxPlayers())

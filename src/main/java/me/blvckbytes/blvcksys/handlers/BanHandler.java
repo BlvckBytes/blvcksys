@@ -14,6 +14,7 @@ import me.blvckbytes.blvcksys.persistence.query.FieldOperation;
 import me.blvckbytes.blvcksys.persistence.query.FieldQueryGroup;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import me.blvckbytes.blvcksys.util.TimeUtil;
+import net.minecraft.util.Tuple;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -129,7 +130,7 @@ public class BanHandler implements IBanHandler, Listener {
   }
 
   @Override
-  public Map<Pattern, String> buildBanVariables(BanModel ban) {
+  public Map<String, Tuple<Pattern, String>> buildBanVariables(BanModel ban) {
     int remaining = 0;
 
     // Remaining: (createdAt + durationSections) - now

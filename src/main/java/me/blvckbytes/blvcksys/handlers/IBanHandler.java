@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.handlers;
 
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.BanModel;
+import net.minecraft.util.Tuple;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
@@ -75,7 +76,7 @@ public interface IBanHandler {
    * @param ban Ban model to use as a variable value supplier
    * @return Variable map
    */
-  Map<Pattern, String> buildBanVariables(BanModel ban);
+  Map<String, Tuple<Pattern, String>> buildBanVariables(BanModel ban);
 
   /**
    * Find a specific ban by it's ID

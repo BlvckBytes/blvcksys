@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.config;
 
 import net.md_5.bungee.api.chat.TextComponent;
+import net.minecraft.util.Tuple;
 import org.bukkit.ChatColor;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,7 +39,7 @@ public class ConfigValue {
 
   // Variable names and their values that need to be substituted
   // Names are translated to a pattern when added to the instance
-  private final Map<Pattern, String> vars;
+  private final Map<String, Tuple<Pattern, String>> vars;
 
   // Global prefix value
   private final String prefix;
@@ -97,8 +98,11 @@ public class ConfigValue {
   public ConfigValue withVariable(String name, @Nullable Object value) {
     int flags = Pattern.LITERAL | (ignoreVarCasing ? Pattern.CASE_INSENSITIVE : 0);
     this.vars.put(
-      Pattern.compile(varMakerS + name + varMakerE, flags),
-      value == null ? "null" : value.toString()
+      name.toLowerCase(),
+      new Tuple<>(
+        Pattern.compile(varMakerS + name + varMakerE, flags),
+        value == null ? "null" : value.toString()
+      )
     );
     return this;
   }
@@ -107,7 +111,7 @@ public class ConfigValue {
    * Apply an external map of variables all at once
    * @param variables Map of variables
    */
-  public ConfigValue withVariables(Map<Pattern, String> variables) {
+  public ConfigValue withVariables(Map<String, Tuple<Pattern, String>> variables) {
     this.vars.putAll(variables);
     return this;
   }
@@ -116,7 +120,7 @@ public class ConfigValue {
    * Export all currently known variables
    * @return Map of variables
    */
-  public Map<Pattern, String> exportVariables() {
+  public Map<String, Tuple<Pattern, String>> exportVariables() {
     return Collections.unmodifiableMap(this.vars);
   }
 
@@ -254,10 +258,14 @@ public class ConfigValue {
    * @return Transformed result
    */
   private String applyVariables(String input) {
-    for (Map.Entry<Pattern, String> var : vars.entrySet())
+    for (Map.Entry<String, Tuple<Pattern, String>> var : vars.entrySet()) {
+      Tuple<Pattern, String> t = var.getValue();
+
       // Escape dollars before applying the regex replace, unescape afterwards
       // This avoids illegal group reference exceptions
-      input = var.getKey().matcher(input).replaceAll(var.getValue().replace("$", "\\$")).replace("\\$", "$");
+      input = t.a().matcher(input).replaceAll(t.b().replace("$", "\\$")).replace("\\$", "$");
+    }
+
     return input;
   }
 

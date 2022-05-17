@@ -14,6 +14,7 @@ import me.blvckbytes.blvcksys.persistence.query.FieldOperation;
 import me.blvckbytes.blvcksys.persistence.query.FieldQueryGroup;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import me.blvckbytes.blvcksys.util.TimeUtil;
+import net.minecraft.util.Tuple;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -113,7 +114,7 @@ public class MuteHandler implements IMuteHandler, Listener {
   }
 
   @Override
-  public Map<Pattern, String> buildMuteVariables(MuteModel mute) {
+  public Map<String, Tuple<Pattern, String>> buildMuteVariables(MuteModel mute) {
     // Remaining: (createdAt + durationSections) - now
     int remaining = (int) Math.max(0,
       (mute.getCreatedAt().getTime() / 1000 + mute.getDurationSeconds()) -
@@ -195,7 +196,7 @@ public class MuteHandler implements IMuteHandler, Listener {
   }
 
   //=========================================================================//
-  //                                    API                                  //
+  //                                 Listener                                //
   //=========================================================================//
 
   @EventHandler

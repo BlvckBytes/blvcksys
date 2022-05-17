@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.handlers;
 
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.MuteModel;
+import net.minecraft.util.Tuple;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
@@ -67,7 +68,7 @@ public interface IMuteHandler {
    * @param mute Mute model to use as a variable value supplier
    * @return Variable map
    */
-  Map<Pattern, String> buildMuteVariables(MuteModel mute);
+  Map<String, Tuple<Pattern, String>> buildMuteVariables(MuteModel mute);
 
   /**
    * Find a specific mute by it's ID

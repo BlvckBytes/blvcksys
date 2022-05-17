@@ -168,6 +168,45 @@ public enum ConfigKey {
   PLAYERLIST_VERSION_MISMATCH("playerlist.version_mismatch", "$2Version {{version}}"),
 
   //=========================================================================//
+  //                               WARN Commands                             //
+  //=========================================================================//
+
+  WARN_REVOKED_BROADCAST(
+    "warn.revoked_broadcast",
+    "$0Der $3{{warn_number}}te Warn $0vom Spieler $3{{target}} $0wurde $3aufgehoben$0!",
+    "$0Von: $3{{revoker}}",
+    "$0Grund: $3{{revocation_reason}}"
+  ),
+  WARN_CASTED_BROADCAST(
+    "warn.casted_broadcast",
+    "$0Der Spieler $3{{target}} $0erhielt die $3{{warn_number}}te Verwarnung$0!",
+    "$0Von: $3{{creator}}",
+    "$0Dauer: $3{{duration}}",
+    "$0Grund: $3{{reason}}"
+  ),
+  WARN_DURATION_PERMANENT("warn.duration_permanent", "&cPermanent"),
+  WARN_REMAINING_PERMANENT("warn.remaining_permanent", "&c/"),
+  WARN_NO_REASON("warn.no_reason", "&cKein Grund angegeben"),
+  WARN_NO_ADDRESS("warn.no_address", "&c/"),
+  WARN_NO_REVOKED("warn.no_revoked", "&c/"),
+  WARN_MAX_REACHED("warn.max_reached", "$0Der Spieler $4{{target}} $0hat bereits die maximale Anzahl an Warns von $4{{max_warns}} $0erreicht!"),
+  WARN_UNKNOWN("warn.unknown", "$0Es existiert kein Warn mit der ID $4{{id}}$0!"),
+  WARN_ALREADY_REVOKED("warn.already_revoked", "$0Der Warn mit der ID $4{{id}} $0wurde bereits aufgehoben!"),
+  WARN_NOT_ACTIVE("warn.not_active", "$0Der Warn mit der ID $4{{id}} $0ist nicht mehr $4aktiv."),
+  WARN_STILL_ACTIVE("warn.still_active", "$0Der Warn mit der ID $4{{id}} $0ist noch $4aktiv $0und kann daher nicht gelöscht werden."),
+  WARN_DELETED("warn.deleted", "$0Der Warn mit der ID $3{{id}} $0wurde $3gelöscht$0!"),
+  WARN_LIST_EMPTY("warn.list.empty", "$0Der Spieler $4{{target}} $0hat keine $4{{type}} $0Warns!"),
+  WARN_LIST_HEADLINE(
+    "warn.list.headline",
+    "$3{{type}} $0Warns von $3{{target}}$0:",
+    "$1| $3Ersteller $1| $3Datum $1| $3Dauer $1| $3Aktiv $1|"
+  ),
+  WARN_LIST_YES("warn.list.yes", "&aJa"),
+  WARN_LIST_NO("warn.list.no", "&cNein"),
+  WARN_LIST_ENTRY("warn.list.entry", "$1| $0{{creator}} $1| $0{{created_at}} $1| $0{{duration}} $1| $0{{is_active}} $1|"),
+  WARN_LIST_HOVER("warn.list.hover", "$0Klick: $3{{command}}"),
+
+  //=========================================================================//
   //                               MUTE Commands                             //
   //=========================================================================//
 
@@ -214,8 +253,9 @@ public enum ConfigKey {
   ),
   MUTE_NOT_REVOKED("mute.not_revoked", "$0Der Mute mit der ID $4{{id}} $0wurde $4noch nicht $0aufgehoben!"),
   MUTE_EDIT_SAVED("mute.edit_saved", "$0Die Änderungen für den Mute mit der ID $3{{id}} $0wurden $3gespeichert$0."),
-  MUTE_STILL_ACTIVE("mute.still_active", "$0Dieser Mute mit der ID $4{{id}} $0ist noch $4aktiv $0und kann daher nicht gelöscht werden."),
-  MUTE_DELETED("mute.deleted", "$0Dieser Mute mit der ID $3{{id}} $0wurde $3gelöscht$0!"),
+  MUTE_STILL_ACTIVE("mute.still_active", "$0Der Mute mit der ID $4{{id}} $0ist noch $4aktiv $0und kann daher nicht gelöscht werden."),
+  MUTE_NOT_ACTIVE("mute.not_active", "$0Der Mute mit der ID $4{{id}} $0ist nicht mehr $4aktiv."),
+  MUTE_DELETED("mute.deleted", "$0Der Mute mit der ID $3{{id}} $0wurde $3gelöscht$0!"),
   MUTE_LIST_EMPTY("mute.list.empty", "$0Der Spieler $4{{target}} $0hat keine $4{{type}} $0Mutes!"),
   MUTE_LIST_HEADLINE(
     "mute.list.headline",
@@ -270,8 +310,9 @@ public enum ConfigKey {
   BAN_LIST_YES("ban.list.yes", "&aJa"),
   BAN_LIST_NO("ban.list.no", "&cNein"),
   BAN_UNKNOWN("ban.unknown", "$0Es existiert kein Bann mit der ID $4{{id}}$0!"),
-  BAN_STILL_ACTIVE("ban.still_active", "$0Dieser Bann mit der ID $4{{id}} $0ist noch $4aktiv $0und kann daher nicht gelöscht werden."),
-  BAN_DELETED("ban.deleted", "$0Dieser Bann mit der ID $3{{id}} $0wurde $3gelöscht$0!"),
+  BAN_STILL_ACTIVE("ban.still_active", "$0Der Bann mit der ID $4{{id}} $0ist noch $4aktiv $0und kann daher nicht gelöscht werden."),
+  BAN_NOT_ACTIVE("ban.not_active", "$0Der Bann mit der ID $4{{id}} $0ist nicht mehr $4aktiv."),
+  BAN_DELETED("ban.deleted", "$0Der Bann mit der ID $3{{id}} $0wurde $3gelöscht$0!"),
   BAN_ALREADY_REVOKED("ban.already_revoked", "$0Der Bann mit der ID $4{{id}} $0wurde bereits aufgehoben!"),
   BAN_EDIT_SAVED("ban.edit_saved", "$0Die Änderungen für den Bann mit der ID $3{{id}} $0wurden $3gespeichert$0."),
   BAN_NOT_REVOKED("ban.not_revoked", "$0Der Bann mit der ID $4{{id}} $0wurde $4noch nicht $0aufgehoben!"),

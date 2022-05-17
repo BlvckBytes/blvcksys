@@ -784,14 +784,14 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
    * @return Unique constraint, null if there's no unique column
    */
   private String buildUniqueConstraint(MysqlTable table) {
-    if (table.columns().stream().noneMatch(MysqlColumn::isUnique))
-      return null;
-
     List<String> tarColNames = table.columns().stream()
       .filter(MysqlColumn::isUnique)
       .filter(col -> !col.isPrimaryKey())
       .map(MysqlColumn::getName)
       .toList();
+
+    if (tarColNames.size() == 0)
+      return null;
 
     // Triple underscore separates columns, since the single underscore
     // is reserved for casing and the dual for inlining columns

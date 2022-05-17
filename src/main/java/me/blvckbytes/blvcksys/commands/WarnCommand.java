@@ -7,12 +7,14 @@ import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IWarnHandler;
+import me.blvckbytes.blvcksys.persistence.models.WarnModel;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Optional;
 import java.util.stream.Stream;
 
 /*
@@ -60,20 +62,20 @@ public class WarnCommand extends APlayerCommand {
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     OfflinePlayer target = offlinePlayer(args, 0);
+    String reason = argvar(args, 1, "");
 
-    int hasCount = warns.countActiveWarns(target);
-    int maxWarns = warns.getMaxActiveWarns();
-    if (hasCount >= maxWarns) {
+    Optional<WarnModel> warn = warns.createWarn(p, target, null, reason);
+
+    if (warn.isEmpty()) {
       p.sendMessage(
         cfg.get(ConfigKey.WARN_MAX_REACHED)
           .withVariable("target", target.getName())
-          .withVariable("max_warns", maxWarns)
+          .withVariable("max_warns", warns.getMaxActiveWarns())
           .asScalar()
       );
       return;
     }
 
-    String reason = argvar(args, 1, "");
-    warns.broadcastWarn(warns.createWarn(p, target, null, reason));
+    warns.broadcastWarn(warn.get());
   }
 }

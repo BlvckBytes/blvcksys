@@ -16,7 +16,7 @@ import org.bukkit.OfflinePlayer;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class WarnModel extends ARevokeableModel {
+public class WarnModel extends ARevokeableModel implements INumberedModel {
 
   @ModelProperty
   private OfflinePlayer creator;
@@ -31,6 +31,8 @@ public class WarnModel extends ARevokeableModel {
   // Null means that the creator didn't provide a reason
   @ModelProperty(isNullable = true)
   private String reason;
+
+  private int resultNumber;
 
   /**
    * Get whether this warn is currently active

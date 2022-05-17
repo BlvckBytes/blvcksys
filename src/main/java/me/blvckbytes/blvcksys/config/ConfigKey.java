@@ -199,11 +199,11 @@ public enum ConfigKey {
   WARN_LIST_HEADLINE(
     "warn.list.headline",
     "$3{{type}} $0Warns von $3{{target}}$0:",
-    "$1| $3Ersteller $1| $3Datum $1| $3Dauer $1| $3Aktiv $1|"
+    "$1| $3# $1| $3Ersteller $1| $3Datum $1| $3Dauer $1| $3Aktiv $1|"
   ),
   WARN_LIST_YES("warn.list.yes", "&aJa"),
   WARN_LIST_NO("warn.list.no", "&cNein"),
-  WARN_LIST_ENTRY("warn.list.entry", "$1| $0{{creator}} $1| $0{{created_at}} $1| $0{{duration}} $1| $0{{is_active}} $1|"),
+  WARN_LIST_ENTRY("warn.list.entry", "$1| $0{{warn_number}} $1| $0{{creator}} $1| $0{{created_at}} $1| $0{{duration}} $1| $0{{is_active}} $1|"),
   WARN_LIST_HOVER("warn.list.hover", "$0Klick: $3{{command}}"),
 
   //=========================================================================//

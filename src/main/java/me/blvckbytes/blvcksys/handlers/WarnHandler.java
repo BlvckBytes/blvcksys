@@ -61,16 +61,23 @@ public class WarnHandler implements IWarnHandler {
   //=========================================================================//
 
   @Override
-  public WarnModel createWarn(
+  public Optional<WarnModel> createWarn(
     OfflinePlayer creator,
     OfflinePlayer target,
     Integer durationSeconds,
     @Nullable String reason
   ) throws PersistenceException {
-    WarnModel warn = new WarnModel(creator, target, durationSeconds, reason);
+    int hasCount = countActiveWarns(target);
+    int maxWarns = getMaxActiveWarns();
+
+    if (hasCount >= maxWarns)
+      return Optional.empty();
+
+    WarnModel warn = new WarnModel(creator, target, durationSeconds, reason, hasCount + 1);
     pers.store(warn);
     checkActiveWarns(target);
-    return warn;
+
+    return Optional.of(warn);
   }
 
   @Override
@@ -106,12 +113,11 @@ public class WarnHandler implements IWarnHandler {
       );
     }
 
-    // TODO: Add warn_number (sequence number, counting using created_at order)
-
     return ConfigValue.makeEmpty()
       .withVariable("creator", warn.getCreator().getName())
       .withVariable("target", warn.getTarget().getName())
       .withVariable("created_at", warn.getCreatedAtStr())
+      .withVariable("warn_number", warn.getResultNumber())
       .withVariable(
         "duration",
         warn.getDurationSeconds() == null ?

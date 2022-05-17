@@ -27,9 +27,10 @@ public interface IWarnHandler {
    * @param target Target to be warned
    * @param durationSeconds Duration in seconds
    * @param reason Reason of this warn, null means none
-   * @return The warn that has just been created
+   * @return The warn that has just been created, empty if the
+   * player has reached the maximum number of warns
    */
-  WarnModel createWarn(
+  Optional<WarnModel> createWarn(
     OfflinePlayer creator,
     OfflinePlayer target,
     Integer durationSeconds,

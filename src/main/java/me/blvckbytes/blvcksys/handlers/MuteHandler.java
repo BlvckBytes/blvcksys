@@ -162,6 +162,8 @@ public class MuteHandler implements IMuteHandler, Listener {
         MuteModel.class,
         "id", EqualityOperation.EQ, id
       )
+        .orderBy("updatedAt", false)
+        .orderBy("createdAt", false)
     );
   }
 

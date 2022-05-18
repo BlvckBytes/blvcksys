@@ -199,6 +199,8 @@ public class BanHandler implements IBanHandler, Listener {
         BanModel.class,
         "id", EqualityOperation.EQ, id
       )
+        .orderBy("updatedAt", false)
+        .orderBy("createdAt", false)
     );
   }
 

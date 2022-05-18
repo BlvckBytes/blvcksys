@@ -1103,7 +1103,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
     // Find all columns that are row counter receivers if not only the count is selected
     List<String> rowCounters = new ArrayList<>();
-    if (!onlyCount) {
+    if (!onlyCount && !delete) {
       rowCounters = refl.findAllFields(model)
         .stream()
         .filter(f -> f.isAnnotationPresent(RowNumber.class))

@@ -9,10 +9,11 @@ import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.FieldQueryGroup;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -22,12 +23,13 @@ import java.util.Optional;
   executing player and provides an abstracted API.
  */
 @AutoConstruct
-public class IgnoreHandler implements IIgnoreHandler {
+public class IgnoreHandler implements IIgnoreHandler, Listener {
 
   // Default values of all ignores
   private final static boolean DEF_MSG_IGNORE = false;
   private final static boolean DEF_CHAT_IGNORE = false;
 
+  private final Set<OfflinePlayer> cached;
   private final Map<OfflinePlayer, PlayerIgnoreModel> cache;
   private final IPersistence pers;
 
@@ -36,6 +38,7 @@ public class IgnoreHandler implements IIgnoreHandler {
   ) {
     this.pers = pers;
     this.cache = new HashMap<>();
+    this.cached = new HashSet<>();
   }
 
   //=========================================================================//
@@ -71,6 +74,16 @@ public class IgnoreHandler implements IIgnoreHandler {
   }
 
   //=========================================================================//
+  //                                Listener                                 //
+  //=========================================================================//
+
+  @EventHandler
+  public void onQuit(PlayerQuitEvent e) {
+    cache.remove(e.getPlayer());
+    cached.remove(e.getPlayer());
+  }
+
+  //=========================================================================//
   //                                Utilities                                //
   //=========================================================================//
 
@@ -95,6 +108,7 @@ public class IgnoreHandler implements IIgnoreHandler {
 
     pers.store(model);
     cache.put(executor, model);
+    cached.add(executor);
 
     return model;
   }
@@ -106,8 +120,10 @@ public class IgnoreHandler implements IIgnoreHandler {
    * @return Model if it exists, empty otherwise
    */
   private Optional<PlayerIgnoreModel> getModel(OfflinePlayer executor, OfflinePlayer target) throws PersistenceException {
-    if (cache.containsKey(executor))
-      return Optional.of(cache.get(executor));
+    if (cached.contains(executor))
+      return cache.containsKey(executor) ? Optional.of(cache.get(executor)) : Optional.empty();
+
+    cached.add(executor);
     return pers.findFirst(buildQuery(executor, target))
       .map(res -> {
         cache.put(executor, res);

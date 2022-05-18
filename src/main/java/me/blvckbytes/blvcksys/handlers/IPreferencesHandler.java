@@ -35,4 +35,17 @@ public interface IPreferencesHandler {
    * @param hidden Whether the scoreboard should be hidden
    */
   void setChatHidden(Player p, boolean hidden);
+
+  /**
+   * Get the msg disabled preference
+   * @param p Target player
+   */
+  boolean isMsgDisabled(Player p);
+
+  /**
+   * Set the msg disabled preference
+   * @param p Target player
+   * @param disabled Whether private messages should be disabled
+   */
+  void setMsgDisabled(Player p, boolean disabled);
 }

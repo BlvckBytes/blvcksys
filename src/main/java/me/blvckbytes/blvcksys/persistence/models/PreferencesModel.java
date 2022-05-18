@@ -25,4 +25,7 @@ public class PreferencesModel extends APersistentModel {
 
   @ModelProperty(migrationDefault = MigrationDefault.FALSE)
   private boolean chatHidden;
+
+  @ModelProperty(migrationDefault = MigrationDefault.FALSE)
+  private boolean msgDisabled;
 }

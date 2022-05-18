@@ -3,6 +3,7 @@ package me.blvckbytes.blvcksys.commands;
 import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.handlers.IPreferencesHandler;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -33,11 +34,14 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener,
   // B executes: /msg A results in: B->A, A->B
   private final Map<Player, Player> partners;
 
+  private final IPreferencesHandler prefs;
+
   public MsgCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
-    @AutoInject MCReflect refl
+    @AutoInject MCReflect refl,
+    @AutoInject IPreferencesHandler prefs
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -49,6 +53,8 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener,
     );
 
     this.partners = new HashMap<>();
+
+    this.prefs = prefs;
   }
 
   //=========================================================================//
@@ -74,12 +80,35 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener,
     Player recipient = onlinePlayer(args, 0);
 
     // Cannot send yourself messages
-    if (recipient == p)
-      customError(
+    if (recipient == p) {
+      p.sendMessage(
         cfg.get(ConfigKey.MSG_SELF)
           .withPrefix()
           .asScalar()
       );
+      return;
+    }
+
+    // Sender has msg disabled
+    if (prefs.isMsgDisabled(p)) {
+      p.sendMessage(
+        cfg.get(ConfigKey.MSG_DISABLED_SELF)
+          .withPrefix()
+          .asScalar()
+      );
+      return;
+    }
+
+    // Receiver has msg disabled
+    if (prefs.isMsgDisabled(recipient)) {
+      p.sendMessage(
+        cfg.get(ConfigKey.MSG_DISABLED_OTHERS)
+          .withPrefix()
+          .withVariable("receiver", recipient.getName())
+          .asScalar()
+      );
+      return;
+    }
 
     // Get the message
     String message = argvar(args, 1);

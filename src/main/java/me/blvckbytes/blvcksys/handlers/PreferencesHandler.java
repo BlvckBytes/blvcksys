@@ -27,6 +27,7 @@ public class PreferencesHandler implements IPreferencesHandler {
   // Default values of all preferences
   private final static boolean DEF_SCOREBOARD_HIDDEN = false;
   private final static boolean DEF_CHAT_HIDDEN = false;
+  private final static boolean DEF_MSG_DISABLED = false;
 
   private final IPersistence pers;
   private final Map<UUID, PreferencesModel> cache;
@@ -70,6 +71,22 @@ public class PreferencesHandler implements IPreferencesHandler {
     getOrCreatePreferences(p)
       .ifPresent(prefs -> {
         prefs.setChatHidden(hidden);
+        pers.store(prefs);
+      });
+  }
+
+  @Override
+  public boolean isMsgDisabled(Player p) {
+    return getOrCreatePreferences(p)
+      .map(PreferencesModel::isMsgDisabled)
+      .orElse(DEF_MSG_DISABLED);
+  }
+
+  @Override
+  public void setMsgDisabled(Player p, boolean disabled) {
+    getOrCreatePreferences(p)
+      .ifPresent(prefs -> {
+        prefs.setMsgDisabled(disabled);
         pers.store(prefs);
       });
   }
@@ -129,7 +146,8 @@ public class PreferencesHandler implements IPreferencesHandler {
     PreferencesModel prefs = new PreferencesModel(
       p,
       DEF_SCOREBOARD_HIDDEN,
-      DEF_CHAT_HIDDEN
+      DEF_CHAT_HIDDEN,
+      DEF_MSG_DISABLED
     );
     pers.store(prefs);
   }

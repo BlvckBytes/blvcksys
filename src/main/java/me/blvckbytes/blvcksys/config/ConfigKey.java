@@ -702,6 +702,8 @@ public enum ConfigKey {
   MSG_SENDER("msg.sender", "$1($2Du $0-> $2{{receiver}}$1)$0: {{message}}"),
   MSG_RECEIVER("msg.receiver", "$1($2{{sender}}$1 -> $2Dir$1)$0: {{message}}"),
   MSG_NO_PARTNER("msg.no_partner", "$4Du hast keinen aktiven Nachrichten-Partner!"),
+  MSG_DISABLED_SELF("msg.disabled.self", "$0Du hast deine privaten Nachrichten $3deaktiviert$0!"),
+  MSG_DISABLED_OTHERS("msg.disabled.others", "$3{{receiver}} $0hat privaten Nachrichten $3deaktiviert$0!"),
   MSG_SELF("msg.self", "$4Du kannst dir selbst keine Nachrichten schreiben!"),
 
   //=========================================================================//
@@ -764,6 +766,13 @@ public enum ConfigKey {
   CLEARINVENTORY_CLEARED_SENDER("clearinventory.cleared.sender", "$0Das Inventar von $3{{target}} $0wurde $3geleert$0."),
   CLEARINVENTORY_CLEARED_TARGET("clearinventory.cleared.target", "$3{{issuer}} $0hat dein Inventar $3geleert$0."),
   CLEARINVENTORY_CANCELLED("clearinventory.cancelled", "$0Du hast die Leerung $4abgebrochen$0!"),
+
+  //=========================================================================//
+  //                             MsgToggle Command                           //
+  //=========================================================================//
+
+  MSGTOGGLE_DISABLED("msgtoggle.disabled", "$0Du empfängst nun $3keine $0privaten Nachrichten mehr."),
+  MSGTOGGLE_ENABLED("msgtoggle.enabled", "$0Du empfängst nun $3wieder $0privaten Nachrichten."),
 
   //=========================================================================//
   //                            Scoreboard Command                           //

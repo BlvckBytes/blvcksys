@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.persistence.models;
 
 import lombok.*;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
+import me.blvckbytes.blvcksys.persistence.RowNumber;
 import org.bukkit.OfflinePlayer;
 
 /*
@@ -16,7 +17,7 @@ import org.bukkit.OfflinePlayer;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public class WarnModel extends ARevokeableModel implements INumberedModel {
+public class WarnModel extends ARevokeableModel {
 
   @ModelProperty
   private OfflinePlayer creator;
@@ -32,7 +33,8 @@ public class WarnModel extends ARevokeableModel implements INumberedModel {
   @ModelProperty(isNullable = true)
   private String reason;
 
-  private int resultNumber;
+  @RowNumber(partitionedBy = "target__uuid")
+  private int number;
 
   /**
    * Get whether this warn is currently active

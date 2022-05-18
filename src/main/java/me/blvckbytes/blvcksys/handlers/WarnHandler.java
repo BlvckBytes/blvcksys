@@ -117,7 +117,7 @@ public class WarnHandler implements IWarnHandler {
       .withVariable("creator", warn.getCreator().getName())
       .withVariable("target", warn.getTarget().getName())
       .withVariable("created_at", warn.getCreatedAtStr())
-      .withVariable("warn_number", warn.getResultNumber())
+      .withVariable("warn_number", warn.getNumber())
       .withVariable(
         "duration",
         warn.getDurationSeconds() == null ?
@@ -165,6 +165,8 @@ public class WarnHandler implements IWarnHandler {
         WarnModel.class,
         "id", EqualityOperation.EQ, id
       )
+        .orderBy("createdAt", false)
+        .orderBy("updatedAt", false)
     );
   }
 

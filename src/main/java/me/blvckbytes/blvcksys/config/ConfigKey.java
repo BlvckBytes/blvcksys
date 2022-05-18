@@ -205,6 +205,20 @@ public enum ConfigKey {
   WARN_LIST_NO("warn.list.no", "&cNein"),
   WARN_LIST_ENTRY("warn.list.entry", "$1| $0{{warn_number}} $1| $0{{creator}} $1| $0{{created_at}} $1| $0{{duration}} $1| $0{{is_active}} $1|"),
   WARN_LIST_HOVER("warn.list.hover", "$0Klick: $3{{command}}"),
+  WARN_INFO_SCREEN(
+    "warn.info.screen",
+    "$0Warn mit der ID $3{{id}}$0:",
+    "$0#: $3{{warn_number}}",
+    "$0Ziel: $3{{target}}",
+    "$0Erstellt am: $3{{created_at}}",
+    "$0Ersteller: $3{{creator}}",
+    "$0Dauer: $3{{duration}}",
+    "$0Verbleibend: $3{{remaining}}",
+    "$0Grund: $3{{reason}}",
+    "$0Aufgehoben von: $3{{revoker}}",
+    "$0Aufgehoben am: $3{{revoked_at}}",
+    "$0Aufhebegrund: $3{{revocation_reason}}"
+  ),
 
   //=========================================================================//
   //                               MUTE Commands                             //

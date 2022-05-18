@@ -249,6 +249,17 @@ public enum ConfigKey {
   ),
 
   //=========================================================================//
+  //                                PAY Command                              //
+  //=========================================================================//
+
+  PAY_INVALID_AMOUNT("pay.invalid_amount", "$0Der Betrag muss $4größer als 0 $0sein!"),
+  PAY_TOO_MUCH("pay.too_much", "$0Du kannst maximal $3{{available}} Coins $0überweisen!"),
+  PAY_SELF("pay.self", "$0Du kannst $4nicht $0an dich $4selbst $0überweisen!"),
+  PAY_HAS_NONE("pay.has_none", "$0Du hast $4keine Coins$0!"),
+  PAY_TRANSFERED_SENDER("pay.transfered.sender", "$0Du hast $3{{amount}} Coins $0an $3{{target}} $0überwiesen."),
+  PAY_TRANSFERED_RECEIVER("pay.transfered.receiver", "$3{{sender}} $0hat $3{{amount}} Coins $0an dich überwiesen."),
+
+  //=========================================================================//
   //                               MUTE Commands                             //
   //=========================================================================//
 

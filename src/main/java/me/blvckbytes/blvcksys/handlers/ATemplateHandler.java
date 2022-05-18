@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.handlers;
 
 import net.minecraft.util.Tuple;
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
@@ -82,6 +83,9 @@ public abstract class ATemplateHandler {
   protected Tuple<Long, List<Object>> buildLineTemplate(String line) {
     List<Object> res = new ArrayList<>();
     long minUpdatePeriod = -1;
+
+    // Translate colors
+    line = ChatColor.translateAlternateColorCodes('&', line);
 
     // Char iteration state machine
     int lastOpenCurly = -1;

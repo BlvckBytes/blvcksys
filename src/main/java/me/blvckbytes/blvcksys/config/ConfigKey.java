@@ -680,6 +680,7 @@ public enum ConfigKey {
 
   SIGNEDIT_NOSIGN("signedit.nosign", "$0Du hast aktuell $4kein $0Schild auf deinem $4Fadenkreuz$0!"),
   SIGNEDIT_NOBUILD("signedit.nobuild", "$0Du kannst in diesem Gebiet $4nicht bauen$0!"),
+  SIGNEDIT_IS_PSIGN("signedit.is_psign", "$0Dieses Schild wird bereits als $4PSign verwaltet$0!"),
   SIGNEDIT_CANCELLED("signedit.cancelled", "$4Die Bearbeitung wurde abgebrochen!"),
 
   //=========================================================================//
@@ -705,6 +706,38 @@ public enum ConfigKey {
   MSG_DISABLED_SELF("msg.disabled.self", "$0Du hast deine privaten Nachrichten $3deaktiviert$0!"),
   MSG_DISABLED_OTHERS("msg.disabled.others", "$3{{receiver}} $0hat privaten Nachrichten $3deaktiviert$0!"),
   MSG_SELF("msg.self", "$4Du kannst dir selbst keine Nachrichten schreiben!"),
+
+  //=========================================================================//
+  //                              PSIGN Command                              //
+  //=========================================================================//
+
+  PSIGN_NOSIGN("psign.nosign", "$0Du hast aktuell $4kein $0Schild auf deinem $4Fadenkreuz$0!"),
+  PSIGN_LOC_NOSIGN("psign.loc_nosign", "$0Bei der Position $4{{location}} $0befindet sich $4kein Schild$0!"),
+  PSIGN_NOBUILD("psign.nobuild", "$0Du kannst in diesem Gebiet $4nicht bauen$0!"),
+  PSIGN_LOC_NOBUILD("psign.loc_nobuild", "$0Du kannst bei $4{{location}} nicht bauen$0!"),
+  PSIGN_NOT_EXISTING("psign.not_existing", "$0Dieses Schild ist $4kein $0verwaltetes PSign!"),
+  PSIGN_DELETED("psign.deleted", "$0Das Schild wird nun $3nicht mehr $0verwaltet."),
+  PSIGN_EXISTS("psign.exists", "$0Das Schild ist $4bereits $0ein verwaltetes PSign!"),
+  PSIGN_INVALID_LINEID("psign.invalid_lineid", "$0Die LineID muss eine Zahl zwischen $41-4 $0sein!"),
+  PSIGN_CREATED("psign.created", "$0Das Schild $3ist nun $0ein verwaltetes PSign."),
+  PSIGN_UPDATED("psign.updated", "$0Die Zeile $3{{line_id}} $0wurde geändert."),
+  PSIGN_LISTLINES(
+    "psign.listlines",
+    "$0Schild bei $3{{location}}",
+    "$0Erstellt von: $3{{creator}}",
+    "$0Erstellt am: $3{{created_at}}",
+    "$0Geändert von: $3{{last_editor}}",
+    "$0Geändert am: $3{{updated_at}}",
+    "$0Zeilen:",
+    "$01: {{line1}}",
+    "$02: {{line2}}",
+    "$03: {{line3}}",
+    "$04: {{line4}}"
+  ),
+  PSIGN_CANNOT_BREAK("psign.cannot_break", "$0Aktive PSigns können $4nicht abgebaut $0werden!"),
+  PSIGN_MOVED("psign.moved", "$0Das Schild wurde zu deinem Fadenkreuz $3bewegt$0."),
+  PSIGN_MOVE_OCCUPIED("psign.move.occupied", "$0Das Zielschild $4wird bereits $0als PSign verwaltet!"),
+  PSIGN_MOVE_NOT_EXISTING("psign.move.not_existing", "$0Das Schild $4{{location}} $0ist kein PSign!"),
 
   //=========================================================================//
   //                               FLY Command                               //

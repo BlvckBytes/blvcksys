@@ -6,6 +6,7 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.events.IChatListener;
+import me.blvckbytes.blvcksys.handlers.IPlayerSignHandler;
 import me.blvckbytes.blvcksys.packets.communicators.signeditor.ISignEditorCommunicator;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
@@ -30,6 +31,7 @@ public class SignEditCommand extends APlayerCommand {
 
   private final IRegionAdapter regions;
   private final ISignEditorCommunicator signEditor;
+  private final IPlayerSignHandler psign;
   private final IChatListener chat;
 
   public SignEditCommand(
@@ -39,7 +41,8 @@ public class SignEditCommand extends APlayerCommand {
     @AutoInject MCReflect refl,
     @AutoInject IRegionAdapter regions,
     @AutoInject ISignEditorCommunicator signEditor,
-    @AutoInject IChatListener chat
+    @AutoInject IChatListener chat,
+    @AutoInject IPlayerSignHandler psign
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -51,6 +54,7 @@ public class SignEditCommand extends APlayerCommand {
     this.regions = regions;
     this.signEditor = signEditor;
     this.chat = chat;
+    this.psign = psign;
   }
 
   @Override
@@ -71,6 +75,16 @@ public class SignEditCommand extends APlayerCommand {
     if (!regions.canBuild(p, b.getLocation())) {
       p.sendMessage(
         cfg.get(ConfigKey.SIGNEDIT_NOBUILD)
+          .withPrefix()
+          .asScalar()
+      );
+      return;
+    }
+
+    // Is already a PSign
+    if (psign.findSign(s).isPresent()) {
+      p.sendMessage(
+        cfg.get(ConfigKey.SIGNEDIT_IS_PSIGN)
           .withPrefix()
           .asScalar()
       );

@@ -1020,9 +1020,27 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     if (!(isNull && (query.getEqOp() == EqualityOperation.EQ || query.getEqOp() == EqualityOperation.NEQ)))
       params.add(new Tuple<>(targColA.getType(), value));
 
+    // Whether to compare using tolerance
+    boolean isCommaComp = (
+      // Not a field operation and not a null value
+      targColB == null && !isNull &&
+      // Targets a float or a double
+      (targColA.getType() == MysqlType.FLOAT || targColA.getType() == MysqlType.DOUBLE)
+    );
+
     return switch (query.getEqOp()) {
-      case EQ -> fieldExpr + " " + (isNull ? "IS NULL" : "= " + ph);
-      case NEQ -> fieldExpr + " " + (isNull ? "IS NOT NULL" : "!= " + ph);
+      case EQ -> {
+        if (isCommaComp)
+          yield "(" + fieldExpr + " - " + ph + ") < 0.01";
+        else
+          yield fieldExpr + " " + (isNull ? "IS NULL" : "= " + ph);
+      }
+      case NEQ -> {
+        if (isCommaComp)
+          yield "(" + fieldExpr + " - " + ph + ") > 0.01";
+        else
+          yield fieldExpr + " " + (isNull ? "IS NOT NULL" : "!= " + ph);
+      }
       case CONT, STARTS, ENDS -> fieldExpr + " LIKE " + ph + " ESCAPE '!'";
       case CONT_IC, STARTS_IC, ENDS_IC -> "LOWER(" + fieldExpr + ") LIKE LOWER(" + ph + ") ESCAPE '!'";
       case EQ_IC -> "LOWER(" + fieldExpr + ") = LOWER(" + ph + ")";

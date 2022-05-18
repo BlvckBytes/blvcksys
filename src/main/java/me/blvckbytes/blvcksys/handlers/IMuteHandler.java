@@ -98,4 +98,11 @@ public interface IMuteHandler {
    * @return Formatted and customized mute screen
    */
   String buildMuteScreen(MuteModel mute);
+
+  /**
+   * Delete a mute permanently
+   * @param mute Mute to delete
+   * @return SUCC on deletion, ERR if the mute is still active, EMPTY if the mute didn't exist
+   */
+  TriResult deleteMute(MuteModel mute);
 }

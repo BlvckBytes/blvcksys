@@ -36,6 +36,7 @@ import java.util.regex.Pattern;
 public class MuteHandler implements IMuteHandler, Listener {
 
   private final Map<OfflinePlayer, MuteModel> cache;
+  private final Set<OfflinePlayer> cached;
 
   private final IPersistence pers;
   private final IChatListener chat;
@@ -49,6 +50,7 @@ public class MuteHandler implements IMuteHandler, Listener {
     @AutoInject TimeUtil time
   ) {
     this.cache = new HashMap<>();
+    this.cached = new HashSet<>();
 
     this.pers = pers;
     this.chat = chat;
@@ -69,7 +71,8 @@ public class MuteHandler implements IMuteHandler, Listener {
   ) throws PersistenceException {
     MuteModel mute = new MuteModel(creator, target, durationSeconds, reason);
     pers.store(mute);
-    cache.remove(mute.getTarget());
+    cache.put(mute.getTarget(), mute);
+    cached.add(target);
     return mute;
   }
 
@@ -95,6 +98,16 @@ public class MuteHandler implements IMuteHandler, Listener {
 
   @Override
   public Optional<MuteModel> isCurrentlyMuted(OfflinePlayer target) {
+    if (!cached.contains(target)) {
+      cached.add(target);
+
+      return pers.findFirst(buildQuery(target, false, true))
+        .map(model -> {
+          cache.put(target, model);
+          return model;
+        });
+    }
+
     MuteModel mute = cache.get(target);
 
     if (mute != null) {
@@ -106,11 +119,7 @@ public class MuteHandler implements IMuteHandler, Listener {
       return Optional.of(mute);
     }
 
-    return pers.findFirst(buildQuery(target, false, true))
-      .map(res -> {
-        cache.put(target, res);
-        return res;
-      });
+    return Optional.empty();
   }
 
   @Override
@@ -169,6 +178,7 @@ public class MuteHandler implements IMuteHandler, Listener {
     mute.setRevoked(revoker, reason);
     pers.store(mute);
     cache.remove(mute.getTarget());
+    cached.add(mute.getTarget());
 
     return mute;
   }
@@ -191,6 +201,20 @@ public class MuteHandler implements IMuteHandler, Listener {
       .asScalar();
   }
 
+  @Override
+  public TriResult deleteMute(MuteModel mute) {
+    if (mute.isActive())
+      return TriResult.ERR;
+
+    cache.remove(mute.getTarget());
+    cached.add(mute.getTarget());
+
+    if (!pers.delete(mute))
+      return TriResult.EMPTY;
+
+    return TriResult.SUCC;
+  }
+
   //=========================================================================//
   //                                 Listener                                //
   //=========================================================================//
@@ -198,6 +222,7 @@ public class MuteHandler implements IMuteHandler, Listener {
   @EventHandler
   public void onQuit(PlayerQuitEvent e) {
     cache.remove(e.getPlayer());
+    cached.remove(e.getPlayer());
   }
 
   //=========================================================================//

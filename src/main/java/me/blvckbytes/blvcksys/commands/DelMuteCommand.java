@@ -7,6 +7,7 @@ import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IMuteHandler;
+import me.blvckbytes.blvcksys.handlers.TriResult;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.MuteModel;
 import me.blvckbytes.blvcksys.util.MCReflect;
@@ -77,7 +78,19 @@ public class DelMuteCommand extends APlayerCommand {
       return;
     }
 
-    if (mute.get().isActive()) {
+    TriResult res = mutes.deleteMute(mute.get());
+
+    if (res == TriResult.SUCC) {
+      p.sendMessage(
+        cfg.get(ConfigKey.MUTE_DELETED)
+          .withPrefix()
+          .withVariable("id", id)
+          .asScalar()
+      );
+      return;
+    }
+
+    if (res == TriResult.ERR) {
       p.sendMessage(
         cfg.get(ConfigKey.MUTE_STILL_ACTIVE)
           .withPrefix()
@@ -87,13 +100,14 @@ public class DelMuteCommand extends APlayerCommand {
       return;
     }
 
-    pers.delete(mute.get());
-
-    p.sendMessage(
-      cfg.get(ConfigKey.MUTE_DELETED)
-        .withPrefix()
-        .withVariable("id", id)
-        .asScalar()
-    );
+    if (res == TriResult.EMPTY) {
+      p.sendMessage(
+        cfg.get(ConfigKey.MUTE_UNKNOWN)
+          .withPrefix()
+          .withVariable("id", id)
+          .asScalar()
+      );
+      return;
+    }
   }
 }

@@ -8,7 +8,6 @@ import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.di.IAutoConstructer;
 import me.blvckbytes.blvcksys.persistence.*;
 import me.blvckbytes.blvcksys.persistence.exceptions.DuplicatePropertyException;
-import me.blvckbytes.blvcksys.persistence.exceptions.ModelNotFoundException;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.APersistentModel;
 import me.blvckbytes.blvcksys.persistence.query.*;
@@ -111,9 +110,9 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   }
 
   @Override
-  public <T extends APersistentModel>void delete(Class<T> type, UUID id) throws PersistenceException {
+  public <T extends APersistentModel>boolean delete(Class<T> type, UUID id) throws PersistenceException {
     try {
-      deleteModel(type, id);
+      return deleteModel(type, id);
     } catch (PersistenceException e) {
       throw e;
     } catch (Exception e) {
@@ -212,9 +211,10 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   }
 
   @Override
-  public void delete(APersistentModel model) throws PersistenceException {
-    delete(model.getClass(), model.getId());
+  public boolean delete(APersistentModel model) throws PersistenceException {
+    boolean res = delete(model.getClass(), model.getId());
     refl.setFieldByName(model, "id", null);
+    return res;
   }
 
   @Override
@@ -1446,10 +1446,10 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   /**
    * Delete an existing modelfrom the database by it's ID
    * @param id ID of the model
+   * @return True if the model could be deleted, false if it didn't exist
    */
-  private void deleteModel(Class<? extends APersistentModel> type, UUID id) throws Exception {
+  private boolean deleteModel(Class<? extends APersistentModel> type, UUID id) throws Exception {
     MysqlTable table = getTableFromModel(type, false);
-    String idStr = id == null ? null : id.toString();
 
     PreparedStatement ps = conn.prepareStatement(
       "DELETE FROM `" + table.name() + "` WHERE `id` = " + uuidToBin(id) + ";"
@@ -1458,9 +1458,10 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     logStatement(ps);
 
     if (ps.executeUpdate() == 0)
-      throw new ModelNotFoundException(dbNameToModelName(table.name(), true), idStr);
+      return false;
 
     ps.close();
+    return true;
   }
 
   //////////////////////////////////// Writing ////////////////////////////////////////

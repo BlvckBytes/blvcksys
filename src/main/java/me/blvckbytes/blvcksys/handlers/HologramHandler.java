@@ -5,7 +5,6 @@ import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.packets.communicators.hologram.IHologramCommunicator;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
-import me.blvckbytes.blvcksys.persistence.exceptions.ModelNotFoundException;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.HologramLineModel;
 import me.blvckbytes.blvcksys.persistence.models.SequenceSortResult;
@@ -86,8 +85,12 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
     // Remove this entry from the cache
     this.cache.remove(name.toLowerCase());
 
-    // Remove this entry from the list of active holograms and destroy it for all players
-    this.holograms.remove(name.toLowerCase()).destroy();
+    // Remove this entry from the list of active holograms
+    MultilineHologram holo = this.holograms.remove(name.toLowerCase());
+
+    // Destroy it for all players
+    if (holo != null)
+      holo.destroy();
 
     return pers.delete(
       new QueryBuilder<>(
@@ -119,16 +122,14 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
 
   @Override
   public boolean deleteHologramLine(HologramLineModel line) throws PersistenceException {
-    try {
-      String name = line.getName();
-      HologramLineModel.deleteSequenceMember(line, pers);
+    String name = line.getName();
+    boolean res = HologramLineModel.deleteSequenceMember(line, pers);
 
-      // Load the changes into cache
+    // Load the changes into cache
+    if (res)
       getHologramLines(name, true);
-      return true;
-    } catch (ModelNotFoundException e) {
-      return false;
-    }
+
+    return res;
   }
 
   @Override

@@ -9,5 +9,6 @@ package me.blvckbytes.blvcksys.persistence.models;
 public enum SequenceSortResult {
   SORTED,
   ID_INVALID,
-  IDS_MISSING
+  IDS_MISSING,
+  MODEL_UNKNOWN
 }

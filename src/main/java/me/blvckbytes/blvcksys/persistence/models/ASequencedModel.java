@@ -85,7 +85,7 @@ public abstract class ASequencedModel extends APersistentModel {
    * @param member Member to delete
    * @param pers Persistence ref
    */
-  public static<T extends ASequencedModel> void deleteSequenceMember(T member, IPersistence pers) throws PersistenceException {
+  public static<T extends ASequencedModel> boolean deleteSequenceMember(T member, IPersistence pers) throws PersistenceException {
     // Find the predecessor which points to the line by "next"
     ASequencedModel predecessor = pers.findFirst(
       new QueryBuilder<>(
@@ -131,7 +131,7 @@ public abstract class ASequencedModel extends APersistentModel {
     // Otherwise: was the only node, nothing to change
 
     // Delete the member which is not used in any other foreign keys anymore
-    pers.delete(member);
+    return pers.delete(member);
   }
 
   /**
@@ -183,6 +183,9 @@ public abstract class ASequencedModel extends APersistentModel {
     IPersistence pers
   ) throws PersistenceException {
     List<T> members = sequentize(pers.find(membersQuery));
+
+    if (members.size() == 0)
+      return new Tuple<>(SequenceSortResult.MODEL_UNKNOWN, 0);
 
     // There are some IDs missing
     if (members.size() > sequence.length)

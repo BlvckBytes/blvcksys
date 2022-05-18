@@ -27,7 +27,6 @@ public interface IHologramHandler {
    * @param name Name of the hologram
    * @param lineIdSequence Sequence of line-IDs in the desired order
    * @return Zero on success, number of missing IDs when missing IDs
-   * @throws PersistenceException {@link me.blvckbytes.blvcksys.persistence.exceptions.ModelNotFoundException} When the name doesn't exist
    */
   Tuple<SequenceSortResult, Integer> sortHologramLines(String name, int[] lineIdSequence) throws PersistenceException;
 

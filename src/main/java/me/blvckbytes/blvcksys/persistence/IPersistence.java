@@ -34,7 +34,7 @@ public interface IPersistence {
    * Delete a previously created model
    * @param model Model to delete
    */
-   void delete(APersistentModel model) throws PersistenceException;
+   boolean delete(APersistentModel model) throws PersistenceException;
 
   /**
    * Delete models by a query
@@ -46,7 +46,7 @@ public interface IPersistence {
    * Delete a previously created model by it's id
    * @param id ID of the model
    */
-  <T extends APersistentModel>void delete(Class<T> type, UUID id) throws PersistenceException;
+  <T extends APersistentModel>boolean delete(Class<T> type, UUID id) throws PersistenceException;
 
   /**
    * Find all models that match the specified query

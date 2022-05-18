@@ -1766,11 +1766,17 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
         // Create a clone of this column that has the foreign field's name as a prefix
         // Use the nullable as well as the unique flags from the original column
-        .map(c -> new MysqlColumn(
+        .map(c -> {
+          // Update the type of this inlined column to match the parent field's uniqueness
+          MysqlType type = MysqlType.fromJavaType(c.getType().getJavaEquivalents()[0], mp.isUnique())
+            .orElseThrow(() -> new PersistenceException("Couldn't find a valid data-type for an inlined column"));
+
+          return new MysqlColumn(
             f.getName() + "__" + c.getName(),
-            c.getType(), mp.isNullable(), c.getMigrationDefault(),
+            type, mp.isNullable(), c.getMigrationDefault(),
             mp.isUnique(), true, f, c.getModelField(), c.getForeignKey(), c.getForeignAction()
-        ))
+          );
+        })
         .toList()
     );
   }

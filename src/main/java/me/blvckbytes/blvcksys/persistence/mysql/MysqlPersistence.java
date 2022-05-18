@@ -6,15 +6,11 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.di.IAutoConstructer;
-import me.blvckbytes.blvcksys.persistence.ForeignKeyAction;
-import me.blvckbytes.blvcksys.persistence.IPersistence;
-import me.blvckbytes.blvcksys.persistence.MigrationDefault;
-import me.blvckbytes.blvcksys.persistence.ModelProperty;
+import me.blvckbytes.blvcksys.persistence.*;
 import me.blvckbytes.blvcksys.persistence.exceptions.DuplicatePropertyException;
 import me.blvckbytes.blvcksys.persistence.exceptions.ModelNotFoundException;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.APersistentModel;
-import me.blvckbytes.blvcksys.persistence.models.INumberedModel;
 import me.blvckbytes.blvcksys.persistence.query.*;
 import me.blvckbytes.blvcksys.persistence.transformers.IDataTransformer;
 import me.blvckbytes.blvcksys.util.MCReflect;
@@ -1103,7 +1099,17 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     StringBuilder stmt = new StringBuilder();
 
     // Stringify the order by clause ahead of time, as it may be required in SELECT as well as after WHERE
-    String orderBy = query == null ? "" : "ORDER BY " + stringifySorting(table, query.getSorting());
+    String orderBy = (query == null || query.getSorting().size() == 0) ? "" : "ORDER BY " + stringifySorting(table, query.getSorting());
+
+    // Find all columns that are row counter receivers if not only the count is selected
+    List<String> rowCounters = new ArrayList<>();
+    if (!onlyCount) {
+      rowCounters = refl.findAllFields(model)
+        .stream()
+        .filter(f -> f.isAnnotationPresent(RowNumber.class))
+        .map(f -> f.getAnnotation(RowNumber.class).partitionedBy())
+        .toList();
+    }
 
     // Selection mode
     if (!delete) {
@@ -1122,17 +1128,37 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
           stmt.append("`").append(name).append("`").append(i != fields.length - 1 ? ", " : "");
         }
       }
-
-      // This model also requires the selection of it's row number
-      if (!onlyCount && INumberedModel.class.isAssignableFrom(model))
-        stmt.append(", ROW_NUMBER() OVER (").append(orderBy).append(") AS __ROW_NUMBER");
     }
 
     // Deletion mode
     else
       stmt.append("DELETE");
 
-    stmt.append(" FROM `").append(table.name()).append("`");
+    stmt.append(" FROM ");
+
+    // In order to get proper row numbers, select
+    // from a sub-query without the WHERE clause first
+    if (!rowCounters.isEmpty()) {
+      stmt.append("(").append("SELECT *");
+
+      // Add an individual row number counter for each row counter annotated in the model
+      for (String rowCounter : rowCounters) {
+        String name = getColumnByName(table, rowCounter).getName();
+
+        stmt.append(", ROW_NUMBER() OVER (PARTITION BY `").append(name).append("` ")
+          .append(orderBy)
+          .append(") AS __ROW_NUMBER_").append(name.toUpperCase());
+      }
+
+      stmt.append(" FROM `").append(table.name()).append("` ")
+        .append(orderBy)
+        .append(") x");
+    }
+
+    // Not selecting row numbers, select directly from the target table
+    else
+      stmt.append("`").append(table.name()).append("`");
+
     List<Tuple<MysqlType, Object>> params = new ArrayList<>();
 
     if (query != null) {
@@ -1360,12 +1386,21 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       remainingColumns.remove(col);
     }
 
-    // This model requires it's row number
-    if (inst instanceof INumberedModel nm) {
+    // Find all row counter receivers of this model
+    List<Tuple<String, Field>> rowCounters = refl.findAllFields(model).stream()
+      .filter(f -> f.isAnnotationPresent(RowNumber.class))
+      .map(f -> new Tuple<>(f.getAnnotation(RowNumber.class).partitionedBy(), f))
+      .toList();
+
+    // Loop all row counter receivers and set their value by their partition name
+    for (Tuple<String, Field> rowCounter : rowCounters) {
+      Field receiver = rowCounter.b();
+      receiver.setAccessible(true);
+
       try {
-        nm.setResultNumber(rs.getInt("__ROW_NUMBER"));
+        receiver.set(inst, rs.getInt("__ROW_NUMBER_" + rowCounter.a().toUpperCase()));
       } catch (SQLException e) {
-        nm.setResultNumber(-1);
+        receiver.set(inst, -1);
         logger.logError(e);
       }
     }

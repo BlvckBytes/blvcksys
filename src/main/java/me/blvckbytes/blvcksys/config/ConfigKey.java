@@ -205,6 +205,8 @@ public enum ConfigKey {
   WARN_LIST_NO("warn.list.no", "&cNein"),
   WARN_LIST_ENTRY("warn.list.entry", "$1| $0{{warn_number}} $1| $0{{creator}} $1| $0{{created_at}} $1| $0{{duration}} $1| $0{{is_active}} $1|"),
   WARN_LIST_HOVER("warn.list.hover", "$0Klick: $3{{command}}"),
+  WARN_NOT_REVOKED("warn.not_revoked", "$0Der Warn mit der ID $4{{id}} $0wurde $4noch nicht $0aufgehoben!"),
+  WARN_EDIT_SAVED("warn.edit_saved", "$0Die Änderungen für den Warn mit der ID $3{{id}} $0wurden $3gespeichert$0."),
   WARN_INFO_SCREEN(
     "warn.info.screen",
     "$0Warn mit der ID $3{{id}}$0:",

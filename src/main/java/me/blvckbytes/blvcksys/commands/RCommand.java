@@ -3,6 +3,7 @@ package me.blvckbytes.blvcksys.commands;
 import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.handlers.IIgnoreHandler;
 import me.blvckbytes.blvcksys.handlers.IPreferencesHandler;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
@@ -25,6 +26,7 @@ public class RCommand extends APlayerCommand {
 
   private final IMsgCommand msgC;
   private final IPreferencesHandler prefs;
+  private final IIgnoreHandler ignores;
 
   public RCommand(
     @AutoInject JavaPlugin plugin,
@@ -32,7 +34,8 @@ public class RCommand extends APlayerCommand {
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
     @AutoInject IMsgCommand msgC,
-    @AutoInject IPreferencesHandler prefs
+    @AutoInject IPreferencesHandler prefs,
+    @AutoInject IIgnoreHandler ignores
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -44,6 +47,7 @@ public class RCommand extends APlayerCommand {
 
     this.msgC = msgC;
     this.prefs = prefs;
+    this.ignores = ignores;
   }
 
   //=========================================================================//
@@ -80,6 +84,28 @@ public class RCommand extends APlayerCommand {
         cfg.get(ConfigKey.MSG_DISABLED_OTHERS)
           .withPrefix()
           .withVariable("receiver", partner.getName())
+          .asScalar()
+      );
+      return;
+    }
+
+    // The sender ignores this partner
+    if (ignores.getMsgIgnore(p, partner)) {
+      p.sendMessage(
+        cfg.get(ConfigKey.IGNORE_MSG_IGNORING)
+          .withPrefix()
+          .withVariable("target", partner.getName())
+          .asScalar()
+      );
+      return;
+    }
+
+    // The partner ignores this sender
+    if (ignores.getMsgIgnore(partner, p)) {
+      p.sendMessage(
+        cfg.get(ConfigKey.IGNORE_MSG_IGNORED)
+          .withPrefix()
+          .withVariable("target", partner.getName())
           .asScalar()
       );
       return;

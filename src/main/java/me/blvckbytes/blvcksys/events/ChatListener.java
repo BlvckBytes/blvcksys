@@ -4,6 +4,7 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
+import me.blvckbytes.blvcksys.handlers.IIgnoreHandler;
 import me.blvckbytes.blvcksys.handlers.IMuteHandler;
 import me.blvckbytes.blvcksys.handlers.IPreferencesHandler;
 import me.blvckbytes.blvcksys.handlers.ITeamHandler;
@@ -37,6 +38,7 @@ public class ChatListener implements Listener, IChatListener {
   private final IConfig cfg;
   private final ITeamHandler teams;
   private final IPreferencesHandler prefs;
+  private final IIgnoreHandler ignores;
 
   @AutoInjectLate
   private IMuteHandler mutes;
@@ -44,11 +46,13 @@ public class ChatListener implements Listener, IChatListener {
   public ChatListener(
     @AutoInject IConfig cfg,
     @AutoInject ITeamHandler teams,
-    @AutoInject IPreferencesHandler prefs
+    @AutoInject IPreferencesHandler prefs,
+    @AutoInject IIgnoreHandler ignores
   ) {
     this.cfg = cfg;
     this.teams = teams;
     this.prefs = prefs;
+    this.ignores = ignores;
   }
 
   //=========================================================================//
@@ -74,6 +78,10 @@ public class ChatListener implements Listener, IChatListener {
         // Skip blocking self
         receiver != sender
       )
+        continue;
+
+      // Don't send to the receiver if they ignore the sender
+      if (ignores.getChatIgnore(receiver, sender))
         continue;
 
       // Override the default message

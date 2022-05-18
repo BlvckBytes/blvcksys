@@ -3,6 +3,7 @@ package me.blvckbytes.blvcksys.commands;
 import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.handlers.IIgnoreHandler;
 import me.blvckbytes.blvcksys.handlers.IPreferencesHandler;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
@@ -35,13 +36,15 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener,
   private final Map<Player, Player> partners;
 
   private final IPreferencesHandler prefs;
+  private final IIgnoreHandler ignores;
 
   public MsgCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
-    @AutoInject IPreferencesHandler prefs
+    @AutoInject IPreferencesHandler prefs,
+    @AutoInject IIgnoreHandler ignores
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -55,6 +58,7 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener,
     this.partners = new HashMap<>();
 
     this.prefs = prefs;
+    this.ignores = ignores;
   }
 
   //=========================================================================//
@@ -105,6 +109,28 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener,
         cfg.get(ConfigKey.MSG_DISABLED_OTHERS)
           .withPrefix()
           .withVariable("receiver", recipient.getName())
+          .asScalar()
+      );
+      return;
+    }
+
+    // The sender ignores this recipient
+    if (ignores.getMsgIgnore(p, recipient)) {
+      p.sendMessage(
+        cfg.get(ConfigKey.IGNORE_MSG_IGNORING)
+          .withPrefix()
+          .withVariable("target", recipient.getName())
+          .asScalar()
+      );
+      return;
+    }
+
+    // The recipient ignores this sender
+    if (ignores.getMsgIgnore(recipient, p)) {
+      p.sendMessage(
+        cfg.get(ConfigKey.IGNORE_MSG_IGNORED)
+          .withPrefix()
+          .withVariable("target", recipient.getName())
           .asScalar()
       );
       return;

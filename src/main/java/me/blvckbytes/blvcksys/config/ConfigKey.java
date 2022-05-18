@@ -740,6 +740,18 @@ public enum ConfigKey {
   PSIGN_MOVE_NOT_EXISTING("psign.move.not_existing", "$0Das Schild $4{{location}} $0ist kein PSign!"),
 
   //=========================================================================//
+  //                              IGNORE Command                             //
+  //=========================================================================//
+
+  IGNORE_CHAT_DISABLED("ignore.chat.disabled", "$0Du empfängst nun $3Chat Nachrichten $0von $3{{target}}$0."),
+  IGNORE_CHAT_ENABLED("ignore.chat.enabled", "$0Du empfängst nun $3keine Chat Nachrichten $0von $3{{target}} $0mehr."),
+  IGNORE_MSG_DISABLED("ignore.msg.disabled", "$0Du empfängst nun $3private Nachrichten $0von $3{{target}}$0."),
+  IGNORE_MSG_ENABLED("ignore.msg.enabled", "$0Du empfängst nun $3keine privaten Nachrichten $0von $3{{target}} $0mehr."),
+  IGNORE_SELF("ignore.self", "$0Du kannst dich nicht $4selbst $0ignorieren!"),
+  IGNORE_MSG_IGNORED("ignore.msg.ignored", "$4{{target}} $0ignoriert dich über $4MSG$0."),
+  IGNORE_MSG_IGNORING("ignore.msg.ignoring", "$0Du ignorierst den Spieler $4{{target}} $0über $4MSG$0."),
+
+  //=========================================================================//
   //                               FLY Command                               //
   //=========================================================================//
 

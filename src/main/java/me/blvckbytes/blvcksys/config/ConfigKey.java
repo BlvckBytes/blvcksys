@@ -184,6 +184,11 @@ public enum ConfigKey {
     "$0Dauer: $3{{duration}}",
     "$0Grund: $3{{reason}}"
   ),
+  WARN_CLEARED_BROADCAST(
+    "warn.cleared_broadcast",
+    "$3{{num_cleared}} Warnungen $0von $3{{target}} $0wurden zurückgesetzt!",
+    "$0Von: $3{{creator}}"
+  ),
   WARN_DURATION_PERMANENT("warn.duration_permanent", "&cPermanent"),
   WARN_REMAINING_PERMANENT("warn.remaining_permanent", "&c/"),
   WARN_NO_REASON("warn.no_reason", "&cKein Grund angegeben"),
@@ -221,6 +226,13 @@ public enum ConfigKey {
     "$0Aufgehoben am: $3{{revoked_at}}",
     "$0Aufhebegrund: $3{{revocation_reason}}"
   ),
+  WARN_AUTO_PUNISHMENT_REASON(
+    "warn.auto_punishment.reason",
+    "$0Du hast die Maximalzahl von $3{{max_warns}} aktiven Warnungen $0erreicht!"
+  ),
+  WARN_CLEAR_CONFIRMATION("warn.clear.confirmation", "$3Alle ({{num_warns}}) $0Warnungen von $3{{target}} $0löschen?: "),
+  WARN_CLEAR_CANCELLED("warn.clear.cancelled", "$0Die Leerung wurde $4abgebrochen$0!"),
+  WARN_CLEAR_NO_WARNS("warn.clear.no_warns", "$0Der Spieler $4{{target}} $0besitzt $4keine Warns$0!"),
 
   //=========================================================================//
   //                               MUTE Commands                             //

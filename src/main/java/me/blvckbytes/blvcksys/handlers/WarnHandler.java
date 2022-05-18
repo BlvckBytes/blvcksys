@@ -43,17 +43,20 @@ public class WarnHandler implements IWarnHandler {
   private final IConfig cfg;
   private final IChatListener chat;
   private final TimeUtil time;
+  private final IBanHandler bans;
 
   public WarnHandler(
     @AutoInject IPersistence pers,
     @AutoInject IConfig cfg,
     @AutoInject IChatListener chat,
-    @AutoInject TimeUtil time
+    @AutoInject TimeUtil time,
+    @AutoInject IBanHandler bans
   ) {
     this.pers = pers;
     this.cfg = cfg;
     this.chat = chat;
     this.time = time;
+    this.bans = bans;
   }
 
   //=========================================================================//
@@ -75,7 +78,7 @@ public class WarnHandler implements IWarnHandler {
 
     WarnModel warn = new WarnModel(creator, target, durationSeconds, reason, hasCount + 1);
     pers.store(warn);
-    checkActiveWarns(target);
+    checkActiveWarns(creator, target);
 
     return Optional.of(warn);
   }
@@ -193,6 +196,28 @@ public class WarnHandler implements IWarnHandler {
   }
 
   @Override
+  public void broadcastClear(OfflinePlayer target, int numCleared) {
+    chat.broadcastMessage(
+      Bukkit.getOnlinePlayers(),
+      cfg.get(ConfigKey.WARN_CLEARED_BROADCAST)
+        .withPrefixes()
+        .withVariable("target", target.getName())
+        .withVariable("num_cleared", numCleared)
+        .asScalar()
+    );
+  }
+
+  @Override
+  public void clearWarns(OfflinePlayer target) {
+    pers.delete(buildQuery(target, null, null, null));
+  }
+
+  @Override
+  public int countAllWarns(OfflinePlayer target) {
+    return pers.count(buildQuery(target, null, null, null));
+  }
+
+  @Override
   public int countActiveWarns(OfflinePlayer target) {
     return pers.count(buildQuery(target, null, false, true));
   }
@@ -209,15 +234,21 @@ public class WarnHandler implements IWarnHandler {
   /**
    * Check the number of active warns a player has, and create
    * a punishment if the number of active warns exceeded the maximum.
+   * @param executor Executor of the last added warn, will be the executor used for auto punishments
    * @param target Target to check
    */
-  private void checkActiveWarns(OfflinePlayer target) {
+  private void checkActiveWarns(OfflinePlayer executor, OfflinePlayer target) {
     int active = countActiveWarns(target);
 
     if (active < MAX_ACTIVE_WARNS)
       return;
 
-    Bukkit.broadcastMessage("§4§lTODO: Implement punishing " + target.getName() + "!");
+    bans.broadcastBan(bans.createBan(
+      executor, target, null, null,
+      cfg.get(ConfigKey.WARN_AUTO_PUNISHMENT_REASON)
+        .withVariable("max_warns", MAX_ACTIVE_WARNS)
+        .asScalar()
+    ));
   }
 
   /**

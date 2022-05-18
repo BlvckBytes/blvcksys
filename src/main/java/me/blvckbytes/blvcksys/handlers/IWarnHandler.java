@@ -89,6 +89,26 @@ public interface IWarnHandler {
   void broadcastRevoke(WarnModel warn);
 
   /**
+   * Broadcast the clearing of a player's warns
+   * @param target Target player
+   * @param numCleared How many warns have been cleared
+   */
+  void broadcastClear(OfflinePlayer target, int numCleared);
+
+  /**
+   * Clear all warns of a player (active or inactive)
+   * @param target Target player
+   */
+  void clearWarns(OfflinePlayer target);
+
+  /**
+   * Count the number of all warns of a player
+   * @param target Target player
+   * @return Number of warns
+   */
+  int countAllWarns(OfflinePlayer target);
+
+  /**
    * Count the number of currently active warns of a player
    * @param target Target player
    * @return Number of active warns

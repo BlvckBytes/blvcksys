@@ -1031,13 +1031,13 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
     return switch (query.getEqOp()) {
       case EQ -> {
         if (isCommaComp)
-          yield "(" + fieldExpr + " - " + ph + ") < 0.01";
+          yield "ABS(" + fieldExpr + " - " + ph + ") < 0.01";
         else
           yield fieldExpr + " " + (isNull ? "IS NULL" : "= " + ph);
       }
       case NEQ -> {
         if (isCommaComp)
-          yield "(" + fieldExpr + " - " + ph + ") > 0.01";
+          yield "ABS(" + fieldExpr + " - " + ph + ") > 0.01";
         else
           yield fieldExpr + " " + (isNull ? "IS NOT NULL" : "!= " + ph);
       }

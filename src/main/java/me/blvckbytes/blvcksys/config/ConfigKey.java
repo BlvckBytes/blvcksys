@@ -235,6 +235,20 @@ public enum ConfigKey {
   WARN_CLEAR_NO_WARNS("warn.clear.no_warns", "$0Der Spieler $4{{target}} $0besitzt $4keine Warns$0!"),
 
   //=========================================================================//
+  //                               STATS Command                             //
+  //=========================================================================//
+
+  STATS_NONE("stats.none", "&c/"),
+  STATS_SCREEN(
+    "stats.screen",
+    "$0Name: $3{{target}}",
+    "$0Kills, Deaths, KD: $3{{kills}}$0/$3{{deaths}}$0/$3{{kd}}",
+    "$0Coins: $3{{coins}}",
+    "$0Warns gesamt: $3{{warns_total}}$0, davon aktiv: $3{{warns_active}}",
+    "$0Mute: $3{{mute_duration}}$0, verbleibend: $3{{mute_remaining}}"
+  ),
+
+  //=========================================================================//
   //                               MUTE Commands                             //
   //=========================================================================//
 

@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.handlers;
 
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 import java.util.function.Consumer;
@@ -17,40 +18,40 @@ public interface IPlayerStatsHandler {
    * @param statistic Statistic to be notified on
    * @param origin Update event origin
    */
-  void registerUpdateInterest(PlayerStatistic statistic, Consumer<Player> origin);
+  void registerUpdateInterest(PlayerStatistic statistic, Consumer<OfflinePlayer> origin);
 
   /**
    * Get the number of kills a player currently has
    * @param p Target player
    * @return Number of kills
    */
-  int getKills(Player p);
+  int getKills(OfflinePlayer p);
 
   /**
    * Get the number of deaths a player currently has
    * @param p Target player
    * @return Number of deaths
    */
-  int getDeaths(Player p);
+  int getDeaths(OfflinePlayer p);
 
   /**
    * Calculate the current KD (kills/deaths) of a target player
    * @param p Target player
    * @return KD value, rounded
    */
-  double calculateKD(Player p);
+  double calculateKD(OfflinePlayer p);
 
   /**
    * Get the amount of money a player currently owns
    * @param p Target player
    * @return Amount of money
    */
-  int getMoney(Player p);
+  int getMoney(OfflinePlayer p);
 
   /**
    * Set the amount of money a player owns
    * @param p Target player
    * @param amount Amount of money
    */
-  void setMoney(Player p, int amount);
+  void setMoney(OfflinePlayer p, int amount);
 }

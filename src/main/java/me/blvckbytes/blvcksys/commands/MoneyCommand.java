@@ -9,6 +9,7 @@ import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IPlayerStatsHandler;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -66,9 +67,9 @@ public class MoneyCommand extends APlayerCommand {
     if (currArg == 0)
       return suggestEnum(args, currArg, MoneyAction.class);
 
-    // Suggest online players
+    // Suggest all players
     if (currArg == 1)
-      return suggestOnlinePlayers(p, args, currArg, false);
+      return suggestOfflinePlayers(args, currArg);
 
     // Suggest placeholder
     if (currArg == 2)
@@ -80,7 +81,7 @@ public class MoneyCommand extends APlayerCommand {
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     MoneyAction action = parseEnum(MoneyAction.class, args, 0, null);
-    Player target = onlinePlayer(args, 1);
+    OfflinePlayer target = offlinePlayer(args, 1);
     boolean isSelf = target.equals(p);
 
     // Foreign target (not self)
@@ -129,8 +130,8 @@ public class MoneyCommand extends APlayerCommand {
     );
 
     // Not self, notify the receiver
-    if (!isSelf)
-      target.sendMessage(
+    if (!isSelf && target instanceof Player online)
+      online.sendMessage(
         cfg.get(ConfigKey.MONEY_SET_OTHERS_RECEIVER)
           .withPrefix()
           .withVariable("issuer", p.getName())

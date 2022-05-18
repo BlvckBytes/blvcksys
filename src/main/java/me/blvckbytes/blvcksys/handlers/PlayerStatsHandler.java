@@ -9,6 +9,7 @@ import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.Bukkit;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -32,7 +33,7 @@ import java.util.function.Consumer;
 public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed, Listener {
 
   // There can be multiple update interests per statistic
-  private final Map<PlayerStatistic, List<Consumer<Player>>> updateInterests;
+  private final Map<PlayerStatistic, List<Consumer<OfflinePlayer>>> updateInterests;
 
   // Each player has their stats, combined with a "delta-occurred" flag
   private final Map<UUID, PlayerStatsModel> cache;
@@ -56,7 +57,7 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
   //=========================================================================//
 
   @Override
-  public void registerUpdateInterest(PlayerStatistic statistic, Consumer<Player> origin) {
+  public void registerUpdateInterest(PlayerStatistic statistic, Consumer<OfflinePlayer> origin) {
     if (!this.updateInterests.containsKey(statistic))
       this.updateInterests.put(statistic, new ArrayList<>());
     this.updateInterests.get(statistic).add(origin);
@@ -65,19 +66,19 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
   ///////////////////////////////// KILLS ////////////////////////////////////
 
   @Override
-  public int getKills(Player p) {
+  public int getKills(OfflinePlayer p) {
     return getStats(p).getKills();
   }
 
   ///////////////////////////////// DEATHS ////////////////////////////////////
 
   @Override
-  public int getDeaths(Player p) {
+  public int getDeaths(OfflinePlayer p) {
     return getStats(p).getDeaths();
   }
 
   @Override
-  public double calculateKD(Player p) {
+  public double calculateKD(OfflinePlayer p) {
     double deaths = getDeaths(p);
     double kills = getKills(p);
 
@@ -91,12 +92,12 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
   ///////////////////////////////// MONEY ////////////////////////////////////
 
   @Override
-  public int getMoney(Player p) {
+  public int getMoney(OfflinePlayer p) {
     return getStats(p).getMoney();
   }
 
   @Override
-  public void setMoney(Player p, int amount) {
+  public void setMoney(OfflinePlayer p, int amount) {
     PlayerStatsModel stats = getStats(p);
     stats.setMoney(amount);
     pers.store(stats);
@@ -149,7 +150,7 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
    * @param p Target player
    * @return Stats model
    */
-  private PlayerStatsModel getStats(Player p) {
+  private PlayerStatsModel getStats(OfflinePlayer p) {
     if (cache.containsKey(p.getUniqueId()))
       return cache.get(p.getUniqueId());
     return loadPlayer(p);
@@ -184,7 +185,7 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
    * @param p Target player
    * @return Stats model
    */
-  private PlayerStatsModel loadPlayer(Player p) {
+  private PlayerStatsModel loadPlayer(OfflinePlayer p) {
     PlayerStatsModel model = pers.findFirst(
       new QueryBuilder<>(
         PlayerStatsModel.class,
@@ -219,12 +220,12 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
    * @param statistic Changed statistic
    * @param origin Target player
    */
-  private void callInterest(PlayerStatistic statistic, Player origin) {
+  private void callInterest(PlayerStatistic statistic, OfflinePlayer origin) {
     // No interests registered yet
     if (!updateInterests.containsKey(statistic))
       return;
 
-    for (Consumer<Player> interest : updateInterests.get(statistic))
+    for (Consumer<OfflinePlayer> interest : updateInterests.get(statistic))
       interest.accept(origin);
   }
 }

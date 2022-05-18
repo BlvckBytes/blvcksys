@@ -11,6 +11,7 @@ import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.Player;
@@ -275,9 +276,9 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
       }
     }
 
-    stats.registerUpdateInterest(PlayerStatistic.KILLS, this::updateSidebar);
-    stats.registerUpdateInterest(PlayerStatistic.DEATHS, this::updateSidebar);
-    stats.registerUpdateInterest(PlayerStatistic.MONEY, this::updateSidebar);
+    stats.registerUpdateInterest(PlayerStatistic.KILLS, this::updateSidebarIfOnline);
+    stats.registerUpdateInterest(PlayerStatistic.DEATHS, this::updateSidebarIfOnline);
+    stats.registerUpdateInterest(PlayerStatistic.MONEY, this::updateSidebarIfOnline);
   }
 
   @Override
@@ -289,6 +290,15 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
   //=========================================================================//
   //                                Utilities                                //
   //=========================================================================//
+
+  /**
+   * Updates the sidebar of the given player if they're online
+   * @param p Target player
+   */
+  private void updateSidebarIfOnline(OfflinePlayer p) {
+    if (p.isOnline())
+      updateSidebar(((Player) p));
+  }
 
   /**
    * Call this routine whenever a player's levels might have changed, as

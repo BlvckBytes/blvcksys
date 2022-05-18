@@ -59,7 +59,7 @@ public class SignEditCommand extends APlayerCommand {
 
     // Not a sign block
     if (b == null || !(b.getState() instanceof Sign s)) {
-      customError(
+      p.sendMessage(
         cfg.get(ConfigKey.SIGNEDIT_NOSIGN)
           .withPrefix()
           .asScalar()
@@ -69,11 +69,12 @@ public class SignEditCommand extends APlayerCommand {
 
     // Cannot build here
     if (!regions.canBuild(p, b.getLocation())) {
-      customError(
+      p.sendMessage(
         cfg.get(ConfigKey.SIGNEDIT_NOBUILD)
           .withPrefix()
           .asScalar()
       );
+      return;
     }
 
     // Get the current lines of the sign and

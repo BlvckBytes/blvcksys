@@ -56,7 +56,7 @@ public class AfkCommand extends APlayerCommand {
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     // Is already AFK
     if (afk.isAFK(p)) {
-      customError(
+      p.sendMessage(
         cfg.get(ConfigKey.AFK_ALREADY)
           .withPrefix()
           .asScalar()

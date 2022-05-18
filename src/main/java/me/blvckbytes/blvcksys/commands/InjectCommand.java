@@ -125,12 +125,13 @@ public class InjectCommand extends APlayerCommand implements IPacketModifier, IA
       try {
         regex = Pattern.compile(regStr);
       } catch (PatternSyntaxException e) {
-        customError(
+        p.sendMessage(
           cfg.get(ConfigKey.INJECT_INVALID_REGEX)
             .withPrefix()
             .withVariable("regex", regStr)
             .asScalar()
         );
+        return;
       }
     }
 

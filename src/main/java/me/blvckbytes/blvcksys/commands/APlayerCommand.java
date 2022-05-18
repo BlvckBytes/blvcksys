@@ -571,14 +571,6 @@ public abstract class APlayerCommand extends Command {
   ////////////////////////////// Custom Error ////////////////////////////////
 
   /**
-   * Generate a custom error result
-   * @param message Message to send to the player
-   */
-  protected void customError(String message) throws CommandException {
-    throw new CommandException(message);
-  }
-
-  /**
    * Generate an internal error result
    */
   protected void internalError() throws CommandException {

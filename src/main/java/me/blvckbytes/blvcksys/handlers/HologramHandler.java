@@ -43,13 +43,13 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
   private final IPersistence pers;
   private final JavaPlugin plugin;
   private final IHologramCommunicator holoComm;
-  private final IHologramVariableSupplier varSupp;
+  private final ILiveVariableSupplier varSupp;
 
   public HologramHandler(
     @AutoInject IPersistence pers,
     @AutoInject JavaPlugin plugin,
     @AutoInject IHologramCommunicator holoComm,
-    @AutoInject IHologramVariableSupplier varSupp
+    @AutoInject ILiveVariableSupplier varSupp
   ) {
     this.pers = pers;
     this.plugin = plugin;

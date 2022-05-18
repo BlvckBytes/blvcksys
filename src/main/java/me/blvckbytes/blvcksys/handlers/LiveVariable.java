@@ -7,12 +7,11 @@ import lombok.Getter;
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 05/09/2022
 
-  Specifies all available variables with their template representation
-  that can be used within hologram lines.
+  Specifies all available variables with their template representation.
 */
 @Getter
 @AllArgsConstructor
-public enum HologramVariable {
+public enum LiveVariable {
 
   // Player specific
   PLAYER_NAME("{player_name}", Long.MAX_VALUE),
@@ -29,12 +28,12 @@ public enum HologramVariable {
   private final long updatePeriodTicks;
 
   /**
-   * Find a hologram variable by it's placeholder
+   * Find a live variable by it's placeholder
    * @param placeholder Placeholder to look up
-   * @return HologramVariable on success, null if the placeholder is unknown
+   * @return LiveVariable on success, null if the placeholder is unknown
    */
-  public static HologramVariable fromPlaceholder(String placeholder) {
-    for (HologramVariable var : HologramVariable.values()) {
+  public static LiveVariable fromPlaceholder(String placeholder) {
+    for (LiveVariable var : LiveVariable.values()) {
       if (var.placeholder.equalsIgnoreCase(placeholder))
         return var;
     }

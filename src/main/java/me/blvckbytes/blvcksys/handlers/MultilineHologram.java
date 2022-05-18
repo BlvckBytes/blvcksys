@@ -35,14 +35,14 @@ public class MultilineHologram {
   private List<Tuple<Long, List<Object>>> lineTemplates;
 
   private final IHologramCommunicator holoComm;
-  private final IHologramVariableSupplier varSupp;
+  private final ILiveVariableSupplier varSupp;
 
   public MultilineHologram(
     String name,
     Location loc,
     List<String> lines,
     IHologramCommunicator holoComm,
-    IHologramVariableSupplier varSupp
+    ILiveVariableSupplier varSupp
   ) {
     this.name = name;
     this.loc = loc;
@@ -168,7 +168,7 @@ public class MultilineHologram {
       }
 
       // Resolve this variable and append the result
-      if (part instanceof HologramVariable hv)
+      if (part instanceof LiveVariable hv)
         sb.append(varSupp.resolveVariable(p, hv));
     }
 
@@ -236,7 +236,7 @@ public class MultilineHologram {
         // Variable notation found in range [lastOpenCurly,i]
         if (c == '}') {
           String varNotation = line.substring(lastOpenCurly, i + 1);
-          HologramVariable var = HologramVariable.fromPlaceholder(varNotation);
+          LiveVariable var = LiveVariable.fromPlaceholder(varNotation);
 
           // Variable unknown, append unaltered notation
           if (var == null)

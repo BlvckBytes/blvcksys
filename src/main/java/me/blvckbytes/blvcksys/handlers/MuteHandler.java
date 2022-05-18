@@ -115,18 +115,12 @@ public class MuteHandler implements IMuteHandler, Listener {
 
   @Override
   public Map<String, Tuple<Pattern, String>> buildMuteVariables(MuteModel mute) {
-    // Remaining: (createdAt + durationSections) - now
-    int remaining = (int) Math.max(0,
-      (mute.getCreatedAt().getTime() / 1000 + mute.getDurationSeconds()) -
-      (System.currentTimeMillis() / 1000)
-    );
-
     return ConfigValue.makeEmpty()
       .withVariable("creator", mute.getCreator().getName())
       .withVariable("target", mute.getTarget().getName())
       .withVariable("created_at", mute.getCreatedAtStr())
       .withVariable("duration", time.formatDuration(mute.getDurationSeconds()))
-      .withVariable("remaining", time.formatDuration(remaining))
+      .withVariable("remaining", time.formatDuration(mute.getRemainingSeconds()))
       .withVariable(
         "reason",
         mute.getReason() == null ?

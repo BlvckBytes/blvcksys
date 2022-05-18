@@ -37,7 +37,19 @@ public class MuteModel extends ARevokeableModel {
    */
   public boolean isActive() {
     return revokedAt == null &&
-      ((createdAt.getTime() / 1000) + durationSeconds) - (System.currentTimeMillis() / 1000) > 0
-    ;
+      ((createdAt.getTime() / 1000) + durationSeconds) - (System.currentTimeMillis() / 1000) > 0;
+  }
+
+  /**
+   * Calculates the time in seconds that's remaining, based
+   * on the duration stored
+   * @return Remaining seconds
+   */
+  public int getRemainingSeconds() {
+    // Remaining: (createdAt + durationSections) - now
+    return (int) Math.max(0,
+      (getCreatedAt().getTime() / 1000 + getDurationSeconds()) -
+        (System.currentTimeMillis() / 1000)
+    );
   }
 }

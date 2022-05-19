@@ -65,6 +65,27 @@ public enum ConfigKey {
   LOGGING_PREFIX_ERROR("logging_prefix.error", "$5"),
 
   //=========================================================================//
+  //                                   MOTD                                  //
+  //=========================================================================//
+
+  MOTD_SCREEN_RELOGIN(
+    "motd_screen.relogin",
+    "&8&m----------------------------------------------",
+    "$0Willkommen zurück, $2{{name}}$0!",
+    "$0Letzter Login: $2{{last_login}}",
+    "$0Aktuelle Spielerzahl: $2{{num_online}}$0/$2{{num_slots}}",
+    "&8&m----------------------------------------------"
+  ),
+  MOTD_SCREEN_FIRST_JOIN(
+    "motd_screen.first_join",
+    "&8&m----------------------------------------------",
+    "$0Willkommen auf unserem Server, $2{{name}}$0!",
+    "$0Alle verfügbaren Befehle: $2/help",
+    "$0Aktuelle Spielerzahl: $2{{num_online}}$0/$2{{num_slots}}",
+    "&8&m----------------------------------------------"
+  ),
+
+  //=========================================================================//
   //                                   Chat                                  //
   //=========================================================================//
 

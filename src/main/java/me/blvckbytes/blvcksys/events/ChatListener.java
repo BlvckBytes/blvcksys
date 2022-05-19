@@ -13,6 +13,7 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.persistence.models.MuteModel;
 import net.md_5.bungee.api.chat.TextComponent;
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -21,6 +22,7 @@ import org.bukkit.event.player.AsyncPlayerChatEvent;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /*
@@ -65,6 +67,15 @@ public class ChatListener implements Listener, IChatListener {
     Optional<TeamGroup> tg = teams.getPlayerGroup(sender);
     String prefix = tg.map(TeamGroup::prefix).orElse("§r");
 
+    // Translate chat colors based on permissions
+    message = translateColors(sender, message, PlayerPermission.CHAT_COLOR_PREFIX);
+
+    // Set a default message color
+    message = cfg.get(ConfigKey.CHAT_MESSAGE_DEF_COLOR).asScalar() + message;
+
+    // Tag online players in the message
+    message = addPlayerTags(message);
+
     // Broadcast to all receivers
     boolean senderBypassesToggleChat = PlayerPermission.TOGGLECHAT_BYPASS.has(sender);
     for(Player receiver : receivers) {
@@ -86,9 +97,9 @@ public class ChatListener implements Listener, IChatListener {
 
       // Override the default message
       receiver.sendMessage(
-        cfg.get(ConfigKey.CHAT_FORMAT)
+        cfg.get(ConfigKey.CHAT_MESSAGE_FORMAT)
           .withVariable("name", sender.getName())
-          .withVariable("message", translateColors(sender, message, PlayerPermission.CHAT_COLOR_PREFIX))
+          .withVariable("message", message)
           .withVariable("prefix", prefix)
           .asScalar()
       );
@@ -106,36 +117,6 @@ public class ChatListener implements Listener, IChatListener {
     for (Player t : receivers)
       t.spigot().sendMessage(message);
   }
-
-  //=========================================================================//
-  //                                Listeners                                //
-  //=========================================================================//
-
-  @EventHandler
-  public void onChat(AsyncPlayerChatEvent e) {
-    Player p = e.getPlayer();
-
-    // Cancel the vanilla event
-    e.setCancelled(true);
-
-    if (mutes != null) {
-
-      MuteModel mute = mutes.isCurrentlyMuted(p).orElse(null);
-
-      // Check if the user is muted
-      if (mute != null) {
-        p.sendMessage(mutes.buildMuteScreen(mute));
-        return;
-      }
-    }
-
-    // Send using custom formatting
-    sendChatMessage(p, new ArrayList<>(e.getRecipients()), e.getMessage());
-  }
-
-  //=========================================================================//
-  //                                Utilities                                //
-  //=========================================================================//
 
   @Override
   public String translateColors(Player p, String message, PlayerPermission prefix) {
@@ -171,5 +152,103 @@ public class ChatListener implements Listener, IChatListener {
     }
 
     return res.toString();
+  }
+
+  //=========================================================================//
+  //                                Listeners                                //
+  //=========================================================================//
+
+  @EventHandler
+  public void onChat(AsyncPlayerChatEvent e) {
+    Player p = e.getPlayer();
+
+    // Cancel the vanilla event
+    e.setCancelled(true);
+
+    if (mutes != null) {
+
+      MuteModel mute = mutes.isCurrentlyMuted(p).orElse(null);
+
+      // Check if the user is muted
+      if (mute != null) {
+        p.sendMessage(mutes.buildMuteScreen(mute));
+        return;
+      }
+    }
+
+    // Send using custom formatting
+    sendChatMessage(p, new ArrayList<>(e.getRecipients()), e.getMessage());
+  }
+
+  //=========================================================================//
+  //                                Utilities                                //
+  //=========================================================================//
+
+  /**
+   * Adds tags to player-names which are currently online
+   * @param message Message which may contain player names
+   * @return Message with substitutions
+   */
+  private String addPlayerTags(String message) {
+    // Get a list of available names, longest names first
+    // to replace greedily
+    List<String> names = Bukkit.getOnlinePlayers()
+      .stream()
+      .map(Player::getName)
+      .sorted((a, b) -> b.length() - a.length())
+      .toList();
+
+    // Keep track of color codes the player defined in the message here
+    StringBuilder colors = new StringBuilder();
+
+    // Get the shortest name to know at what offset to stop
+    int shortestLen = names.get(names.size() - 1).length();
+
+    // Loop till' end of message (minus shortest name)
+    int offs = 0;
+    while (offs <= message.length() - shortestLen) {
+
+      // Check if any of the available names starts at this offset
+      boolean anyMatched = false;
+      for (String name : names) {
+
+        // Name wouldn't fit, no need to check
+        if (name.length() + offs > message.length())
+          continue;
+
+        // Check if the current name starts at the current offset
+        boolean is = true;
+        for (int i = offs; i < offs + name.length(); i++) {
+          if (i != 0 && message.charAt(i - 1) == '§')
+            colors.append("§").append(message.charAt(i));
+
+          if (message.charAt(i) != name.charAt(i - offs)) {
+            is = false;
+            break;
+          }
+        }
+
+        if (is) {
+          // Make sure to restore colors after the tag
+          String tag = cfg.get(ConfigKey.CHAT_TAG_FORMAT)
+            .withVariable("name", name)
+            .asScalar() + colors;
+
+          // Substitute the name for the tag
+          message = message.substring(0, offs) + tag + message.substring(offs + name.length());
+
+          // Pick up right after the substituted in tag
+          offs += tag.length();
+          anyMatched = true;
+          break;
+        }
+      }
+
+      // Couldn't match any name at this offset, advance a character
+      if (!anyMatched)
+        offs++;
+    }
+
+    return message;
   }
 }

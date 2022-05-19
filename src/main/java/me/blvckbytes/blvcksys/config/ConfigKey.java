@@ -68,7 +68,9 @@ public enum ConfigKey {
   //                                   Chat                                  //
   //=========================================================================//
 
-  CHAT_FORMAT("chat_format", "{{prefix}}{{name}}$0: {{message}}"),
+  CHAT_MESSAGE_FORMAT("chat.message_format", "{{prefix}}{{name}}$0: {{message}}"),
+  CHAT_MESSAGE_DEF_COLOR("chat.message_def_color", "$0"),
+  CHAT_TAG_FORMAT("chat.tag_format", "&6@{{name}}"),
 
   //=========================================================================//
   //                                  Sidebar                                //

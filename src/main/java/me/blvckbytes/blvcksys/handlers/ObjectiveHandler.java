@@ -9,6 +9,7 @@ import me.blvckbytes.blvcksys.packets.communicators.objective.ObjectiveUnit;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
+import me.blvckbytes.blvcksys.persistence.models.PlayerStatsModel;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -484,14 +485,16 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
     if (this.prefs.isScoreboardHidden(t))
       return;
 
+    PlayerStatsModel s = stats.getStats(t);
+
     // Get the templated list of scoreboard lines
     List<String> scores = cfg.get(ConfigKey.SIDEBAR_LINES)
       .withVariable("num_online", Bukkit.getOnlinePlayers().size())
       .withVariable("name", t.getName())
       .withVariable("num_slots", plugin.getServer().getMaxPlayers())
-      .withVariable("kills", stats.getKills(t))
-      .withVariable("deaths", stats.getDeaths(t))
-      .withVariable("money", stats.getMoney(t))
+      .withVariable("kills", s.getKills())
+      .withVariable("deaths", s.getDeaths())
+      .withVariable("money", s.getMoney())
       .withVariable("kd", stats.calculateKD(t))
       .asList();
 

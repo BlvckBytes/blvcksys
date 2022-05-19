@@ -88,20 +88,21 @@ public class MoneyCommand extends APlayerCommand {
     if (!isSelf)
       ensurePermission(p, PlayerPermission.COMMAND_MONEY_OTHERS);
 
+    int before = stats.getStats(target).getMoney();
+
     // Get - read the current number of coins
     if (action == MoneyAction.GET) {
       p.sendMessage(
         cfg.get(isSelf ? ConfigKey.MONEY_GET_SELF : ConfigKey.MONEY_GET_OTHERS)
           .withPrefix()
           .withVariable("target", target.getName())
-          .withVariable("money", stats.getMoney(target))
+          .withVariable("money", before)
           .asScalar()
       );
       return;
     }
 
     // Set, remove, give: Override, subtract or add a given amount of coins
-    int before = stats.getMoney(target);
     int amount = parseInt(args, 2);
 
     // Decide on how to affect the amount of coins

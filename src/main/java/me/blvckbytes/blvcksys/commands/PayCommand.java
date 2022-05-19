@@ -80,7 +80,7 @@ public class PayCommand extends APlayerCommand {
       return;
     }
 
-    int available = stats.getMoney(p);
+    int available = stats.getStats(p).getMoney();
 
     if (available == 0) {
       p.sendMessage(
@@ -102,7 +102,7 @@ public class PayCommand extends APlayerCommand {
     }
 
     stats.setMoney(p, available - amount);
-    stats.setMoney(target, stats.getMoney(target) + amount);
+    stats.setMoney(target, available + amount);
 
     p.sendMessage(
       cfg.get(ConfigKey.PAY_TRANSFERED_SENDER)

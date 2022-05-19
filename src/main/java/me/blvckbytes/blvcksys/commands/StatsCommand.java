@@ -9,6 +9,7 @@ import me.blvckbytes.blvcksys.handlers.IMuteHandler;
 import me.blvckbytes.blvcksys.handlers.IPlayerStatsHandler;
 import me.blvckbytes.blvcksys.handlers.IWarnHandler;
 import me.blvckbytes.blvcksys.persistence.models.MuteModel;
+import me.blvckbytes.blvcksys.persistence.models.PlayerStatsModel;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.TimeUtil;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
@@ -72,15 +73,16 @@ public class StatsCommand extends APlayerCommand {
     OfflinePlayer target = offlinePlayer(args, 0, p);
 
     MuteModel currentMute = mutes.isCurrentlyMuted(target).orElse(null);
+    PlayerStatsModel s = stats.getStats(target);
 
     p.sendMessage(
       cfg.get(ConfigKey.STATS_SCREEN)
         .withPrefixes()
         .withVariable("target", target.getName())
-        .withVariable("kills", stats.getKills(target))
-        .withVariable("deaths", stats.getDeaths(target))
+        .withVariable("kills", s.getKills())
+        .withVariable("deaths", s.getDeaths())
         .withVariable("kd", stats.calculateKD(target))
-        .withVariable("coins", stats.getMoney(target))
+        .withVariable("coins", s.getMoney())
         .withVariable("warns_total", warns.countAllWarns(target))
         .withVariable("warns_active", warns.countActiveWarns(target))
         .withVariable(

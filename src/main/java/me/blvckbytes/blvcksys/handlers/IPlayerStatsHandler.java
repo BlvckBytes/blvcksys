@@ -1,8 +1,10 @@
 package me.blvckbytes.blvcksys.handlers;
 
+import me.blvckbytes.blvcksys.persistence.models.PlayerStatsModel;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
+import java.util.Date;
 import java.util.function.Consumer;
 
 /*
@@ -21,20 +23,6 @@ public interface IPlayerStatsHandler {
   void registerUpdateInterest(PlayerStatistic statistic, Consumer<OfflinePlayer> origin);
 
   /**
-   * Get the number of kills a player currently has
-   * @param p Target player
-   * @return Number of kills
-   */
-  int getKills(OfflinePlayer p);
-
-  /**
-   * Get the number of deaths a player currently has
-   * @param p Target player
-   * @return Number of deaths
-   */
-  int getDeaths(OfflinePlayer p);
-
-  /**
    * Calculate the current KD (kills/deaths) of a target player
    * @param p Target player
    * @return KD value, rounded
@@ -42,16 +30,23 @@ public interface IPlayerStatsHandler {
   double calculateKD(OfflinePlayer p);
 
   /**
-   * Get the amount of money a player currently owns
-   * @param p Target player
-   * @return Amount of money
-   */
-  int getMoney(OfflinePlayer p);
-
-  /**
    * Set the amount of money a player owns
    * @param p Target player
    * @param amount Amount of money
    */
   void setMoney(OfflinePlayer p, int amount);
+
+  /**
+   * Set the last login stamp of a player
+   * @param p Target player
+   * @param stamp Last login
+   */
+  void setLastLogin(OfflinePlayer p, Date stamp);
+
+  /**
+   * Get all current statistics of a player
+   * @param p Target player
+   * @return Current statistics
+   */
+  PlayerStatsModel getStats(OfflinePlayer p);
 }

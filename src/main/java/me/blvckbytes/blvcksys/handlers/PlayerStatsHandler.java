@@ -57,30 +57,26 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
   //=========================================================================//
 
   @Override
+  public PlayerStatsModel getStats(OfflinePlayer p) {
+    if (cache.containsKey(p.getUniqueId()))
+      return cache.get(p.getUniqueId());
+    return loadPlayer(p);
+  }
+
+  @Override
   public void registerUpdateInterest(PlayerStatistic statistic, Consumer<OfflinePlayer> origin) {
     if (!this.updateInterests.containsKey(statistic))
       this.updateInterests.put(statistic, new ArrayList<>());
     this.updateInterests.get(statistic).add(origin);
   }
 
-  ///////////////////////////////// KILLS ////////////////////////////////////
-
-  @Override
-  public int getKills(OfflinePlayer p) {
-    return getStats(p).getKills();
-  }
-
   ///////////////////////////////// DEATHS ////////////////////////////////////
 
   @Override
-  public int getDeaths(OfflinePlayer p) {
-    return getStats(p).getDeaths();
-  }
-
-  @Override
   public double calculateKD(OfflinePlayer p) {
-    double deaths = getDeaths(p);
-    double kills = getKills(p);
+    PlayerStatsModel stats = getStats(p);
+    double deaths = stats.getDeaths();
+    double kills = stats.getKills();
 
     if (deaths == 0)
       return kills;
@@ -92,17 +88,19 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
   ///////////////////////////////// MONEY ////////////////////////////////////
 
   @Override
-  public int getMoney(OfflinePlayer p) {
-    return getStats(p).getMoney();
-  }
-
-  @Override
   public void setMoney(OfflinePlayer p, int amount) {
     PlayerStatsModel stats = getStats(p);
     stats.setMoney(amount);
     pers.store(stats);
 
     callInterest(PlayerStatistic.MONEY, p);
+  }
+
+  @Override
+  public void setLastLogin(OfflinePlayer p, Date stamp) {
+    PlayerStatsModel stats = getStats(p);
+    stats.setLastLogin(stamp);
+    pers.store(stats);
   }
 
   @Override
@@ -144,17 +142,6 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
   //=========================================================================//
   //                                Utilities                                //
   //=========================================================================//
-
-  /**
-   * Get the statistics of a player and create the model on absence
-   * @param p Target player
-   * @return Stats model
-   */
-  private PlayerStatsModel getStats(OfflinePlayer p) {
-    if (cache.containsKey(p.getUniqueId()))
-      return cache.get(p.getUniqueId());
-    return loadPlayer(p);
-  }
 
   /**
    * Increment the deaths of a player and store the update

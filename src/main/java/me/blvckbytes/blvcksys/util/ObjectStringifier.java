@@ -168,7 +168,7 @@ public class ObjectStringifier {
 
     try {
       Class<?> cl = o.getClass();
-      Field[] fields = cl.getDeclaredFields();
+      Field[] fields = listFields(cl);
 
       // This class doesn't contain any fields, search for superclasses
       while (
@@ -182,9 +182,7 @@ public class ObjectStringifier {
         cl = cl.getSuperclass();
 
         // Skip static fields
-        fields = Arrays.stream(cl.getDeclaredFields())
-          .filter(f -> !Modifier.isStatic(f.getModifiers()))
-          .toArray(Field[]::new);
+        fields = listFields(cl);
       }
 
       // Loop all fields of this packet and add them to a comma separated list
@@ -228,6 +226,17 @@ public class ObjectStringifier {
 
     // Re-set the colors at the end
     return props + "§r";
+  }
+
+  /**
+   * List all fields that are to be printed from a class
+   * @param c Target class
+   * @return Fields to print
+   */
+  private Field[] listFields(Class<?> c) {
+    return Arrays.stream(c.getDeclaredFields())
+      .filter(f -> !Modifier.isStatic(f.getModifiers()))
+      .toArray(Field[]::new);
   }
 
   /**

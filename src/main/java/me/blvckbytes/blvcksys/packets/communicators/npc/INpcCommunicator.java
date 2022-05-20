@@ -4,6 +4,7 @@ import com.mojang.authlib.GameProfile;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -45,4 +46,13 @@ public interface INpcCommunicator {
    * @param profile GameProfile of the npc, used for the skin
    */
   void removeFromTablist(int entityId, GameProfile profile, Player receiver);
+
+  /**
+   * Sets the npc's rotation (head and body) to match the yaw and pitch
+   * @param entityId ID of this entity
+   * @param receiver Receiver of the packet
+   * @param yaw Yaw of the npc
+   * @param pitch Pitch of the npc
+   */
+  void setRotation(int entityId, Player receiver, float yaw, float pitch);
 }

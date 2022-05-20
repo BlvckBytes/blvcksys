@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
-  Created On: 04/26/2022
+  Created On: 05/20/2022
 
   Handles spawning npcs for players within a given radius and catches
   interactions to fire custom npc events.
@@ -54,8 +54,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @AutoConstruct
 public class NpcHandler implements INpcHandler, IAutoConstructed, IPacketModifier, Listener {
 
-  // Specifies the time between hologram update triggers in ticks
-  private static final long UPDATE_INTERVAL_TICKS = 20;
+  // Specifies the time between npc update triggers in ticks
+  private static final long UPDATE_INTERVAL_TICKS = 10;
 
   // Time in milliseconds to use for event debouncing
   private static final long EVENT_DEBOUNCE_MS = 50;

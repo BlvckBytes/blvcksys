@@ -3,10 +3,12 @@ package me.blvckbytes.blvcksys.handlers;
 import com.mojang.authlib.GameProfile;
 import lombok.Getter;
 import me.blvckbytes.blvcksys.packets.communicators.npc.INpcCommunicator;
+import me.blvckbytes.blvcksys.util.Vec3D;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.checkerframework.checker.units.qual.A;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -27,6 +29,10 @@ public class FakeNpc {
   // Specify the max. squared distance between the npc and any
   // given recipient that receives updates here
   private static final double RECIPIENT_MAX_DIST_SQ = Math.pow(30, 2);
+
+  // Specify the max. squared distance between the npc and a player
+  // that it should track with it's rotation
+  private static final double LOOK_MAX_DIST_SQ = Math.pow(8, 2);
 
   // The delay used between tab manipulation packets (add/remove) and spawning
   // or despawning the fake entity
@@ -132,9 +138,14 @@ public class FakeNpc {
    */
   private void tickPlayer(Player p) {
     // Already has an active instance of this NPC
-    // NOTE: Maybe let the NPC look directly at the player here? Would be cool!
-    if (actives.contains(p))
+    if (actives.contains(p)) {
+      // Don't track the player by rotation
+      if (loc.distanceSquared(p.getLocation()) > LOOK_MAX_DIST_SQ)
+        return;
+
+      lookAtPlayer(p);
       return;
+    }
 
     npcComm.addToTablist(entityId, prof, p);
 
@@ -147,6 +158,36 @@ public class FakeNpc {
     }, DEL_TAB_MANIP_T * 2);
 
     actives.add(p);
+  }
+
+  /**
+   * Makes the NPC look directly at the player's head
+   * @param p Player to look at
+   */
+  private void lookAtPlayer(Player p) {
+    // Resting vector (yaw=0, pitch=0) means looking along +z-axis, pitched parallel to it
+    Vec3D vResting = new Vec3D(0, 0, 1);
+
+    // Looking vector from the entity's head towards the player's head
+    // Add to the Y coordinate of the entity to end up about where the head resides
+    Vec3D vLook = Vec3D.fromLocation(p.getEyeLocation()).sub(Vec3D.fromLocation(loc).add(0, 1.6, 0));
+
+    // The angle which vResting and vLook spans is the resulting yaw,
+    // where cos is used to decide on the angle and sin is used to
+    // get the information about whether it's positive or negative, to end
+    // up with an output which ranges from -180 to 180
+    double yawAngle = Math.atan2(
+      vLook.getX() * vResting.getX() - vLook.getZ() * vResting.getZ(),
+      -(vLook.getX() * vResting.getZ() + vLook.getZ() * vResting.getX())
+    ) * 180.0 / Math.PI + 90;
+
+    // Calculate the angle between vLook and the x-z plane by getting the
+    // angle of the triangle with sides deltaY and the length of vLook
+    double pitchAngle = Math.atan(
+      (p.getLocation().getY() - loc.getY()) / vLook.abs()
+    ) * -180.0 / Math.PI;
+
+    npcComm.setRotation(entityId, p, (float) yawAngle, (float) pitchAngle);
   }
 
   /**

@@ -63,13 +63,9 @@ public class NpcCommunicator implements INpcCommunicator {
       refl.setFieldByType(spawn, double.class, loc.getY(), 1);
       refl.setFieldByType(spawn, double.class, loc.getZ(), 2);
 
-      float yaw = loc.getYaw() < 0 ? loc.getYaw() + 360 : loc.getYaw();
-      float pitch = loc.getPitch() < 0 ? loc.getPitch() + 360 : loc.getPitch();
-
       // Rotation angle in bytes: A rotation angle in steps of 1/256 of a full turn
-      byte yawB = (byte) ((int) (yaw / 360.0F * 256.0F));
-      byte pitchB = (byte) ((int) (pitch / 360.0F * 256.0F));
-
+      byte yawB = (byte) ((int) (loc.getYaw() / 360.0F * 256.0F));
+      byte pitchB = (byte) ((int) (loc.getPitch() / 360.0F * 256.0F));
       refl.setFieldByType(spawn, byte.class, yawB, 0);
       refl.setFieldByType(spawn, byte.class, pitchB, 1);
 
@@ -79,21 +75,10 @@ public class NpcCommunicator implements INpcCommunicator {
       DataWatcher watcher = refl.getFieldByType(fakePlayer, DataWatcher.class, 0);
       Object meta = new PacketPlayOutEntityMetadata(entityId, watcher, true);
 
-      // Rotate the head to the proper yaw value
-      Object headRot = refl.createPacket(PacketPlayOutEntityHeadRotation.class);
-      refl.setFieldByType(headRot, int.class, entityId, 0);
-      refl.setFieldByType(headRot, byte.class, yawB, 0);
-
-      // Rotate the body
-      Object look = new PacketPlayOutEntity.PacketPlayOutEntityLook(
-        entityId, yawB, pitchB,
-        true // onGround
-      );
-
       refl.sendPacket(receiver, meta);
       refl.sendPacket(receiver, spawn);
-      refl.sendPacket(receiver, headRot);
-      refl.sendPacket(receiver, look);
+
+      setRotation(entityId, receiver, loc.getYaw(), loc.getPitch());
 
       // Execute the hidden armor stand mount
       fpD.b().run();
@@ -120,6 +105,31 @@ public class NpcCommunicator implements INpcCommunicator {
   public void removeFromTablist(int entityId, GameProfile profile, Player receiver) {
     try {
       refl.sendPacket(receiver, createInfoPacket(entityId, profile, true));
+    } catch (Exception e) {
+      logger.logError(e);
+    }
+  }
+
+  @Override
+  public void setRotation(int entityId, Player receiver, float yaw, float pitch) {
+    try {
+      // Rotation angle in bytes: A rotation angle in steps of 1/256 of a full turn
+      byte yawB = (byte) ((int) (yaw / 360.0F * 256.0F));
+      byte pitchB = (byte) ((int) (pitch / 360.0F * 256.0F));
+
+      // Rotate the head to the proper yaw value
+      Object headRot = refl.createPacket(PacketPlayOutEntityHeadRotation.class);
+      refl.setFieldByType(headRot, int.class, entityId, 0);
+      refl.setFieldByType(headRot, byte.class, yawB, 0);
+
+      // Rotate the body
+      Object look = new PacketPlayOutEntity.PacketPlayOutEntityLook(
+        entityId, yawB, pitchB,
+        true // onGround
+      );
+
+      refl.sendPacket(receiver, headRot);
+      refl.sendPacket(receiver, look);
     } catch (Exception e) {
       logger.logError(e);
     }

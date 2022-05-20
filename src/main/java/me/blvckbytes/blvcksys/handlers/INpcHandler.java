@@ -43,9 +43,10 @@ public interface INpcHandler {
    * Change the skin of a npc
    * @param name Name of the npc
    * @param skin New skin value
-   * @return True on success, false if there's no npc with this name
+   * @return SUCC on success, EMPTY if there is no npc with this name, ERR if the skin could not be loaded
+   * and ERR if the skin textures could not be loaded
    */
-  boolean changeSkin(String name, String skin);
+  TriResult changeSkin(String name, String skin);
 
   /**
    * Get a list of npcs which are near a specified location

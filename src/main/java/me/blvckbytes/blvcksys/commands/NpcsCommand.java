@@ -119,7 +119,7 @@ public class NpcsCommand extends APlayerCommand {
             .withVariable("created_at", npc.getCreatedAtStr())
             .withVariable("updated_at", npc.getUpdatedAtStr())
             .withVariable("creator", npc.getCreator().getName())
-            .withVariable("skin", npc.getSkin())
+            .withVariable("skin", npc.getSkinOwnerName())
             .withVariable("distance", (int) npc.getLoc().distance(p.getLocation()))
             .withVariable("location", "(" + l.getBlockX() + " | " + l.getBlockY() + " | " + l.getBlockZ() + ")")
             .asScalar()

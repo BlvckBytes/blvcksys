@@ -5,6 +5,8 @@ import me.blvckbytes.blvcksys.persistence.ModelProperty;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 
+import java.util.UUID;
+
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 05/20/2022
@@ -28,6 +30,11 @@ public class NpcModel extends APersistentModel {
   private Location loc;
 
   @ModelProperty(isNullable = true)
-  private String skin;
+  private UUID skinOwnerId;
 
+  @ModelProperty(isNullable = true)
+  private String skinOwnerName;
+
+  @ModelProperty(isNullable = true)
+  private String skinTextures;
 }

@@ -3,6 +3,7 @@ package me.blvckbytes.blvcksys.packets.communicators.npc;
 import com.mojang.authlib.GameProfile;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -20,26 +21,28 @@ public interface INpcCommunicator {
    * @param loc Location of the npc
    * @param profile GameProfile of the npc, used for the skin
    */
-  void spawnNpc(int entityId, OfflinePlayer receiver, Location loc, GameProfile profile);
+  void spawnNpc(int entityId, Player receiver, Location loc, GameProfile profile);
 
   /**
    * Destroy an existing npc for a given player
    * @param entityId ID of this entity
    * @param receiver Receiver of the packet
    */
-  void destroyNpc(int entityId, OfflinePlayer receiver);
+  void destroyNpc(int entityId, Player receiver);
 
   /**
    * Add an existing npc to the tablist for a given player
    * @param entityId ID of this entity
    * @param receiver Receiver of the packet
+   * @param profile GameProfile of the npc, used for the skin
    */
-  void addToTablist(int entityId, OfflinePlayer receiver);
+  void addToTablist(int entityId, GameProfile profile, Player receiver);
 
   /**
    * Remove an existing npc from the tablist for a given player
    * @param entityId ID of this entity
    * @param receiver Receiver of the packet
+   * @param profile GameProfile of the npc, used for the skin
    */
-  void removeFromTablist(int entityId, OfflinePlayer receiver);
+  void removeFromTablist(int entityId, GameProfile profile, Player receiver);
 }

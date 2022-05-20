@@ -9,9 +9,11 @@ import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.PacketDataSerializer;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.PlayerConnection;
 import net.minecraft.world.item.Item;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -102,6 +104,34 @@ public class MCReflect {
   public Object getCraftServer() throws ClassNotFoundException {
     // Get the server instance and cast it to a CraftServer
     return getClassBKT("CraftServer").cast(plugin.getServer());
+  }
+
+  /**
+   * Get the instance of the MinecraftServer
+   */
+  public Object getMinecraftServer() throws Exception {
+    Object cs = getCraftServer();
+    Object handle = invokeMethodByName(cs, "getHandle", new Class[]{});
+    return getFieldByType(handle, MinecraftServer.class, 0);
+  }
+
+  /**
+   * Get the instance of the CraftWorld from a specific location
+   * @param loc Target location
+   * @return CraftWorld
+   */
+  public Object getCraftWorld(Location loc) throws ClassNotFoundException {
+    return getClassBKT("CraftWorld").cast(loc.getWorld());
+  }
+
+  /**
+   * Get the world server for a given location
+   * @param loc Target location
+   * @return WorldServer
+   */
+  public Object getWorldServer(Location loc) throws Exception {
+    Object cw = getCraftWorld(loc);
+    return invokeMethodByName(cw, "getHandle", new Class[]{});
   }
 
   /**
@@ -249,15 +279,15 @@ public class MCReflect {
   /**
    * Try to set a class' member field's value by it's type, choose the first occurrence
    * @param o Object to manipulate in
-   * @param c Class to search in
    * @param type Type that holds the generic type
+   * @param genericType Generic type
    * @param v Value to set
    * @param skip How many occurrences to skip
    * @return Success state
    */
-  public boolean setGenericFieldByType(Object o, Class<?> c, Class<?> type, Object v, int skip) {
+  public boolean setGenericFieldByType(Object o, Class<?> type, Class<?> genericType, Object v, int skip) {
     try {
-      findGenericFieldByType(o.getClass(), c, type, skip).set(o, v);
+      findGenericFieldByType(o.getClass(), type, genericType, skip).set(o, v);
       return true;
     } catch (Exception e) {
       return false;

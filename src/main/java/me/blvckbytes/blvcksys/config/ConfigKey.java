@@ -74,6 +74,7 @@ public enum ConfigKey {
   NPC_CREATED("npc.created", "$0Der NPC $3{{name}} $0wurde erstellt."),
   NPC_MOVED("npc.moved", "$0Der NPC $3{{name}} $0wurde zu dir bewegt."),
   NPC_SKIN_CHANGED("npc.skin_changed", "$0Der Skin des NPCs $3{{name}} $0wurde auf $3{{skin}} $0gesetzt."),
+  NPC_SKIN_NOT_LOADABLE("npc.skin_not_loadable", "$0Der Skin von $4{{name}} $0konnte nicht geladen werden!"),
 
   //=========================================================================//
   //                               NPCS Command                              //

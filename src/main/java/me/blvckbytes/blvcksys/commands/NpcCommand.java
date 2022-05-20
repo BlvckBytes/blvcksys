@@ -7,6 +7,7 @@ import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.INpcHandler;
+import me.blvckbytes.blvcksys.handlers.TriResult;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.NpcModel;
 import me.blvckbytes.blvcksys.util.MCReflect;
@@ -147,10 +148,21 @@ public class NpcCommand extends APlayerCommand {
 
     if (action == NpcAction.SETSKIN) {
       String skin = argval(args, 2);
+      TriResult res = npcs.changeSkin(name, skin);
 
-      if (!npcs.changeSkin(name, skin)) {
+      if (res == TriResult.EMPTY) {
         p.sendMessage(
           cfg.get(ConfigKey.NPC_NOT_FOUND)
+            .withPrefix()
+            .withVariable("name", name)
+            .asScalar()
+        );
+        return;
+      }
+
+      if (res == TriResult.ERR) {
+        p.sendMessage(
+          cfg.get(ConfigKey.NPC_SKIN_NOT_LOADABLE)
             .withPrefix()
             .withVariable("name", name)
             .asScalar()

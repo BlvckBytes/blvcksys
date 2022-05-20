@@ -84,13 +84,10 @@ public class NpcCommunicator implements INpcCommunicator {
       refl.setFieldByType(headRot, int.class, entityId, 0);
       refl.setFieldByType(headRot, byte.class, yawB, 0);
 
-      // Rotate the body, which seems to always be 1/8 byte rotation behind the actual yaw,
-      // thus just offset the yaw byte by this value
-      // FIXME: This doesn't seem to always produce the right rotation...
+      // Rotate the body
       Object look = new PacketPlayOutEntity.PacketPlayOutEntityLook(
-        entityId,
-        (byte) (yawB + (255 / 8)),
-        pitchB, true
+        entityId, yawB, pitchB,
+        true // onGround
       );
 
       refl.sendPacket(receiver, meta);

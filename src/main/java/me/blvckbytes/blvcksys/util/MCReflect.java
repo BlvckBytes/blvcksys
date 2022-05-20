@@ -560,6 +560,24 @@ public class MCReflect {
   }
 
   /**
+   * Find a method only by it's return type
+   * @param c Class to search in
+   * @param returnType Type the method should return
+   * @return Optional method
+   */
+  public Optional<Method> findMethodByReturn(Class<?> c, Class<?> returnType) throws Exception {
+    return walkHierarchyToFind(c, (Class<?> cc) -> {
+      for (Method m : cc.getDeclaredMethods()) {
+        if (compareTypes(m.getReturnType(), returnType, false)) {
+          m.setAccessible(true);
+          return Optional.of(m);
+        }
+      }
+      return Optional.empty();
+    });
+  }
+
+  /**
    * Find a method only by it's argument types
    * @param c Class to search in
    * @param args Arg types of target method

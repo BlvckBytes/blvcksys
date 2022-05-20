@@ -30,22 +30,31 @@ public class FakeNpc {
 
   // The delay used between tab manipulation packets (add/remove) and spawning
   // or despawning the fake entity
-  private static final long DEL_TAB_MANIP_T = 5;
+  private static final long DEL_TAB_MANIP_T = 20;
 
   private final List<Player> actives;
   private final INpcCommunicator npcComm;
   private final JavaPlugin plugin;
   private final int entityId;
+  private final String name;
 
   private Location loc;
   private GameProfile prof;
 
-  public FakeNpc(Location loc, GameProfile prof, int entityId, INpcCommunicator npcComm, JavaPlugin plugin) {
+  public FakeNpc(
+    Location loc,
+    GameProfile prof,
+    int entityId,
+    String name,
+    INpcCommunicator npcComm,
+    JavaPlugin plugin
+  ) {
     this.loc = loc;
     this.prof = prof;
     this.entityId = entityId;
     this.npcComm = npcComm;
     this.plugin = plugin;
+    this.name = name;
 
     this.actives = new ArrayList<>();
   }

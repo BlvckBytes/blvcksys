@@ -9,6 +9,10 @@ import com.mojang.authlib.properties.Property;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
+import me.blvckbytes.blvcksys.events.NpcInteractEvent;
+import me.blvckbytes.blvcksys.events.NpcInteraction;
+import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
+import me.blvckbytes.blvcksys.packets.IPacketModifier;
 import me.blvckbytes.blvcksys.packets.communicators.npc.INpcCommunicator;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.exceptions.DuplicatePropertyException;
@@ -17,13 +21,21 @@ import me.blvckbytes.blvcksys.persistence.models.NpcModel;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.FieldQueryGroup;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
+import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.PacketPlayInUseEntity;
 import net.minecraft.util.Tuple;
 import net.minecraft.world.entity.Entity;
 import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Field;
@@ -40,32 +52,51 @@ import java.util.concurrent.atomic.AtomicInteger;
   interactions to fire custom npc events.
 */
 @AutoConstruct
-public class NpcHandler implements INpcHandler, IAutoConstructed {
+public class NpcHandler implements INpcHandler, IAutoConstructed, IPacketModifier, Listener {
 
   // Specifies the time between hologram update triggers in ticks
   private static final long UPDATE_INTERVAL_TICKS = 20;
+
+  // Time in milliseconds to use for event debouncing
+  private static final long EVENT_DEBOUNCE_MS = 50;
 
   private final JavaPlugin plugin;
   private final IPersistence pers;
   private final INpcCommunicator npcComm;
   private final ILogger logger;
+  private final MCReflect refl;
 
+  // Mapping npc-names to fake-npcs
   private final Map<String, FakeNpc> npcs;
+
+  // Mapping entity IDs to fake-npcs
+  private final Map<Integer, FakeNpc> npcIds;
+
+  // Mapping event causing players to their last event emit timestamp (for debouncing)
+  private final Map<UUID, Long> lastEventEmits;
+
   private int intervalHandle;
 
   public NpcHandler(
     @AutoInject JavaPlugin plugin,
     @AutoInject IPersistence pers,
     @AutoInject INpcCommunicator npcComm,
-    @AutoInject ILogger logger
+    @AutoInject ILogger logger,
+    @AutoInject IPacketInterceptor interceptor,
+    @AutoInject MCReflect refl
   ) {
     this.plugin = plugin;
     this.pers = pers;
     this.npcComm = npcComm;
+    this.refl = refl;
     this.logger = logger;
 
     this.intervalHandle = -1;
     this.npcs = new HashMap<>();
+    this.npcIds = new HashMap<>();
+    this.lastEventEmits = Collections.synchronizedMap(new HashMap<>());
+
+    interceptor.register(this);
   }
 
   //=========================================================================//
@@ -77,7 +108,11 @@ public class NpcHandler implements INpcHandler, IAutoConstructed {
     try {
       NpcModel npc = new NpcModel(creator, name, loc, null, null, null);
       pers.store(npc);
-      npcs.put(name.toLowerCase(), fakeNpcFromModel(npc));
+
+      FakeNpc fNpc = fakeNpcFromModel(npc);
+      npcs.put(name.toLowerCase(), fNpc);
+      npcIds.put(fNpc.getEntityId(), fNpc);
+
       return Optional.of(npc);
     } catch (DuplicatePropertyException e) {
       return Optional.empty();
@@ -171,17 +206,96 @@ public class NpcHandler implements INpcHandler, IAutoConstructed {
       npc.destroy();
 
     npcs.clear();
+    npcIds.clear();
   }
 
   @Override
   public void initialize() {
-    for (NpcModel npc : pers.list(NpcModel.class))
-      npcs.put(npc.getName().toLowerCase(), fakeNpcFromModel(npc));
+    for (NpcModel npc : pers.list(NpcModel.class)) {
+      FakeNpc fNpc = fakeNpcFromModel(npc);
+      npcs.put(npc.getName().toLowerCase(), fNpc);
+      npcIds.put(fNpc.getEntityId(), fNpc);
+    }
 
     intervalHandle = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
       for (FakeNpc npc : npcs.values())
         npc.tick();
     }, 0L, UPDATE_INTERVAL_TICKS);
+  }
+
+  @Override
+  public Packet<?> modifyIncoming(UUID sender, NetworkManager nm, Packet<?> incoming) {
+    // A player used an entity (left- or right click)
+    if (sender != null && incoming instanceof PacketPlayInUseEntity pack) {
+
+      try {
+        Player p = Bukkit.getPlayer(sender);
+        int entityId = refl.getFieldByType(pack, int.class, 0);
+
+
+        FakeNpc target = npcIds.get(entityId);
+
+        // Not a fake NPC, do nothing
+        if (target == null)
+          return incoming;
+
+        // Debounce packets, ignore bursts (but still drop the packet)
+        Long lastEmit = lastEventEmits.get(sender);
+        if (lastEmit != null && System.currentTimeMillis() < lastEmit + EVENT_DEBOUNCE_MS)
+          return null;
+
+        // Get the first enum defined within the packet's class (is the interact type, as there's only one)
+        Class<?> actionEnumC = Arrays.stream(PacketPlayInUseEntity.class.getDeclaredClasses())
+          .filter(Class::isEnum)
+          .findFirst()
+          .orElseThrow();
+
+        // Get the use-action interface type'd field within the packet
+        Class<?> actionC = refl.findInnerClass(pack.getClass(), "EnumEntityUseAction");
+        Object useAction = refl.getFieldByType(pack, actionC, 0);
+
+        // Invoke the method of that interface which returns the action enum
+        Enum<?> action = (Enum<?>) refl.findMethodByReturn(useAction.getClass(), actionEnumC)
+          .orElseThrow()
+          .invoke(useAction);
+
+        // The boolean signals whether the interacting player was sneaking
+        boolean isSneaking = refl.getFieldByType(pack, boolean.class, 0);
+
+        // Create a new npc event from these parameters and decode the action
+        NpcInteractEvent event = new NpcInteractEvent(
+          p,
+          action.ordinal() == 1 ? NpcInteraction.HIT : NpcInteraction.INTERACTED,
+          isSneaking,
+          target.getName()
+        );
+
+        // Fire the event synchronously
+        Bukkit.getScheduler().runTask(plugin, () -> Bukkit.getPluginManager().callEvent(event));
+        this.lastEventEmits.put(sender, System.currentTimeMillis());
+
+        // Catch this packet
+        return null;
+      } catch (Exception e) {
+        logger.logError(e);
+      }
+    }
+
+    return incoming;
+  }
+
+  @Override
+  public Packet<?> modifyOutgoing(UUID receiver, NetworkManager nm, Packet<?> outgoing) {
+    return outgoing;
+  }
+
+  //=========================================================================//
+  //                                 Listener                                //
+  //=========================================================================//
+
+  @EventHandler
+  public void onQuit(PlayerQuitEvent e) {
+    this.lastEventEmits.remove(e.getPlayer().getUniqueId());
   }
 
   //=========================================================================//
@@ -260,6 +374,7 @@ public class NpcHandler implements INpcHandler, IAutoConstructed {
 
     FakeNpc fn = fakeNpcFromModel(model);
     this.npcs.put(name, fn);
+    this.npcIds.put(fn.getEntityId(), fn);
 
     return fn;
   }
@@ -273,7 +388,7 @@ public class NpcHandler implements INpcHandler, IAutoConstructed {
     return new FakeNpc(
       model.getLoc(),
       buildProfile(model.getSkinOwnerId(), model.getSkinOwnerName(), model.getSkinTextures()),
-      generateEntityId(), npcComm, plugin
+      generateEntityId(), model.getName(), npcComm, plugin
     );
   }
 

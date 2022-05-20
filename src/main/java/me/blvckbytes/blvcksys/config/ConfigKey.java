@@ -65,6 +65,35 @@ public enum ConfigKey {
   LOGGING_PREFIX_ERROR("logging_prefix.error", "$5"),
 
   //=========================================================================//
+  //                                NPC Command                              //
+  //=========================================================================//
+
+  NPC_EXISTS("npc.exists", "$0Es existiert bereits ein NPC namens $4{{name}}$0!"),
+  NPC_NOT_FOUND("npc.not_found", "$0Es existiert kein NPC namens $4{{name}}$0!"),
+  NPC_DELETED("npc.deleted", "$0Der NPC $3{{name}} $0wurde gelöscht."),
+  NPC_CREATED("npc.created", "$0Der NPC $3{{name}} $0wurde erstellt."),
+  NPC_MOVED("npc.moved", "$0Der NPC $3{{name}} $0wurde zu dir bewegt."),
+  NPC_SKIN_CHANGED("npc.skin_changed", "$0Der Skin des NPCs $3{{name}} $0wurde auf $3{{skin}} $0gesetzt."),
+
+  //=========================================================================//
+  //                               NPCS Command                              //
+  //=========================================================================//
+
+  NPC_LIST_NONE("npc.none", "$4Keine NPCs gefunden"),
+  NPC_LIST_TELEPORTED("npc.teleported", "$0Du wurdest zum NPC $3{{name}} $0teleportiert."),
+  NPC_LIST_PREFIX("npc.header", "$0NPCs im Radius von $3{{radius}} $0Blöcken: "),
+  NPC_LIST_FORMAT("npc.list.format", "$3{{name}}$1{{sep}}"),
+  NPC_LIST_HOVER_TEXT(
+    "npc.list.hover.text",
+    "$0Erstellt am: $3{{created_at}}",
+    "$0Geändert am: $3{{updated_at}}",
+    "$0Erstellt von: $3{{creator}}",
+    "$0Skin: $3{{skin}}",
+    "$0Position: $3{{location}}",
+    "$0Distanz: $3{{distance}} Blöcke"
+  ),
+
+  //=========================================================================//
   //                                   MOTD                                  //
   //=========================================================================//
 

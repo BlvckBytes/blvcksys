@@ -624,6 +624,14 @@ public enum ConfigKey {
   TP_OTHER_RECEIVER("tp.other.receiver", "$0Du wurdest von $2{{issuer}} $0zu $2{{target}} $0teleportiert!"),
 
   //=========================================================================//
+  //                                 CombatLog                               //
+  //=========================================================================//
+
+  COMBATLOG_BROADCAST("combatlog.broadcast", "$0Der Spieler $2{{name}} $0hat sich $2im Kampf $0ausgeloggt und wurde $2getötet$0."),
+  COMBATLOG_INFO("combatlog.info", "$0Du bist noch $2{{remaining_seconds}}s $0im Kampf, $2nicht ausloggen$0!"),
+  COMBATLOG_DONE("combatlog.done", "$0Du bist $2nicht mehr $0im Kampf$0."),
+
+  //=========================================================================//
   //                               Teleportations                            //
   //=========================================================================//
 

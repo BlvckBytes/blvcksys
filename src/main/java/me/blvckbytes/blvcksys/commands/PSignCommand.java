@@ -65,8 +65,6 @@ public class PSignCommand extends APlayerCommand {
   //                                 Handler                                 //
   //=========================================================================//
 
-  // TODO: Implement /psignmove <x> <y> <z>
-
   @Override
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
     // Suggest actions

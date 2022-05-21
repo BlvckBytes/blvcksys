@@ -2,7 +2,6 @@ package me.blvckbytes.blvcksys.handlers.gui;
 
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
-import net.minecraft.util.Tuple;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -10,6 +9,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -26,30 +26,32 @@ import java.util.stream.IntStream;
 */
 public abstract class AGui implements Listener {
 
-  private record GuiInstance(
-    Player viewer,
-    Inventory inv,
-    Function<Player, ConfigValue> title,
-    Map<Integer, Tuple<Function<Player, ItemStackBuilder>, BiConsumer<Player, Integer>>> items
-  ) {}
-
   protected final IConfig cfg;
+  protected final JavaPlugin plugin;
 
   // Mapping players to their active instance
   private final Map<Player, GuiInstance> instances;
-  private final Function<Player, ConfigValue> title;
-  private final int rows;
-  private final Map<Integer, Tuple<Function<Player, ItemStackBuilder>, BiConsumer<Player, Integer>>> items;
 
-  protected AGui(int rows, IConfig cfg, Function<Player, ConfigValue> title) {
+  // Inventory title supplier
+  private final Function<Player, ConfigValue> title;
+
+  private final int rows;
+  private int tickerHandle;
+
+  // Mapping slots to a tuple of the item supplier as well as the click event consumer
+  private final Map<Integer, GuiItem> items;
+
+  protected AGui(int rows, IConfig cfg, JavaPlugin plugin, Function<Player, ConfigValue> title) {
     this.rows = rows;
     this.cfg = cfg;
+    this.plugin = plugin;
     this.title = title;
 
     this.items = new HashMap<>();
     this.instances = new HashMap<>();
+    this.tickerHandle = -1;
 
-    setupItems(rows);
+    createTicker();
   }
 
   //=========================================================================//
@@ -62,9 +64,10 @@ public abstract class AGui implements Listener {
    */
   public void show(Player viewer) {
     Inventory inv = Bukkit.createInventory(null, rows * 9, title.apply(viewer).asScalar());
-    instances.put(viewer, new GuiInstance(viewer, inv, title, items));
+    GuiInstance inst = new GuiInstance(viewer, inv, title, items);
+    instances.put(viewer, inst);
 
-    opening(viewer);
+    opening(viewer, inst);
     redraw(viewer, "*");
 
     viewer.openInventory(inv);
@@ -73,13 +76,6 @@ public abstract class AGui implements Listener {
   //=========================================================================//
   //                                Internals                                //
   //=========================================================================//
-
-  /**
-   * Called right after constructing in order to set up all Items
-   * within the GUI using {@link #withItem(String, BiFunction, BiConsumer)}
-   * @param rows Number of rows this GUI has
-   */
-  abstract protected void setupItems(int rows);
 
   /**
    * Called when a GUI has been closed by a player
@@ -91,7 +87,7 @@ public abstract class AGui implements Listener {
    * Called before a GUI is being shown to a player
    * @param viewer Player that requested a GUI
    */
-  abstract protected void opening(Player viewer);
+  abstract protected void opening(Player viewer, GuiInstance inst);
 
   /**
    * Add an item to multiple slots using a slot expression
@@ -102,14 +98,13 @@ public abstract class AGui implements Listener {
    * @param item An item supplier which provides the viewing player and the current slot number
    * @param onClick Action to run when this item has been clicked
    */
-  protected AGui withItem(
+  protected void withItem(
     String slotExpr,
     BiFunction<Player, Integer, ItemStackBuilder> item,
     @Nullable BiConsumer<Player, Integer> onClick
   ) {
-    for (int slotNumber : slotExprToSlots(slotExpr))
-      items.put(slotNumber, new Tuple<>((p) -> item.apply(p, slotNumber), onClick));
-    return this;
+    for (int slotNumber : slotExprToSlots(slotExpr, rows))
+      items.put(slotNumber, new GuiItem((p) -> item.apply(p, slotNumber), onClick, null));
   }
 
   /**
@@ -122,17 +117,25 @@ public abstract class AGui implements Listener {
       return;
 
     GuiInstance inst = instances.get(viewer);
-    for (int slotNumber : slotExprToSlots(slotExpr)) {
-      if (!inst.items.containsKey(slotNumber))
+    for (int slotNumber : slotExprToSlots(slotExpr, rows)) {
+      if (!inst.getItems().containsKey(slotNumber))
         continue;
 
-      inst.inv.setItem(
+      inst.getInv().setItem(
         slotNumber,
-        inst.items.get(slotNumber).a()
+        inst.getItems().get(slotNumber).item()
           .apply(viewer)
           .build()
       );
     }
+  }
+
+  /**
+   * Stop the ticker task
+   */
+  protected void stopTicker() {
+    if (tickerHandle > 0)
+      Bukkit.getScheduler().cancelTask(tickerHandle);
   }
 
   //=========================================================================//
@@ -148,13 +151,17 @@ public abstract class AGui implements Listener {
     if (inst == null)
       return;
 
-    if (!inst.inv.equals(e.getClickedInventory()))
+    if (!inst.getInv().equals(e.getClickedInventory()))
       return;
 
     e.setCancelled(true);
 
-    if (inst.items.containsKey(e.getSlot()))
-      inst.items.get(e.getSlot()).b().accept(p, e.getSlot());;
+    if (inst.getItems().containsKey(e.getSlot())) {
+      BiConsumer<Player, Integer> cb = inst.getItems().get(e.getSlot()).onClick();
+
+      if (cb != null)
+        cb.accept(p, e.getSlot());
+    }
   }
 
   @EventHandler
@@ -166,7 +173,7 @@ public abstract class AGui implements Listener {
     if (inst == null)
       return;
 
-    if (!inst.inv.equals(e.getInventory()))
+    if (!inst.getInv().equals(e.getInventory()))
       return;
 
     instances.remove(p);
@@ -181,7 +188,7 @@ public abstract class AGui implements Listener {
    * Convert a slot expression to a set of slot indices
    * @param slotExpr Slot expression
    */
-  private Set<Integer> slotExprToSlots(String slotExpr) {
+  public static Set<Integer> slotExprToSlots(String slotExpr, int rows) {
     Set<Integer> slots = new HashSet<>();
 
     for (String range : slotExpr.split(",")) {
@@ -208,5 +215,20 @@ public abstract class AGui implements Listener {
     }
 
     return slots;
+  }
+
+  /**
+   * Create a new ticker task which ticks all available instances
+   */
+  private void createTicker() {
+    tickerHandle = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
+      long time = 0;
+
+      @Override
+      public void run() {
+        instances.values().forEach(inst -> inst.tick(time));
+        time += 10;
+      }
+    }, 0L, 10L);
   }
 }

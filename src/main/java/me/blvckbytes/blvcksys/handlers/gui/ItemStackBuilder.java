@@ -5,6 +5,7 @@ import net.minecraft.util.Tuple;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -23,6 +24,15 @@ public class ItemStackBuilder {
   private final int amount;
   private ConfigValue displayName;
   private ConfigValue lore;
+
+  public ItemStackBuilder(@Nullable ItemStack from, int amount) {
+    if (from == null)
+      this.mat = Material.BARRIER;
+    else
+      this.mat = from.getType();
+
+    this.amount = amount;
+  }
 
   public ItemStackBuilder(Material mat, int amount) {
     this.mat = mat;

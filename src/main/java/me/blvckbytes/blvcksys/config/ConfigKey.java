@@ -1078,6 +1078,20 @@ public enum ConfigKey {
   ),
 
   //=========================================================================//
+  //                                Kits GUI                                 //
+  //=========================================================================//
+
+  GUI_KITS_TITLE("gui.kits.title", "$0Kits von $2{{viewer}}"),
+  GUI_KITS_REDSTONE_NAME("gui.kits.redstone.name", "$0Redstone von $c$2{{viewer}}"),
+  GUI_KITS_REDSTONE_LORE(
+    "gui.kits.redstone.lore",
+    "$0This redstone has a nice Lore!",
+    "$0It sits at slot $2{{slot}}$0.",
+    "$0Being displayed for $2{{viewer}}$0.",
+    "$0Has been clicked $2{{num_clicks}} $0times."
+  ),
+
+  //=========================================================================//
   //                            Generic Messages                             //
   //=========================================================================//
   GENERIC_JOINED("generic.joined", "$0Der Spieler $2{{name}} $0ist dem Server $2beigetreten$0!"),

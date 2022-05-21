@@ -47,6 +47,7 @@ public class InventoryTransformer implements IDataTransformer<InventoryModel, In
         inv.setItem(i, (ItemStack) dataInput.readObject());
 
       dataInput.close();
+      inputStream.close();
       res = inv;
     } catch (Exception e) {
       logger.logError(e);
@@ -70,6 +71,7 @@ public class InventoryTransformer implements IDataTransformer<InventoryModel, In
 
       dataOutput.close();
       base64 = Base64Coder.encodeLines(outputStream.toByteArray());
+      outputStream.close();
     } catch (Exception e) {
       logger.logError(e);
       base64 = "";

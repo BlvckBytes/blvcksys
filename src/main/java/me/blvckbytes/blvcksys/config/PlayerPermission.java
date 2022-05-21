@@ -66,6 +66,7 @@ public enum PlayerPermission {
   //=========================================================================//
 
   COMMAND_SETKIT("bvs.setkit"),
+  COMMAND_KITITEM("bvs.kititem"),
   COMMAND_DELKIT("bvs.delkit"),
   COMMAND_KIT_OTHERS("bvs.kit.others"),
   COMMAND_KIT_COOLDOWN_BYPASS("bvs.kit.cooldown.bypass"),

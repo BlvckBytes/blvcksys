@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.persistence.models;
 
 import lombok.*;
+import me.blvckbytes.blvcksys.persistence.MigrationDefault;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -35,6 +36,9 @@ public class KitModel extends ACooldownModel {
 
   @ModelProperty
   private OfflinePlayer creator;
+
+  @ModelProperty(isNullable = true, migrationDefault = MigrationDefault.NULL)
+  private ItemStack representitiveItem;
 
   /**
    * Get the number of items this kit contains

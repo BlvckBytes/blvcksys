@@ -88,10 +88,13 @@ public class SetKitCommand extends APlayerCommand {
     }
 
     if (!hasItems) {
-      p.sendMessage("§cYour inventory is empty.");
+      p.sendMessage(
+        cfg.get(ConfigKey.KIT_NO_ITEMS)
+          .withPrefix()
+          .asScalar()
+      );
       return;
     }
-
 
     // Check if a kit with this name already exists
     boolean exists = pers.count(

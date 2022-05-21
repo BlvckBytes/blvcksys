@@ -936,6 +936,9 @@ public enum ConfigKey {
   //=========================================================================//
 
   KIT_NOT_EXISTING("kit.not_existing", "$0Es existiert kein Kit namens $4{{name}}$0!"),
+  KIT_NO_ITEM("kit.no_item", "$0Du hältst $4kein Item $0in der Hand!"),
+  KIT_ITEM_SET("kit.item_set", "$0Das Item des Kits $3{{name}} $0wurde auf $3{{item}} $0geändert."),
+  KIT_NO_ITEMS("kit.no_items", "$0Du hast $4keine Items $0im Inventar!"),
   KIT_CREATED("kit.created", "$0Das Kit $3{{name}} $0wurde mit $3{{num_items}} Items $0erstellt."),
   KIT_COOLDOWN("kit.cooldown", "$0Du kannst das Kit $4{{name}} $0erst in $4{{duration}} $0erneut anfordern."),
   KIT_DELETED("kit.deleted", "$0Das Kit $3{{name}} $0wurde $3gelöscht$0."),
@@ -1082,6 +1085,12 @@ public enum ConfigKey {
   //=========================================================================//
 
   GUI_KITS_TITLE("gui.kits.title", "$0Kits von $2{{viewer}}"),
+  GUI_KITS_KIT_NAME("gui.kits.kit_name", "$0» $2{{name}}"),
+  GUI_KITS_KIT_LORE(
+    "gui.kits.kit_lore",
+    "$0Anzahl Items: $2{{num_items}}",
+    "$0Cooldown verbleibend: $2{{cooldown}}"
+  ),
   GUI_KITS_REDSTONE_NAME("gui.kits.redstone.name", "$0Redstone von $c$2{{viewer}}"),
   GUI_KITS_REDSTONE_LORE(
     "gui.kits.redstone.lore",

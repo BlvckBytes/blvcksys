@@ -5,6 +5,7 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.handlers.ITeleportationHandler;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.WarpModel;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
@@ -27,13 +28,15 @@ import java.util.stream.Stream;
 public class WarpCommand extends APlayerCommand {
 
   private final IPersistence pers;
+  private final ITeleportationHandler tp;
 
   public WarpCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
-    @AutoInject IPersistence pers
+    @AutoInject IPersistence pers,
+    @AutoInject ITeleportationHandler tp
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -44,6 +47,7 @@ public class WarpCommand extends APlayerCommand {
     );
 
     this.pers = pers;
+    this.tp = tp;
   }
 
   //=========================================================================//
@@ -79,15 +83,14 @@ public class WarpCommand extends APlayerCommand {
       return;
     }
 
-    // TODO: Also add a teleport timer here
     WarpModel warp = res.get();
-    p.teleport(warp.getLoc());
-
-    p.sendMessage(
-      cfg.get(ConfigKey.WARP_TELEPORTED)
-        .withPrefix()
-        .withVariable("name", warp.getName())
-        .asScalar()
-    );
+    tp.requestTeleportation(p, warp.getLoc(), () -> {
+      p.sendMessage(
+        cfg.get(ConfigKey.WARP_TELEPORTED)
+          .withPrefix()
+          .withVariable("name", warp.getName())
+          .asScalar()
+      );
+    }, null);
   }
 }

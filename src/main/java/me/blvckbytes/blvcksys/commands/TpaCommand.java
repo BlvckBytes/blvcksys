@@ -4,17 +4,13 @@ import lombok.AllArgsConstructor;
 import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
-import me.blvckbytes.blvcksys.events.IMoveListener;
-import me.blvckbytes.blvcksys.handlers.AnimationType;
-import me.blvckbytes.blvcksys.handlers.BelowNameFlag;
-import me.blvckbytes.blvcksys.handlers.IAnimationHandler;
-import me.blvckbytes.blvcksys.handlers.IObjectiveHandler;
-import me.blvckbytes.blvcksys.util.ChatButtons;
-import me.blvckbytes.blvcksys.util.ChatUtil;
-import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
+import me.blvckbytes.blvcksys.handlers.ITeleportationHandler;
+import me.blvckbytes.blvcksys.util.ChatButtons;
+import me.blvckbytes.blvcksys.util.ChatUtil;
+import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -22,7 +18,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.stream.Stream;
@@ -49,40 +44,26 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener,
     Player target;
     int timeoutHandle;
     ChatButtons acceptPrompt;
-    @Nullable Runnable moveListener;
   }
 
   // Timeout in ticks for a pending teleport request
   private static final long REQUEST_TIMEOUT = 20 * 60;
 
-  // Timeout in ticks for how long not to move during a teleportation
-  private static final long TELEPORT_TIMEOUT = 20 * 3;
-
-  // Which animation to play during teleportation
-  private static final AnimationType TELEPORT_ANIMATION = AnimationType.ROTATING_CONE;
-
   // Currently pending requests, mapping senders to requested targets
   // where each player may have multiple requests simultaneously
   private final Map<Player, List<TeleportRequest>> pendingRequests;
 
-  // Each Player and their teleporting task
-  private final Map<Player, Integer> teleportingTasks;
-
-  private final IMoveListener move;
   private final ChatUtil chat;
-  private final IAnimationHandler animation;
-  private final IObjectiveHandler obj;
+  private final ITeleportationHandler tp;
 
   public TpaCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
-    @AutoInject IMoveListener move,
     @AutoInject ChatUtil chat,
-    @AutoInject IAnimationHandler animation,
-    @AutoInject IObjectiveHandler obj
-  ) {
+    @AutoInject ITeleportationHandler tp
+    ) {
     super(
       plugin, logger, cfg, refl,
       "tpa",
@@ -92,12 +73,8 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener,
     );
 
     this.pendingRequests = new HashMap<>();
-    this.teleportingTasks = new HashMap<>();
-
-    this.move = move;
     this.chat = chat;
-    this.animation = animation;
-    this.obj = obj;
+    this.tp = tp;
   }
 
   //=========================================================================//
@@ -164,8 +141,8 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener,
         null
       );
 
-    // Register the new request (no move-listener at this point)
-    pendingRequests.get(p).add(new TeleportRequest(target, timeoutHandle, buttons, null));
+    // Register the new request
+    pendingRequests.get(p).add(new TeleportRequest(target, timeoutHandle, buttons));
 
     // Inform sender
     p.sendMessage(
@@ -202,26 +179,11 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener,
     if (req.isEmpty())
       return false;
 
-    // Cancel a previous teleport that's still active
-    Integer prevTask = this.teleportingTasks.remove(sender);
-    if (prevTask != null) {
-      cancelRequest(sender, target);
-      Bukkit.getScheduler().cancelTask(prevTask);
-    }
-
-    // Create a teleportation task that unregisters the move listener on success,
-    // where the move listener will cancel the teleportation task on move and then
-    // unregister itself
-    TeleportRequest tReq = req.get();
-    tReq.moveListener = cancelTeleportOnMove(sender, target, tReq);
-    createTeleportationTask(sender, target, tReq);
-
     // Inform sender about accept
     sender.sendMessage(
       cfg.get(ConfigKey.TPA_ACCEPTED_SENDER)
         .withPrefix()
         .withVariable("target", target.getName())
-        .withVariable("seconds", TELEPORT_TIMEOUT / 20)
         .asScalar()
     );
 
@@ -232,6 +194,45 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener,
         .withVariable("sender", sender.getName())
         .asScalar()
     );
+
+    TeleportRequest tReq = req.get();
+    tp.requestTeleportation(sender, target.getLocation(), () -> {
+      deleteRequest(sender, tReq);
+
+      // Inform sender about teleport
+      sender.sendMessage(
+        cfg.get(ConfigKey.TPA_TELEPORTED_SENDER)
+          .withPrefix()
+          .withVariable("target", target.getName())
+          .asScalar()
+      );
+
+      // Inform target about teleport
+      target.sendMessage(
+        cfg.get(ConfigKey.TPA_TELEPORTED_RECEIVER)
+          .withPrefix()
+          .withVariable("sender", sender.getName())
+          .asScalar()
+      );
+    }, () -> {
+      deleteRequest(sender, tReq);
+
+      // Inform sender about cancel
+      sender.sendMessage(
+        cfg.get(ConfigKey.TPA_MOVED_SENDER)
+          .withPrefix()
+          .withVariable("target", target.getName())
+          .asScalar()
+      );
+
+      // Inform target about cancel
+      target.sendMessage(
+        cfg.get(ConfigKey.TPA_MOVED_RECEIVER)
+          .withPrefix()
+          .withVariable("sender", sender.getName())
+          .asScalar()
+      );
+    });
 
     return true;
   }
@@ -336,17 +337,11 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener,
             .withVariable("sender", involved.getName())
             .asScalar()
         );
-
-        // Unsubscribe a possibly existing move-listener
-        if (req.moveListener != null)
-          move.unsubscribe(involved, req.moveListener);
       }
     }
 
     // Cancel all requests that were targetted at the involved player
     for (Map.Entry<Player, List<TeleportRequest>> requests : pendingRequests.entrySet()) {
-      Player sender = requests.getKey();
-
       // Find all requests that this player is involved in
       List<TeleportRequest> invReqs = requests.getValue()
         .stream()
@@ -367,122 +362,8 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener,
             .withVariable("target", involved.getName())
             .asScalar()
         );
-
-        // Cancel any teleporting task the sender of this request may be in
-        Integer handle = teleportingTasks.remove(sender);
-        if (handle != null)
-          Bukkit.getScheduler().cancelTask(handle);
-
-        // Unsubscribe a possibly existing move-listener
-        if (invReq.moveListener != null)
-          move.unsubscribe(sender, invReq.moveListener);
       }
     }
-
-    // Cancel any teleporting task
-    Integer handle = teleportingTasks.remove(involved);
-    if (handle != null)
-      Bukkit.getScheduler().cancelTask(handle);
-  }
-
-  /**
-   * Create a teleportation task (timeout) to teleport the sender if they haven't
-   * moved until the timeout elapsed, also unregisters the moveListener at that point
-   * @param sender Sender that's not allowed to move
-   * @param target Target that the sender wants to teleport to
-   * @param req Teleportation request ref
-   */
-  private void createTeleportationTask(Player sender, Player target, TeleportRequest req) {
-    // Start the animation
-    animation.startAnimation(sender, TELEPORT_ANIMATION);
-
-    // Add the teleporting flag
-    obj.setBelowNameFlag(sender, BelowNameFlag.TELEPORTING, true);
-
-    // Create a timeout to await non-movement in
-    this.teleportingTasks.put(sender, Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
-      // Stop listening to moves
-      move.unsubscribe(sender, req.moveListener);
-
-      // Remove the finished task
-      teleportingTasks.remove(sender);
-
-      // Delete request
-      deleteRequest(sender, req);
-
-      // Stop the animation
-      animation.stopAnimation(sender, TELEPORT_ANIMATION);
-
-      // Remove the teleporting flag
-      obj.setBelowNameFlag(sender, BelowNameFlag.TELEPORTING, false);
-
-      // Teleport
-      sender.teleport(target);
-
-      // Inform sender about teleport
-      sender.sendMessage(
-        cfg.get(ConfigKey.TPA_TELEPORTED_SENDER)
-          .withPrefix()
-          .withVariable("target", target.getName())
-          .asScalar()
-      );
-
-      // Inform target about teleport
-      target.sendMessage(
-        cfg.get(ConfigKey.TPA_TELEPORTED_RECEIVER)
-          .withPrefix()
-          .withVariable("sender", sender.getName())
-          .asScalar()
-      );
-    }, TELEPORT_TIMEOUT));
-  }
-
-  /**
-   * Cancel a currently active teleport if the sender moves
-   * @param sender Sender that's not allowed to move
-   * @param target Target that the sender wants to teleport to
-   * @param req Teleportation request ref
-   * @return Runnable used to register within {@link IMoveListener}
-   */
-  private Runnable cancelTeleportOnMove(Player sender, Player target, TeleportRequest req) {
-    return this.move.subscribe(sender, new Runnable() {
-
-      @Override
-      public void run() {
-        // Cancel the teleporting task
-        Integer handle = teleportingTasks.remove(sender);
-        if (handle != null)
-          Bukkit.getScheduler().cancelTask(handle);
-
-        // Stop the animation
-        animation.stopAnimation(sender, TELEPORT_ANIMATION);
-
-        // Remove the teleporting flag
-        obj.setBelowNameFlag(sender, BelowNameFlag.TELEPORTING, false);
-
-        // Delete request
-        deleteRequest(sender, req);
-
-        // Inform sender about cancel
-        sender.sendMessage(
-          cfg.get(ConfigKey.TPA_MOVED_SENDER)
-            .withPrefix()
-            .withVariable("target", target.getName())
-            .asScalar()
-        );
-
-        // Inform target about cancel
-        target.sendMessage(
-          cfg.get(ConfigKey.TPA_MOVED_RECEIVER)
-            .withPrefix()
-            .withVariable("sender", sender.getName())
-            .asScalar()
-        );
-
-        // Stop subscribing to movement
-        move.unsubscribe(sender, this);
-      }
-    });
   }
 
   /**

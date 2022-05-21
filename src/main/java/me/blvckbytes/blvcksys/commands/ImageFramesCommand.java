@@ -7,6 +7,7 @@ import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IImageFrameHandler;
+import me.blvckbytes.blvcksys.handlers.ITeleportationHandler;
 import me.blvckbytes.blvcksys.handlers.ImageFrameHandler;
 import me.blvckbytes.blvcksys.handlers.ItemFrameGroup;
 import me.blvckbytes.blvcksys.persistence.models.ImageFrameModel;
@@ -39,6 +40,7 @@ public class ImageFramesCommand extends APlayerCommand {
 
   private final IImageFrameHandler iframe;
   private final ChatUtil chat;
+  private final ITeleportationHandler tp;
 
   public ImageFramesCommand(
     @AutoInject JavaPlugin plugin,
@@ -46,7 +48,8 @@ public class ImageFramesCommand extends APlayerCommand {
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
     @AutoInject ImageFrameHandler iframe,
-    @AutoInject ChatUtil chat
+    @AutoInject ChatUtil chat,
+    @AutoInject ITeleportationHandler tp
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -58,6 +61,7 @@ public class ImageFramesCommand extends APlayerCommand {
 
     this.iframe = iframe;
     this.chat = chat;
+    this.tp = tp;
   }
 
   //=========================================================================//
@@ -100,13 +104,14 @@ public class ImageFramesCommand extends APlayerCommand {
           .withVariable("name", group.getName())
           .withVariable("sep", i == groups.size() - 1 ? "" : ", "),
         plugin, cfg, () -> {
-          p.teleport(l);
-          p.sendMessage(
-            cfg.get(ConfigKey.COMMAND_IMAGEFRAMES_LIST_TELEPORTED)
-              .withPrefix()
-              .withVariable("name", group.getName())
-              .asScalar()
-          );
+          tp.requestTeleportation(p, l, () -> {
+            p.sendMessage(
+              cfg.get(ConfigKey.COMMAND_IMAGEFRAMES_LIST_TELEPORTED)
+                .withPrefix()
+                .withVariable("name", group.getName())
+                .asScalar()
+            );
+          }, null);
         }
       );
 

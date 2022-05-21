@@ -7,6 +7,7 @@ import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IHologramHandler;
+import me.blvckbytes.blvcksys.handlers.ITeleportationHandler;
 import me.blvckbytes.blvcksys.persistence.models.HologramLineModel;
 import me.blvckbytes.blvcksys.util.ChatButtons;
 import me.blvckbytes.blvcksys.util.ChatUtil;
@@ -38,6 +39,7 @@ public class HolosCommand extends APlayerCommand {
   private static final float RADIUS_FALLBACK = 50;
 
   private final IHologramHandler holo;
+  private final ITeleportationHandler tp;
   private final ChatUtil chat;
 
   public HolosCommand(
@@ -46,7 +48,8 @@ public class HolosCommand extends APlayerCommand {
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
     @AutoInject IHologramHandler holo,
-    @AutoInject ChatUtil chat
+    @AutoInject ChatUtil chat,
+    @AutoInject ITeleportationHandler tp
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -58,6 +61,7 @@ public class HolosCommand extends APlayerCommand {
 
     this.holo = holo;
     this.chat = chat;
+    this.tp = tp;
   }
 
   //=========================================================================//
@@ -111,13 +115,14 @@ public class HolosCommand extends APlayerCommand {
           .withVariable("name", hologram.a())
           .withVariable("sep", i == holograms.size() - 1 ? "" : ", "),
         plugin, cfg, () -> {
-          p.teleport(l);
-          p.sendMessage(
-            cfg.get(ConfigKey.COMMAND_HOLOS_LIST_TELEPORTED)
-              .withPrefix()
-              .withVariable("name", hologram.a())
-              .asScalar()
-          );
+          tp.requestTeleportation(p, l, () -> {
+            p.sendMessage(
+              cfg.get(ConfigKey.COMMAND_HOLOS_LIST_TELEPORTED)
+                .withPrefix()
+                .withVariable("name", hologram.a())
+                .asScalar()
+            );
+          }, null);
         }
       );
 

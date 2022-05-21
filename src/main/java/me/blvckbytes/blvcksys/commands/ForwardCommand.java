@@ -5,6 +5,7 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.events.ITeleportListener;
+import me.blvckbytes.blvcksys.handlers.ITeleportationHandler;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -25,13 +26,15 @@ import java.util.Optional;
 public class ForwardCommand extends APlayerCommand {
 
   private final ITeleportListener tel;
+  private final ITeleportationHandler tp;
 
   public ForwardCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
-    @AutoInject ITeleportListener tel
+    @AutoInject ITeleportListener tel,
+    @AutoInject ITeleportationHandler tp
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -41,6 +44,7 @@ public class ForwardCommand extends APlayerCommand {
     );
 
     this.tel = tel;
+    this.tp = tp;
   }
 
   //=========================================================================//
@@ -50,18 +54,23 @@ public class ForwardCommand extends APlayerCommand {
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     Optional<Location> loc = tel.getHistoryNext(p);
-    boolean exists = loc.isPresent();
-
-    p.sendMessage(
-      cfg.get(exists ? ConfigKey.FORWARD_TELEPORTED : ConfigKey.FORWARD_NONE)
-        .withPrefix()
-        .asScalar()
-    );
 
     // No next location available
-    if (!exists)
+    if (loc.isEmpty()) {
+      p.sendMessage(
+        cfg.get(ConfigKey.FORWARD_NONE)
+          .withPrefix()
+          .asScalar()
+      );
       return;
+    }
 
-    p.teleport(loc.get());
+    tp.requestTeleportation(p, loc.get(), () -> {
+      p.sendMessage(
+        cfg.get(ConfigKey.FORWARD_TELEPORTED)
+          .withPrefix()
+          .asScalar()
+      );
+    }, null);
   }
 }

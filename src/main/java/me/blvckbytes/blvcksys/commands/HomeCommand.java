@@ -6,6 +6,7 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IHomeHandler;
+import me.blvckbytes.blvcksys.handlers.ITeleportationHandler;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.HomeModel;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
@@ -30,6 +31,7 @@ public class HomeCommand extends APlayerCommand {
 
   private final IHomeHandler homes;
   private final IPersistence pers;
+  private final ITeleportationHandler tp;
 
   public HomeCommand(
     @AutoInject JavaPlugin plugin,
@@ -37,7 +39,8 @@ public class HomeCommand extends APlayerCommand {
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
     @AutoInject IHomeHandler homes,
-    @AutoInject IPersistence pers
+    @AutoInject IPersistence pers,
+    @AutoInject ITeleportationHandler tp
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -50,6 +53,7 @@ public class HomeCommand extends APlayerCommand {
 
     this.homes = homes;
     this.pers = pers;
+    this.tp = tp;
   }
 
   //=========================================================================//
@@ -88,14 +92,14 @@ public class HomeCommand extends APlayerCommand {
       return;
     }
 
-    // TODO: Also add a teleport timer here
-    p.teleport(home.get().getLoc());
-    p.sendMessage(
-      cfg.get(owner.equals(p) ? ConfigKey.HOMES_TELEPORTED_SELF : ConfigKey.HOMES_TELEPORTED_OTHERS)
-        .withPrefix()
-        .withVariable("name", home.get().getName())
-        .withVariable("owner", owner.getName())
-        .asScalar()
-    );
+    tp.requestTeleportation(p, home.get().getLoc(), () -> {
+      p.sendMessage(
+        cfg.get(owner.equals(p) ? ConfigKey.HOMES_TELEPORTED_SELF : ConfigKey.HOMES_TELEPORTED_OTHERS)
+          .withPrefix()
+          .withVariable("name", home.get().getName())
+          .withVariable("owner", owner.getName())
+          .asScalar()
+      );
+    }, null);
   }
 }

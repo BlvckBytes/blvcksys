@@ -624,6 +624,13 @@ public enum ConfigKey {
   TP_OTHER_RECEIVER("tp.other.receiver", "$0Du wurdest von $2{{issuer}} $0zu $2{{target}} $0teleportiert!"),
 
   //=========================================================================//
+  //                               Teleportations                            //
+  //=========================================================================//
+
+  TELEPORTATIONS_MOVED("teleportations.moved", "$4Du hast dich bewegt!"),
+  TELEPORTATIONS_INITIATED("teleportations.initiated", "$0Teleportation eingeleitet, $2nicht bewegen$0..."),
+
+  //=========================================================================//
   //                                TPA Command                              //
   //=========================================================================//
 
@@ -634,7 +641,7 @@ public enum ConfigKey {
   TPA_CANCELLED_RECEIVER("tpa.cancelled.receiver", "$0Die Anfrage von $4{{sender}} $0wurde $4abgebrochen$0!"),
   TPA_DENIED_SENDER("tpa.denied.sender", "$0Deine Anfrage an $4{{target}} $0wurde $4abgelehnt$0!"),
   TPA_DENIED_RECEIVER("tpa.denied.receiver", "$0Die Anfrage von $4{{sender}} $0wurde $4abgelehnt$0!"),
-  TPA_MOVED_SENDER("tpa.moved.sender", "$0Du hast dich $4bewegt$0, deine Anfrage an $4{{target}} $0wurde abgebrochen!"),
+  TPA_MOVED_SENDER("tpa.moved.sender", "$0Deine Anfrage an $4{{target}} $0wurde abgebrochen!"),
   TPA_MOVED_RECEIVER("tpa.moved.receiver", "$4{{sender}} $0hat sich bewegt, die Anfrage wurde $4abgebrochen$0!"),
   TPA_TELEPORTED_SENDER("tpa.teleported.sender", "$0Du wurdest zu $2{{target}} $0teleportiert."),
   TPA_TELEPORTED_RECEIVER("tpa.teleported.receiver", "$2{{sender}} $0wurde zu dir teleportiert."),
@@ -644,12 +651,8 @@ public enum ConfigKey {
   TPA_SELF("tpa.self", "$0Du kannst $4dir selbst $0keine Anfragen senden!"),
   TPA_NONE_RECEIVED("tpa.none.received", "$0Du hast $4keine $0aktive Anfrage von $4{{sender}}$0!"),
   TPA_NONE_SENT("tpa.none.sent", "$0Du hast noch keine Anfrage an $4{{target}} $0versendet!"),
-  TPA_ACCEPTED_SENDER(
-    "tpa.accepted.sender",
-    "$0Deine Anfrage an $4{{target}} $0wurde $2angenommen$0!",
-    "$0Bewege dich für $2{{seconds}}s $0nicht, um $2teleportiert $0zu werden."
-  ),
-  TPA_ACCEPTED_RECEIVER("tpa.accepted.receiver", "$0Die Anfrage von $4{{sender}} $0wurde $2angenommen$0!"),
+  TPA_ACCEPTED_SENDER("tpa.accepted.sender", "$0Deine Anfrage an $2{{target}} $0wurde $2angenommen$0!"),
+  TPA_ACCEPTED_RECEIVER("tpa.accepted.receiver", "$0Die Anfrage von $2{{sender}} $0wurde $2angenommen$0!"),
   TPA_RECEIVED_PREFIX("tpa.received_prefix", "$2{{sender}} $0möchte sich zu dir teleportieren: "),
 
   //=========================================================================//

@@ -7,6 +7,7 @@ import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.INpcHandler;
+import me.blvckbytes.blvcksys.handlers.ITeleportationHandler;
 import me.blvckbytes.blvcksys.persistence.models.NpcModel;
 import me.blvckbytes.blvcksys.util.ChatButtons;
 import me.blvckbytes.blvcksys.util.ChatUtil;
@@ -36,6 +37,7 @@ public class NpcsCommand extends APlayerCommand {
 
   private final INpcHandler npcs;
   private final ChatUtil chat;
+  private final ITeleportationHandler tp;
 
   public NpcsCommand(
     @AutoInject JavaPlugin plugin,
@@ -43,7 +45,8 @@ public class NpcsCommand extends APlayerCommand {
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
     @AutoInject INpcHandler npcs,
-    @AutoInject ChatUtil chat
+    @AutoInject ChatUtil chat,
+    @AutoInject ITeleportationHandler tp
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -55,6 +58,7 @@ public class NpcsCommand extends APlayerCommand {
 
     this.npcs = npcs;
     this.chat = chat;
+    this.tp = tp;
   }
 
   //=========================================================================//
@@ -98,13 +102,14 @@ public class NpcsCommand extends APlayerCommand {
           .withVariable("name", npc.getName())
           .withVariable("sep", i == npcs.size() - 1 ? "" : ", "),
         plugin, cfg, () -> {
-          p.teleport(l);
-          p.sendMessage(
-            cfg.get(ConfigKey.NPC_LIST_TELEPORTED)
-              .withPrefix()
-              .withVariable("name", npc.getName())
-              .asScalar()
-          );
+          tp.requestTeleportation(p, l, () -> {
+            p.sendMessage(
+              cfg.get(ConfigKey.NPC_LIST_TELEPORTED)
+                .withPrefix()
+                .withVariable("name", npc.getName())
+                .asScalar()
+            );
+          }, null);
         }
       );
 

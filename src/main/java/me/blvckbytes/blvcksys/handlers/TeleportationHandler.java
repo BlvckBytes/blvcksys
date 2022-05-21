@@ -28,8 +28,6 @@ import java.util.Map;
 @AutoConstruct
 public class TeleportationHandler implements ITeleportationHandler, Listener {
 
-  // TODO: Think about instant teleportation when not in combat
-
   /**
    * Represents an active teleportation request of a player
    * @param taskHandle No-Move timeout task handle
@@ -50,6 +48,7 @@ public class TeleportationHandler implements ITeleportationHandler, Listener {
 
   private final Map<Player, TeleportRequest> tasks;
 
+  private final ICombatLogHandler combatlog;
   private final IMoveListener move;
   private final IAnimationHandler animation;
   private final IObjectiveHandler obj;
@@ -61,15 +60,17 @@ public class TeleportationHandler implements ITeleportationHandler, Listener {
     @AutoInject IAnimationHandler animation,
     @AutoInject IObjectiveHandler obj,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IConfig cfg
+    @AutoInject IConfig cfg,
+    @AutoInject ICombatLogHandler combatlog
   ) {
     this.move = move;
     this.animation = animation;
     this.obj = obj;
     this.plugin = plugin;
+    this.cfg = cfg;
+    this.combatlog = combatlog;
 
     this.tasks = new HashMap<>();
-    this.cfg = cfg;
   }
 
   //=========================================================================//
@@ -80,7 +81,7 @@ public class TeleportationHandler implements ITeleportationHandler, Listener {
   public void requestTeleportation(Player p, Location to, @Nullable Runnable done, @Nullable Runnable cancelled) {
 
     // Instant teleportation allowed
-    if (PlayerPermission.TELEPORTATIONS_BYPASS.has(p)) {
+    if (!combatlog.isInCombat(p) || PlayerPermission.TELEPORTATIONS_BYPASS.has(p)) {
       p.teleport(to);
 
       if (done != null)

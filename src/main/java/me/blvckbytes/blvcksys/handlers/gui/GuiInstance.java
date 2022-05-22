@@ -4,6 +4,7 @@ import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -62,7 +63,7 @@ public class GuiInstance {
    * @param updatePeriod Update period in ticks, null means never
    */
   public void addPagedItem(
-    Function<GuiInstance, ItemStackBuilder> item,
+    Function<GuiInstance, ItemStack> item,
     @Nullable Consumer<GuiClickEvent> onClick,
     @Nullable Integer updatePeriod
   ) {
@@ -90,7 +91,7 @@ public class GuiInstance {
         continue;
 
       // Update the item by re-calling it's supplier
-      inv.setItem(slot, target.item().apply(this).build());
+      inv.setItem(slot, target.item().apply(this));
     }
   }
 
@@ -198,7 +199,7 @@ public class GuiInstance {
 
       // Only update on force updates or if the time is a multiple of the item's period
       if (time == null || (item.updatePeriod() != null && time % item.updatePeriod() == 0))
-        inv.setItem(pageItem.getKey(), item.item().apply(this).build());
+        inv.setItem(pageItem.getKey(), item.item().apply(this));
     }
 
     // Clear unused page slots if they're not already vacant
@@ -221,7 +222,7 @@ public class GuiInstance {
 
       // Only tick this item if it has a period which has elapsed
       if (item.updatePeriod() != null && time % item.updatePeriod() == 0)
-        inv.setItem(itemE.getKey(), item.item().apply(this).build());
+        inv.setItem(itemE.getKey(), item.item().apply(this));
     }
 
     // Tick all page items

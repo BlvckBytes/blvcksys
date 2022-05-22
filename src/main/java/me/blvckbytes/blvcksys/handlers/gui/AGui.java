@@ -9,6 +9,8 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
@@ -141,7 +143,7 @@ public abstract class AGui implements IAutoConstructed, Listener {
    */
   protected void fixedItem(
     String slotExpr,
-    Function<GuiInstance, ItemStackBuilder> item,
+    Function<GuiInstance, ItemStack> item,
     @Nullable Consumer<GuiClickEvent> onClick
   ) {
     for (int slotNumber : slotExprToSlots(slotExpr, rows))
@@ -182,6 +184,23 @@ public abstract class AGui implements IAutoConstructed, Listener {
     if (!(e.getPlayer() instanceof Player p))
       return;
 
+    quitInstance(p);
+  }
+
+  @EventHandler
+  public void onQuit(PlayerQuitEvent e) {
+    quitInstance(e.getPlayer());
+  }
+
+  //=========================================================================//
+  //                                Utilities                                //
+  //=========================================================================//
+
+  /**
+   * Quits an active instance, if it exists
+   * @param p Target player
+   */
+  private void quitInstance(Player p) {
     // The player has no instance
     GuiInstance inst = instances.get(p);
     if (inst == null)
@@ -191,10 +210,6 @@ public abstract class AGui implements IAutoConstructed, Listener {
     if (instances.remove(p) != null)
       closed(p);
   }
-
-  //=========================================================================//
-  //                                Utilities                                //
-  //=========================================================================//
 
   /**
    * Convert a slot expression to a set of slot indices

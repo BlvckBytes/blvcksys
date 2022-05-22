@@ -51,14 +51,13 @@ public class KitsGui extends AGui {
   }
 
   protected void setupFixedItems() {
-    fixedItem("0-9,17,18,26,27-35", g -> (
-      new ItemStackBuilder(Material.GRAY_STAINED_GLASS_PANE)
-    ), null);
+    fixedItem("0-9,17,18,26,27-35", g -> new ItemStackBuilder(Material.GRAY_STAINED_GLASS_PANE).build(), null);
 
     fixedItem("28", g -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner(), false), 1)
-      .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_NAME))
+        .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_NAME))
         .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_LORE))
+        .build()
     ), e -> {
       e.gui().previousPage();
       e.gui().redraw("31");
@@ -72,12 +71,14 @@ public class KitsGui extends AGui {
             .withVariable("num_pages", g.getNumPages())
         )
         .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_INDICATOR_LORE))
+        .build()
     ), null);
 
     fixedItem("34", g -> (
     new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_RIGHT.getOwner(), false), 1)
       .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_NAME))
         .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_LORE))
+      .build()
     ), e -> {
       e.gui().nextPage();
       e.gui().redraw("31");
@@ -98,15 +99,16 @@ public class KitsGui extends AGui {
         long rem = kit.getCooldownRemaining(viewer, pers);
 
         return new ItemStackBuilder(kit.getRepresentitiveItem(), 1)
-            .withName(
-              cfg.get(ConfigKey.GUI_KITS_KIT_NAME)
-                .withVariable("name", kit.getName())
-            )
-            .withLore(
-              cfg.get(ConfigKey.GUI_KITS_KIT_LORE)
-                .withVariable("num_items", kit.getNumItems())
-                .withVariable("cooldown", rem < 0 ? "/" : time.formatDuration(rem))
-            );
+          .withName(
+            cfg.get(ConfigKey.GUI_KITS_KIT_NAME)
+              .withVariable("name", kit.getName())
+          )
+          .withLore(
+            cfg.get(ConfigKey.GUI_KITS_KIT_LORE)
+              .withVariable("num_items", kit.getNumItems())
+              .withVariable("cooldown", rem < 0 ? "/" : time.formatDuration(rem))
+          )
+          .build();
 
       }, e -> {
         if (e.type() == ClickType.LEFT || e.type() == ClickType.SHIFT_LEFT)

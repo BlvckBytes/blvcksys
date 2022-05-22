@@ -1113,23 +1113,24 @@ public enum ConfigKey {
   //                                Kits GUI                                 //
   //=========================================================================//
 
-  GUI_KITS_TITLE("gui.kits.title", "$0Kits von $2{{viewer}}"),
+  GUI_KITS_TITLE("gui.kits.title", "$0Kitmenu von $2{{viewer}}"),
   GUI_KITS_KIT_NAME("gui.kits.kit_name", "$0» $2{{name}}"),
   GUI_KITS_KIT_LORE(
     "gui.kits.kit_lore",
+    " ",
     "$0Anzahl Items: $2{{num_items}}",
-    "$0Cooldown verbleibend: $2{{cooldown}}"
+    "$0Cooldown verbleibend: $2{{cooldown}}",
+    " ",
+    "$0&oRechtsklick zur Vorschau"
   ),
-  GUI_KITS_REDSTONE_NAME("gui.kits.redstone.name", "$0Redstone von $c$2{{viewer}}"),
-  GUI_KITS_REDSTONE_LORE(
-    "gui.kits.redstone.lore",
-    "$0This redstone has a nice Lore!",
-    "$0It sits at slot $2{{slot}}$0.",
-    "$0Being displayed for $2{{viewer}}$0.",
-    "$0Has been clicked $2{{num_clicks}} $0times."
-  ),
-
   GUI_KIT_CONTENT_TITLE("gui.kit_content.title", "$0Kitvorschau $2{{name}}"),
+  GUI_KIT_CONTENT_CONTENT_NAME("gui.kit_content.content.name", "$2{{hr_type}}"),
+  GUI_KIT_CONTENT_CONTENT_LORE(
+    "gui.kit_content.content.lore",
+    " ",
+    "$0Dieses Item erhältst du, wenn du",
+    "$0das Kit $2{{name}} $0anforderst."
+  ),
 
   //=========================================================================//
   //                            Generic Messages                             //

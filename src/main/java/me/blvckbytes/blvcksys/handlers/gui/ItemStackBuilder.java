@@ -27,6 +27,8 @@ public class ItemStackBuilder {
   private ConfigValue displayName;
   private ConfigValue lore;
   private GameProfile profile;
+  private ItemStack stack;
+  private ItemMeta meta;
 
   /**
    * Create a new builder for a player-head
@@ -46,8 +48,11 @@ public class ItemStackBuilder {
   public ItemStackBuilder(@Nullable ItemStack from, int amount) {
     if (from == null)
       this.mat = Material.BARRIER;
-    else
+    else {
       this.mat = from.getType();
+      this.stack = from.clone();
+      this.meta = stack.getItemMeta();
+    }
 
     this.amount = amount;
   }
@@ -100,8 +105,15 @@ public class ItemStackBuilder {
    * @param variables Variables to apply
    */
   public ItemStack build(Map<String, Tuple<Pattern, String>> variables) {
-    ItemStack stack = new ItemStack(this.mat, this.amount);
-    ItemMeta meta = stack.getItemMeta();
+    if (stack == null)
+      stack = new ItemStack(this.mat, this.amount);
+    else {
+      stack.setType(this.mat);
+      stack.setAmount(this.amount);
+    }
+
+    if (meta == null)
+      meta = stack.getItemMeta();
 
     if (meta == null)
       return stack;

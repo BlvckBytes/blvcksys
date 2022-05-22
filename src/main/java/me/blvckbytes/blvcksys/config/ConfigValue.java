@@ -280,4 +280,12 @@ public class ConfigValue {
   public static ConfigValue makeEmpty() {
     return new ConfigValue("", "", "");
   }
+
+  /**
+   * Make a new instance from an immediate value
+   * @param value Immediate value
+   */
+  public static ConfigValue immediate(String value) {
+    return new ConfigValue("", value, "");
+  }
 }

@@ -20,6 +20,8 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -36,12 +38,17 @@ public class PlayerTextureHandler implements IPlayerTextureHandler {
   private final IPersistence pers;
   private final ILogger logger;
 
+  // Mapping names to textures
+  private final Map<String, PlayerTextureModel> cache;
+
   public PlayerTextureHandler(
     @AutoInject IPersistence pers,
     @AutoInject ILogger logger
   ) {
     this.pers = pers;
     this.logger = logger;
+
+    this.cache = new HashMap<>();
   }
 
   //=========================================================================//
@@ -50,13 +57,18 @@ public class PlayerTextureHandler implements IPlayerTextureHandler {
 
   @Override
   public Optional<PlayerTextureModel> getTextures(String name, boolean forceUpdate) {
+    // Try to resolve from cache
+    if (cache.containsKey(name.toLowerCase()))
+      return Optional.of(cache.get(name.toLowerCase()));
 
-    // Try to resolve from cache (db)
+    // Try to resolve from db
     if (!forceUpdate) {
       Optional<PlayerTextureModel> res = pers.findFirst(buildQuery(name));
 
-      if (res.isPresent())
+      if (res.isPresent()) {
+        cache.put(name.toLowerCase(), res.get());
         return res;
+      }
     }
 
     // Cannot resolve this name
@@ -74,6 +86,7 @@ public class PlayerTextureHandler implements IPlayerTextureHandler {
     PlayerTextureModel model = new PlayerTextureModel(name, result.a(), result.b());
     pers.store(model);
 
+    cache.put(name.toLowerCase(), model);
     return Optional.of(model);
   }
 

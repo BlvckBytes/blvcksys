@@ -1,6 +1,5 @@
 package me.blvckbytes.blvcksys.handlers;
 
-import com.mojang.authlib.GameProfile;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
@@ -321,7 +320,7 @@ public class NpcHandler implements INpcHandler, IAutoConstructed, IPacketModifie
   private FakeNpc fakeNpcFromModel(NpcModel model) {
     return new FakeNpc(
       model.getLoc(),
-      playerTextures.getProfileOrDefault(model.getSkinOwnerName(), false),
+      playerTextures.getProfileOrDefault(model.getSkinOwnerName()),
       generateEntityId(), model.getName(), npcComm, plugin
     );
   }

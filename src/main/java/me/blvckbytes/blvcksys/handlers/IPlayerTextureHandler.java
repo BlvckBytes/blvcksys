@@ -25,8 +25,7 @@ public interface IPlayerTextureHandler {
    * Utility method to get a game profile directly, or fall back to a default
    * profile, which consists of a random UUID and the requested name
    * @param name Name of the player
-   * @param forceUpdate Whether to force a cache-update
    * @return Fetched GameProfile if the name exists, default profile otherwise
    */
-  GameProfile getProfileOrDefault(String name, boolean forceUpdate);
+  GameProfile getProfileOrDefault(String name);
 }

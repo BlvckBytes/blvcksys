@@ -91,8 +91,8 @@ public class PlayerTextureHandler implements IPlayerTextureHandler {
   }
 
   @Override
-  public GameProfile getProfileOrDefault(String name, boolean forceUpdate) {
-    Optional<PlayerTextureModel> textures = getTextures(name, forceUpdate);
+  public GameProfile getProfileOrDefault(String name) {
+    Optional<PlayerTextureModel> textures = getTextures(name, false);
 
     if (textures.isPresent())
       return textures.get().toProfile();

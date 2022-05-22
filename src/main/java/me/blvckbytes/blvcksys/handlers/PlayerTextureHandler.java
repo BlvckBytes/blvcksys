@@ -4,6 +4,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mojang.authlib.GameProfile;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
@@ -74,6 +75,16 @@ public class PlayerTextureHandler implements IPlayerTextureHandler {
     pers.store(model);
 
     return Optional.of(model);
+  }
+
+  @Override
+  public GameProfile getProfileOrDefault(String name, boolean forceUpdate) {
+    Optional<PlayerTextureModel> textures = getTextures(name, forceUpdate);
+
+    if (textures.isPresent())
+      return textures.get().toProfile();
+
+    return new GameProfile(UUID.randomUUID(), name);
   }
 
   //=========================================================================//

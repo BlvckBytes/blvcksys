@@ -319,11 +319,9 @@ public class NpcHandler implements INpcHandler, IAutoConstructed, IPacketModifie
    * @return New fake npc
    */
   private FakeNpc fakeNpcFromModel(NpcModel model) {
-    PlayerTextureModel textures = playerTextures.getTextures(model.getSkinOwnerName(), false).orElse(null);
-
     return new FakeNpc(
       model.getLoc(),
-      textures != null ? textures.toProfile() : new GameProfile(UUID.randomUUID(), model.getSkinOwnerName()),
+      playerTextures.getProfileOrDefault(model.getSkinOwnerName(), false),
       generateEntityId(), model.getName(), npcComm, plugin
     );
   }

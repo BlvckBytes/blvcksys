@@ -1,7 +1,6 @@
 package me.blvckbytes.blvcksys.handlers;
 
 import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.properties.Property;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
@@ -32,7 +31,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -155,7 +153,7 @@ public class NpcHandler implements INpcHandler, IAutoConstructed, IPacketModifie
     npc.setSkinOwnerName(skin);
     pers.store(npc);
 
-    findFakeNpcByModel(npc).setGameProfile(buildProfile(textures.getUuid(), skin, textures.getTextures()));
+    findFakeNpcByModel(npc).setGameProfile(textures.toProfile());
 
     return TriResult.SUCC;
   }
@@ -297,26 +295,6 @@ public class NpcHandler implements INpcHandler, IAutoConstructed, IPacketModifie
   //=========================================================================//
 
   /**
-   * Resolve a full game profile by the owning player's name
-   * @param name Name of the owning player
-   * @return GameProfile
-   */
-  private GameProfile buildProfile(@Nullable UUID id, String name, @Nullable String skinTextures) {
-    if (id == null)
-       id = UUID.randomUUID();
-
-    if (name == null)
-      name = id.toString().substring(0, 15);
-
-    GameProfile prof = new GameProfile(id, name);
-
-    if (skinTextures != null)
-      prof.getProperties().put("textures", new Property("textures", skinTextures));
-
-    return prof;
-  }
-
-  /**
    * Find a fake npc by it's model from cache, creates cache entry if
    * the npc could not be located
    * @param model Corresponding model
@@ -341,21 +319,11 @@ public class NpcHandler implements INpcHandler, IAutoConstructed, IPacketModifie
    * @return New fake npc
    */
   private FakeNpc fakeNpcFromModel(NpcModel model) {
-    UUID profUUID = null;
-    String profTextures = null;
-
-    // Apply textures if set and available
-    if (model.getSkinOwnerName() != null) {
-      PlayerTextureModel textures = playerTextures.getTextures(model.getSkinOwnerName(), false).orElse(null);
-      if (textures != null) {
-        profUUID = textures.getUuid();
-        profTextures = textures.getTextures();
-      }
-    }
+    PlayerTextureModel textures = playerTextures.getTextures(model.getSkinOwnerName(), false).orElse(null);
 
     return new FakeNpc(
       model.getLoc(),
-      buildProfile(profUUID, model.getSkinOwnerName(), profTextures),
+      textures != null ? textures.toProfile() : new GameProfile(UUID.randomUUID(), model.getSkinOwnerName()),
       generateEntityId(), model.getName(), npcComm, plugin
     );
   }

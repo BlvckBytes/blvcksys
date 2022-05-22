@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
+import com.mojang.authlib.GameProfile;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import net.minecraft.util.Tuple;
 import org.bukkit.Material;
@@ -7,6 +8,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
@@ -24,7 +26,24 @@ public class ItemStackBuilder {
   private final int amount;
   private ConfigValue displayName;
   private ConfigValue lore;
+  private GameProfile profile;
 
+  /**
+   * Create a new builder for a player-head
+   * @param profile Profile to apply to the head
+   * @param amount Amount of items
+   */
+  public ItemStackBuilder(GameProfile profile, int amount) {
+    this.mat = Material.PLAYER_HEAD;
+    this.amount = amount;
+    this.profile = profile;
+  }
+
+  /**
+   * Create a new builder based on an existing item stack
+   * @param from Existing item stack to mimic
+   * @param amount Amount of items
+   */
   public ItemStackBuilder(@Nullable ItemStack from, int amount) {
     if (from == null)
       this.mat = Material.BARRIER;
@@ -34,11 +53,20 @@ public class ItemStackBuilder {
     this.amount = amount;
   }
 
+  /**
+   * Create a new builder for a specific material
+   * @param mat Material to target
+   * @param amount Amount of items
+   */
   public ItemStackBuilder(Material mat, int amount) {
     this.mat = mat;
     this.amount = amount;
   }
 
+  /**
+   * Create a new builder for a specific material
+   * @param mat Material to target
+   */
   public ItemStackBuilder(Material mat) {
     this(mat, 1);
   }
@@ -94,6 +122,17 @@ public class ItemStackBuilder {
           .withVariables(variables)
           .asList()
     );
+
+    // Is a player-head where textures should be applied
+    if (mat == Material.PLAYER_HEAD && profile != null) {
+      try {
+        Field profileField = meta.getClass().getDeclaredField("profile");
+        profileField.setAccessible(true);
+        profileField.set(meta, profile);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
 
     stack.setItemMeta(meta);
     return stack;

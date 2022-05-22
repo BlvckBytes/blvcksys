@@ -4,6 +4,7 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.KitModel;
 import me.blvckbytes.blvcksys.util.TimeUtil;
@@ -26,12 +27,14 @@ public class KitsGui extends AGui {
   private final IConfig cfg;
   private final IPersistence pers;
   private final TimeUtil time;
+  private final IPlayerTextureHandler textures;
 
   public KitsGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
     @AutoInject IPersistence pers,
-    @AutoInject TimeUtil time
+    @AutoInject TimeUtil time,
+    @AutoInject IPlayerTextureHandler textures
   ) {
     super(4, "10-16,19-25", p -> (
       cfg.get(ConfigKey.GUI_KITS_TITLE)
@@ -41,6 +44,7 @@ public class KitsGui extends AGui {
     this.pers = pers;
     this.time = time;
     this.cfg = cfg;
+    this.textures = textures;
 
     this.setupFixedItems();
   }
@@ -51,8 +55,8 @@ public class KitsGui extends AGui {
     ), null);
 
     fixedItem("28", g -> (
-      new ItemStackBuilder(Material.ARROW)
-        .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_NAME))
+      new ItemStackBuilder(textures.getProfileOrDefault("MHF_ArrowLeft", false), 1)
+      .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_NAME))
         .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_LORE))
     ), e -> {
       e.gui().previousPage();
@@ -70,8 +74,8 @@ public class KitsGui extends AGui {
     ), null);
 
     fixedItem("34", g -> (
-      new ItemStackBuilder(Material.GUNPOWDER)
-        .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_NAME))
+      new ItemStackBuilder(textures.getProfileOrDefault("MHF_ArrowRight", false), 1)
+      .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_NAME))
         .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_LORE))
     ), e -> {
       e.gui().nextPage();

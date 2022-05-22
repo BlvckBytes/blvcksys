@@ -1,9 +1,14 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import lombok.Getter;
+import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.ConfigValue;
+import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
+import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
+import me.blvckbytes.blvcksys.util.SymbolicHead;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -32,6 +37,8 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
   private static final long TICKER_PERIOD_T = 10L;
 
   protected final JavaPlugin plugin;
+  protected final IConfig cfg;
+  protected final IPlayerTextureHandler textures;
 
   // Mapping players to their active instances
   private final Map<Player, List<GuiInstance<T>>> activeInstances;
@@ -63,11 +70,15 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     int rows,
     String pageSlotExpr,
     Function<GuiInstance<T>, ConfigValue> title,
-    JavaPlugin plugin
+    JavaPlugin plugin,
+    IConfig cfg,
+    IPlayerTextureHandler textures
   ) {
     this.rows = rows;
     this.title = title;
     this.plugin = plugin;
+    this.cfg = cfg;
+    this.textures = textures;
 
     this.pageSlots = AGui.slotExprToSlots(pageSlotExpr, rows);
     this.fixedItems = new HashMap<>();
@@ -107,6 +118,16 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
   public void cleanup() {
     if (tickerHandle > 0)
       Bukkit.getScheduler().cancelTask(tickerHandle);
+
+    // Destroy all instances of all players
+    for (List<GuiInstance<T>> instances : activeInstances.values()) {
+      for (Iterator<GuiInstance<T>> instI = instances.iterator(); instI.hasNext();) {
+        GuiInstance<T> inst = instI.next();
+        inst.getViewer().closeInventory();
+        closed(inst.getViewer());
+        instI.remove();
+      }
+    }
   }
 
   @Override
@@ -128,6 +149,8 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
         time += TICKER_PERIOD_T;
       }
     }, 0L, TICKER_PERIOD_T);
+
+    prepare();
   }
 
   //=========================================================================//
@@ -147,6 +170,12 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
   abstract protected void opening(Player viewer, GuiInstance<T> inst);
 
   /**
+   * Called right after autoconstruction is complete and
+   * is ment to prepare all fixed items within the GUI
+   */
+  abstract protected void prepare();
+
+  /**
    * Add a fixed item, which is an item that will always have the same position,
    * no matter of the viewer's state
    * @param slotExpr Slot(s) to set this item to
@@ -160,6 +189,90 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
   ) {
     for (int slotNumber : slotExprToSlots(slotExpr, rows))
       fixedItems.put(slotNumber, new GuiItem<>(item, onClick, null));
+  }
+
+  /**
+   * Adds a previous, an indicator as well as a next item as fixed and
+   * standardized items to the GUI
+   * @param prevSlot Slot of the previous button
+   * @param indicatorSlot Slot of the page indicator
+   * @param nextSlot Slot of the next button
+   */
+  protected void addPagination(String prevSlot, String indicatorSlot, String nextSlot) {
+    fixedItem(prevSlot, g -> (
+      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner()))
+        .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_NAME))
+        .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_LORE))
+        .build()
+    ), e -> {
+      e.gui().previousPage();
+      e.gui().redraw(indicatorSlot);
+    });
+
+    fixedItem(indicatorSlot, g -> (
+      new ItemStackBuilder(Material.PAPER)
+        .withName(
+          cfg.get(ConfigKey.GUI_GENERICS_PAGING_INDICATOR_NAME)
+            .withVariable("curr_page", g.getCurrentPage())
+            .withVariable("num_pages", g.getNumPages())
+        )
+        .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_INDICATOR_LORE))
+        .build()
+    ), null);
+
+    fixedItem(nextSlot, g -> (
+      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_RIGHT.getOwner()))
+        .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_NAME))
+        .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_LORE))
+        .build()
+    ), e -> {
+      e.gui().nextPage();
+      e.gui().redraw(indicatorSlot);
+    });
+  }
+
+  /**
+   * Adds a border of fixed items consiting of the provided material to the GUI
+   * @param mat Material to use as a border
+   */
+  protected void addBorder(Material mat) {
+    StringBuilder slotExpr = new StringBuilder();
+
+    for (int i = 0; i < rows; i++) {
+      int firstSlot = 9 * i, lastSlot = firstSlot + 8;
+
+      slotExpr.append(i == 0 ? "" : ",").append(firstSlot);
+
+      // First or last, use full range
+      if (i == 0 || i == rows - 1)
+        slotExpr.append('-');
+
+      // Inbetween, only use first and last
+      else
+        slotExpr.append(',');
+
+      slotExpr.append(lastSlot);
+    }
+
+    fixedItem(slotExpr.toString(), g -> (
+      new ItemStackBuilder(mat)
+        .build()
+    ), null);
+  }
+
+  /**
+   * Adds a back button as a fixed item to the GUI
+   * @param slot Slot of the back button
+   * @param gui Gui to open on click
+   * @param param Gui parameter
+   */
+  protected<A> void addBack(String slot, AGui<A> gui, A param) {
+    fixedItem(slot, g -> (
+      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner()))
+        .withName(cfg.get(ConfigKey.GUI_GENERICS_NAV_BACK_NAME))
+        .withLore(cfg.get(ConfigKey.GUI_GENERICS_NAV_BACK_LORE))
+        .build()
+    ), e -> e.gui().switchTo(gui, param));
   }
 
   //=========================================================================//

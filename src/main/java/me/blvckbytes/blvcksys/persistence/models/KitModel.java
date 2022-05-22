@@ -8,6 +8,8 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.Objects;
+
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 05/06/2022
@@ -52,5 +54,24 @@ public class KitModel extends ACooldownModel {
     }
 
     return numItems;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (!(obj instanceof KitModel other))
+      return false;
+
+    // Have to have the same unique name
+    if (!name.equals(other.getName()))
+      return false;
+
+    // Have to be updated at the same time
+    return updatedAt.equals(other.getUpdatedAt());
+  }
+
+  @Override
+  public int hashCode() {
+    // Kits should also be unique when hashed
+    return Objects.hashCode(name);
   }
 }

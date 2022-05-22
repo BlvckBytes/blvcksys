@@ -17,7 +17,10 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 import java.util.stream.Stream;
 
 /*
@@ -27,8 +30,9 @@ import java.util.stream.Stream;
   Obtain a kit by it's name.
 */
 @AutoConstruct
-public class KitCommand extends APlayerCommand {
+public class KitCommand extends APlayerCommand implements IKitCommand {
 
+  private final List<BiConsumer<Player, KitModel>> requestInterests;
   private final IPersistence pers;
   private final IGiveCommand give;
 
@@ -51,6 +55,8 @@ public class KitCommand extends APlayerCommand {
 
     this.pers = pers;
     this.give = give;
+
+    this.requestInterests = new ArrayList<>();
   }
 
   //=========================================================================//
@@ -98,6 +104,9 @@ public class KitCommand extends APlayerCommand {
         .withPrefix()
         .withVariable("name", kit.getName())
     );
+
+    // Call all interests
+    requestInterests.forEach(interest -> interest.accept(target, kit));
 
     // Count the number of dropped items
     int numDropped = 0;
@@ -150,5 +159,14 @@ public class KitCommand extends APlayerCommand {
           .withVariable("num_dropped", numDropped)
           .asScalar()
       );
+  }
+
+  //=========================================================================//
+  //                                   API                                   //
+  //=========================================================================//
+
+  @Override
+  public void registerRequestInterest(BiConsumer<Player, KitModel> callback) {
+    this.requestInterests.add(callback);
   }
 }

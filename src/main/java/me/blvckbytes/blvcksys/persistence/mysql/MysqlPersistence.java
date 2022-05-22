@@ -340,7 +340,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       char c = chars[i];
 
       // Is an uppercase letter
-      if (c >= 65 && c <= 90) {
+      if (c >= 'A' && c <= 'Z') {
 
         // Separate pascal casing using underscores
         if (i != 0)
@@ -1773,7 +1773,7 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
             .orElseThrow(() -> new PersistenceException("Couldn't find a valid data-type for an inlined column"));
 
           return new MysqlColumn(
-            f.getName() + "__" + c.getName(),
+            modelNameToDBName(f.getName()) + "__" + c.getName(),
             type, mp.isNullable(), c.getMigrationDefault(),
             mp.isUnique(), true, f, c.getModelField(), c.getForeignKey(), c.getForeignAction()
           );

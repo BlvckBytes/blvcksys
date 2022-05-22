@@ -30,11 +30,5 @@ public class NpcModel extends APersistentModel {
   private Location loc;
 
   @ModelProperty(isNullable = true)
-  private UUID skinOwnerId;
-
-  @ModelProperty(isNullable = true)
   private String skinOwnerName;
-
-  @ModelProperty(isNullable = true)
-  private String skinTextures;
 }

@@ -1,9 +1,5 @@
 package me.blvckbytes.blvcksys.handlers;
 
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
 import com.mojang.authlib.properties.Property;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
@@ -18,6 +14,7 @@ import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.exceptions.DuplicatePropertyException;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.NpcModel;
+import me.blvckbytes.blvcksys.persistence.models.PlayerTextureModel;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.FieldQueryGroup;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
@@ -26,9 +23,7 @@ import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.PacketPlayInUseEntity;
-import net.minecraft.util.Tuple;
 import net.minecraft.world.entity.Entity;
-import org.apache.commons.io.IOUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
@@ -37,10 +32,9 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -65,6 +59,7 @@ public class NpcHandler implements INpcHandler, IAutoConstructed, IPacketModifie
   private final INpcCommunicator npcComm;
   private final ILogger logger;
   private final MCReflect refl;
+  private final IPlayerTextureHandler playerTextures;
 
   // Mapping npc-names to fake-npcs
   private final Map<String, FakeNpc> npcs;
@@ -83,13 +78,15 @@ public class NpcHandler implements INpcHandler, IAutoConstructed, IPacketModifie
     @AutoInject INpcCommunicator npcComm,
     @AutoInject ILogger logger,
     @AutoInject IPacketInterceptor interceptor,
-    @AutoInject MCReflect refl
+    @AutoInject MCReflect refl,
+    @AutoInject PlayerTextureHandler playerTextures
   ) {
     this.plugin = plugin;
     this.pers = pers;
     this.npcComm = npcComm;
     this.refl = refl;
     this.logger = logger;
+    this.playerTextures = playerTextures;
 
     this.intervalHandle = -1;
     this.npcs = new HashMap<>();
@@ -106,7 +103,7 @@ public class NpcHandler implements INpcHandler, IAutoConstructed, IPacketModifie
   @Override
   public Optional<NpcModel> createNpc(OfflinePlayer creator, String name, Location loc) {
     try {
-      NpcModel npc = new NpcModel(creator, name, loc, null, null, null);
+      NpcModel npc = new NpcModel(creator, name, loc, null);
       pers.store(npc);
 
       FakeNpc fNpc = fakeNpcFromModel(npc);
@@ -150,18 +147,15 @@ public class NpcHandler implements INpcHandler, IAutoConstructed, IPacketModifie
     if (npc == null)
       return TriResult.EMPTY;
 
-    try {
-      Tuple<UUID, String> textures = resolveSkinTextures(skin);
-      npc.setSkinOwnerName(skin);
-      npc.setSkinOwnerId(textures.a());
-      npc.setSkinTextures(textures.b());
-    } catch (Exception e) {
-      return TriResult.ERR;
-    }
+    PlayerTextureModel textures = playerTextures.getTextures(skin, false).orElse(null);
 
+    if (textures == null)
+      return TriResult.ERR;
+
+    npc.setSkinOwnerName(skin);
     pers.store(npc);
 
-    findFakeNpcByModel(npc).setGameProfile(buildProfile(npc.getSkinOwnerId(), skin, npc.getSkinTextures()));
+    findFakeNpcByModel(npc).setGameProfile(buildProfile(textures.getUuid(), skin, textures.getTextures()));
 
     return TriResult.SUCC;
   }
@@ -303,49 +297,11 @@ public class NpcHandler implements INpcHandler, IAutoConstructed, IPacketModifie
   //=========================================================================//
 
   /**
-   * Resolves the skin textures as well as the UUID from a player's name
-   * @param name Name of the target player
-   * @return A tuple of the target's UUID and their skin texture property value
-   */
-  private Tuple<UUID, String> resolveSkinTextures(String name) throws Exception {
-    URL playerDbURL = new URL("https://playerdb.co/api/player/minecraft/" + name);
-
-    // Get the player's UUID from player-db
-    JsonObject playerDb = JsonParser.parseString(IOUtils.toString(playerDbURL, StandardCharsets.UTF_8)).getAsJsonObject();
-    UUID id = UUID.fromString(
-      playerDb.getAsJsonObject("data")
-        .getAsJsonObject("player")
-        .get("id")
-        .getAsString()
-    );
-
-    // Get the player's profile from mojang
-    URL mojangURL = new URL("https://sessionserver.mojang.com/session/minecraft/profile/" + id);
-    JsonObject mojang = JsonParser.parseString(IOUtils.toString(mojangURL, StandardCharsets.UTF_8)).getAsJsonObject();
-
-    // Find the textures property among all properties
-    String textures = null;
-    JsonArray props = mojang.getAsJsonArray("properties");
-    for (JsonElement el : props) {
-      if (!el.isJsonObject())
-        continue;
-
-      JsonObject prop = el.getAsJsonObject();
-      if (!prop.get("name").getAsString().equals("textures"))
-        continue;
-
-      textures = prop.get("value").getAsString();
-    }
-
-    return new Tuple<>(id, textures);
-  }
-
-  /**
    * Resolve a full game profile by the owning player's name
    * @param name Name of the owning player
    * @return GameProfile
    */
-  private GameProfile buildProfile(UUID id, String name, String skinTextures) {
+  private GameProfile buildProfile(@Nullable UUID id, String name, @Nullable String skinTextures) {
     if (id == null)
        id = UUID.randomUUID();
 
@@ -385,9 +341,21 @@ public class NpcHandler implements INpcHandler, IAutoConstructed, IPacketModifie
    * @return New fake npc
    */
   private FakeNpc fakeNpcFromModel(NpcModel model) {
+    UUID profUUID = null;
+    String profTextures = null;
+
+    // Apply textures if set and available
+    if (model.getSkinOwnerName() != null) {
+      PlayerTextureModel textures = playerTextures.getTextures(model.getSkinOwnerName(), false).orElse(null);
+      if (textures != null) {
+        profUUID = textures.getUuid();
+        profTextures = textures.getTextures();
+      }
+    }
+
     return new FakeNpc(
       model.getLoc(),
-      buildProfile(model.getSkinOwnerId(), model.getSkinOwnerName(), model.getSkinTextures()),
+      buildProfile(profUUID, model.getSkinOwnerName(), profTextures),
       generateEntityId(), model.getName(), npcComm, plugin
     );
   }

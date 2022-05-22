@@ -7,6 +7,7 @@ import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.KitModel;
+import me.blvckbytes.blvcksys.util.SymbolicHead;
 import me.blvckbytes.blvcksys.util.TimeUtil;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -55,7 +56,7 @@ public class KitsGui extends AGui {
     ), null);
 
     fixedItem("28", g -> (
-      new ItemStackBuilder(textures.getProfileOrDefault("MHF_ArrowLeft", false), 1)
+      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner(), false), 1)
       .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_NAME))
         .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_LORE))
     ), e -> {
@@ -74,7 +75,7 @@ public class KitsGui extends AGui {
     ), null);
 
     fixedItem("34", g -> (
-      new ItemStackBuilder(textures.getProfileOrDefault("MHF_ArrowRight", false), 1)
+    new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_RIGHT.getOwner(), false), 1)
       .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_NAME))
         .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_LORE))
     ), e -> {

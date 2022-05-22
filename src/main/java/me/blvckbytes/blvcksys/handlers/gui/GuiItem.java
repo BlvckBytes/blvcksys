@@ -12,12 +12,12 @@ import java.util.function.Function;
 
   Represents an item which resides in a managed GUI.
 */
-public record GuiItem (
+public record GuiItem<T> (
   // Item supplier function
-  Function<GuiInstance, ItemStack> item,
+  Function<GuiInstance<T>, ItemStack> item,
 
   // Click event consumer
-  Consumer<GuiClickEvent> onClick,
+  Consumer<GuiClickEvent<T>> onClick,
 
   // How often this item should be updated, in ticks, null means never
   @Nullable Integer updatePeriod

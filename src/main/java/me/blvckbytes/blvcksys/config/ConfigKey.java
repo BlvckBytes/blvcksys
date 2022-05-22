@@ -1102,6 +1102,12 @@ public enum ConfigKey {
     " ",
     "$0Zeigt die aktuelle Seitenposition"
   ),
+  GUI_GENERICS_NAV_BACK_NAME("gui.generics.nav.back.name", "$0» $2Zurück $0«"),
+  GUI_GENERICS_NAV_BACK_LORE(
+    "gui.generics.nav.back.lore",
+    " ",
+    "$0Zurück zum vorherigen Menu"
+  ),
 
   //=========================================================================//
   //                                Kits GUI                                 //
@@ -1122,6 +1128,8 @@ public enum ConfigKey {
     "$0Being displayed for $2{{viewer}}$0.",
     "$0Has been clicked $2{{num_clicks}} $0times."
   ),
+
+  GUI_KIT_CONTENT_TITLE("gui.kit_content.title", "$0Kitvorschau $2{{name}}"),
 
   //=========================================================================//
   //                            Generic Messages                             //

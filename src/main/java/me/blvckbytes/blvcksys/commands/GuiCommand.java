@@ -53,6 +53,6 @@ public class GuiCommand extends APlayerCommand {
 
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
-    gui.show(p);
+    gui.show(p, null);
   }
 }

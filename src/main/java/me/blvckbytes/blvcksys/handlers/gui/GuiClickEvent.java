@@ -8,8 +8,8 @@ import org.bukkit.event.inventory.ClickType;
 
   Used as a callback parameter when a GUI item has been clicked.
 */
-public record GuiClickEvent (
-  GuiInstance gui,
+public record GuiClickEvent<T> (
+  GuiInstance<T> gui,
   Integer slot,
   ClickType type
 ) {}

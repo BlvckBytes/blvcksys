@@ -31,11 +31,10 @@ public class ItemStackBuilder {
   /**
    * Create a new builder for a player-head
    * @param profile Profile to apply to the head
-   * @param amount Amount of items
    */
-  public ItemStackBuilder(GameProfile profile, int amount) {
+  public ItemStackBuilder(GameProfile profile) {
     this.mat = Material.PLAYER_HEAD;
-    this.amount = amount;
+    this.amount = 1;
     this.profile = profile;
   }
 

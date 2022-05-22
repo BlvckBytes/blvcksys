@@ -4,6 +4,7 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.KitModel;
@@ -23,12 +24,15 @@ import java.util.List;
   Retrieve existing kits and check out their contents.
 */
 @AutoConstruct
-public class KitsGui extends AGui {
+public class KitsGui extends AGui<Object> {
 
   private final IConfig cfg;
   private final IPersistence pers;
   private final TimeUtil time;
   private final IPlayerTextureHandler textures;
+
+  @AutoInjectLate
+  private KitContentGui kitContentGui;
 
   public KitsGui(
     @AutoInject IConfig cfg,
@@ -37,9 +41,9 @@ public class KitsGui extends AGui {
     @AutoInject TimeUtil time,
     @AutoInject IPlayerTextureHandler textures
   ) {
-    super(4, "10-16,19-25", p -> (
+    super(4, "10-16,19-25", i -> (
       cfg.get(ConfigKey.GUI_KITS_TITLE)
-        .withVariable("viewer", p.getName())
+        .withVariable("viewer", i.getViewer().getName())
     ), plugin);
 
     this.pers = pers;
@@ -51,10 +55,13 @@ public class KitsGui extends AGui {
   }
 
   protected void setupFixedItems() {
-    fixedItem("0-9,17,18,26,27-35", g -> new ItemStackBuilder(Material.GRAY_STAINED_GLASS_PANE).build(), null);
+    fixedItem("0-9,17,18,26,27-35", g -> (
+      new ItemStackBuilder(Material.GRAY_STAINED_GLASS_PANE)
+        .build()
+    ), null);
 
     fixedItem("28", g -> (
-      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner(), false), 1)
+      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_NAME))
         .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_LORE))
         .build()
@@ -75,7 +82,7 @@ public class KitsGui extends AGui {
     ), null);
 
     fixedItem("34", g -> (
-    new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_RIGHT.getOwner(), false), 1)
+    new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_RIGHT.getOwner()))
       .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_NAME))
         .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_LORE))
       .build()
@@ -89,7 +96,7 @@ public class KitsGui extends AGui {
   protected void closed(Player viewer) {}
 
   @Override
-  protected void opening(Player viewer, GuiInstance inst) {
+  protected void opening(Player viewer, GuiInstance<Object> inst) {
     List<KitModel> kits = pers.list(KitModel.class);
 
     for (KitModel kit : kits) {
@@ -114,8 +121,8 @@ public class KitsGui extends AGui {
         if (e.type() == ClickType.LEFT || e.type() == ClickType.SHIFT_LEFT)
           e.gui().getViewer().performCommand("kit " + kit.getName());
 
-        // TODO: Show a preview of the kit when right-clicking
-//        else if (e.type() == ClickType.RIGHT || e.type() == ClickType.SHIFT_RIGHT)
+        else if (e.type() == ClickType.RIGHT || e.type() == ClickType.SHIFT_RIGHT)
+          e.gui().switchTo(kitContentGui, kit);
       }, 10);
     }
   }

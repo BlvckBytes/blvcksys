@@ -17,7 +17,7 @@ import java.util.function.Function;
 
   A personalized, live instance of a GUI template.
 */
-public class GuiInstance {
+public class GuiInstance<T> {
 
   @Getter
   private final Player viewer;
@@ -25,27 +25,51 @@ public class GuiInstance {
   @Getter
   private final Inventory inv;
 
-  // A list of pages, where each page maps a used page slot to an item
-  private final List<Map<Integer, GuiItem>> pages;
+  @Getter
+  private final T arg;
 
-  private final AGui template;
+  // A list of pages, where each page maps a used page slot to an item
+  private final List<Map<Integer, GuiItem<T>>> pages;
+
+  @Getter
+  private final AGui<T> template;
+
   private int currPage;
 
   /**
    * Create a new GUI instance from a template instance
    * @param viewer Viewer of this instance
    * @param template Template instance
+   * @param arg Argument of this instance
    */
-  public GuiInstance(Player viewer, AGui template) {
-    this.inv = Bukkit.createInventory(null, template.getRows() * 9, template.getTitle().apply(viewer).asScalar());
+  public GuiInstance(Player viewer, AGui<T> template, T arg) {
     this.viewer = viewer;
     this.template = template;
+    this.arg = arg;
     this.pages = new ArrayList<>();
+
+    // In order to evaluate the title supplier, this call needs to follow
+    // after the instance's property assignments
+    this.inv = Bukkit.createInventory(null, template.getRows() * 9, template.getTitle().apply(this).asScalar());
   }
 
   //=========================================================================//
   //                                    API                                  //
   //=========================================================================//
+
+  //////////////////////////////// Switching //////////////////////////////////
+
+  /**
+   * Switches to another GUI or just closes the screen if the GUI is null
+   * @param gui GUI to switch to
+   * @param arg Argument for the gui
+   */
+  public<A> void switchTo(@Nullable AGui<A> gui, A arg) {
+    if (gui != null)
+      gui.show(viewer, arg);
+    else
+      viewer.closeInventory();
+  }
 
   //////////////////////////////// Inventory //////////////////////////////////
 
@@ -63,8 +87,8 @@ public class GuiInstance {
    * @param updatePeriod Update period in ticks, null means never
    */
   public void addPagedItem(
-    Function<GuiInstance, ItemStack> item,
-    @Nullable Consumer<GuiClickEvent> onClick,
+    Function<GuiInstance<T>, ItemStack> item,
+    @Nullable Consumer<GuiClickEvent<T>> onClick,
     @Nullable Integer updatePeriod
   ) {
     // Create a new page either initially or if the last page is already fully used
@@ -72,9 +96,9 @@ public class GuiInstance {
       pages.add(new HashMap<>());
 
     // Add the new item to the last page and determine it's slot
-    Map<Integer, GuiItem> targetPage = pages.get(pages.size() - 1);
+    Map<Integer, GuiItem<T>> targetPage = pages.get(pages.size() - 1);
     int slot = template.getPageSlots().get(targetPage.size());
-    targetPage.put(slot, new GuiItem(item, onClick, updatePeriod));
+    targetPage.put(slot, new GuiItem<>(item, onClick, updatePeriod));
   }
 
   /**
@@ -86,7 +110,7 @@ public class GuiInstance {
     for (int slot : AGui.slotExprToSlots(slotExpr, template.getRows())) {
 
       // Vacant slot, skip
-      GuiItem target = getItem(slot).orElse(null);
+      GuiItem<T> target = getItem(slot).orElse(null);
       if (target == null)
         continue;
 
@@ -100,9 +124,9 @@ public class GuiInstance {
    * @param slot Slot to search in
    * @return Optional item, empty if that slot is vacant
    */
-  public Optional<GuiItem> getItem(int slot) {
+  public Optional<GuiItem<T>> getItem(int slot) {
     // Check for fixed items
-    GuiItem fixed = template.getFixedItems().get(slot);
+    GuiItem<T> fixed = template.getFixedItems().get(slot);
     if (fixed != null)
       return Optional.of(fixed);
 
@@ -111,7 +135,7 @@ public class GuiInstance {
       return Optional.empty();
 
     // Check for page items
-    GuiItem pageItem = pages.get(currPage).get(slot);
+    GuiItem<T> pageItem = pages.get(currPage).get(slot);
     if (pageItem != null)
       return Optional.of(pageItem);
 
@@ -193,8 +217,8 @@ public class GuiInstance {
     List<Integer> pageSlots = new ArrayList<>(template.getPageSlots());
 
     // Loop all items of the current page
-    for (Map.Entry<Integer, GuiItem> pageItem : pages.get(currPage).entrySet()) {
-      GuiItem item = pageItem.getValue();
+    for (Map.Entry<Integer, GuiItem<T>> pageItem : pages.get(currPage).entrySet()) {
+      GuiItem<T> item = pageItem.getValue();
       pageSlots.remove(pageItem.getKey());
 
       // Only update on force updates or if the time is a multiple of the item's period
@@ -217,8 +241,8 @@ public class GuiInstance {
    */
   public void tick(long time) {
     // Tick all fixed items
-    for (Map.Entry<Integer, GuiItem> itemE : template.getFixedItems().entrySet()) {
-      GuiItem item = itemE.getValue();
+    for (Map.Entry<Integer, GuiItem<T>> itemE : template.getFixedItems().entrySet()) {
+      GuiItem<T> item = itemE.getValue();
 
       // Only tick this item if it has a period which has elapsed
       if (item.updatePeriod() != null && time % item.updatePeriod() == 0)

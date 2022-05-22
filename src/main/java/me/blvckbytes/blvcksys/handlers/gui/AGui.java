@@ -10,6 +10,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
@@ -25,27 +26,27 @@ import java.util.stream.IntStream;
 
   The base of all GUIs which implements basic functionality.
 */
-public abstract class AGui implements IAutoConstructed, Listener {
+public abstract class AGui<T> implements IAutoConstructed, Listener {
 
   // The time between GUI ticks
   private static final long TICKER_PERIOD_T = 10L;
 
   protected final JavaPlugin plugin;
 
-  // Mapping players to their active instance
-  private final Map<Player, GuiInstance> instances;
+  // Mapping players to their active instances
+  private final Map<Player, List<GuiInstance<T>>> activeInstances;
   private int tickerHandle;
 
   // Inventory title supplier
   @Getter
-  private final Function<Player, ConfigValue> title;
+  private final Function<GuiInstance<T>, ConfigValue> title;
 
   @Getter
   private final int rows;
 
   // Mapping slots to their corresponding fixed item
   @Getter
-  private final Map<Integer, GuiItem> fixedItems;
+  private final Map<Integer, GuiItem<T>> fixedItems;
 
   // Set of slots which are reserved for pages (items may differ for every session)
   @Getter
@@ -61,7 +62,7 @@ public abstract class AGui implements IAutoConstructed, Listener {
   protected AGui(
     int rows,
     String pageSlotExpr,
-    Function<Player, ConfigValue> title,
+    Function<GuiInstance<T>, ConfigValue> title,
     JavaPlugin plugin
   ) {
     this.rows = rows;
@@ -70,7 +71,7 @@ public abstract class AGui implements IAutoConstructed, Listener {
 
     this.pageSlots = AGui.slotExprToSlots(pageSlotExpr, rows);
     this.fixedItems = new HashMap<>();
-    this.instances = new HashMap<>();
+    this.activeInstances = new HashMap<>();
     this.tickerHandle = -1;
   }
 
@@ -81,11 +82,15 @@ public abstract class AGui implements IAutoConstructed, Listener {
   /**
    * Show a personalized instance of this GUI to a player
    * @param viewer Inventory viewer
+   * @param arg Argument to be passed to the instance
    */
-  public void show(Player viewer) {
+  public void show(Player viewer, T arg) {
+    if (!activeInstances.containsKey(viewer))
+      activeInstances.put(viewer, new ArrayList<>());
+
     // Create and register a new GUI instance
-    GuiInstance inst = new GuiInstance(viewer, this);
-    instances.put(viewer, inst);
+    GuiInstance<T> inst = new GuiInstance<>(viewer, this, arg);
+    activeInstances.get(viewer).add(inst);
 
     // Call the opening event before actually opening
     opening(viewer, inst);
@@ -112,7 +117,14 @@ public abstract class AGui implements IAutoConstructed, Listener {
 
       @Override
       public void run() {
-        instances.values().forEach(inst -> inst.tick(time));
+
+        // Tick all instances of all players
+        for (List<GuiInstance<T>> instances : activeInstances.values()) {
+          for (GuiInstance<T> instance : instances) {
+            instance.tick(time);
+          }
+        }
+
         time += TICKER_PERIOD_T;
       }
     }, 0L, TICKER_PERIOD_T);
@@ -132,7 +144,7 @@ public abstract class AGui implements IAutoConstructed, Listener {
    * Called before a GUI is being shown to a player
    * @param viewer Player that requested a GUI
    */
-  abstract protected void opening(Player viewer, GuiInstance inst);
+  abstract protected void opening(Player viewer, GuiInstance<T> inst);
 
   /**
    * Add a fixed item, which is an item that will always have the same position,
@@ -143,11 +155,11 @@ public abstract class AGui implements IAutoConstructed, Listener {
    */
   protected void fixedItem(
     String slotExpr,
-    Function<GuiInstance, ItemStack> item,
-    @Nullable Consumer<GuiClickEvent> onClick
+    Function<GuiInstance<T>, ItemStack> item,
+    @Nullable Consumer<GuiClickEvent<T>> onClick
   ) {
     for (int slotNumber : slotExprToSlots(slotExpr, rows))
-      fixedItems.put(slotNumber, new GuiItem(item, onClick, null));
+      fixedItems.put(slotNumber, new GuiItem<>(item, onClick, null));
   }
 
   //=========================================================================//
@@ -160,21 +172,17 @@ public abstract class AGui implements IAutoConstructed, Listener {
       return;
 
     // The player has no instance
-    GuiInstance inst = instances.get(p);
+    GuiInstance<T> inst = findByInventory(p, e.getInventory()).orElse(null);
     if (inst == null)
-      return;
-
-    // Clicked in another (unmanaged) inventory
-    if (!inst.getInv().equals(e.getClickedInventory()))
       return;
 
     e.setCancelled(true);
 
     // Clicked on a used slot which has a click event bound to it
-    GuiItem clicked = inst.getItem(e.getSlot()).orElse(null);
+    GuiItem<T> clicked = inst.getItem(e.getSlot()).orElse(null);
     if (clicked != null && clicked.onClick() != null) {
       clicked.onClick().accept(
-        new GuiClickEvent(inst, e.getSlot(), e.getClick())
+        new GuiClickEvent<>(inst, e.getSlot(), e.getClick())
       );
     }
   }
@@ -184,12 +192,21 @@ public abstract class AGui implements IAutoConstructed, Listener {
     if (!(e.getPlayer() instanceof Player p))
       return;
 
-    quitInstance(p);
+    // The player has no instance
+    GuiInstance<T> inst = findByInventory(p, e.getInventory()).orElse(null);
+    if (inst == null)
+      return;
+
+    // Destroy the instance
+    if (activeInstances.get(p).remove(inst))
+      closed(p);
   }
 
   @EventHandler
   public void onQuit(PlayerQuitEvent e) {
-    quitInstance(e.getPlayer());
+    // Destroy all instances
+    if (activeInstances.containsKey(e.getPlayer()))
+      activeInstances.remove(e.getPlayer()).forEach(i -> i.getTemplate().closed(e.getPlayer()));
   }
 
   //=========================================================================//
@@ -197,18 +214,18 @@ public abstract class AGui implements IAutoConstructed, Listener {
   //=========================================================================//
 
   /**
-   * Quits an active instance, if it exists
-   * @param p Target player
+   * Find a gui instance by it's inventory ref
+   * @param viewer Viewing player
+   * @param inv Inventory ref
+   * @return Optional instance, empty if there is no such instance
    */
-  private void quitInstance(Player p) {
-    // The player has no instance
-    GuiInstance inst = instances.get(p);
-    if (inst == null)
-      return;
+  private Optional<GuiInstance<T>> findByInventory(Player viewer, Inventory inv) {
+    if (!activeInstances.containsKey(viewer))
+      return Optional.empty();
 
-    // Destroy the instance
-    if (instances.remove(p) != null)
-      closed(p);
+    return activeInstances.get(viewer).stream()
+      .filter(inst -> inst.getInv().equals(inv))
+      .findFirst();
   }
 
   /**
@@ -241,6 +258,9 @@ public abstract class AGui implements IAutoConstructed, Listener {
       }
     }
 
-    return new ArrayList<>(slots);
+    // Sort slots in ascending order to start appending top left
+    return slots.stream()
+      .sorted()
+      .toList();
   }
 }

@@ -23,7 +23,7 @@ import java.util.stream.Stream;
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 05/21/2022
 
-  Set the representitive item of a kit.
+  Set the representative item of a kit.
 */
 @AutoConstruct
 public class KitItemCommand extends APlayerCommand {
@@ -40,7 +40,7 @@ public class KitItemCommand extends APlayerCommand {
     super(
       plugin, logger, cfg, refl,
       "kititem",
-      "Set a kit's representitive item",
+      "Set a kit's representative item",
       PlayerPermission.COMMAND_KITITEM,
       new CommandArgument("<name>", "Name of the kit")
     );
@@ -93,7 +93,7 @@ public class KitItemCommand extends APlayerCommand {
     }
 
     KitModel kit = res.get();
-    kit.setRepresentitiveItem(item);
+    kit.setRepresentativeItem(item);
     pers.store(kit);
 
     p.sendMessage(

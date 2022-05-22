@@ -38,7 +38,7 @@ public class KitModel extends ACooldownModel {
   private OfflinePlayer creator;
 
   @ModelProperty(isNullable = true, migrationDefault = MigrationDefault.NULL)
-  private ItemStack representitiveItem;
+  private ItemStack representativeItem;
 
   /**
    * Get the number of items this kit contains

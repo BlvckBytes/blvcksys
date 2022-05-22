@@ -60,13 +60,14 @@ public class KitsGui extends AGui<Object> {
   protected void opening(Player viewer, GuiInstance<Object> inst) {
     List<KitModel> kits = pers.list(KitModel.class);
 
+    // Add all kits by their representative item
     for (KitModel kit : kits) {
       inst.addPagedItem(g -> {
 
         // FIXME: Fetching the cooldown from DB on every update period is quite inefficient...
         long rem = kit.getCooldownRemaining(viewer, pers);
 
-        return new ItemStackBuilder(kit.getRepresentitiveItem(), 1)
+        return new ItemStackBuilder(kit.getRepresentativeItem(), 1)
           .withName(
             cfg.get(ConfigKey.GUI_KITS_KIT_NAME)
               .withVariable("name", kit.getName())

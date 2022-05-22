@@ -1081,6 +1081,29 @@ public enum ConfigKey {
   ),
 
   //=========================================================================//
+  //                              GUI Generics                               //
+  //=========================================================================//
+
+  GUI_GENERICS_PAGING_NEXT_NAME("gui.generics.paging.next.name", "$0» $2Nächste Seite $0«"),
+  GUI_GENERICS_PAGING_NEXT_LORE(
+    "gui.generics.paging.next.lore",
+    " ",
+    "$0Navigiere zur nächsten Seite"
+  ),
+  GUI_GENERICS_PAGING_PREV_NAME("gui.generics.paging.prev.name", "$0» $2Vorherige Seite $0«"),
+  GUI_GENERICS_PAGING_PREV_LORE(
+    "gui.generics.paging.prev.lore",
+    " ",
+    "$0Navigiere zur vorherigen Seite"
+  ),
+  GUI_GENERICS_PAGING_INDICATOR_NAME("gui.generics.paging.indicator.name", "$0» $2Seite {{curr_page}}/{{num_pages}} $0«"),
+  GUI_GENERICS_PAGING_INDICATOR_LORE(
+    "gui.generics.paging.indicator.lore",
+    " ",
+    "$0Zeigt die aktuelle Seitenposition"
+  ),
+
+  //=========================================================================//
   //                                Kits GUI                                 //
   //=========================================================================//
 

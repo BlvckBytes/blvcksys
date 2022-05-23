@@ -1115,15 +1115,63 @@ public enum ConfigKey {
     " ",
     "$0Zurück zum vorherigen Menu"
   ),
+  GUI_GENERICS_BUTTONS_ENABLE_NAME("gui.generics.buttons.enable.name", "$0» &aAktivieren"),
+  GUI_GENERICS_BUTTONS_ENABLE_LORE(
+    "gui.generics.buttons.enable.lore",
+    " ",
+    "$0Ändere den Zustand auf &aaktiviert&0."
+  ),
+  GUI_GENERICS_BUTTONS_DISABLE_NAME("gui.generics.buttons.disable.name", "$0» &cDeaktivieren"),
+  GUI_GENERICS_BUTTONS_DISABLE_LORE(
+    "gui.generics.buttons.disable.lore",
+    " ",
+    "$0Ändere den Zustand auf &cdeaktiviert&0."
+  ),
+  GUI_GENERICS_PLACEHOLDERS_ENABLED("gui.generics.placeholders.enabled", "&aaktiviert"),
+  GUI_GENERICS_PLACEHOLDERS_DISABLED("gui.generics.placeholders.disabled", "&cdeaktiviert"),
+
+  //=========================================================================//
+  //                             Preferences GUI                             //
+  //=========================================================================//
+
+  GUI_PREFERENCES_TITLE("gui.preferences.title", "$0Einstellungen von $2{{viewer}}"),
+  GUI_PREFERENCES_MSG_NAME("gui.preferences.msg.name", "$0» $2Private Nachrichten $0«"),
+  GUI_PREFERENCES_MSG_LORE(
+    "gui.preferences.msg.lore",
+    " ",
+    "$0Gibt an, ob du private Nachrichten, welche",
+    "$0mittels /msg und /r versandt werden, empfängst.",
+    " ",
+    "$0Aktueller Zustand: {{state}}"
+  ),
+  GUI_PREFERENCES_CHAT_NAME("gui.preferences.chat.name", "$0» $2Chat $0«"),
+  GUI_PREFERENCES_CHAT_LORE(
+    "gui.preferences.chat.lore",
+    " ",
+    "$0Gibt an, ob du Nachrichten von anderen",
+    "$0Spielern im Chat empfängst. Systemnachrichten",
+    "$0bleiben erhalten.",
+    " ",
+    "$0Aktueller Zustand: {{state}}"
+  ),
+  GUI_PREFERENCES_SCOREBOARD_NAME("gui.preferences.scoreboard.name", "$0» $2Scoreboard $0«"),
+  GUI_PREFERENCES_SCOREBOARD_LORE(
+    "gui.preferences.scoreboard.lore",
+    " ",
+    "$0Gibt an, ob das Scoreboard am rechten",
+    "$0Bildschirmrand angezeigt wird.",
+    " ",
+    "$0Aktueller Zustand: {{state}}"
+  ),
 
   //=========================================================================//
   //                                Kits GUI                                 //
   //=========================================================================//
 
   GUI_KITS_TITLE("gui.kits.title", "$0Kitmenu von $2{{viewer}}"),
-  GUI_KITS_KIT_NAME("gui.kits.kit_name", "$0» $2{{name}}"),
+  GUI_KITS_KIT_NAME("gui.kits.kit.name", "$0» $2{{name}}"),
   GUI_KITS_KIT_LORE(
-    "gui.kits.kit_lore",
+    "gui.kits.kit.lore",
     " ",
     "$0Anzahl Items: $2{{num_items}}",
     "$0Cooldown verbleibend: $2{{cooldown}}",

@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.handlers;
 
 import com.mojang.authlib.GameProfile;
 import me.blvckbytes.blvcksys.persistence.models.PlayerTextureModel;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 
@@ -27,5 +28,5 @@ public interface IPlayerTextureHandler {
    * @param name Name of the player
    * @return Fetched GameProfile if the name exists, default profile otherwise
    */
-  GameProfile getProfileOrDefault(String name);
+  GameProfile getProfileOrDefault(@Nullable String name);
 }

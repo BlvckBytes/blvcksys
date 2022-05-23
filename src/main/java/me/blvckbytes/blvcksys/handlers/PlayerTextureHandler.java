@@ -14,6 +14,7 @@ import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.util.Tuple;
 import org.apache.commons.io.IOUtils;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -91,7 +92,10 @@ public class PlayerTextureHandler implements IPlayerTextureHandler {
   }
 
   @Override
-  public GameProfile getProfileOrDefault(String name) {
+  public GameProfile getProfileOrDefault(@Nullable String name) {
+    if (name == null)
+      return new GameProfile(UUID.randomUUID(), "");
+
     Optional<PlayerTextureModel> textures = getTextures(name, false);
 
     if (textures.isPresent())

@@ -232,6 +232,22 @@ public class GuiInstance<T> {
   }
 
   /**
+   * Get the size of a page
+   */
+  public int getPageSize() {
+    return template.getPageSlots().size();
+  }
+
+  /**
+   * Get the number of items on the current page
+   */
+  public int getCurrPageNumItems() {
+    if (pages.size() == 0)
+      return 0;
+    return pages.get(currPage).size();
+  }
+
+  /**
    * Update the current page's items within the GUI inventory
    * @param time Current relative time, null to force an update upon all items
    */

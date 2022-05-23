@@ -46,27 +46,36 @@ public class PreferencesGui extends AGui<Object> {
     fixedItem("11", i -> (
       new ItemStackBuilder(Material.NAME_TAG)
         .withName(cfg.get(ConfigKey.GUI_PREFERENCES_MSG_NAME))
-        .withLore(withStatePlaceholder(ConfigKey.GUI_PREFERENCES_MSG_LORE, !prefs.isMsgDisabled(i.getViewer())))
+        .withLore(
+          cfg.get(ConfigKey.GUI_PREFERENCES_MSG_LORE)
+            .withVariable("state", statePlaceholder(!prefs.isMsgDisabled(i.getViewer())))
+        )
         .build()
     ), null);
 
     fixedItem("13", i -> (
       new ItemStackBuilder(Material.PAPER)
         .withName(cfg.get(ConfigKey.GUI_PREFERENCES_CHAT_NAME))
-        .withLore(withStatePlaceholder(ConfigKey.GUI_PREFERENCES_CHAT_LORE, !prefs.isChatHidden(i.getViewer())))
+        .withLore(
+          cfg.get(ConfigKey.GUI_PREFERENCES_CHAT_LORE)
+            .withVariable("state", !prefs.isChatHidden(i.getViewer()))
+        )
         .build()
     ), null);
 
     fixedItem("15", i -> (
       new ItemStackBuilder(Material.LADDER)
         .withName(cfg.get(ConfigKey.GUI_PREFERENCES_SCOREBOARD_NAME))
-        .withLore(withStatePlaceholder(ConfigKey.GUI_PREFERENCES_SCOREBOARD_LORE, obj.getSidebarVisibility(i.getViewer())))
+        .withLore(
+          cfg.get(ConfigKey.GUI_PREFERENCES_SCOREBOARD_LORE)
+            .withVariable("state", obj.getSidebarVisibility(i.getViewer()))
+        )
         .build()
     ), null);
 
-    addStateToggle("20", "11", i -> !prefs.isMsgDisabled(i.getViewer()), (s, p) -> prefs.setMsgDisabled(p, s));
-    addStateToggle("22", "13", i -> !prefs.isChatHidden(i.getViewer()), (s, p) -> prefs.setChatHidden(p, s));
-    addStateToggle("24", "15", i -> obj.getSidebarVisibility(i.getViewer()), (s, p) -> obj.setSidebarVisibility(p, !s));
+    addStateToggle("20", "11", i -> !prefs.isMsgDisabled(i.getViewer()), (s, i) -> prefs.setMsgDisabled(i.getViewer(), s));
+    addStateToggle("22", "13", i -> !prefs.isChatHidden(i.getViewer()), (s, i) -> prefs.setChatHidden(i.getViewer(), s));
+    addStateToggle("24", "15", i -> obj.getSidebarVisibility(i.getViewer()), (s, i) -> obj.setSidebarVisibility(i.getViewer(), !s));
   }
 
   @Override

@@ -73,6 +73,20 @@ public class IgnoreHandler implements IIgnoreHandler, Listener {
     pers.store(model);
   }
 
+  @Override
+  public List<PlayerIgnoreModel> listActiveIgnores(OfflinePlayer executor) {
+    return pers.find(
+      new QueryBuilder<>(
+        PlayerIgnoreModel.class,
+        "creator__uuid", EqualityOperation.EQ, executor.getUniqueId()
+      )
+        .and(
+          new FieldQueryGroup("ignoresChat", EqualityOperation.EQ, true)
+            .or("ignoresMsg", EqualityOperation.EQ, true)
+        )
+    );
+  }
+
   //=========================================================================//
   //                                Listener                                 //
   //=========================================================================//

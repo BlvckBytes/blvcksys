@@ -1107,7 +1107,10 @@ public enum ConfigKey {
   GUI_GENERICS_PAGING_INDICATOR_LORE(
     "gui.generics.paging.indicator.lore",
     " ",
-    "$0Zeigt die aktuelle Seitenposition"
+    "$0Einträge: $2{{num_items}}",
+    "$0Max. pro Seite: $2{{max_items}}",
+    " ",
+    "$0Zeigt aktuelle Seiteninformationen"
   ),
   GUI_GENERICS_NAV_BACK_NAME("gui.generics.nav.back.name", "$0» $2Zurück $0«"),
   GUI_GENERICS_NAV_BACK_LORE(
@@ -1129,6 +1132,49 @@ public enum ConfigKey {
   ),
   GUI_GENERICS_PLACEHOLDERS_ENABLED("gui.generics.placeholders.enabled", "&aaktiviert"),
   GUI_GENERICS_PLACEHOLDERS_DISABLED("gui.generics.placeholders.disabled", "&cdeaktiviert"),
+
+  //=========================================================================//
+  //                               Ignores GUI                               //
+  //=========================================================================//
+
+  GUI_IGNORES_TITLE("gui.ignores.title", "$0Ignores von $2{{viewer}}"),
+  GUI_IGNORES_NONE_NAME("gui.ignores.none.name", "$0» &cKeine Ignores"),
+  GUI_IGNORES_NONE_LORE(
+    "gui.ignores.none.lore",
+    " ",
+    "$0Du hast aktuell &ckeine $0Spieler ignoriert."
+  ),
+  GUI_IGNORES_PLAYER_NAME("gui.ignores.player.name", "$0» $2{{name}} $0«"),
+  GUI_IGNORES_PLAYER_LORE(
+    "gui.ignores.player.lore",
+    " ",
+    "$0MSG Blockiert: {{msg_state}}",
+    "$0Chat Blockiert: {{chat_state}}"
+  ),
+
+  //=========================================================================//
+  //                                IGNORE GUI                               //
+  //=========================================================================//
+
+  GUI_IGNORE_TITLE("gui.ignore.title", "$0Ignore $2{{target}}"),
+  GUI_IGNORE_MSG_NAME("gui.ignore.msg.name", "$0» $2Private Nachrichten $0«"),
+  GUI_IGNORE_MSG_LORE(
+    "gui.ignore.msg.lore",
+    " ",
+    "$0Gibt an, ob du private Nachrichten",
+    "$0von $2{{target}} $0empfängst.",
+    " ",
+    "$0Aktueller Zustand: {{state}}"
+  ),
+  GUI_IGNORE_CHAT_NAME("gui.ignore.chat.name", "$0» $2Chat $0«"),
+  GUI_IGNORE_CHAT_LORE(
+    "gui.ignore.chat.lore",
+    " ",
+    "$0Gibt an, ob du Nachrichten von",
+    "$2{{target}}$ 0im Chat empfängst.",
+    " ",
+    "$0Aktueller Zustand: {{state}}"
+  ),
 
   //=========================================================================//
   //                             Preferences GUI                             //

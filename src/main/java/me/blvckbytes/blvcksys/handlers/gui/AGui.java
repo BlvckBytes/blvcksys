@@ -235,7 +235,11 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
             .withVariable("curr_page", g.getCurrentPage())
             .withVariable("num_pages", g.getNumPages())
         )
-        .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_INDICATOR_LORE))
+        .withLore(
+          cfg.get(ConfigKey.GUI_GENERICS_PAGING_INDICATOR_LORE)
+            .withVariable("num_items", g.getCurrPageNumItems())
+            .withVariable("max_items", g.getPageSize())
+        )
         .build()
     ), null);
 
@@ -257,7 +261,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
    * @param state State supplier
    * @param onClick Click event, providing the current state and the player
    */
-  protected void addStateToggle(String slot, @Nullable String update, Function<GuiInstance<T>, Boolean> state, BiConsumer<Boolean, Player> onClick) {
+  protected void addStateToggle(String slot, @Nullable String update, Function<GuiInstance<T>, Boolean> state, BiConsumer<Boolean, GuiInstance<T>> onClick) {
     fixedItem(slot, i -> {
       boolean s = state.apply(i);
 
@@ -266,20 +270,18 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
         .withLore(cfg.get(s ? ConfigKey.GUI_GENERICS_BUTTONS_DISABLE_LORE : ConfigKey.GUI_GENERICS_BUTTONS_ENABLE_LORE))
         .build();
     }, e -> {
-      onClick.accept(state.apply(e.gui()), e.gui().getViewer());
+      onClick.accept(state.apply(e.gui()), e.gui());
       e.gui().redraw(slot + "," + (update == null ? "" : update));
     });
   }
 
   /**
-   * Creates a config value from a given key and adds the standardized
-   * boolean state variable onto it
-   * @param key Key to create
-   * @param state Boolean state
-   * @return Config value
+   * Get the standardized state placeholder based on a state
+   * @param state State
+   * @return State placeholder
    */
-  protected ConfigValue withStatePlaceholder(ConfigKey key, boolean state) {
-    return cfg.get(key).withVariable("state", cfg.get(state ? ConfigKey.GUI_GENERICS_PLACEHOLDERS_ENABLED : ConfigKey.GUI_GENERICS_PLACEHOLDERS_DISABLED));
+  protected String statePlaceholder(boolean state) {
+    return cfg.get(state ? ConfigKey.GUI_GENERICS_PLACEHOLDERS_ENABLED : ConfigKey.GUI_GENERICS_PLACEHOLDERS_DISABLED).asScalar();
   }
 
   /**

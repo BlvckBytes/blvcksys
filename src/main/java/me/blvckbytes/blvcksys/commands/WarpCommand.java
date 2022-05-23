@@ -7,6 +7,7 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.ITeleportationHandler;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
+import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.WarpModel;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
@@ -14,6 +15,7 @@ import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
 import java.util.stream.Stream;
@@ -25,7 +27,7 @@ import java.util.stream.Stream;
   Teleport to an existing warping-point.
 */
 @AutoConstruct
-public class WarpCommand extends APlayerCommand {
+public class WarpCommand extends APlayerCommand implements IWarpCommand {
 
   private final IPersistence pers;
   private final ITeleportationHandler tp;
@@ -66,6 +68,31 @@ public class WarpCommand extends APlayerCommand {
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     String name = argval(args, 0);
 
+    boolean res = invokeWarping(p, name, () -> {
+      p.sendMessage(
+        cfg.get(ConfigKey.WARP_TELEPORTED)
+          .withPrefix()
+          .withVariable("name", name)
+          .asScalar()
+      );
+    });
+
+    if (!res) {
+      p.sendMessage(
+        cfg.get(ConfigKey.WARP_NOT_EXISTING)
+          .withPrefix()
+          .withVariable("name", name)
+          .asScalar()
+      );
+    }
+  }
+
+  //=========================================================================//
+  //                                   API                                   //
+  //=========================================================================//
+
+  @Override
+  public boolean invokeWarping(Player p, String name, @Nullable Runnable done) throws PersistenceException {
     Optional<WarpModel> res = pers.findFirst(
       new QueryBuilder<>(
         WarpModel.class,
@@ -73,24 +100,11 @@ public class WarpCommand extends APlayerCommand {
       )
     );
 
-    if (res.isEmpty()) {
-      p.sendMessage(
-        cfg.get(ConfigKey.WARP_NOT_EXISTING)
-          .withPrefix()
-          .withVariable("name", name)
-          .asScalar()
-      );
-      return;
-    }
+    if (res.isEmpty())
+      return false;
 
     WarpModel warp = res.get();
-    tp.requestTeleportation(p, warp.getLoc(), () -> {
-      p.sendMessage(
-        cfg.get(ConfigKey.WARP_TELEPORTED)
-          .withPrefix()
-          .withVariable("name", warp.getName())
-          .asScalar()
-      );
-    }, null);
+    tp.requestTeleportation(p, warp.getLoc(), done, null);
+    return true;
   }
 }

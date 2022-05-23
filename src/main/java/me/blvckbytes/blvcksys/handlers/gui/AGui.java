@@ -21,6 +21,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
@@ -250,6 +251,55 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
   }
 
   /**
+   * Add a standardized state toggle button to the GUI
+   * @param slot Where to set the item
+   * @param update What slots to update separately when the state changed
+   * @param state State supplier
+   * @param onClick Click event, providing the current state and the player
+   */
+  protected void addStateToggle(String slot, @Nullable String update, Function<GuiInstance<T>, Boolean> state, BiConsumer<Boolean, Player> onClick) {
+    fixedItem(slot, i -> {
+      boolean s = state.apply(i);
+
+      return new ItemStackBuilder(s ? Material.GREEN_DYE : Material.RED_DYE)
+        .withName(cfg.get(s ? ConfigKey.GUI_GENERICS_BUTTONS_DISABLE_NAME : ConfigKey.GUI_GENERICS_BUTTONS_ENABLE_NAME))
+        .withLore(cfg.get(s ? ConfigKey.GUI_GENERICS_BUTTONS_DISABLE_LORE : ConfigKey.GUI_GENERICS_BUTTONS_ENABLE_LORE))
+        .build();
+    }, e -> {
+      onClick.accept(state.apply(e.gui()), e.gui().getViewer());
+      e.gui().redraw(slot + "," + (update == null ? "" : update));
+    });
+  }
+
+  /**
+   * Creates a config value from a given key and adds the standardized
+   * boolean state variable onto it
+   * @param key Key to create
+   * @param state Boolean state
+   * @return Config value
+   */
+  protected ConfigValue withStatePlaceholder(ConfigKey key, boolean state) {
+    return cfg.get(key).withVariable("state", cfg.get(state ? ConfigKey.GUI_GENERICS_PLACEHOLDERS_ENABLED : ConfigKey.GUI_GENERICS_PLACEHOLDERS_DISABLED));
+  }
+
+  /**
+   * Adds a fill of fixed items consiting of the provided material to the GUI
+   * @param mat Material to use to fill
+   */
+  protected void addFill(Material mat) {
+    StringBuilder slotExpr = new StringBuilder();
+
+    for (int i = 0; i < rows * 9; i++) {
+      if (pageSlots.contains(i))
+        continue;
+
+      slotExpr.append(i == 0 ? "" : ",").append(i);
+    }
+
+    fixedItem(slotExpr.toString(), g -> new ItemStackBuilder(mat).build(), null);
+  }
+
+  /**
    * Adds a border of fixed items consiting of the provided material to the GUI
    * @param mat Material to use as a border
    */
@@ -369,6 +419,9 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
    * @param slotExpr Slot expression
    */
   public static List<Integer> slotExprToSlots(String slotExpr, int rows) {
+    if (slotExpr.isBlank())
+      return new ArrayList<>();
+
     Set<Integer> slots = new HashSet<>();
 
     for (String range : slotExpr.split(",")) {

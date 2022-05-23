@@ -4,6 +4,7 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
+import me.blvckbytes.blvcksys.packets.ModificationPriority;
 import me.blvckbytes.blvcksys.packets.communicators.blockspoof.IBlockSpoofCommunicator;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
@@ -68,7 +69,7 @@ public class SignEditorCommunicator implements ISignEditorCommunicator, IPacketM
     this.logger = logger;
 
     this.signeditRequests = new HashMap<>();
-    interceptor.register(this);
+    interceptor.register(this, ModificationPriority.HIGH);
   }
 
   @Override

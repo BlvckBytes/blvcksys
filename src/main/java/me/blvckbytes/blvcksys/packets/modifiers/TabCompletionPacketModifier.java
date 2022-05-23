@@ -5,6 +5,7 @@ import com.mojang.brigadier.suggestion.Suggestions;
 import me.blvckbytes.blvcksys.commands.APlayerCommand;
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
+import me.blvckbytes.blvcksys.packets.ModificationPriority;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -46,7 +47,7 @@ public class TabCompletionPacketModifier implements IPacketModifier {
     this.refl = refl;
     this.logger = logger;
 
-    interceptor.register(this);
+    interceptor.register(this, ModificationPriority.HIGH);
   }
 
   @Override

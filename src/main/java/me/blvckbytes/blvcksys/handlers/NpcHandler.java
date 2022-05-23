@@ -7,6 +7,7 @@ import me.blvckbytes.blvcksys.events.NpcInteractEvent;
 import me.blvckbytes.blvcksys.events.NpcInteraction;
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
+import me.blvckbytes.blvcksys.packets.ModificationPriority;
 import me.blvckbytes.blvcksys.packets.communicators.npc.INpcCommunicator;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.exceptions.DuplicatePropertyException;
@@ -90,7 +91,7 @@ public class NpcHandler implements INpcHandler, IAutoConstructed, IPacketModifie
     this.npcIds = new HashMap<>();
     this.lastEventEmits = Collections.synchronizedMap(new HashMap<>());
 
-    interceptor.register(this);
+    interceptor.register(this, ModificationPriority.LOW);
   }
 
   //=========================================================================//

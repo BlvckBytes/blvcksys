@@ -5,6 +5,7 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
+import me.blvckbytes.blvcksys.packets.ModificationPriority;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -54,7 +55,7 @@ public class ServerListPacketModifier implements IPacketModifier {
     this.plugin = plugin;
 
     loadIconFile();
-    interceptor.register(this);
+    interceptor.register(this, ModificationPriority.HIGH);
   }
 
   //=========================================================================//

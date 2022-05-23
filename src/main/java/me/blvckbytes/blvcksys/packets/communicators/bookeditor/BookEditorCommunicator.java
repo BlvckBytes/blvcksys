@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.packets.communicators.bookeditor;
 
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
+import me.blvckbytes.blvcksys.packets.ModificationPriority;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -72,7 +73,7 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
     this.logger = logger;
 
     this.bookeditRequests = Collections.synchronizedMap(new HashMap<>());
-    interceptor.register(this);
+    interceptor.register(this, ModificationPriority.HIGH);
   }
 
   //=========================================================================//

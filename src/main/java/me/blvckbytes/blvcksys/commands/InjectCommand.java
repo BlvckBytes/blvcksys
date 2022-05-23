@@ -6,6 +6,7 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
+import me.blvckbytes.blvcksys.packets.ModificationPriority;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.ObjectStringifier;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
@@ -152,7 +153,7 @@ public class InjectCommand extends APlayerCommand implements IPacketModifier, IA
 
     // Create a new injection and store the request locally
     this.requests.put(target.getUniqueId(), new InterceptionRequest(dir, depth, regex));
-    this.interceptor.registerSpecific(target.getUniqueId(), this);
+    this.interceptor.registerSpecific(target.getUniqueId(), this, ModificationPriority.LOW);
 
     p.sendMessage(
       cfg.get(ConfigKey.INJECT_INJECTED)

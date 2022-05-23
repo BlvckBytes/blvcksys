@@ -13,8 +13,9 @@ public interface IPacketInterceptor {
   /**
    * Register a new modifier for all players
    * @param modifier Packet modifier to register
+   * @param priority Priority of this modifier
    */
-  void register(IPacketModifier modifier);
+  void register(IPacketModifier modifier, ModificationPriority priority);
 
   /**
    * Unregister an existing modifier for all players
@@ -33,8 +34,9 @@ public interface IPacketInterceptor {
    * Register a new modifier for a specific player
    * @param target Player to target with this modifier
    * @param modifier Packet modifier to register
+   * @param priority Priority of this modifier
    */
-  void registerSpecific(UUID target, IPacketModifier modifier);
+  void registerSpecific(UUID target, IPacketModifier modifier, ModificationPriority priority);
 
   /**
    * Unegister an existing modifier for a specific player

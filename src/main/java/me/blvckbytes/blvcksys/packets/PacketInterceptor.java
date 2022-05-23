@@ -10,6 +10,7 @@ import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.server.network.ServerConnection;
+import net.minecraft.util.Tuple;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -17,7 +18,6 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
@@ -42,30 +42,27 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
   private static final String handlerName = "packet_interceptor";
 
   // List of globally registered modifiers
-  private final List<IPacketModifier> globalModifiers;
+  private final List<Tuple<IPacketModifier, ModificationPriority>> globalModifiers;
 
   // List of per-player registered modifiers
   // Use UUIDs here to allow persistence accross re-joins
-  private final Map<UUID, ArrayList<IPacketModifier>> specificModifiers;
+  private final Map<UUID, ArrayList<Tuple<IPacketModifier, ModificationPriority>>> specificModifiers;
 
   // Vanilla network manager list before proxying, used for restoring
   @Nullable private Object vanillaNML;
 
   private final ILogger logger;
   private final MCReflect refl;
-  private final JavaPlugin plugin;
 
   public PacketInterceptor(
     @AutoInject ILogger logger,
-    @AutoInject MCReflect refl,
-    @AutoInject JavaPlugin plugin
+    @AutoInject MCReflect refl
   ) {
     this.globalModifiers = Collections.synchronizedList(new ArrayList<>());
     this.specificModifiers = Collections.synchronizedMap(new HashMap<>());
 
     this.logger = logger;
     this.refl = refl;
-    this.plugin = plugin;
   }
 
   //=========================================================================//
@@ -73,28 +70,36 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
   //=========================================================================//
 
   @Override
-  public void register(IPacketModifier modifier) {
-    this.globalModifiers.add(modifier);
+  public void register(IPacketModifier modifier, ModificationPriority priority) {
+    this.globalModifiers.add(
+      priority == ModificationPriority.HIGH ? 0 : this.globalModifiers.size(),
+      new Tuple<>(modifier, priority)
+    );
   }
 
   @Override
   public void unregister(IPacketModifier modifier) {
-    this.globalModifiers.remove(modifier);
+    this.globalModifiers.removeIf(t -> t.a().equals(modifier));
   }
 
   @Override
   public boolean isRegistered(IPacketModifier modifier) {
-    return this.globalModifiers.contains(modifier);
+    return this.globalModifiers
+      .stream()
+      .anyMatch(t -> t.a().equals(modifier));
   }
 
   @Override
-  public void registerSpecific(UUID target, IPacketModifier modifier) {
+  public void registerSpecific(UUID target, IPacketModifier modifier, ModificationPriority priority) {
     // Create empty list to add to
     if (!this.specificModifiers.containsKey(target))
       this.specificModifiers.put(target, new ArrayList<>());
 
     // Add modifier to list
-    this.specificModifiers.get(target).add(modifier);
+    this.specificModifiers.get(target).add(
+      priority == ModificationPriority.HIGH ? 0 : this.specificModifiers.get(target).size(),
+      new Tuple<>(modifier, priority)
+    );
   }
 
   @Override
@@ -104,8 +109,8 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
       return;
 
     // Remove modifier from list
-    List<IPacketModifier> modifiers = this.specificModifiers.get(target);
-    modifiers.remove(modifier);
+    List<Tuple<IPacketModifier, ModificationPriority>> modifiers = this.specificModifiers.get(target);
+    modifiers.removeIf(t -> t.a().equals(modifier));
 
     // Remove from map when no more modifiers remain
     if (modifiers.size() == 0)
@@ -114,7 +119,9 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
 
   @Override
   public boolean isRegisteredSpecific(UUID target, IPacketModifier modifier) {
-    return this.specificModifiers.getOrDefault(target, new ArrayList<>()).contains(modifier);
+    return this.specificModifiers.getOrDefault(target, new ArrayList<>())
+      .stream()
+      .anyMatch(t -> t.a().equals(modifier));
   }
 
   @Override
@@ -125,15 +132,15 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
     // Unregister all globals
     // Loop in reverse to avoid concurrent modifications
     for (int i = this.globalModifiers.size() - 1; i >= 0; i--)
-      this.unregister(this.globalModifiers.get(i));
+      this.unregister(this.globalModifiers.get(i).a());
 
     // Unregister all specifics
-    for (Map.Entry<UUID, ArrayList<IPacketModifier>> entry : specificModifiers.entrySet()) {
+    for (Map.Entry<UUID, ArrayList<Tuple<IPacketModifier, ModificationPriority>>> entry : specificModifiers.entrySet()) {
 
       // Loop in reverse to avoid concurrent modifications
-      List<IPacketModifier> modifiers = entry.getValue();
+      List<Tuple<IPacketModifier, ModificationPriority>> modifiers = entry.getValue();
       for (int i = modifiers.size() - 1; i >= 0; i--)
-        this.unregisterSpecific(entry.getKey(), modifiers.get(i));
+        this.unregisterSpecific(entry.getKey(), modifiers.get(i).a());
     }
 
     // Uninject all players before a reload
@@ -222,8 +229,8 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
         // Ensure exceptions don't ruin the pipe
         try {
           // Run through all global modifiers
-          for (IPacketModifier modifier : globalModifiers) {
-            packet = modifier.modifyIncoming(u, nm, packet);
+          for (Tuple<IPacketModifier, ModificationPriority> modifier : globalModifiers) {
+            packet = modifier.a().modifyIncoming(u, nm, packet);
 
             // Packet has been terminated
             if (packet == null)
@@ -231,10 +238,10 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
           }
 
           // Run through all specific modifiers
-          ArrayList<IPacketModifier> specifics = specificModifiers.get(u);
+          ArrayList<Tuple<IPacketModifier, ModificationPriority>> specifics = specificModifiers.get(u);
           if (specifics != null) {
-            for (IPacketModifier modifier : specifics) {
-              packet = modifier.modifyIncoming(u, nm, packet);
+            for (Tuple<IPacketModifier, ModificationPriority> modifier : specifics) {
+              packet = modifier.a().modifyIncoming(u, nm, packet);
 
               // Packet has been terminated
               if (packet == null)
@@ -260,8 +267,8 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
         // Ensure exceptions don't ruin the pipe
         try {
           // Run through all global modifiers
-          for (IPacketModifier modifier : globalModifiers) {
-            packet = modifier.modifyOutgoing(u, nm, packet);
+          for (Tuple<IPacketModifier, ModificationPriority> modifier : globalModifiers) {
+            packet = modifier.a().modifyOutgoing(u, nm, packet);
 
             // Packet has been terminated
             if (packet == null)
@@ -269,10 +276,10 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
           }
 
           // Run through all specific modifiers
-          ArrayList<IPacketModifier> specifics = specificModifiers.get(u);
+          ArrayList<Tuple<IPacketModifier, ModificationPriority>> specifics = specificModifiers.get(u);
           if (specifics != null) {
-            for (IPacketModifier modifier : specifics) {
-              packet = modifier.modifyOutgoing(u, nm, packet);
+            for (Tuple<IPacketModifier, ModificationPriority> modifier : specifics) {
+              packet = modifier.a().modifyOutgoing(u, nm, packet);
 
               // Packet has been terminated
               if (packet == null)

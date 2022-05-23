@@ -135,7 +135,7 @@ public enum ConfigKey {
     "$2{{num_online}}$0/$2{{num_slots}}",
     " ",
     "Onlinezeit:",
-    "$4Soon",
+    "$2{{playtime}}",
     " ",
     "Münzen:",
     "$2{{money}}",
@@ -295,6 +295,7 @@ public enum ConfigKey {
   STATS_SCREEN(
     "stats.screen",
     "$0Name: $3{{target}}",
+    "$0Onlinezeit: $3{{playtime}}",
     "$0Kills, Deaths, KD: $3{{kills}}$0/$3{{deaths}}$0/$3{{kd}}",
     "$0Coins: $3{{coins}}",
     "$0Warns gesamt: $3{{warns_total}}$0, davon aktiv: $3{{warns_active}}",

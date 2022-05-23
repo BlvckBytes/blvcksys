@@ -84,6 +84,17 @@ public class TimeUtil {
    * @return Formatted duration string
    */
   public String formatDuration(long duration) {
+    return formatDuration(duration, false);
+  }
+
+  /**
+   * Format a duration in seconds to a time string
+   * containing months, weeks, days, hours, minutes and seconds
+   * @param duration Duration in seconds
+   * @param skipSeconds Whether to skip displaying seconds
+   * @return Formatted duration string
+   */
+  public String formatDuration(long duration, boolean skipSeconds) {
     StringBuilder sb = new StringBuilder();
     long durS = duration;
 
@@ -96,10 +107,16 @@ public class TimeUtil {
       long currQuot = durS / currD;
       durS = durS % currD;
 
+      // Skip seconds
+      if (skipSeconds && i == 0)
+        continue;
+
       // Do not display zero quotients, except for seconds, but
       // don't display zero seconds if any other span has been >0
       if (currQuot == 0) {
-        if (!(i == 0 && sb.isEmpty()))
+        // Skipping seconds and minutes are empty but there's
+        // nothing else in the builder, so print 0m, else skip
+        if (!(skipSeconds && sb.isEmpty() && i == 1))
           continue;
       }
 

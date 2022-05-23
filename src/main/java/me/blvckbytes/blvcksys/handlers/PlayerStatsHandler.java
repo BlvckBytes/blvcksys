@@ -3,11 +3,11 @@ package me.blvckbytes.blvcksys.handlers;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
+import me.blvckbytes.blvcksys.events.IAfkListener;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.PlayerStatsModel;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
-import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -16,6 +16,8 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -32,21 +34,29 @@ import java.util.function.Consumer;
 @AutoConstruct
 public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed, Listener {
 
+  // Time in ticks between ticks of the play time task
+  private static final long TICKER_PERIOD_S = 30;
+
   // There can be multiple update interests per statistic
   private final Map<PlayerStatistic, List<Consumer<OfflinePlayer>>> updateInterests;
 
   // Each player has their stats, combined with a "delta-occurred" flag
-  private final Map<UUID, PlayerStatsModel> cache;
+  private final Map<OfflinePlayer, PlayerStatsModel> cache;
 
   private final IPersistence pers;
-  private final ILogger logger;
+  private final JavaPlugin plugin;
+  private final IAfkListener afk;
+
+  private BukkitTask tickerHandle;
 
   public PlayerStatsHandler(
     @AutoInject IPersistence pers,
-    @AutoInject ILogger logger
+    @AutoInject JavaPlugin plugin,
+    @AutoInject IAfkListener afk
   ) {
     this.pers = pers;
-    this.logger = logger;
+    this.plugin = plugin;
+    this.afk = afk;
 
     this.updateInterests = new HashMap<>();
     this.cache = new HashMap<>();
@@ -58,8 +68,8 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
 
   @Override
   public PlayerStatsModel getStats(OfflinePlayer p) {
-    if (cache.containsKey(p.getUniqueId()))
-      return cache.get(p.getUniqueId());
+    if (cache.containsKey(p))
+      return cache.get(p);
     return loadPlayer(p);
   }
 
@@ -104,12 +114,17 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
   }
 
   @Override
-  public void cleanup() {}
+  public void cleanup() {
+    if (tickerHandle != null)
+      tickerHandle.cancel();
+  }
 
   @Override
   public void initialize() {
     for (Player t : Bukkit.getOnlinePlayers())
       loadPlayer(t);
+
+    this.tickerHandle = Bukkit.getScheduler().runTaskTimerAsynchronously(plugin, this::tickPlayTime, 0L, TICKER_PERIOD_S * 20);
   }
 
   //=========================================================================//
@@ -123,8 +138,7 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
 
   @EventHandler
   public void onQuit(PlayerQuitEvent e) {
-    // Save and remove this player from the cache
-    this.cache.remove(e.getPlayer().getUniqueId());
+    this.cache.remove(e.getPlayer());
   }
 
   @EventHandler
@@ -186,20 +200,8 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
       pers.store(model);
     }
 
-    this.cache.put(p.getUniqueId(), model);
+    this.cache.put(p, model);
     return model;
-  }
-
-  /**
-   * Store the statistics of a player
-   * @param model Stats model
-   */
-  private void save(PlayerStatsModel model) {
-    try {
-      pers.store(model);
-    } catch (Exception e) {
-      logger.logError(e);
-    }
   }
 
   /**
@@ -214,5 +216,29 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
 
     for (Consumer<OfflinePlayer> interest : updateInterests.get(statistic))
       interest.accept(origin);
+  }
+
+  /**
+   * Advances the playing time of all currently online players
+   */
+  private void tickPlayTime() {
+    for (Player t : Bukkit.getOnlinePlayers()) {
+      // Playing time doesn't advance when you're AFK
+      if (afk.isAFK(t))
+        continue;
+
+      // Advance the play time by one ticker period
+      // This might add a few extra seconds in special cases, but that's
+      // neglectable and not worth the extra computing effort
+      PlayerStatsModel stats = getStats(t);
+      stats.setPlaytimeSeconds(stats.getPlaytimeSeconds() + TICKER_PERIOD_S);
+      pers.store(stats);
+    }
+
+    // After updating all playtimes in a separate thread, call all interests synchronously
+    Bukkit.getScheduler().runTask(plugin, () -> {
+      for (Player t : Bukkit.getOnlinePlayers())
+        callInterest(PlayerStatistic.PLAYTIME, t);
+    });
   }
 }

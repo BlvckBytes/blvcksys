@@ -10,6 +10,7 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.persistence.models.PlayerStatsModel;
+import me.blvckbytes.blvcksys.util.TimeUtil;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -62,6 +63,7 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
   private final IObjectiveCommunicator oComm;
   private final IPreferencesHandler prefs;
   private final IPlayerStatsHandler stats;
+  private final TimeUtil time;
 
   // Previous sidebar lines, used for diffing and thus obsolete score deletion
   private final Map<Player, List<String>> prevSidebarLines;
@@ -80,7 +82,8 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
     @AutoInject IConfig cfg,
     @AutoInject IObjectiveCommunicator oComm,
     @AutoInject IPreferencesHandler prefs,
-    @AutoInject IPlayerStatsHandler stats
+    @AutoInject IPlayerStatsHandler stats,
+    @AutoInject TimeUtil time
   ) {
     this.prevSidebarLines = new HashMap<>();
     this.knownBelowNames = new HashMap<>();
@@ -92,6 +95,7 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
     this.cfg = cfg;
     this.oComm = oComm;
     this.prefs = prefs;
+    this.time = time;
   }
 
   //=========================================================================//
@@ -278,6 +282,7 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
     }
 
     stats.registerUpdateInterest(PlayerStatistic.KILLS, this::updateSidebarIfOnline);
+    stats.registerUpdateInterest(PlayerStatistic.PLAYTIME, this::updateSidebarIfOnline);
     stats.registerUpdateInterest(PlayerStatistic.DEATHS, this::updateSidebarIfOnline);
     stats.registerUpdateInterest(PlayerStatistic.MONEY, this::updateSidebarIfOnline);
   }
@@ -496,6 +501,7 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
       .withVariable("deaths", s.getDeaths())
       .withVariable("money", s.getMoney())
       .withVariable("kd", stats.calculateKD(t))
+      .withVariable("playtime", time.formatDuration(s.getPlaytimeSeconds(), true))
       .asList();
 
     // Uniquify all lines to avoid collisions (multiple lines collapsing into a single score)

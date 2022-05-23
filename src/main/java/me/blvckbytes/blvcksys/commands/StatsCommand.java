@@ -85,6 +85,7 @@ public class StatsCommand extends APlayerCommand {
         .withVariable("coins", s.getMoney())
         .withVariable("warns_total", warns.countAllWarns(target))
         .withVariable("warns_active", warns.countActiveWarns(target))
+        .withVariable("playtime", time.formatDuration(s.getPlaytimeSeconds()))
         .withVariable(
           "mute_duration",
           currentMute == null ?

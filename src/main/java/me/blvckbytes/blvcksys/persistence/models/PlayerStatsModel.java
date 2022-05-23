@@ -31,6 +31,9 @@ public class PlayerStatsModel extends APersistentModel {
   @ModelProperty
   private int money;
 
+  @ModelProperty(migrationDefault = MigrationDefault.ZERO)
+  private long playtimeSeconds;
+
   @ModelProperty(isNullable = true, migrationDefault = MigrationDefault.NULL)
   private Date lastLogin;
 
@@ -50,6 +53,6 @@ public class PlayerStatsModel extends APersistentModel {
   }
 
   public static PlayerStatsModel createDefault(OfflinePlayer owner) {
-    return new PlayerStatsModel(owner, 0, 0, 0, null);
+    return new PlayerStatsModel(owner, 0, 0, 0, 0, null);
   }
 }

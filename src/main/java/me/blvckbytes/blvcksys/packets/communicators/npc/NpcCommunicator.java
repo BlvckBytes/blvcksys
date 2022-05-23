@@ -8,6 +8,8 @@ import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.network.chat.ChatMessage;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.network.syncher.DataWatcher;
+import net.minecraft.network.syncher.DataWatcherObject;
+import net.minecraft.network.syncher.DataWatcherRegistry;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.EntityPlayer;
 import net.minecraft.server.level.WorldServer;
@@ -73,10 +75,17 @@ public class NpcCommunicator implements INpcCommunicator {
       Tuple<Object, Runnable> fpD = createFakeEntityPlayer(receiver, entityId, loc, profile);
       Object fakePlayer = fpD.a();
       DataWatcher watcher = refl.getFieldByType(fakePlayer, DataWatcher.class, 0);
+
+      // Enable all skin overlays (https://wiki.vg/Entity_metadata#Player)
+      refl.invokeMethodByArgsOnly(
+        watcher, new Class[] { DataWatcherObject.class, Object.class },
+        new DataWatcherObject<>(17, DataWatcherRegistry.a), (byte) 127
+      );
+
       Object meta = new PacketPlayOutEntityMetadata(entityId, watcher, true);
 
-      refl.sendPacket(receiver, meta);
       refl.sendPacket(receiver, spawn);
+      refl.sendPacket(receiver, meta);
 
       setRotation(entityId, receiver, loc.getYaw(), loc.getPitch());
 

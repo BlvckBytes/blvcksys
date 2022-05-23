@@ -18,6 +18,7 @@ import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.FieldQueryGroup;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import me.blvckbytes.blvcksys.util.MCReflect;
+import me.blvckbytes.blvcksys.util.Triple;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.protocol.Packet;
@@ -45,6 +46,13 @@ import java.util.concurrent.atomic.AtomicInteger;
 */
 @AutoConstruct
 public class NpcHandler implements INpcHandler, IAutoConstructed, IPacketModifier, Listener {
+
+  // Specifies the max. distance when searching for the nearest npc
+  // handle horizontally and vertically, where the horizontal distance should be
+  // a lot greater, as holograms which are overlapping with npc hitboxes usually are
+  // almost on the same x- and z coordinates and only differ mostly in y.
+  private static final double NEAR_NPC_MAX_DIST_H = 1;
+  private static final double NEAR_NPC_MAX_DIST_V = 4;
 
   // Specifies the time between npc update triggers in ticks
   private static final long UPDATE_INTERVAL_TICKS = 10;
@@ -156,6 +164,30 @@ public class NpcHandler implements INpcHandler, IAutoConstructed, IPacketModifie
     findFakeNpcByModel(npc).setGameProfile(textures.toProfile());
 
     return TriResult.SUCC;
+  }
+
+  @Override
+  public Optional<FakeNpc> getNearestNpc(Location where) {
+    return this.npcs.values().stream()
+      // Map each npc to their h-/v distance
+      .map(npc -> (
+        new Triple<>(
+          npc,
+          // Calculate vertical distance
+          Math.abs(npc.getLoc().getY() - where.getY()),
+
+          // Calculate horizontal distance
+          Math.abs(npc.getLoc().getX() - where.getX()) + Math.abs(npc.getLoc().getZ() - where.getZ())
+        )
+      ))
+
+      // Filter out npcs which are too far away
+      .filter(t -> t.b() <= NEAR_NPC_MAX_DIST_V && t.c() <= NEAR_NPC_MAX_DIST_H)
+
+      // Sort by total distance ascending
+      .sorted((a, b) -> (int) Math.round((a.b() + a.c()) - (b.b() - b.c())))
+      .map(Triple::a)
+      .findFirst();
   }
 
   @Override

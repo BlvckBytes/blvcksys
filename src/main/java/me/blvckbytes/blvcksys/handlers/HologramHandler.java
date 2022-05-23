@@ -3,6 +3,9 @@ package me.blvckbytes.blvcksys.handlers;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
+import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
+import me.blvckbytes.blvcksys.packets.IPacketModifier;
+import me.blvckbytes.blvcksys.packets.ModificationPriority;
 import me.blvckbytes.blvcksys.packets.communicators.hologram.IHologramCommunicator;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
@@ -11,6 +14,11 @@ import me.blvckbytes.blvcksys.persistence.models.SequenceSortResult;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.FieldQueryGroup;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
+import me.blvckbytes.blvcksys.util.MCReflect;
+import me.blvckbytes.blvcksys.util.logging.ILogger;
+import net.minecraft.network.NetworkManager;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.PacketPlayInUseEntity;
 import net.minecraft.util.Tuple;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -28,7 +36,7 @@ import java.util.*;
   this underlying fact for all callers.
 */
 @AutoConstruct
-public class HologramHandler implements IHologramHandler, IAutoConstructed {
+public class HologramHandler implements IHologramHandler, IAutoConstructed, IPacketModifier {
 
   // Specifies the time between hologram update triggers in ticks
   private static final long UPDATE_INTERVAL_TICKS = 20;
@@ -43,21 +51,33 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
   private final JavaPlugin plugin;
   private final IHologramCommunicator holoComm;
   private final ILiveVariableSupplier varSupp;
+  private final ILogger logger;
+  private final MCReflect refl;
+  private final INpcHandler npcs;
 
   public HologramHandler(
     @AutoInject IPersistence pers,
     @AutoInject JavaPlugin plugin,
     @AutoInject IHologramCommunicator holoComm,
-    @AutoInject ILiveVariableSupplier varSupp
+    @AutoInject ILiveVariableSupplier varSupp,
+    @AutoInject IPacketInterceptor interceptor,
+    @AutoInject ILogger logger,
+    @AutoInject MCReflect refl,
+    @AutoInject INpcHandler npcs
   ) {
     this.pers = pers;
     this.plugin = plugin;
     this.holoComm = holoComm;
     this.intervalHandle = -1;
     this.varSupp = varSupp;
+    this.logger = logger;
+    this.refl = refl;
+    this.npcs = npcs;
 
     this.cache = new HashMap<>();
     this.holograms = new HashMap<>();
+
+    interceptor.register(this, ModificationPriority.HIGH);
   }
 
   //=========================================================================//
@@ -239,6 +259,35 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed {
         time += UPDATE_INTERVAL_TICKS;
       }
     }, 0L, UPDATE_INTERVAL_TICKS);
+  }
+
+  @Override
+  public Packet<?> modifyIncoming(UUID sender, NetworkManager nm, Packet<?> incoming) {
+    // A player used an entity (left- or right click)
+    if (sender != null && incoming instanceof PacketPlayInUseEntity pack) {
+
+      try {
+        int entityId = refl.getFieldByType(pack, int.class, 0);
+
+        // List all npcs that contain this entityId (can only be one), then
+        // get the nearest npc from it's location and if that's present, modify the
+        // entity id within the packet to the npc's entity id to "relay" the click-event
+        holograms.values().stream()
+          .filter(h -> h.containsEntityId(entityId))
+          .findFirst()
+          .flatMap(h -> npcs.getNearestNpc(h.getLoc()))
+          .ifPresent(n -> refl.setFieldByType(pack, int.class, n.getEntityId(), 0));
+      } catch (Exception e) {
+        logger.logError(e);
+      }
+
+    }
+    return incoming;
+  }
+
+  @Override
+  public Packet<?> modifyOutgoing(UUID receiver, NetworkManager nm, Packet<?> outgoing) {
+    return outgoing;
   }
 
   //=========================================================================//

@@ -28,6 +28,7 @@ public class MultilineHologram extends ATemplateHandler {
   // given recipient that receives updates here
   private static final double RECIPIENT_MAX_DIST_SQ = Math.pow(30, 2);
 
+  private final List<Integer> entityIds;
   private final Map<Player, List<Entity>> entities;
   private final String name;
   private Location loc;
@@ -49,6 +50,7 @@ public class MultilineHologram extends ATemplateHandler {
     this.loc = loc;
     this.holoComm = holoComm;
     this.entities = new HashMap<>();
+    this.entityIds = new ArrayList<>();
 
     this.setLines(lines);
   }
@@ -56,6 +58,10 @@ public class MultilineHologram extends ATemplateHandler {
   //=========================================================================//
   //                                   API                                   //
   //=========================================================================//
+
+  public boolean containsEntityId(int entityId) {
+    return entityIds.contains(entityId);
+  }
 
   public void setLines(List<String> lines) {
     // Build a list of line templates from the string lines
@@ -103,8 +109,10 @@ public class MultilineHologram extends ATemplateHandler {
    */
   public void destroy() {
     for (Player t : entities.keySet()) {
-      for (Entity ent : entities.get(t))
+      for (Entity ent : entities.get(t)) {
         holoComm.deleteLine(t, ent);
+        entityIds.remove(Integer.valueOf(ent.getEntityId()));
+      }
     }
     entities.clear();
   }
@@ -160,7 +168,11 @@ public class MultilineHologram extends ATemplateHandler {
     // Make lines grow downwards from the head
     Location head = loc.clone();
     for (Tuple<Long, List<Object>> lineTemplate : lineTemplates) {
-      ents.add(holoComm.createLine(p, head, evaluateLineTemplate(p, lineTemplate.b())));
+      Entity ent = holoComm.createLine(p, head, evaluateLineTemplate(p, lineTemplate.b()));
+
+      ents.add(ent);
+      entityIds.add(ent.getEntityId());
+
       head.add(0, -INTER_LINE_SPACING, 0);
     }
 
@@ -179,8 +191,10 @@ public class MultilineHologram extends ATemplateHandler {
       return;
 
     // Destroy all lines
-    for (Entity ent : ents)
+    for (Entity ent : ents) {
       holoComm.deleteLine(p, ent);
+      entityIds.remove(Integer.valueOf(ent.getEntityId()));
+    }
   }
 
   /**

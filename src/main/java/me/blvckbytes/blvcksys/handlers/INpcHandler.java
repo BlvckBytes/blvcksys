@@ -49,6 +49,13 @@ public interface INpcHandler {
   TriResult changeSkin(String name, String skin);
 
   /**
+   * Get the nearest npc handle of a given location
+   * @param where Where to search at
+   * @return Nearest npc, empty if there was no npc within reach
+   */
+  Optional<FakeNpc> getNearestNpc(Location where);
+
+  /**
    * Get a list of npcs which are near a specified location
    * @param where Where to search at
    * @param rangeRadius Max. distance between where and the hologram

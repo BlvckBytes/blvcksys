@@ -41,7 +41,7 @@ public class KitContentGui extends AGui<KitModel> {
   @Override
   protected void prepare() {
     addBorder(Material.BLACK_STAINED_GLASS_PANE);
-    addBack("0", kitsGui, null);
+    addBack("0", kitsGui, null, AnimationType.SLIDE_RIGHT);
   }
 
   @Override

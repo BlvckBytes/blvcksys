@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -30,22 +31,27 @@ public class GuiInstance<T> {
 
   // A list of pages, where each page maps a used page slot to an item
   private final List<Map<Integer, GuiItem<T>>> pages;
+  private int currPage;
+  private final JavaPlugin plugin;
 
   @Getter
   private final AGui<T> template;
 
-  private int currPage;
+  @Getter
+  private boolean animating;
 
   /**
    * Create a new GUI instance from a template instance
    * @param viewer Viewer of this instance
    * @param template Template instance
    * @param arg Argument of this instance
+   * @param plugin JavaPlugin ref
    */
-  public GuiInstance(Player viewer, AGui<T> template, T arg) {
+  public GuiInstance(Player viewer, AGui<T> template, T arg, JavaPlugin plugin) {
     this.viewer = viewer;
     this.template = template;
     this.arg = arg;
+    this.plugin = plugin;
     this.pages = new ArrayList<>();
 
     // In order to evaluate the title supplier, this call needs to follow
@@ -61,12 +67,19 @@ public class GuiInstance<T> {
 
   /**
    * Switches to another GUI or just closes the screen if the GUI is null
+   * @param current Currently open instance
+   * @param transition Transition to play while switching GUIs
    * @param gui GUI to switch to
    * @param arg Argument for the gui
    */
-  public<A> void switchTo(@Nullable AGui<A> gui, A arg) {
+  public<A> void switchTo(
+    GuiInstance<?> current,
+    @Nullable AnimationType transition,
+    @Nullable AGui<A> gui,
+    A arg
+  ) {
     if (gui != null)
-      gui.show(viewer, arg);
+      gui.show(viewer, arg, transition, current.getInv());
     else
       viewer.closeInventory();
   }
@@ -75,9 +88,26 @@ public class GuiInstance<T> {
 
   /**
    * Opens the inventory for it's viewer
+   * @param animation Animation to display when opening the GUI
+   * @param animateFrom Inventory to animate based off of (transitions)
    */
-  public void open() {
-    viewer.openInventory(inv);
+  public void open(@Nullable AnimationType animation, @Nullable Inventory animateFrom) {
+    // Play the given animation
+    if (animation != null) {
+      animating = true;
+
+      new GuiAnimation(
+        plugin, animation,
+        animateFrom == null ? inv : animateFrom,
+        animateFrom == null ? null : inv,
+        () -> viewer.openInventory(inv),
+        () -> animating = false
+      );
+    }
+
+    // Show instantly
+    else
+      viewer.openInventory(inv);
   }
 
   /**

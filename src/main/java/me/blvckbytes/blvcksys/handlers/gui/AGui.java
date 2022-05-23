@@ -94,24 +94,38 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
    * Show a personalized instance of this GUI to a player
    * @param viewer Inventory viewer
    * @param arg Argument to be passed to the instance
+   * @param animation Animation to display when opening the GUI
+   * @param animateFrom Inventory to animate based off of (transitions)
    */
-  public void show(Player viewer, T arg) {
+  public void show(
+    Player viewer,
+    T arg,
+    @Nullable AnimationType animation,
+    @Nullable Inventory animateFrom
+  ) {
     if (!activeInstances.containsKey(viewer))
       activeInstances.put(viewer, new ArrayList<>());
 
     // Create and register a new GUI instance
-    GuiInstance<T> inst = new GuiInstance<>(viewer, this, arg);
+    GuiInstance<T> inst = new GuiInstance<>(viewer, this, arg, plugin);
     activeInstances.get(viewer).add(inst);
 
     // Call the opening event before actually opening
     opening(viewer, inst);
 
-    // Initially apply the first page
-    inst.updatePage(null);
-
     // Initially draw the whole gui
     inst.redraw("*");
-    inst.open();
+    inst.open(animation, animateFrom);
+  }
+
+  /**
+   * Show a personalized instance of this GUI to a player
+   * @param viewer Inventory viewer
+   * @param arg Argument to be passed to the instance
+   * @param animation Animation to display when opening the GUI
+   */
+  public void show(Player viewer, T arg, @Nullable AnimationType animation) {
+    show(viewer, arg, animation, null);
   }
 
   @Override
@@ -142,6 +156,10 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
         // Tick all instances of all players
         for (List<GuiInstance<T>> instances : activeInstances.values()) {
           for (GuiInstance<T> instance : instances) {
+            // Don't tick animating GUIs
+            if (instance.isAnimating())
+              continue;
+
             instance.tick(time);
           }
         }
@@ -265,14 +283,15 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
    * @param slot Slot of the back button
    * @param gui Gui to open on click
    * @param param Gui parameter
+   * @param animation Animation to use when navigating back
    */
-  protected<A> void addBack(String slot, AGui<A> gui, A param) {
+  protected<A> void addBack(String slot, AGui<A> gui, A param, @Nullable AnimationType animation) {
     fixedItem(slot, g -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_GENERICS_NAV_BACK_NAME))
         .withLore(cfg.get(ConfigKey.GUI_GENERICS_NAV_BACK_LORE))
         .build()
-    ), e -> e.gui().switchTo(gui, param));
+    ), e -> e.gui().switchTo(e.gui(), animation, gui, param));
   }
 
   //=========================================================================//
@@ -290,6 +309,10 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
       return;
 
     e.setCancelled(true);
+
+    // Ignore interactions while animating
+    if (inst.isAnimating())
+      return;
 
     // Clicked on a used slot which has a click event bound to it
     GuiItem<T> clicked = inst.getItem(e.getSlot()).orElse(null);

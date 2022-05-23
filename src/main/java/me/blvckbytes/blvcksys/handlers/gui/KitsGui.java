@@ -6,6 +6,8 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
+import me.blvckbytes.blvcksys.events.NpcInteractEvent;
+import me.blvckbytes.blvcksys.events.NpcInteraction;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.KitModel;
@@ -32,6 +34,9 @@ import java.util.Map;
 @AutoConstruct
 public class KitsGui extends AGui<Object> implements Listener {
 
+  // Name of the NPC that will trigger opening this GUI
+  private final static String NPC_NAME = "kits_gui";
+
   // Mapping players to a map of their kits and a tuple of <cacheCreation, remainingSeconds>
   private final Map<Player, Map<KitModel, Tuple<Long, Long>>> cooldownCaches;
 
@@ -49,7 +54,7 @@ public class KitsGui extends AGui<Object> implements Listener {
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject IKitCommand kits
   ) {
-    super(4, "10-16,19-25", i -> (
+    super(5, "10-16,19-25,28-34", i -> (
       cfg.get(ConfigKey.GUI_KITS_TITLE)
         .withVariable("viewer", i.getViewer().getName())
     ), plugin, cfg, textures);
@@ -61,18 +66,15 @@ public class KitsGui extends AGui<Object> implements Listener {
 
     // Invalidate the cooldown cache whenever a kit has been requested
     kits.registerRequestInterest((p, kit) -> {
-      if (cooldownCaches.containsKey(p)) {
-        System.out.println(
-          cooldownCaches.get(p).remove(kit)
-        );
-      }
+      if (cooldownCaches.containsKey(p))
+        cooldownCaches.get(p).remove(kit);
     });
   }
 
   @Override
   protected void prepare() {
     addBorder(Material.BLACK_STAINED_GLASS_PANE);
-    addPagination("28", "31", "34");
+    addPagination("37", "40", "43");
   }
 
   @Override
@@ -120,7 +122,7 @@ public class KitsGui extends AGui<Object> implements Listener {
 
         // Right click performs a switch to the kit content preview
         else if (e.type() == ClickType.RIGHT || e.type() == ClickType.SHIFT_RIGHT)
-          e.gui().switchTo(kitContentGui, kit);
+          e.gui().switchTo(e.gui(), AnimationType.SLIDE_LEFT, kitContentGui, kit);
       }, 10);
     }
   }
@@ -132,5 +134,16 @@ public class KitsGui extends AGui<Object> implements Listener {
   @EventHandler
   public void onQuit(PlayerQuitEvent e) {
     cooldownCaches.remove(e.getPlayer());
+  }
+
+  @EventHandler
+  public void onNpcInteract(NpcInteractEvent e) {
+    if (!e.getNpcName().equals(NPC_NAME))
+      return;
+
+    if (e.getType() != NpcInteraction.INTERACTED)
+      return;
+
+    show(e.getPlayer(), null, AnimationType.SLIDE_DOWN);
   }
 }

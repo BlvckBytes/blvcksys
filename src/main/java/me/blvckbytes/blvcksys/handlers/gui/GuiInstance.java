@@ -34,6 +34,7 @@ public class GuiInstance<T> {
   // A list of pages, where each page maps a used page slot to an item
   private final List<Map<Integer, GuiItem<T>>> pages;
   private int currPage;
+  private GuiAnimation currAnimation;
 
   @Setter
   private Runnable beforePaging;
@@ -104,18 +105,32 @@ public class GuiInstance<T> {
     if (animation != null) {
       animating.set(true);
 
-      new GuiAnimation(
+      if (currAnimation != null)
+        currAnimation.fastForward();
+
+      currAnimation = new GuiAnimation(
         plugin, animation,
         animateFrom == null ? inv : animateFrom,
         animateFrom == null ? null : inv,
         () -> viewer.openInventory(inv),
-        () -> animating.set(false)
+        () -> {
+          currAnimation = null;
+          animating.set(false);
+        }
       );
     }
 
     // Show instantly
     else
       viewer.openInventory(inv);
+  }
+
+  /**
+   * Fast forwards the currently active animation, if there is any
+   */
+  public void fastForwardAnimating() {
+    if (currAnimation != null)
+      currAnimation.fastForward();
   }
 
   /**

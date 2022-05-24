@@ -6,6 +6,8 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.concurrent.atomic.AtomicBoolean;
+
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 05/23/2022
@@ -28,6 +30,7 @@ public class GuiAnimation {
   private final Inventory from, to;
   private final Runnable done, ready;
   private final ItemStack[] fromContents, toContents;
+  private final AtomicBoolean fastForwarded;
 
   private int currFrame;
 
@@ -53,7 +56,7 @@ public class GuiAnimation {
     this.done = done;
     this.animation = animation;
     this.from = from;
-    this.to = to;
+    this.to = to == null ? from : to;
 
     // No destination provided, make from the destination
     // and have from as an empty inventory
@@ -68,6 +71,7 @@ public class GuiAnimation {
 
     this.numRows = from.getSize() / 9;
     this.numFrames = getNumFrames();
+    this.fastForwarded = new AtomicBoolean(false);
 
     play();
   }
@@ -76,8 +80,13 @@ public class GuiAnimation {
    * Plays the current frame, also used to bootstrap playing
    */
   private void play() {
+    // Animation has been quit manually already
+    if (this.fastForwarded.get())
+      return;
+
     // Cannot transition inventories unequal in size
     if (to != null && from.getSize() != to.getSize()) {
+      currFrame = numFrames;
       ready.run();
       done.run();
       return;
@@ -201,5 +210,20 @@ public class GuiAnimation {
       // Left and right take as many frames as there are horizontal slots
       case SLIDE_RIGHT, SLIDE_LEFT -> 9;
     };
+  }
+
+  /**
+   * Fast forwards an animation by jumping to it's last frame instantly
+   */
+  public void fastForward() {
+    // No frames left, animation is already over
+    if (currFrame >= numFrames)
+      return;
+
+    // Directly copy the contents (last frame in all cases)
+    for (int i = 0; i < Math.min(fromContents.length, toContents.length); i++)
+      to.setItem(i, toContents[i]);
+
+    done.run();
   }
 }

@@ -113,7 +113,8 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
           return item;
         },
         e -> {
-          int absoluteSlot = (e.getGui().getCurrentPage() - 1) * inst.getPageSize() + e.getSlot();
+          int slot = e.getManipulation().getOriginInventory().equals(e.getGui().getInv()) ? e.getManipulation().getOriginSlot() : e.getManipulation().getTargetSlot();
+          int absoluteSlot = (e.getGui().getCurrentPage() - 1) * inst.getPageSize() + slot;
           boolean allowedToUse = absoluteSlot < maxSlots;
 
           if (!allowedToUse) {
@@ -124,8 +125,7 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
             );
           }
 
-          // TODO: Would be great if there was more granular click information available, to allow
-          // TODO: the player to get items out of locked slots but don't swap them out or put any in
+          // TODO: Allow players to ONLY take items OUT of locked slots and instantly place a lock there afterwards
           e.setPermitUse(allowedToUse);
         },
         null

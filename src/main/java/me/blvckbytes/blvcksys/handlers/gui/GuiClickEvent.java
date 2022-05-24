@@ -4,6 +4,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import me.blvckbytes.blvcksys.events.InventoryManipulationEvent;
 import org.bukkit.event.inventory.ClickType;
 
 /*
@@ -16,8 +17,7 @@ import org.bukkit.event.inventory.ClickType;
 @RequiredArgsConstructor
 public class GuiClickEvent<T> {
   private final GuiInstance<T> gui;
-  private final Integer slot;
-  private final ClickType type;
+  private final InventoryManipulationEvent manipulation;
 
   @Setter
   private boolean permitUse = false;

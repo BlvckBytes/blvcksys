@@ -5,6 +5,7 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
+import me.blvckbytes.blvcksys.events.InventoryManipulationEvent;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.util.SymbolicHead;
 import org.bukkit.Bukkit;
@@ -352,12 +353,18 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
   //=========================================================================//
 
   @EventHandler
-  public void onClick(InventoryClickEvent e) {
-    if (!(e.getWhoClicked() instanceof Player p))
-      return;
+  public void onManip(InventoryManipulationEvent e) {
+    // Check if the origin-inventory was involved in a GUI
+    GuiInstance<T> inst = findByInventory(e.getPlayer(), e.getOriginInventory()).orElse(null);
+    boolean isOrigin = true;
 
-    // The player has no instance
-    GuiInstance<T> inst = findByInventory(p, e.getInventory()).orElse(null);
+    // Origin is not involved but origin doesn't equal target, lookup target too
+    if (inst == null && !e.getOriginInventory().equals(e.getTargetInventory())) {
+      inst = findByInventory(e.getPlayer(), e.getTargetInventory()).orElse(null);
+      isOrigin = false;
+    }
+
+    // Not a GUI-bound event
     if (inst == null)
       return;
 
@@ -370,9 +377,9 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
       return;
 
     // Clicked on a used slot which has a click event bound to it
-    GuiItem<T> clicked = inst.getItem(e.getSlot()).orElse(null);
+    GuiItem<T> clicked = inst.getItem(isOrigin ? e.getOriginSlot() : e.getTargetSlot()).orElse(null);
     if (clicked != null && clicked.onClick() != null) {
-      GuiClickEvent<T> gce = new GuiClickEvent<>(inst, e.getSlot(), e.getClick());
+      GuiClickEvent<T> gce = new GuiClickEvent<>(inst, e);
       clicked.onClick().accept(gce);
 
       // Undo cancellation if the receiver

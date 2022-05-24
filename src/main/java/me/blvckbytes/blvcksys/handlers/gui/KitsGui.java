@@ -116,12 +116,14 @@ public class KitsGui extends AGui<Object> implements Listener {
           )
           .build();
       }, e -> {
+        ClickType click = e.getManipulation().getClick();
+
         // Left click performs a kit request
-        if (e.getType() == ClickType.LEFT || e.getType() == ClickType.SHIFT_LEFT)
+        if (click == ClickType.LEFT || click == ClickType.SHIFT_LEFT)
           e.getGui().getViewer().performCommand("kit " + kit.getName());
 
         // Right click performs a switch to the kit content preview
-        else if (e.getType() == ClickType.RIGHT || e.getType() == ClickType.SHIFT_RIGHT)
+        else if (click == ClickType.RIGHT || click == ClickType.SHIFT_RIGHT)
           e.getGui().switchTo(e.getGui(), AnimationType.SLIDE_LEFT, kitContentGui, kit);
       }, 10);
     }

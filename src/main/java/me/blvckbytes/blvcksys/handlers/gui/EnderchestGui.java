@@ -28,13 +28,21 @@ import java.util.Optional;
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 05/24/2022
 
-  View and manage your enderchest.
+  This enderchest is ment to provide a rich set of features to the user, such
+  as having multiple big pages, which are animated and allow for the locking
+  of individual slots which have a sequence number above a certain threshold.
+  If a slot has been locked again, but the user still has an itemstack residing
+  in that slot, they may take it out at any time and at any rate, but never put
+  anything back in. As soon as the slot reached the vacancy state, a lock is
+  rendered back in it's place.
+
+  Pages are directly mapped to the model's inventories, but only synced on either
+  closing the gui (storing that page) or paging to another page (storing the page
+  which has been paged away from). When the inventory is closed, only then that model
+  is stored persistently, as serializing all the items is not cheap.
 */
 @AutoConstruct
 public class EnderchestGui extends AGui<OfflinePlayer> {
-
-  // FIXME: Enderchests are pretty important! Make all operations failsafe and prevent an item loss as much as possible
-  // FIXME: Also, there sometimes are false positive interaction denies - check that out
 
   // Caching enderchests per player, as they will be used quite frequently
   // Offline player requests (others) are not cached
@@ -116,6 +124,7 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
           // Permit this action, so that items can be gained back, but slots cannot be
           // used since no items can be put back in
           if (
+            !allowedToUse &&
             (
               e.getManipulation().getAction() == ManipulationAction.PICKUP ||
               e.getManipulation().getAction() == ManipulationAction.DROP ||
@@ -237,6 +246,11 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
     return cfg.get(ConfigKey.GUI_ENDERCHEST_LOCK_NAME).asScalar().equals(meta.getDisplayName());
   }
 
+  /**
+   * Build a lock item for a specific slot on a specific page
+   * @param page Page to lock at
+   * @param slot Slot to lock
+   */
   private ItemStack buildLock(int page, int slot) {
     return new ItemStackBuilder(Material.BARRIER)
       .withName(cfg.get(ConfigKey.GUI_ENDERCHEST_LOCK_NAME))

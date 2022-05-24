@@ -26,13 +26,6 @@ import java.util.stream.IntStream;
 @AutoConstruct
 public class InventoryListener implements Listener {
 
-  // TODO: Fix and rework hotbar interaction processing
-
-  @EventHandler
-  public void onManip(InventoryManipulationEvent e) {
-    System.out.println(e);
-  }
-
   @EventHandler
   public void onClick(InventoryClickEvent e) {
     if (!(e.getWhoClicked() instanceof Player p))
@@ -42,13 +35,47 @@ public class InventoryListener implements Listener {
     if (e.getClickedInventory() == null)
       return;
 
-    System.out.println("action=" + e.getAction());
+    // Swapped slot contents using hotbar keys
+    if (
+      e.getAction() == InventoryAction.HOTBAR_SWAP ||
+      e.getAction() == InventoryAction.HOTBAR_MOVE_AND_READD
+    ) {
+
+      ItemStack hotbar = p.getInventory().getItem(e.getHotbarButton());
+      ItemStack target = e.getClickedInventory().getItem(e.getSlot());
+
+      // Swapped two items
+      if (hotbar != null && target != null) {
+        // Moved around only in their own inventory
+        if (p.getInventory().equals(e.getClickedInventory())) {
+          if (checkCancellation(p.getInventory(), p.getInventory(), p, ManipulationAction.SWAP, e.getHotbarButton(), e.getSlot()))
+            e.setCancelled(true);
+        }
+
+        else {
+          if (checkCancellation(p.getInventory(), e.getClickedInventory(), p, ManipulationAction.SWAP, e.getHotbarButton(), e.getSlot()))
+            e.setCancelled(true);
+        }
+      }
+
+      // Moved into hotbar
+      else if (hotbar == null && target != null) {
+        if (checkCancellation(e.getClickedInventory(), p.getInventory(), p, ManipulationAction.MOVE, e.getSlot(), e.getHotbarButton()))
+          e.setCancelled(true);
+      }
+
+      // Moved into foreign
+      else if (hotbar != null) {
+        if (checkCancellation(p.getInventory(), e.getClickedInventory(), p, ManipulationAction.MOVE, e.getHotbarButton(), e.getSlot()))
+          e.setCancelled(true);
+      }
+
+      // Otherwise, both slots were empty
+      return;
+    }
 
     // Moved from one inventory into another
-    if (
-      e.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY ||
-        e.getAction() == InventoryAction.HOTBAR_MOVE_AND_READD
-    ) {
+    if (e.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
       Inventory top = e.getView().getTopInventory();
 
       // Fallback: Moved down into own inventory

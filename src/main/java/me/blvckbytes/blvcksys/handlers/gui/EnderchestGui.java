@@ -44,6 +44,8 @@ import java.util.Optional;
 @AutoConstruct
 public class EnderchestGui extends AGui<OfflinePlayer> {
 
+  // TODO: Properly handle multiple open instances of the same enderchest (/ec foreign)
+
   // Caching enderchests per player, as they will be used quite frequently
   // Offline player requests (others) are not cached
   private final Map<OfflinePlayer, EnderchestModel> cache;
@@ -97,9 +99,19 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
     // Sync up the page that's being paged away from on paging
     inst.setBeforePaging(() -> syncCurrentPage(inst, chest));
 
-    // TODO: Decide on how to handle maxSlots when viewing foreign enderchests
     // Get the maximum number of slots this player may use
-    int maxSlots = PlayerPermission.COMMAND_ENDERCHEST_MAX_SLOTS.getSuffixNumber(viewer, true).orElse(1);
+    int maxSlots;
+
+    // Opened their own enderchest, or the enderchest of another online player
+    if (inst.getArg() instanceof Player target) {
+      maxSlots = PlayerPermission.COMMAND_ENDERCHEST_MAX_SLOTS.getSuffixNumber(target, true)
+        .orElse(EnderchestModel.DEFAULT_MAX_SLOTS);
+      chest.setLastMaxSlots(maxSlots);
+    }
+
+    // Opened a foreign enderchest of an offline player, use the last number of max slots as the current max slots
+    else
+      maxSlots = chest.getLastMaxSlots();
 
     // Add as many items as the enderchest has slots in total
     for (int j = 0; j < EnderchestModel.NUM_PAGES * EnderchestModel.PAGE_ROWS * 9; j++)

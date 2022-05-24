@@ -5,11 +5,13 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.events.ManipulationAction;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.EnderchestModel;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -32,6 +34,7 @@ import java.util.Optional;
 public class EnderchestGui extends AGui<OfflinePlayer> {
 
   // FIXME: Enderchests are pretty important! Make all operations failsafe and prevent an item loss as much as possible
+  // FIXME: Also, there sometimes are false positive interaction denies - check that out
 
   // Caching enderchests per player, as they will be used quite frequently
   // Offline player requests (others) are not cached
@@ -99,16 +102,8 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
           int absoluteSlot = (i.getCurrentPage() - 1) * i.getPageSize() + s;
 
           // Show locks on locked slots but don't shadow any existing items
-          if (absoluteSlot >= maxSlots && item == null) {
-            return new ItemStackBuilder(Material.BARRIER)
-              .withName(cfg.get(ConfigKey.GUI_ENDERCHEST_LOCK_NAME))
-              .withLore(
-                cfg.get(ConfigKey.GUI_ENDERCHEST_LOCK_LORE)
-                  .withVariable("slot", s + 1)
-                  .withVariable("page", i.getCurrentPage())
-              )
-              .build();
-          }
+          if (absoluteSlot >= maxSlots && item == null)
+            return buildLock(i.getCurrentPage(), s);
 
           return item;
         },
@@ -116,6 +111,26 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
           int slot = e.getManipulation().getOriginInventory().equals(e.getGui().getInv()) ? e.getManipulation().getOriginSlot() : e.getManipulation().getTargetSlot();
           int absoluteSlot = (e.getGui().getCurrentPage() - 1) * inst.getPageSize() + slot;
           boolean allowedToUse = absoluteSlot < maxSlots;
+
+          // Tried to remove something from a locked slot that had an item left
+          // Permit this action, so that items can be gained back, but slots cannot be
+          // used since no items can be put back in
+          if (
+            (
+              e.getManipulation().getAction() == ManipulationAction.PICKUP ||
+              e.getManipulation().getAction() == ManipulationAction.DROP ||
+              // Moved into the player's inventory
+              (e.getManipulation().getAction() == ManipulationAction.MOVE && e.getManipulation().getTargetInventory().equals(e.getManipulation().getPlayer().getInventory()))
+            ) && !isLock(e.getGui().getInv().getItem(slot))
+          ) {
+            allowedToUse = true;
+
+            // Check if this slot is empty on the next tick, if so, put a lock there
+            Bukkit.getScheduler().runTaskLater(plugin, () -> {
+              if (e.getGui().getInv().getItem(slot) == null)
+                e.getGui().getInv().setItem(slot, buildLock(e.getGui().getCurrentPage(), slot));
+            }, 1);
+          }
 
           if (!allowedToUse) {
             viewer.sendMessage(
@@ -125,7 +140,6 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
             );
           }
 
-          // TODO: Allow players to ONLY take items OUT of locked slots and instantly place a lock there afterwards
           e.setPermitUse(allowedToUse);
         },
         null
@@ -221,5 +235,16 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
       return false;
 
     return cfg.get(ConfigKey.GUI_ENDERCHEST_LOCK_NAME).asScalar().equals(meta.getDisplayName());
+  }
+
+  private ItemStack buildLock(int page, int slot) {
+    return new ItemStackBuilder(Material.BARRIER)
+      .withName(cfg.get(ConfigKey.GUI_ENDERCHEST_LOCK_NAME))
+      .withLore(
+        cfg.get(ConfigKey.GUI_ENDERCHEST_LOCK_LORE)
+          .withVariable("slot", slot + 1)
+          .withVariable("page", page)
+      )
+      .build();
   }
 }

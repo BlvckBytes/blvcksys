@@ -24,7 +24,7 @@ import java.util.stream.Stream;
   Allows players to access their enderchest by a command.
 */
 @AutoConstruct
-public class EnderchestCommand extends APlayerCommand {
+public class EnderchestCommand extends APlayerCommand implements IEnderchestCommand {
 
   private final ICombatLogHandler combatLog;
   private final EnderchestGui enderchestGui;
@@ -53,7 +53,6 @@ public class EnderchestCommand extends APlayerCommand {
   //                                 Handler                                 //
   //=========================================================================//
 
-
   @Override
   protected Stream<String> onTabCompletion(Player p, String[] args, int currArg) {
     if (currArg == 0)
@@ -64,9 +63,30 @@ public class EnderchestCommand extends APlayerCommand {
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     OfflinePlayer target = offlinePlayer(args, 0, p);
+    openEnderchest(p, target);
+  }
 
-    if (combatLog.isInCombat(p)) {
-      p.sendMessage(
+  //=========================================================================//
+  //                                   API                                   //
+  //=========================================================================//
+
+  @Override
+  public void openEnderchest(Player executor) {
+    openEnderchest(executor, executor);
+  }
+
+  //=========================================================================//
+  //                                Utilities                                //
+  //=========================================================================//
+
+  /**
+   * Open a target player's enderchest to an executing player
+   * @param executor Player to open for
+   * @param target Enderchest owner
+   */
+  private void openEnderchest(Player executor, OfflinePlayer target) {
+    if (combatLog.isInCombat(executor)) {
+      executor.sendMessage(
         cfg.get(ConfigKey.ENDERCHEST_IN_COMBAT)
           .withPrefix()
           .asScalar()
@@ -74,6 +94,6 @@ public class EnderchestCommand extends APlayerCommand {
       return;
     }
 
-    enderchestGui.show(p, target, AnimationType.SLIDE_DOWN);
+    enderchestGui.show(executor, target, AnimationType.SLIDE_DOWN);
   }
 }

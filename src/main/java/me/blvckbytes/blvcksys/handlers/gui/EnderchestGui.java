@@ -67,6 +67,9 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
     if (chest == null)
       return;
 
+    // Ensure there are no animations playing while saving
+    inst.fastForwardAnimating();
+
     // Sync the current page before storing (as is done when paging)
     syncCurrentPage(inst, chest);
     pers.store(chest);
@@ -93,7 +96,7 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
         // Dynamic supplier that's reading items directly from the enderchest
         (i, s) -> {
           ItemStack item = getPageItem(chest, i.getCurrentPage(), s);
-          int absoluteSlot = (i.getCurrentPage() - 1) * 9 + s;
+          int absoluteSlot = (i.getCurrentPage() - 1) * i.getPageSize() + s;
 
           // Show locks on locked slots but don't shadow any existing items
           if (absoluteSlot >= maxSlots && item == null) {
@@ -110,7 +113,7 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
           return item;
         },
         e -> {
-          int absoluteSlot = (e.getGui().getCurrentPage() - 1) * 9 + e.getSlot();
+          int absoluteSlot = (e.getGui().getCurrentPage() - 1) * inst.getPageSize() + e.getSlot();
           boolean allowedToUse = absoluteSlot < maxSlots;
 
           if (!allowedToUse) {

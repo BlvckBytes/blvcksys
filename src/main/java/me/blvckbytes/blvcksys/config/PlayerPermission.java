@@ -37,6 +37,13 @@ public enum PlayerPermission {
   AFK_COOLDOWN_BYPASS("bvs.afk.cooldown.bypass"),
 
   //=========================================================================//
+  //                              ENDERCHEST Command                         //
+  //=========================================================================//
+
+  COMMAND_ENDERCHEST_OTHERS("bvs.enderchest.others"),
+  COMMAND_ENDERCHEST_MAX_SLOTS("bvs.enderchest.max_slots"),
+
+  //=========================================================================//
   //                                MONEY Command                            //
   //=========================================================================//
 

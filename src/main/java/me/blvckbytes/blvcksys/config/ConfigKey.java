@@ -303,6 +303,13 @@ public enum ConfigKey {
   ),
 
   //=========================================================================//
+  //                             ENDERCHEST Command                          //
+  //=========================================================================//
+
+  ENDERCHEST_IN_COMBAT("enderchest.in_combat", "$0Du bist $4im Kampf $0und hast keinen Zugriff auf deine Enderchest!"),
+  ENDERCHEST_LOCKED("enderchest.locked", "$0Dieser Slot wurde noch $4nicht freigeschalten$0!"),
+
+  //=========================================================================//
   //                                PAY Command                              //
   //=========================================================================//
 
@@ -1133,6 +1140,19 @@ public enum ConfigKey {
   ),
   GUI_GENERICS_PLACEHOLDERS_ENABLED("gui.generics.placeholders.enabled", "&aaktiviert"),
   GUI_GENERICS_PLACEHOLDERS_DISABLED("gui.generics.placeholders.disabled", "&cdeaktiviert"),
+
+  //=========================================================================//
+  //                              Enderchest GUI                             //
+  //=========================================================================//
+
+  GUI_ENDERCHEST_TITLE("gui.enderchest.title", "$0Enderchest von $2{{viewer}}"),
+  GUI_ENDERCHEST_LOCK_NAME("gui.enderchest.lock.name", "$0» &cGesperrter Slot"),
+  GUI_ENDERCHEST_LOCK_LORE(
+    "gui.enderchest.lock.lore",
+    " ",
+    "$0Der Slot &c{{slot}} $0der Seite &c{{page}}",
+    "$0wurde noch nicht freigeschalten!"
+  ),
 
   //=========================================================================//
   //                               Ignores GUI                               //

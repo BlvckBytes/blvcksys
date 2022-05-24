@@ -40,7 +40,7 @@ public enum MysqlType {
 
   TEXT(
     new String[] {
-      "TEXT"
+      "LONGTEXT"
     },
     new Class[] {
       String.class

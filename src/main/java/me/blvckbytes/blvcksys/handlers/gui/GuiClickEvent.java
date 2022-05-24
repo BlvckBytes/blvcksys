@@ -1,5 +1,9 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.bukkit.event.inventory.ClickType;
 
 /*
@@ -8,8 +12,13 @@ import org.bukkit.event.inventory.ClickType;
 
   Used as a callback parameter when a GUI item has been clicked.
 */
-public record GuiClickEvent<T> (
-  GuiInstance<T> gui,
-  Integer slot,
-  ClickType type
-) {}
+@Getter
+@RequiredArgsConstructor
+public class GuiClickEvent<T> {
+  private final GuiInstance<T> gui;
+  private final Integer slot;
+  private final ClickType type;
+
+  @Setter
+  private boolean permitUse = false;
+}

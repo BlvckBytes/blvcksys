@@ -139,7 +139,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
       for (Iterator<GuiInstance<T>> instI = instances.iterator(); instI.hasNext();) {
         GuiInstance<T> inst = instI.next();
         inst.getViewer().closeInventory();
-        closed(inst.getViewer());
+        closed(inst);
         instI.remove();
       }
     }
@@ -158,7 +158,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
         for (List<GuiInstance<T>> instances : activeInstances.values()) {
           for (GuiInstance<T> instance : instances) {
             // Don't tick animating GUIs
-            if (instance.isAnimating())
+            if (instance.getAnimating().get())
               continue;
 
             instance.tick(time);
@@ -178,13 +178,14 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
 
   /**
    * Called when a GUI has been closed by a player
-   * @param viewer Player that closed a GUI
+   * @param inst Instance of the GUI closed
    */
-  abstract protected void closed(Player viewer);
+  abstract protected void closed(GuiInstance<T> inst);
 
   /**
    * Called before a GUI is being shown to a player
    * @param viewer Player that requested a GUI
+   * @param inst Instance of the GUI opening
    */
   abstract protected void opening(Player viewer, GuiInstance<T> inst);
 
@@ -207,7 +208,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     @Nullable Consumer<GuiClickEvent<T>> onClick
   ) {
     for (int slotNumber : slotExprToSlots(slotExpr, rows))
-      fixedItems.put(slotNumber, new GuiItem<>(item, onClick, null));
+      fixedItems.put(slotNumber, new GuiItem<>((i, s) -> item.apply(i), onClick, null));
   }
 
   /**
@@ -224,8 +225,8 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
         .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_LORE))
         .build()
     ), e -> {
-      e.gui().previousPage();
-      e.gui().redraw(indicatorSlot);
+      e.getGui().previousPage();
+      e.getGui().redraw(indicatorSlot);
     });
 
     fixedItem(indicatorSlot, g -> (
@@ -249,8 +250,8 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
         .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_LORE))
         .build()
     ), e -> {
-      e.gui().nextPage();
-      e.gui().redraw(indicatorSlot);
+      e.getGui().nextPage();
+      e.getGui().redraw(indicatorSlot);
     });
   }
 
@@ -270,8 +271,8 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
         .withLore(cfg.get(s ? ConfigKey.GUI_GENERICS_BUTTONS_DISABLE_LORE : ConfigKey.GUI_GENERICS_BUTTONS_ENABLE_LORE))
         .build();
     }, e -> {
-      onClick.accept(state.apply(e.gui()), e.gui());
-      e.gui().redraw(slot + "," + (update == null ? "" : update));
+      onClick.accept(state.apply(e.getGui()), e.getGui());
+      e.getGui().redraw(slot + "," + (update == null ? "" : update));
     });
   }
 
@@ -343,7 +344,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
         .withName(cfg.get(ConfigKey.GUI_GENERICS_NAV_BACK_NAME))
         .withLore(cfg.get(ConfigKey.GUI_GENERICS_NAV_BACK_LORE))
         .build()
-    ), e -> e.gui().switchTo(e.gui(), animation, gui, param));
+    ), e -> e.getGui().switchTo(e.getGui(), animation, gui, param));
   }
 
   //=========================================================================//
@@ -360,18 +361,24 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     if (inst == null)
       return;
 
+    // Always cancel as soon as possible as a fallback,
+    // as permitting is usually the exception
     e.setCancelled(true);
 
     // Ignore interactions while animating
-    if (inst.isAnimating())
+    if (inst.getAnimating().get())
       return;
 
     // Clicked on a used slot which has a click event bound to it
     GuiItem<T> clicked = inst.getItem(e.getSlot()).orElse(null);
     if (clicked != null && clicked.onClick() != null) {
-      clicked.onClick().accept(
-        new GuiClickEvent<>(inst, e.getSlot(), e.getClick())
-      );
+      GuiClickEvent<T> gce = new GuiClickEvent<>(inst, e.getSlot(), e.getClick());
+      clicked.onClick().accept(gce);
+
+      // Undo cancellation if the receiver
+      // permitted the use of this slot
+      if (gce.isPermitUse())
+        e.setCancelled(false);
     }
   }
 
@@ -387,14 +394,14 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
 
     // Destroy the instance
     if (activeInstances.get(p).remove(inst))
-      closed(p);
+      closed(inst);
   }
 
   @EventHandler
   public void onQuit(PlayerQuitEvent e) {
     // Destroy all instances
     if (activeInstances.containsKey(e.getPlayer()))
-      activeInstances.remove(e.getPlayer()).forEach(i -> i.getTemplate().closed(e.getPlayer()));
+      activeInstances.remove(e.getPlayer()).forEach(i -> i.getTemplate().closed(i));
   }
 
   //=========================================================================//

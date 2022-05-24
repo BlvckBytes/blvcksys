@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
@@ -9,8 +10,9 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -32,13 +34,17 @@ public class GuiInstance<T> {
   // A list of pages, where each page maps a used page slot to an item
   private final List<Map<Integer, GuiItem<T>>> pages;
   private int currPage;
+
+  @Setter
+  private Runnable beforePaging;
+
   private final JavaPlugin plugin;
 
   @Getter
   private final AGui<T> template;
 
   @Getter
-  private boolean animating;
+  private final AtomicBoolean animating;
 
   /**
    * Create a new GUI instance from a template instance
@@ -52,7 +58,9 @@ public class GuiInstance<T> {
     this.template = template;
     this.arg = arg;
     this.plugin = plugin;
+
     this.pages = new ArrayList<>();
+    this.animating = new AtomicBoolean(false);
 
     // In order to evaluate the title supplier, this call needs to follow
     // after the instance's property assignments
@@ -94,14 +102,14 @@ public class GuiInstance<T> {
   public void open(@Nullable AnimationType animation, @Nullable Inventory animateFrom) {
     // Play the given animation
     if (animation != null) {
-      animating = true;
+      animating.set(true);
 
       new GuiAnimation(
         plugin, animation,
         animateFrom == null ? inv : animateFrom,
         animateFrom == null ? null : inv,
         () -> viewer.openInventory(inv),
-        () -> animating = false
+        () -> animating.set(false)
       );
     }
 
@@ -117,7 +125,7 @@ public class GuiInstance<T> {
    * @param updatePeriod Update period in ticks, null means never
    */
   public void addPagedItem(
-    Function<GuiInstance<T>, ItemStack> item,
+    BiFunction<GuiInstance<T>, Integer, ItemStack> item,
     @Nullable Consumer<GuiClickEvent<T>> onClick,
     @Nullable Integer updatePeriod
   ) {
@@ -145,7 +153,7 @@ public class GuiInstance<T> {
         continue;
 
       // Update the item by re-calling it's supplier
-      inv.setItem(slot, target.item().apply(this));
+      inv.setItem(slot, target.item().apply(this, slot));
     }
   }
 
@@ -190,6 +198,9 @@ public class GuiInstance<T> {
     if (!hasNextPage())
       return false;
 
+    if (beforePaging != null)
+      beforePaging.run();
+
     // Advance to the next page and force an update
     currPage++;
     updatePage(null);
@@ -210,6 +221,9 @@ public class GuiInstance<T> {
   public boolean previousPage() {
     if (!hasPreviousPage())
       return false;
+
+    if (beforePaging != null)
+      beforePaging.run();
 
     // Advance to the previous page and force an update
     currPage--;
@@ -268,8 +282,8 @@ public class GuiInstance<T> {
       pageSlots.remove(pageItem.getKey());
 
       // Only update on force updates or if the time is a multiple of the item's period
-      if (time == null || (item.updatePeriod() != null && time % item.updatePeriod() == 0))
-        inv.setItem(pageItem.getKey(), item.item().apply(this));
+      if (time == null || (item.updatePeriod() != null && item.updatePeriod() > 0 && time % item.updatePeriod() == 0))
+        inv.setItem(pageItem.getKey(), item.item().apply(this, pageItem.getKey()));
     }
 
     // Clear unused page slots if they're not already vacant
@@ -292,7 +306,7 @@ public class GuiInstance<T> {
 
       // Only tick this item if it has a period which has elapsed
       if (item.updatePeriod() != null && time % item.updatePeriod() == 0)
-        inv.setItem(itemE.getKey(), item.item().apply(this));
+        inv.setItem(itemE.getKey(), item.item().apply(this, itemE.getKey()));
     }
 
     // Tick all page items

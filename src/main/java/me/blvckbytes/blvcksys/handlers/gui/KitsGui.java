@@ -78,7 +78,7 @@ public class KitsGui extends AGui<Object> implements Listener {
   }
 
   @Override
-  protected void closed(Player viewer) {}
+  protected void closed(GuiInstance<Object> inst) {}
 
   @Override
   protected void opening(Player viewer, GuiInstance<Object> inst) {
@@ -91,7 +91,7 @@ public class KitsGui extends AGui<Object> implements Listener {
 
     // Add all kits by their representative item
     for (KitModel kit : kits) {
-      inst.addPagedItem(g -> {
+      inst.addPagedItem((i, s) -> {
         // Cache this kit's cooldown, if absent
         if (!cooldownCache.containsKey(kit)) {
           cooldownCache.put(kit, new Tuple<>(
@@ -117,12 +117,12 @@ public class KitsGui extends AGui<Object> implements Listener {
           .build();
       }, e -> {
         // Left click performs a kit request
-        if (e.type() == ClickType.LEFT || e.type() == ClickType.SHIFT_LEFT)
-          e.gui().getViewer().performCommand("kit " + kit.getName());
+        if (e.getType() == ClickType.LEFT || e.getType() == ClickType.SHIFT_LEFT)
+          e.getGui().getViewer().performCommand("kit " + kit.getName());
 
         // Right click performs a switch to the kit content preview
-        else if (e.type() == ClickType.RIGHT || e.type() == ClickType.SHIFT_RIGHT)
-          e.gui().switchTo(e.gui(), AnimationType.SLIDE_LEFT, kitContentGui, kit);
+        else if (e.getType() == ClickType.RIGHT || e.getType() == ClickType.SHIFT_RIGHT)
+          e.getGui().switchTo(e.getGui(), AnimationType.SLIDE_LEFT, kitContentGui, kit);
       }, 10);
     }
   }

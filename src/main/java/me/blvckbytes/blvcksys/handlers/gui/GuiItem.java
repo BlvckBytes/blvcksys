@@ -3,6 +3,7 @@ package me.blvckbytes.blvcksys.handlers.gui;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -14,7 +15,7 @@ import java.util.function.Function;
 */
 public record GuiItem<T> (
   // Item supplier function
-  Function<GuiInstance<T>, ItemStack> item,
+  BiFunction<GuiInstance<T>, Integer, ItemStack> item,
 
   // Click event consumer
   Consumer<GuiClickEvent<T>> onClick,

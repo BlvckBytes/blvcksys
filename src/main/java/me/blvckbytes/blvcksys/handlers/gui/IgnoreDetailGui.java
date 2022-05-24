@@ -75,7 +75,7 @@ public class IgnoreDetailGui extends AGui<OfflinePlayer> {
   }
 
   @Override
-  protected void closed(Player viewer) {
+  protected void closed(GuiInstance<OfflinePlayer> inst) {
   }
 
   @Override

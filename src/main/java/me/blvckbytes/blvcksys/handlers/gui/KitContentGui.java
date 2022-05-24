@@ -45,7 +45,7 @@ public class KitContentGui extends AGui<KitModel> {
   }
 
   @Override
-  protected void closed(Player viewer) {}
+  protected void closed(GuiInstance<KitModel> inst) {}
 
   @Override
   protected void opening(Player viewer, GuiInstance<KitModel> inst) {
@@ -57,7 +57,7 @@ public class KitContentGui extends AGui<KitModel> {
       ItemMeta meta = content.getItemMeta();
       String name = meta == null ? null : meta.getDisplayName();
 
-      inst.addPagedItem(i -> (
+      inst.addPagedItem((i, s) -> (
         new ItemStackBuilder(content, content.getAmount())
           // Keep either the name from ItemMeta or set a human readable type fallback
           .withName(

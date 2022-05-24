@@ -79,7 +79,7 @@ public class PreferencesGui extends AGui<Object> {
   }
 
   @Override
-  protected void closed(Player viewer) {
+  protected void closed(GuiInstance<Object> inst) {
   }
 
   @Override

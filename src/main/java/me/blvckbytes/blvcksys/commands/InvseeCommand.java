@@ -8,12 +8,15 @@ import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.stream.Stream;
 
@@ -77,28 +80,44 @@ public class InvseeCommand extends APlayerCommand implements Listener {
 
   @EventHandler
   public void onClick(InventoryClickEvent e) {
-    // Wasn't caused by a player
-    if (!(e.getWhoClicked() instanceof Player p))
-      return;
+    if (isEditForbidden(e.getWhoClicked(), e.getClickedInventory()))
+      e.setCancelled(true);
+  }
 
-    // Clicked into empty space
-    Inventory inv = e.getClickedInventory();
+  @EventHandler
+  public void onDrag(InventoryDragEvent e) {
+    if (isEditForbidden(e.getWhoClicked(), e.getInventory()))
+      e.setCancelled(true);
+  }
+
+  //=========================================================================//
+  //                                Utilities                                //
+  //=========================================================================//
+
+  /**
+   * Checks whether an executing entity is allowed to edit a given inventory
+   * @param executor Executing entity
+   * @param inv Target inventory
+   * @return True if allowed, false otherwise
+   */
+  private boolean isEditForbidden(HumanEntity executor, @Nullable Inventory inv) {
+    // Not a player
+    if (!(executor instanceof Player p))
+      return false;
+
+    // Clicked into void
     if (inv == null)
-      return;
+      return false;
 
     // The holder is not a player
     if (!(inv.getHolder() instanceof Player h))
-      return;
+      return false;
 
     // It's their own inventory
-    if (h.equals(p))
-      return;
+    if (h.equals(executor))
+      return false;
 
-    // It's a foreign inventory but the player is allowed to alter it
-    if (PlayerPermission.COMMAND_INVSEE_ALTER.has(p))
-      return;
-
-    // Cancel messing with any contents
-    e.setCancelled(true);
+    // It's a foreign inventory but the player may be allowed to alter it
+    return !PlayerPermission.COMMAND_INVSEE_ALTER.has(p);
   }
 }

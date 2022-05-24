@@ -5,6 +5,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
@@ -48,25 +49,25 @@ public class InventoryListener implements Listener {
       if (hotbar != null && target != null) {
         // Moved around only in their own inventory
         if (p.getInventory().equals(e.getClickedInventory())) {
-          if (checkCancellation(p.getInventory(), p.getInventory(), p, ManipulationAction.SWAP, e.getHotbarButton(), e.getSlot()))
+          if (checkCancellation(p.getInventory(), p.getInventory(), p, ManipulationAction.SWAP, e.getHotbarButton(), e.getSlot(), e.getClick()))
             e.setCancelled(true);
         }
 
         else {
-          if (checkCancellation(p.getInventory(), e.getClickedInventory(), p, ManipulationAction.SWAP, e.getHotbarButton(), e.getSlot()))
+          if (checkCancellation(p.getInventory(), e.getClickedInventory(), p, ManipulationAction.SWAP, e.getHotbarButton(), e.getSlot(), e.getClick()))
             e.setCancelled(true);
         }
       }
 
       // Moved into hotbar
       else if (hotbar == null && target != null) {
-        if (checkCancellation(e.getClickedInventory(), p.getInventory(), p, ManipulationAction.MOVE, e.getSlot(), e.getHotbarButton()))
+        if (checkCancellation(e.getClickedInventory(), p.getInventory(), p, ManipulationAction.MOVE, e.getSlot(), e.getHotbarButton(), e.getClick()))
           e.setCancelled(true);
       }
 
       // Moved into foreign
       else if (hotbar != null) {
-        if (checkCancellation(p.getInventory(), e.getClickedInventory(), p, ManipulationAction.MOVE, e.getHotbarButton(), e.getSlot()))
+        if (checkCancellation(p.getInventory(), e.getClickedInventory(), p, ManipulationAction.MOVE, e.getHotbarButton(), e.getSlot(), e.getClick()))
           e.setCancelled(true);
       }
 
@@ -149,7 +150,7 @@ public class InventoryListener implements Listener {
       if (targetSlot < 0)
         return;
 
-      if (checkCancellation(from, to, p, ManipulationAction.MOVE, e.getSlot(), targetSlot))
+      if (checkCancellation(from, to, p, ManipulationAction.MOVE, e.getSlot(), targetSlot, e.getClick()))
         e.setCancelled(true);
       return;
     }
@@ -187,7 +188,7 @@ public class InventoryListener implements Listener {
         }
       }
 
-      if (sourceSlots.stream().anyMatch(slot -> checkCancellation(e.getClickedInventory(), p, ManipulationAction.PICKUP, slot)))
+      if (sourceSlots.stream().anyMatch(slot -> checkCancellation(e.getClickedInventory(), p, ManipulationAction.PICKUP, slot, e.getClick())))
         e.setCancelled(true);
 
       return;
@@ -199,14 +200,14 @@ public class InventoryListener implements Listener {
         e.getAction() == InventoryAction.PLACE_ONE ||
         e.getAction() == InventoryAction.PLACE_SOME
     ) {
-      if (checkCancellation(e.getClickedInventory(), p, ManipulationAction.PLACE, e.getSlot()))
+      if (checkCancellation(e.getClickedInventory(), p, ManipulationAction.PLACE, e.getSlot(), e.getClick()))
         e.setCancelled(true);
       return;
     }
 
     // Swapped a slot with the cursor contents
     if (e.getAction() == InventoryAction.SWAP_WITH_CURSOR) {
-      if (checkCancellation(e.getClickedInventory(), p, ManipulationAction.SWAP, e.getSlot()))
+      if (checkCancellation(e.getClickedInventory(), p, ManipulationAction.SWAP, e.getSlot(), e.getClick()))
         e.setCancelled(true);
       return;
     }
@@ -216,12 +217,12 @@ public class InventoryListener implements Listener {
       e.getAction() == InventoryAction.DROP_ONE_SLOT ||
         e.getAction() == InventoryAction.DROP_ALL_SLOT
     ) {
-      if (checkCancellation(e.getClickedInventory(), p, ManipulationAction.DROP, e.getSlot()))
+      if (checkCancellation(e.getClickedInventory(), p, ManipulationAction.DROP, e.getSlot(), e.getClick()))
         e.setCancelled(true);
       return;
     }
 
-    if (checkCancellation(e.getClickedInventory(), p, ManipulationAction.CLICK, e.getSlot()))
+    if (checkCancellation(e.getClickedInventory(), p, ManipulationAction.CLICK, e.getSlot(), e.getClick()))
       e.setCancelled(true);
   }
 
@@ -234,7 +235,7 @@ public class InventoryListener implements Listener {
     // place event for each slot (because that's what in effect occurs). If any event
     // receiver cancels any of the slots, the whole drag event needs to be cancelled.
     boolean cancel = e.getInventorySlots().stream()
-      .anyMatch(slot -> checkCancellation(e.getInventory(), p, ManipulationAction.PLACE, slot));
+      .anyMatch(slot -> checkCancellation(e.getInventory(), p, ManipulationAction.PLACE, slot, ClickType.RIGHT));
 
     if (cancel)
       e.setCancelled(true);
@@ -247,10 +248,11 @@ public class InventoryListener implements Listener {
    * @param p      Event causing player
    * @param action Action that has been taken
    * @param slot   Slot of action
+   * @param click    Type of click
    * @return True if the action needs to be cancelled
    */
-  private boolean checkCancellation(Inventory inv, Player p, ManipulationAction action, int slot) {
-    return checkCancellation(inv, inv, p, action, slot, slot);
+  private boolean checkCancellation(Inventory inv, Player p, ManipulationAction action, int slot, ClickType click) {
+    return checkCancellation(inv, inv, p, action, slot, slot, click);
   }
 
   /**
@@ -262,11 +264,12 @@ public class InventoryListener implements Listener {
    * @param action   Action that has been taken
    * @param fromSlot Slot that has been taken from
    * @param toSlot   Slot that has been added to
+   * @param click    Type of click
    * @return True if the action needs to be cancelled
    */
-  private boolean checkCancellation(Inventory fromInv, Inventory toInv, Player p, ManipulationAction action, int fromSlot, int toSlot) {
+  private boolean checkCancellation(Inventory fromInv, Inventory toInv, Player p, ManipulationAction action, int fromSlot, int toSlot, ClickType click) {
     InventoryManipulationEvent ime = new InventoryManipulationEvent(
-      fromInv, toInv, p, action, fromSlot, toSlot
+      fromInv, toInv, p, action, fromSlot, toSlot, click
     );
 
     Bukkit.getPluginManager().callEvent(ime);

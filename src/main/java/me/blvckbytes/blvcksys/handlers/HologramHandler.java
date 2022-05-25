@@ -144,8 +144,17 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed, IPac
       pers.store(line);
     }
 
-    // Load the changes into cache
-    getHologramLines(name, true);
+    // Update the location in the local cache
+    MultilineHologram holo = holograms.get(name.toLowerCase());
+
+    // Not in cache, load from persistence
+    if (holo == null)
+      getHologramLines(name, true);
+
+    // Just update their location
+    else
+      holo.setLoc(loc);
+
     return true;
   }
 

@@ -36,4 +36,12 @@ public interface IHologramCommunicator {
    * @param handle Entity handle from creation
    */
   void deleteLine(Player p, Entity handle);
+
+  /**
+   * Moves an existing line to another location
+   * @param p Target player
+   * @param handle Entity handle from creation
+   * @param loc Location to move to
+   */
+  void moveLine(Player p, Entity handle, Location loc);
 }

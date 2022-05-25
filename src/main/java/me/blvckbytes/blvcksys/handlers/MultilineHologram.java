@@ -78,10 +78,8 @@ public class MultilineHologram extends ATemplateHandler {
   public void setLoc(Location loc) {
     this.loc = loc;
 
-    for (Player p : Bukkit.getOnlinePlayers()) {
-      destroyLineEntities(p);
-      createLineEntities(p);
-    }
+    for (Player p : Bukkit.getOnlinePlayers())
+      moveLineEntities(p, loc);
   }
 
   /**
@@ -194,6 +192,25 @@ public class MultilineHologram extends ATemplateHandler {
     for (Entity ent : ents) {
       holoComm.deleteLine(p, ent);
       entityIds.remove(Integer.valueOf(ent.getEntityId()));
+    }
+  }
+
+  /**
+   * Move all existing line entities for a player
+   * @param p Target player
+   */
+  private void moveLineEntities(Player p, Location loc) {
+    List<Entity> ents = entities.get(p);
+
+    // Had no lines
+    if (ents == null)
+      return;
+
+    // Make lines grow downwards from the head
+    Location head = loc.clone();
+    for (Entity ent : ents) {
+      holoComm.moveLine(p, ent, head);
+      head.add(0, -INTER_LINE_SPACING, 0);
     }
   }
 

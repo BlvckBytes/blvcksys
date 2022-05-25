@@ -4,9 +4,7 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
-import net.minecraft.network.protocol.game.PacketPlayOutEntityDestroy;
-import net.minecraft.network.protocol.game.PacketPlayOutEntityMetadata;
-import net.minecraft.network.protocol.game.PacketPlayOutSpawnEntity;
+import net.minecraft.network.protocol.game.*;
 import net.minecraft.network.syncher.DataWatcher;
 import net.minecraft.world.entity.decoration.EntityArmorStand;
 import org.bukkit.Location;
@@ -89,6 +87,31 @@ public class HologramCommunicator implements IHologramCommunicator {
       // Destroy the entity by it's ID
       PacketPlayOutEntityDestroy destroyP = new PacketPlayOutEntityDestroy(handle.getEntityId());
       refl.sendPacket(p, destroyP);
+    } catch (Exception e) {
+      logger.logError(e);
+    }
+  }
+
+  @Override
+  public void moveLine(Player p, Entity handle, Location loc) {
+    try {
+      // Subtract the length between the armor stand's bottom plate and it's name (round about)
+      loc = loc.clone().add(0, -2.5, 0);
+
+      Object teleportP = refl.createPacket(PacketPlayOutEntityTeleport.class);
+
+      refl.setFieldByType(teleportP, int.class, handle.getEntityId(), 0);
+      refl.setFieldByType(teleportP, double.class, loc.getX(), 0);
+      refl.setFieldByType(teleportP, double.class, loc.getY(), 1);
+      refl.setFieldByType(teleportP, double.class, loc.getZ(), 2);
+      refl.setFieldByType(teleportP, byte.class, (byte)((int)(loc.getYaw() * 256.0F / 360.0F)), 0);
+      refl.setFieldByType(teleportP, byte.class, (byte)((int)(loc.getPitch() * 256.0F / 360.0F)), 1);
+      refl.setFieldByType(teleportP, boolean.class, handle.isOnGround(), 0);
+
+      refl.sendPacket(p, teleportP);
+
+      // Also change the location state within the object
+      handle.teleport(loc);
     } catch (Exception e) {
       logger.logError(e);
     }

@@ -55,6 +55,7 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed, IPac
   private final Map<String, List<HologramLineModel>> cache;
   private final Map<String, MultilineHologram> holograms;
   private int intervalHandle;
+  private Long time;
 
   private final IPersistence pers;
   private final JavaPlugin plugin;
@@ -83,6 +84,7 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed, IPac
     this.refl = refl;
     this.npcs = npcs;
 
+    this.time = 0L;
     this.cache = new HashMap<>();
     this.holograms = new HashMap<>();
 
@@ -256,6 +258,7 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed, IPac
 
     // Create and register it
     MultilineHologram tmp = new MultilineHologram(name, loc, lines, holoComm, varSupp, plugin);
+    tmp.tick(time);
     holograms.put(name, tmp);
     return tmp;
   }
@@ -263,6 +266,7 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed, IPac
   @Override
   public void destroyTemporary(MultilineHologram hologram) {
     holograms.remove(hologram.getName());
+    hologram.destroy();
   }
 
   @Override
@@ -282,16 +286,10 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed, IPac
     loadAllHolograms();
 
     // Start the ticker interval
-    this.intervalHandle = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
-
-      long time = 0;
-
-      @Override
-      public void run() {
-        for (MultilineHologram holo : holograms.values())
-          holo.tick(time);
-        time += UPDATE_INTERVAL_TICKS;
-      }
+    this.intervalHandle = Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
+      for (MultilineHologram holo : holograms.values())
+        holo.tick(time);
+      time += UPDATE_INTERVAL_TICKS;
     }, 0L, UPDATE_INTERVAL_TICKS);
   }
 
@@ -307,13 +305,19 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed, IPac
       try {
         int entityId = refl.getFieldByType(pack, int.class, 0);
 
+        MultilineHologram holo = holograms.values().stream()
+          .filter(h -> h.containsEntityId(entityId))
+          .findFirst()
+          .orElse(null);
+
+        // Not a hologram
+        if (holo == null)
+          return incoming;
+
         // List all npcs that contain this entityId (can only be one), then
         // get the nearest npc from it's location and if that's present, modify the
         // entity id within the packet to the npc's entity id to "relay" the click-event
-        Optional<FakeNpc> npc = holograms.values().stream()
-          .filter(h -> h.containsEntityId(entityId))
-          .findFirst()
-          .flatMap(h -> npcs.getNearestNpc(h.getLoc()));
+        Optional<FakeNpc> npc = npcs.getNearestNpc(holo.getLoc());
 
         // There's an npc, modify and let the packet through
         if (npc.isPresent())

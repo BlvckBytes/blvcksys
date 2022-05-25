@@ -145,11 +145,6 @@ public class MultilineHologram extends ATemplateHandler {
 
     this.vel = velocity;
 
-    for (Map.Entry<Player, List<Entity>> x : entities.entrySet()) {
-      for (Entity ent : x.getValue())
-        holoComm.sendVelocity(x.getKey(), ent, velocity);
-    }
-
     applyVelocity(
       // The velocity routine needs the position closest to ground, instead of the head
       loc.clone().add(0, INTER_LINE_SPACING * (lineTemplates.size() - 1), 0),
@@ -214,8 +209,8 @@ public class MultilineHologram extends ATemplateHandler {
       for (int i = pe.getValue().size() - 1; i >= 0; i--) {
         Entity e = pe.getValue().get(i);
 
-        // Send the new velocity vector after collisions
-        if (collidedWith != null)
+        // Send the new velocity vector initially or after collisions
+        if (remainingTicks == VELOCITY_MAX_SECS * 20 || collidedWith != null)
           holoComm.sendVelocity(pe.getKey(), e, vel);
 
         holoComm.moveLine(pe.getKey(), e, tail);

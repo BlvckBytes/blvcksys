@@ -40,6 +40,7 @@ public interface IHologramHandler {
   /**
    * Move a hologram by moving all of it's lines
    * @param name Name of the target hologram
+   * @param loc Location to move to
    * @return True on success, false if there was no hologram with this name
    */
   boolean moveHologram(String name, Location loc) throws PersistenceException;
@@ -82,4 +83,17 @@ public interface IHologramHandler {
    * @return List of holograms that are within the radius
    */
   Map<String, List<HologramLineModel>> getNear(Location where, double rangeRadius) throws PersistenceException;
+
+  /**
+   * Creates a new temporary hologram which is not persisted
+   * @param loc Location of the hologram
+   * @param lines List of lines to display
+   */
+  MultilineHologram createTemporary(Location loc, List<String> lines);
+
+  /**
+   * Destroys an existing temporary hologram
+   * @param hologram Hologram handle
+   */
+  void destroyTemporary(MultilineHologram hologram);
 }

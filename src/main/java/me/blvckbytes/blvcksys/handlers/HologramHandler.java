@@ -250,6 +250,22 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed, IPac
   }
 
   @Override
+  public MultilineHologram createTemporary(Location loc, List<String> lines) {
+    // Generate a new random name for this temporary hologram
+    String name = UUID.randomUUID().toString();
+
+    // Create and register it
+    MultilineHologram tmp = new MultilineHologram(name, loc, lines, holoComm, varSupp, plugin);
+    holograms.put(name, tmp);
+    return tmp;
+  }
+
+  @Override
+  public void destroyTemporary(MultilineHologram hologram) {
+    holograms.remove(hologram.getName());
+  }
+
+  @Override
   public void cleanup() {
     // Stop the ticker task
     if (this.intervalHandle > 0)
@@ -413,7 +429,7 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed, IPac
 
     // Hologram didn't yet exist, create it
     if (!this.holograms.containsKey(name.toLowerCase()))
-      this.holograms.put(name.toLowerCase(), new MultilineHologram(name, loc, strLines, holoComm, varSupp));
+      this.holograms.put(name.toLowerCase(), new MultilineHologram(name, loc, strLines, holoComm, varSupp, plugin));
 
     // Update the existing hologram
     else {

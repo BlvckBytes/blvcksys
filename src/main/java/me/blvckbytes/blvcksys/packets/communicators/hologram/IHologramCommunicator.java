@@ -3,6 +3,7 @@ package me.blvckbytes.blvcksys.packets.communicators.hologram;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.util.Vector;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -38,10 +39,28 @@ public interface IHologramCommunicator {
   void deleteLine(Player p, Entity handle);
 
   /**
-   * Moves an existing line to another location
+   * Teleports an existing line to another location
    * @param p Target player
    * @param handle Entity handle from creation
    * @param loc Location to move to
    */
-  void moveLine(Player p, Entity handle, Location loc);
+  void teleportLine(Player p, Entity handle, Location loc);
+
+  /**
+   * Move a line relative to it's current position
+   * @param p Target player
+   * @param handle Entity handle from creation
+   * @param to Location to move to
+   */
+  void moveLine(Player p, Entity handle, Location to);
+
+  /**
+   * Sends information about the line's current velocity to the client. This is kind
+   * of optional, but considered good practise, as the client can then predict missing
+   * positions to make the movement look as continous as possible.
+   * @param p Target player
+   * @param handle Entity handle from creation
+   * @param velocity Velocity to send
+   */
+  void sendVelocity(Player p, Entity handle, Vector velocity);
 }

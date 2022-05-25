@@ -65,6 +65,21 @@ public enum ConfigKey {
   LOGGING_PREFIX_ERROR("logging_prefix.error", "$5"),
 
   //=========================================================================//
+  //                              Damage Indicators                          //
+  //=========================================================================//
+
+  DAMAGE_INDICATORS_NORMAL(
+    "damage_indicators.normal",
+    "&c-{{damage}}❤"
+  ),
+
+  DAMAGE_INDICATORS_CRITICAL(
+    "damage_indicators.critical",
+    "&c-{{damage}}❤",
+    "&4CRIT"
+  ),
+
+  //=========================================================================//
   //                                NPC Command                              //
   //=========================================================================//
 

@@ -16,13 +16,22 @@ import me.blvckbytes.blvcksys.persistence.query.FieldQueryGroup;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import net.minecraft.core.BlockPosition;
+import net.minecraft.core.EnumDirection;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.PacketPlayInUseEntity;
+import net.minecraft.network.protocol.game.PacketPlayInUseItem;
 import net.minecraft.util.Tuple;
+import net.minecraft.world.EnumHand;
+import net.minecraft.world.phys.MovingObjectPositionBlock;
+import net.minecraft.world.phys.Vec3D;
 import org.bukkit.Bukkit;
+import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.block.Block;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
@@ -266,17 +275,40 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed, IPac
     // A player used an entity (left- or right click)
     if (sender != null && incoming instanceof PacketPlayInUseEntity pack) {
 
+      Player p = Bukkit.getPlayer(sender);
+      if (p == null)
+        return incoming;
+
       try {
         int entityId = refl.getFieldByType(pack, int.class, 0);
 
         // List all npcs that contain this entityId (can only be one), then
         // get the nearest npc from it's location and if that's present, modify the
         // entity id within the packet to the npc's entity id to "relay" the click-event
-        holograms.values().stream()
+        Optional<FakeNpc> npc = holograms.values().stream()
           .filter(h -> h.containsEntityId(entityId))
           .findFirst()
-          .flatMap(h -> npcs.getNearestNpc(h.getLoc()))
-          .ifPresent(n -> refl.setFieldByType(pack, int.class, n.getEntityId(), 0));
+          .flatMap(h -> npcs.getNearestNpc(h.getLoc()));
+
+        // There's an npc, modify and let the packet through
+        if (npc.isPresent())
+          refl.setFieldByType(pack, int.class, npc.get().getEntityId(), 0);
+
+        else {
+          // Would have interacted with a block, substitute the packet for a use
+          Block b = p.getTargetBlockExact(5, FluidCollisionMode.NEVER);
+          if (b != null) {
+            Location l = b.getLocation();
+            Vec3D v = new Vec3D(l.getX(), l.getY(), l.getZ());
+            return new PacketPlayInUseItem(EnumHand.a, new MovingObjectPositionBlock(
+              v, EnumDirection.b, new BlockPosition(v), false
+            ));
+          }
+
+          // Wouldn't have interacted with anything, drop the packet
+          return null;
+        }
+
       } catch (Exception e) {
         logger.logError(e);
       }

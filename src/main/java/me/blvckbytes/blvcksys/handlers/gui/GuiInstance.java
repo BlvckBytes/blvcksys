@@ -102,26 +102,7 @@ public class GuiInstance<T> {
    */
   public void open(@Nullable AnimationType animation, @Nullable Inventory animateFrom) {
     // Play the given animation
-    if (animation != null) {
-      animating.set(true);
-
-      if (currAnimation != null)
-        currAnimation.fastForward();
-
-      currAnimation = new GuiAnimation(
-        plugin, animation,
-        animateFrom == null ? inv : animateFrom,
-        animateFrom == null ? null : inv,
-        () -> viewer.openInventory(inv),
-        () -> {
-          currAnimation = null;
-          animating.set(false);
-        }
-      );
-    }
-
-    // Show instantly
-    else
+    if (!playAnimation(animation, animateFrom == null ? null : animateFrom.getContents(), null, () -> viewer.openInventory(inv)))
       viewer.openInventory(inv);
   }
 
@@ -160,7 +141,7 @@ public class GuiInstance<T> {
    */
   public void redraw(String slotExpr) {
     // Iterate all slots which should be redrawn
-    for (int slot : AGui.slotExprToSlots(slotExpr, template.getRows())) {
+    for (int slot : template.slotExprToSlots(slotExpr, template.getRows())) {
 
       // Vacant slot, skip
       GuiItem<T> target = getItem(slot).orElse(null);
@@ -209,16 +190,19 @@ public class GuiInstance<T> {
    * Navigate to the next page
    * @return True on success, false if there was no next page
    */
-  public boolean nextPage() {
+  public boolean nextPage(@Nullable AnimationType animation) {
     if (!hasNextPage())
       return false;
 
     if (beforePaging != null)
       beforePaging.run();
 
+    ItemStack[] before = inv.getContents().clone();
+
     // Advance to the next page and force an update
     currPage++;
     updatePage(null);
+    playAnimation(animation, before, template.getPageSlots(), null);
     return true;
   }
 
@@ -233,16 +217,19 @@ public class GuiInstance<T> {
    * Navigate to the previous page
    * @return True on success, false if there was no previous page
    */
-  public boolean previousPage() {
+  public boolean previousPage(@Nullable AnimationType animation) {
     if (!hasPreviousPage())
       return false;
 
     if (beforePaging != null)
       beforePaging.run();
 
+    ItemStack[] before = inv.getContents().clone();
+
     // Advance to the previous page and force an update
     currPage--;
     updatePage(null);
+    playAnimation(animation, before, template.getPageSlots(), null);
     return true;
   }
 
@@ -326,5 +313,44 @@ public class GuiInstance<T> {
 
     // Tick all page items
     updatePage(time);
+  }
+
+  /**
+   * Play a given animation on the GUI and manage entering
+   * and leaving the animation lock state
+   * @param animation Animation to play
+   * @param from Items to animate from
+   * @param mask List of slots to animate, leave at null to animate all slots
+   * @param ready Ready callback, signals that the GUI may be presented by now
+   * @return Whether the animation has been initialized
+   */
+  private boolean playAnimation(
+    @Nullable AnimationType animation,
+    @Nullable ItemStack[] from,
+    @Nullable List<Integer> mask,
+    @Nullable Runnable ready
+  ) {
+    if (animation == null)
+      return false;
+
+    // Fastforward the currently playing animation, if any
+    if (currAnimation != null)
+      currAnimation.fastForward();
+
+    // Enter animating lock and start playing
+    animating.set(true);
+    currAnimation = new GuiAnimation(
+      plugin, animation,
+      from, inv.getContents(),
+      inv, mask,
+      ready == null ? () -> {} : ready,
+      () -> {
+        // Leave animating lock
+        currAnimation = null;
+        animating.set(false);
+      }
+    );
+
+    return true;
   }
 }

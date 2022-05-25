@@ -82,7 +82,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     this.cfg = cfg;
     this.textures = textures;
 
-    this.pageSlots = AGui.slotExprToSlots(pageSlotExpr, rows);
+    this.pageSlots = slotExprToSlots(pageSlotExpr, rows);
     this.fixedItems = new HashMap<>();
     this.activeInstances = new HashMap<>();
     this.tickerHandle = -1;
@@ -226,7 +226,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
         .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_LORE))
         .build()
     ), e -> {
-      e.getGui().previousPage();
+      e.getGui().previousPage(AnimationType.SLIDE_RIGHT);
       e.getGui().redraw(indicatorSlot);
     });
 
@@ -251,7 +251,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
         .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_LORE))
         .build()
     ), e -> {
-      e.getGui().nextPage();
+      e.getGui().nextPage(AnimationType.SLIDE_LEFT);
       e.getGui().redraw(indicatorSlot);
     });
   }
@@ -434,7 +434,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
    * Convert a slot expression to a set of slot indices
    * @param slotExpr Slot expression
    */
-  public static List<Integer> slotExprToSlots(String slotExpr, int rows) {
+  public List<Integer> slotExprToSlots(String slotExpr, int rows) {
     if (slotExpr.isBlank())
       return new ArrayList<>();
 

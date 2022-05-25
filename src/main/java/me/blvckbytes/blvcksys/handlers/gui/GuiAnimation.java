@@ -6,6 +6,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /*
@@ -27,10 +28,11 @@ public class GuiAnimation {
   private final AnimationType animation;
   private final JavaPlugin plugin;
   private final int numFrames, numRows;
-  private final Inventory from, to;
+  private final Inventory inv;
   private final Runnable done, ready;
   private final ItemStack[] fromContents, toContents;
   private final AtomicBoolean fastForwarded;
+  private final List<Integer> mask;
 
   private int currFrame;
 
@@ -38,16 +40,20 @@ public class GuiAnimation {
    * Create a new animation for a GUI
    * @param plugin JavaPlugin ref, used for scheduling
    * @param animation Animation to play
-   * @param from Inventory to animate from
-   * @param to Inventory to animate to (for transitions, optional)
+   * @param fromContents Items to animate from
+   * @param toContents Items to animate to
+   * @param inv Inventory to animate from and to contents into
+   * @param mask List of slots to animate, leave at null to animate all slots
    * @param ready Ready callback, signals that the GUI may be presented by now
    * @param done Completion callback, signals that the animation is complete
    */
   public GuiAnimation(
     JavaPlugin plugin,
     AnimationType animation,
-    Inventory from,
-    @Nullable Inventory to,
+    @Nullable ItemStack[] fromContents,
+    ItemStack[] toContents,
+    Inventory inv,
+    @Nullable List<Integer> mask,
     Runnable ready,
     Runnable done
   ) {
@@ -55,21 +61,12 @@ public class GuiAnimation {
     this.ready = ready;
     this.done = done;
     this.animation = animation;
-    this.from = from;
-    this.to = to == null ? from : to;
+    this.fromContents = fromContents == null ? new ItemStack[inv.getSize()] : fromContents;
+    this.toContents = toContents;
+    this.inv = inv;
+    this.mask = mask;
 
-    // No destination provided, make from the destination
-    // and have from as an empty inventory
-    if (to == null) {
-      toContents = from.getContents().clone();
-      fromContents = new ItemStack[from.getSize()];
-    }
-    else {
-      this.fromContents = from.getContents().clone();
-      this.toContents = to.getContents().clone();
-    }
-
-    this.numRows = from.getSize() / 9;
+    this.numRows = inv.getSize() / 9;
     this.numFrames = getNumFrames();
     this.fastForwarded = new AtomicBoolean(false);
 
@@ -85,7 +82,7 @@ public class GuiAnimation {
       return;
 
     // Cannot transition inventories unequal in size
-    if (to != null && from.getSize() != to.getSize()) {
+    if (fromContents != null && fromContents.length != toContents.length) {
       currFrame = numFrames;
       ready.run();
       done.run();
@@ -95,9 +92,11 @@ public class GuiAnimation {
     // Copy over the previous items before the first frame plays
     if (currFrame == 0) {
       // But only if there's a transition
-      if (to != null) {
-        for (int i = 0; i < from.getSize(); i++)
-          to.setItem(i, from.getItem(i));
+      if (fromContents != null) {
+        for (int i = 0; i < fromContents.length; i++) {
+          if (mask == null || mask.contains(i))
+            inv.setItem(i, fromContents[i]);
+        }
       }
 
       ready.run();
@@ -140,8 +139,10 @@ public class GuiAnimation {
             }
           }
 
-          for (int i = 0; i < numRows * 9; i += 9)
-            getWriting().setItem(drawCol + i, origin[readCol + i]);
+          for (int i = 0; i < numRows * 9; i += 9) {
+            if (mask == null || mask.contains(i))
+              inv.setItem(drawCol + i, origin[readCol + i]);
+          }
         }
       }
 
@@ -171,8 +172,10 @@ public class GuiAnimation {
             }
           }
 
-          for (int i = 0; i < 9; i++)
-            getWriting().setItem(drawRow * 9 + i, origin[readRow * 9 + i]);
+          for (int i = 0; i < 9; i++) {
+            if (mask == null || mask.contains(i))
+              inv.setItem(drawRow * 9 + i, origin[readRow * 9 + i]);
+          }
         }
       }
     }
@@ -184,7 +187,7 @@ public class GuiAnimation {
    */
   private void nextFrame() {
     // While there are still frames left and the inv is open, invoke another frame timer
-    if (++currFrame < numFrames && getWriting().getViewers().size() > 0)
+    if (++currFrame < numFrames && inv.getViewers().size() > 0)
       Bukkit.getScheduler().runTaskLater(plugin, this::play, TICKS_PER_FRAME);
 
       // Done, call the callback
@@ -193,19 +196,12 @@ public class GuiAnimation {
   }
 
   /**
-   * Get the inventory that's being written to
-   */
-  private Inventory getWriting() {
-    return to != null ? to : from;
-  }
-
-  /**
    * Get the number of frames this animation will take
    */
   private int getNumFrames() {
     return switch (animation) {
       // Bottom and top will both take as many frames as there are rows
-      case SLIDE_UP, SLIDE_DOWN -> from.getSize() / 9;
+      case SLIDE_UP, SLIDE_DOWN -> inv.getSize() / 9;
 
       // Left and right take as many frames as there are horizontal slots
       case SLIDE_RIGHT, SLIDE_LEFT -> 9;
@@ -221,8 +217,10 @@ public class GuiAnimation {
       return;
 
     // Directly copy the contents (last frame in all cases)
-    for (int i = 0; i < Math.min(fromContents.length, toContents.length); i++)
-      to.setItem(i, toContents[i]);
+    for (int i = 0; i < Math.min(fromContents.length, toContents.length); i++) {
+      if (mask == null || mask.contains(i))
+        inv.setItem(i, toContents[i]);
+    }
 
     done.run();
   }

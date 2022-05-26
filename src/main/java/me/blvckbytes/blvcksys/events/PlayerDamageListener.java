@@ -4,6 +4,7 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.handlers.ICombatLogHandler;
 import me.blvckbytes.blvcksys.handlers.IHologramHandler;
 import me.blvckbytes.blvcksys.handlers.MultilineHologram;
 import org.bukkit.*;
@@ -53,6 +54,7 @@ public class PlayerDamageListener implements Listener {
   private final ChatListener chat;
   private final IHologramHandler holos;
   private final IConfig cfg;
+  private final ICombatLogHandler combatlog;
 
   private final Vector[] hologramVectors, bloodVectors;
   private int hologramVectorsInd, bloodVectorsInd;
@@ -60,11 +62,13 @@ public class PlayerDamageListener implements Listener {
   public PlayerDamageListener(
     @AutoInject IHologramHandler holos,
     @AutoInject IConfig cfg,
-    @AutoInject ChatListener chat
+    @AutoInject ChatListener chat,
+    @AutoInject ICombatLogHandler combatlog
   ) {
     this.holos = holos;
     this.cfg = cfg;
     this.chat = chat;
+    this.combatlog = combatlog;
 
     this.hologramVectors = new Vector[NUM_HOLO_VECTORS];
     this.bloodVectors = new Vector[BLOOD_PARTICLES_MAX];
@@ -88,6 +92,10 @@ public class PlayerDamageListener implements Listener {
 
     // Didn't kill them
     if (p.getHealth() > e.getDamage())
+      return;
+
+    // This kill is scored as being performed by the last damager
+    if (combatlog.getLastDamager(p).isPresent())
       return;
 
     // Decide on what death message to print

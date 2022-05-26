@@ -2,6 +2,8 @@ package me.blvckbytes.blvcksys.handlers;
 
 import org.bukkit.entity.Player;
 
+import java.util.Optional;
+
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 05/21/2022
@@ -15,4 +17,11 @@ public interface ICombatLogHandler {
    * @param p Target player
    */
   boolean isInCombat(Player p);
+
+  /**
+   * Get the last damager within a combatlog session of a given player
+   * @param p Target player
+   * @return Optional last damager, empty if there was none
+   */
+  Optional<Player> getLastDamager(Player p);
 }

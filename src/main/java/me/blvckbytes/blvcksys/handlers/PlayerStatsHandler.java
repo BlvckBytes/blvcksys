@@ -46,17 +46,20 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
   private final IPersistence pers;
   private final JavaPlugin plugin;
   private final IAfkListener afk;
+  private final ICombatLogHandler combatlog;
 
   private BukkitTask tickerHandle;
 
   public PlayerStatsHandler(
     @AutoInject IPersistence pers,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IAfkListener afk
+    @AutoInject IAfkListener afk,
+    @AutoInject ICombatLogHandler combatlog
   ) {
     this.pers = pers;
     this.plugin = plugin;
     this.afk = afk;
+    this.combatlog = combatlog;
 
     this.updateInterests = new HashMap<>();
     this.cache = new HashMap<>();
@@ -146,7 +149,11 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
     if (!(e.getEntity() instanceof Player p))
       return;
 
-    Player killer = e.getEntity().getKiller();
+    // Either get the damager from this event or the last known damager
+    // from the current combatlog session if it wasn't a player
+    Player lastDamager = combatlog.getLastDamager(p).orElse(null);
+    Player killer = p.getKiller() == null ? lastDamager : p.getKiller();
+
     if (killer != null)
       incrementKills(killer);
 

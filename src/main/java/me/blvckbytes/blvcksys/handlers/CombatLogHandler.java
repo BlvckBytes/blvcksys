@@ -39,6 +39,10 @@ public class CombatLogHandler implements Listener, ICombatLogHandler, IAutoConst
 
   // Mapping players to their last combat action timestamp
   private final Map<Player, Long> inCombat;
+
+  // Mapping players to their last damaging player (scoped to combatlog sessions)
+  private final Map<Player, Player> lastDamager;
+
   private int notifierHandle;
 
   private final IConfig cfg;
@@ -59,6 +63,7 @@ public class CombatLogHandler implements Listener, ICombatLogHandler, IAutoConst
 
     this.notifierHandle = -1;
     this.inCombat = new HashMap<>();
+    this.lastDamager = new HashMap<>();
   }
 
   //=========================================================================//
@@ -70,6 +75,11 @@ public class CombatLogHandler implements Listener, ICombatLogHandler, IAutoConst
     return inCombat.containsKey(p);
   }
 
+  @Override
+  public Optional<Player> getLastDamager(Player p) {
+    return lastDamager.containsKey(p) ? Optional.of(lastDamager.get(p)) : Optional.empty();
+  }
+
   //=========================================================================//
   //                                  Listener                               //
   //=========================================================================//
@@ -77,6 +87,10 @@ public class CombatLogHandler implements Listener, ICombatLogHandler, IAutoConst
   @EventHandler
   public void onDeath(PlayerDeathEvent e) {
     inCombat.remove(e.getEntity());
+
+    // Leave the last damager set for another game tick in order to let
+    // death event receivers get the ref, regardless of priority
+    Bukkit.getScheduler().runTaskLater(plugin, () -> lastDamager.remove(e.getEntity()), 1);
   }
 
   @EventHandler
@@ -89,6 +103,7 @@ public class CombatLogHandler implements Listener, ICombatLogHandler, IAutoConst
 
     inCombat.put(victim, System.currentTimeMillis());
     inCombat.put(damager, System.currentTimeMillis());
+    lastDamager.put(victim, damager);
   }
 
   @EventHandler
@@ -98,8 +113,11 @@ public class CombatLogHandler implements Listener, ICombatLogHandler, IAutoConst
     if (!inCombat.containsKey(p))
       return;
 
-    inCombat.remove(p);
+    // Remove all entries where the last damager was the player that just quit or the victim quit
+    lastDamager.keySet().removeIf(victim -> lastDamager.get(victim).equals(p));
+    lastDamager.remove(p);
 
+    inCombat.remove(p);
     p.setHealth(0);
 
     // Strike a lightning effect at the player's position
@@ -132,6 +150,7 @@ public class CombatLogHandler implements Listener, ICombatLogHandler, IAutoConst
 
         if (remMS <= 0) {
           playerI.remove();
+          lastDamager.remove(p);
 
           hud.sendActionBar(
             p,

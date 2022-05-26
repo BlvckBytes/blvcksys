@@ -5,6 +5,7 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.handlers.ICombatLogHandler;
 import me.blvckbytes.blvcksys.handlers.IHologramHandler;
 import me.blvckbytes.blvcksys.handlers.MultilineHologram;
 import org.bukkit.Bukkit;
@@ -12,7 +13,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
@@ -20,6 +20,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 
 import java.util.List;
+import java.util.Optional;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -47,19 +48,22 @@ public class DeathListener implements Listener {
   private final JavaPlugin plugin;
   private final ISpawnCommand spawn;
   private final IChatListener chat;
+  private final ICombatLogHandler combatlog;
 
   public DeathListener(
     @AutoInject JavaPlugin plugin,
     @AutoInject ISpawnCommand spawn,
     @AutoInject IHologramHandler holos,
     @AutoInject IConfig cfg,
-    @AutoInject IChatListener chat
+    @AutoInject IChatListener chat,
+    @AutoInject ICombatLogHandler combatlog
   ) {
     this.plugin = plugin;
     this.spawn = spawn;
     this.holos = holos;
     this.cfg = cfg;
     this.chat = chat;
+    this.combatlog = combatlog;
   }
 
   //=========================================================================//
@@ -76,26 +80,15 @@ public class DeathListener implements Listener {
     if (p.getHealth() > e.getDamage())
       return;
 
+    // Either get the damager from this event or the last known damager
+    // from the current combatlog session if it wasn't a player
+    Player lastDamager = combatlog.getLastDamager(p).orElse(null);
+    Player killer = (e.getDamager() instanceof Player x) ? x : lastDamager;
+
     // Has been slain by another player
-    if (e.getDamager() instanceof Player killer) {
+    if (killer != null) {
       spawnKillIndicator(p, killer);
-
-      chat.broadcastMessage(
-        Bukkit.getOnlinePlayers(),
-        cfg.get(ConfigKey.DEATH_MESSAGES_KILLED)
-          .withPrefix()
-          .withVariable("victim", p.getName())
-          .withVariable("killer", killer.getName())
-          .asScalar()
-      );
-
-      p.sendMessage(
-        cfg.get(ConfigKey.DEATH_MESSAGES_KILLED_VICTIM)
-          .withPrefix()
-          .withVariable("killer_health", killer.getHealth())
-          .withVariable("killer", killer.getName())
-          .asScalar()
-      );
+      notifyAboutKill(p, killer);
       return;
     }
   }
@@ -109,8 +102,15 @@ public class DeathListener implements Listener {
 
   @EventHandler
   public void onDeath(PlayerDeathEvent e) {
+    Player p = e.getEntity();
+
+    // Wasn't already handled by the above event, the player died all by themselves
+    // Check if there was a last damager and notify players of that kill, if so
+    if (!(e.getEntity().getLastDamageCause() instanceof EntityDamageByEntityEvent))
+      combatlog.getLastDamager(p).ifPresent(lastDamager -> notifyAboutKill(p, lastDamager));
+
     e.setDeathMessage(null);
-    respawnPlayer(e.getEntity());
+    respawnPlayer(p);
   }
 
   @EventHandler
@@ -124,6 +124,30 @@ public class DeathListener implements Listener {
   //=========================================================================//
   //                                 Utilities                               //
   //=========================================================================//
+
+  /**
+   * Notifies players about a kill
+   * @param victim Victim that has been killed
+   * @param killer Killer which killed the victim
+   */
+  private void notifyAboutKill(Player victim, Player killer) {
+    chat.broadcastMessage(
+      Bukkit.getOnlinePlayers(),
+      cfg.get(ConfigKey.DEATH_MESSAGES_KILLED)
+        .withPrefix()
+        .withVariable("victim", victim.getName())
+        .withVariable("killer", killer.getName())
+        .asScalar()
+    );
+
+    victim.sendMessage(
+      cfg.get(ConfigKey.DEATH_MESSAGES_KILLED_VICTIM)
+        .withPrefix()
+        .withVariable("killer_health", killer.getHealth())
+        .withVariable("killer", killer.getName())
+        .asScalar()
+    );
+  }
 
   /**
    * Respawn the player after the delay elapsed
@@ -146,6 +170,7 @@ public class DeathListener implements Listener {
       List.of(killer),
       cfg.get(ConfigKey.KILL_INDICATORS)
         .withVariable("victim", victim.getName())
+        .withVariable("killer", killer.getName())
         .withVariable("coins", 10)
         .asList()
     );

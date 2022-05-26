@@ -6,9 +6,7 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IHologramHandler;
 import me.blvckbytes.blvcksys.handlers.MultilineHologram;
-import org.bukkit.Bukkit;
-import org.bukkit.Material;
-import org.bukkit.World;
+import org.bukkit.*;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.FallingBlock;
 import org.bukkit.entity.LivingEntity;
@@ -28,8 +26,10 @@ import java.util.Random;
   Created On: 05/26/2022
 
   Listens to damage done by a player to another player and spawns a temporary
-  hologram which displays information about the damage done. Also modifies
-  vanilla death messages to very detailled config values.
+  hologram which displays information about the damage done. When a player is being
+  damaged by another player, blood particles are displayed, where the amount of
+  particles is directly proportional to the damage done. Also modifies vanilla death
+  messages to very detailled config values.
 */
 @AutoConstruct
 public class PlayerDamageListener implements Listener {
@@ -44,14 +44,18 @@ public class PlayerDamageListener implements Listener {
   private static final double VECTOR_XZ_RANGE = 0.25D;
 
   // Number of hologram vectors to prepare beforehand for the ringbuffer
-  private static final int NUM_VECTORS = 20;
+  private static final int NUM_HOLO_VECTORS = 20;
+
+  // How many blood particles to spawn at what damage level, using a linear correlation
+  private static final int BLOOD_PARTICLES_MIN = 8, BLOOD_PARTICLES_MAX = 32;
+  private static final double BLOOD_HEALTH_MIN = 1.0, BLOOD_HEALTH_MAX = 20.0;
 
   private final ChatListener chat;
   private final IHologramHandler holos;
   private final IConfig cfg;
 
-  private final Vector[] hologramVectors;
-  private int hologramVectorsInd;
+  private final Vector[] hologramVectors, bloodVectors;
+  private int hologramVectorsInd, bloodVectorsInd;
 
   public PlayerDamageListener(
     @AutoInject IHologramHandler holos,
@@ -62,10 +66,14 @@ public class PlayerDamageListener implements Listener {
     this.cfg = cfg;
     this.chat = chat;
 
-    this.hologramVectors = new Vector[NUM_VECTORS];
+    this.hologramVectors = new Vector[NUM_HOLO_VECTORS];
+    this.bloodVectors = new Vector[BLOOD_PARTICLES_MAX];
 
-    for (int i = 0; i < NUM_VECTORS; i++)
-      hologramVectors[i] = generateVector();
+    for (int i = 0; i < NUM_HOLO_VECTORS; i++)
+      hologramVectors[i] = generateVector(VECTOR_XZ_RANGE, 0.3, 0.3);
+
+    for (int i = 0; i < BLOOD_PARTICLES_MAX; i++)
+      bloodVectors[i] = generateVector(.5, -1, 1.5);
   }
 
   //=========================================================================//
@@ -158,11 +166,62 @@ public class PlayerDamageListener implements Listener {
       return;
 
     spawnDamageIndicator(victim, damager, e.getDamage());
+    spawnBloodParticles(victim, e.getDamage());
   }
 
   //=========================================================================//
   //                                 Utilities                               //
   //=========================================================================//
+
+  /**
+   * Spawns damage indicating blood particles
+   * @param victim Player to spawn at
+   * @param damage Damage done (determines number of particles)
+   */
+  private void spawnBloodParticles(Player victim, double damage) {
+    World w = victim.getLocation().getWorld();
+    if (w == null)
+      return;
+
+    for (int i = 0; i < calculateNumBloodParticles(damage); i++) {
+      w.spawnParticle(
+        Particle.BLOCK_CRACK,
+        victim.getLocation()
+          // Particles use a y-offset from -1 to 1 (whole player height)
+          .add(0, 1, 0)
+          .add(getNextBloodVector()),
+        1,
+        Material.REDSTONE_BLOCK.createBlockData()
+      );
+    }
+  }
+
+  /**
+   * Calculates the number of blood particles to show corresponding
+   * to an amount of damage done
+   * @param damage Damage done
+   * @return Number of particles to spawn
+   */
+  private int calculateNumBloodParticles(double damage) {
+    // This is pretty much the general form for a map(i, from, to, from, to) function
+    // I'm leaving this big chunk here for future reference
+    //
+    // f(x) = kx + d, x: damage, f: particles
+    // f(HEALTH_MIN) = PARTICLES_MIN, f(HEALTH_MAX) = PARTICLES_MAX
+    // PARTICLES_MIN = k * HEALTH_MIN  + d
+    // PARTICLES_MAX = k * HEALTH_MAX + d
+    // -
+    // PARTICLES_MIN - PARTICLES_MAX = (k * HEALTH_MIN) - (k * HEALTH_MAX)
+    // PARTICLES_MIN - PARTICLES_MAX = k * (HEALTH_MIN-HEALTH_MAX)
+    // (PARTICLES_MIN - PARTICLES_MAX) / (HEALTH_MIN-HEALTH_MAX) = k
+    // PARTICLES_MIN = ((PARTICLES_MIN - PARTICLES_MAX) / (HEALTH_MIN-HEALTH_MAX)) * HEALTH_MIN + d
+    // => d = PARTICLES_MIN - ((PARTICLES_MIN - PARTICLES_MAX) / (HEALTH_MIN-HEALTH_MAX)) * HEALTH_MIN
+
+    // => f(x) = (PARTICLES_MIN - PARTICLES_MAX) / (HEALTH_MIN - HEALTH_MAX) * x + PARTICLES_MIN - ((PARTICLES_MIN - PARTICLES_MAX) / (HEALTH_MIN-HEALTH_MAX)) * HEALTH_MIN
+
+    double i = (BLOOD_PARTICLES_MIN - BLOOD_PARTICLES_MAX) / (BLOOD_HEALTH_MIN - BLOOD_HEALTH_MAX);
+    return (int) Math.round(i * damage + BLOOD_PARTICLES_MIN - i * BLOOD_HEALTH_MIN);
+  }
 
   /**
    * Spawn a new damage indicating temporary hologram
@@ -177,7 +236,7 @@ public class PlayerDamageListener implements Listener {
         .withVariable("damage", Math.round(damage * 100.0) / 100.0)
         .asList()
     );
-    holo.setVelocity(getNextVector(), null, true, true, null, () -> holos.destroyTemporary(holo));
+    holo.setVelocity(getNextHoloVector(), null, true, true, null, () -> holos.destroyTemporary(holo));
   }
 
   /**
@@ -200,12 +259,24 @@ public class PlayerDamageListener implements Listener {
   }
 
   /**
+   * Get the next usable blood vector from the ringbuffer
+   */
+  private Vector getNextBloodVector() {
+    Vector next = bloodVectors[bloodVectorsInd];
+
+    if (++bloodVectorsInd == BLOOD_PARTICLES_MAX)
+      bloodVectorsInd = 0;
+
+    return next;
+  }
+
+  /**
    * Get the next usable hologram vector from the ringbuffer
    */
-  private Vector getNextVector() {
+  private Vector getNextHoloVector() {
     Vector next = hologramVectors[hologramVectorsInd];
 
-    if (++hologramVectorsInd == NUM_VECTORS)
+    if (++hologramVectorsInd == NUM_HOLO_VECTORS)
       hologramVectorsInd = 0;
 
     return next;
@@ -214,14 +285,14 @@ public class PlayerDamageListener implements Listener {
   /**
    * Generates a random vector within range to be used with holograms
    */
-  private Vector generateVector() {
-    double genX = rand.nextDouble(VECTOR_XZ_RANGE * 2);
-    double genZ = rand.nextDouble(VECTOR_XZ_RANGE * 2);
+  private Vector generateVector(double symXzRange, double yFrom, double yTo) {
+    double genX = rand.nextDouble(symXzRange * 2);
+    double genZ = rand.nextDouble(symXzRange * 2);
 
     return new Vector(
-      (genX > VECTOR_XZ_RANGE ? -genX : genX) / 2,
-      0.3D,
-      (genZ > VECTOR_XZ_RANGE ? -genZ : genZ) / 2
+      (genX > symXzRange ? -genX : genX) / 2,
+      rand.nextDouble() * (yTo - yFrom) + yFrom,
+      (genZ > symXzRange ? -genZ : genZ) / 2
     );
   }
 }

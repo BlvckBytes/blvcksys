@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
+import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -71,6 +72,11 @@ public class CombatLogHandler implements Listener, ICombatLogHandler, IAutoConst
   //=========================================================================//
   //                                  Listener                               //
   //=========================================================================//
+
+  @EventHandler
+  public void onDeath(PlayerDeathEvent e) {
+    inCombat.remove(e.getEntity());
+  }
 
   @EventHandler
   public void onDamage(EntityDamageByEntityEvent e) {

@@ -33,6 +33,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -252,12 +253,12 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed, IPac
   }
 
   @Override
-  public MultilineHologram createTemporary(Location loc, List<String> lines) {
+  public MultilineHologram createTemporary(Location loc, @Nullable List<Player> recipients, List<String> lines) {
     // Generate a new random name for this temporary hologram
     String name = UUID.randomUUID().toString();
 
     // Create and register it
-    MultilineHologram tmp = new MultilineHologram(name, loc, lines, holoComm, varSupp, plugin);
+    MultilineHologram tmp = new MultilineHologram(name, loc, lines, recipients, holoComm, varSupp, plugin);
     tmp.tick(time);
     holograms.put(name, tmp);
     return tmp;
@@ -433,7 +434,7 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed, IPac
 
     // Hologram didn't yet exist, create it
     if (!this.holograms.containsKey(name.toLowerCase()))
-      this.holograms.put(name.toLowerCase(), new MultilineHologram(name, loc, strLines, holoComm, varSupp, plugin));
+      this.holograms.put(name.toLowerCase(), new MultilineHologram(name, loc, strLines, null, holoComm, varSupp, plugin));
 
     // Update the existing hologram
     else {

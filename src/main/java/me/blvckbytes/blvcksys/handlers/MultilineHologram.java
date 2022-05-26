@@ -9,7 +9,9 @@ import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.Consumer;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -53,12 +55,15 @@ public class MultilineHologram extends ATemplateHandler {
   // given recipient that receives updates here
   private static final double RECIPIENT_MAX_DIST_SQ = Math.pow(30, 2);
 
+  private final List<Player> recipients;
   private final List<Integer> entityIds;
   private final Map<Player, List<Entity>> entities;
   private final String name;
 
   private Location loc;
   private Vector vel;
+  private boolean collisions, drag, destroyed;
+  private double gravity;
 
   private List<Tuple<Long, List<Object>>> lineTemplates;
 
@@ -69,6 +74,7 @@ public class MultilineHologram extends ATemplateHandler {
     String name,
     Location loc,
     List<String> lines,
+    @Nullable List<Player> recipients,
     IHologramCommunicator holoComm,
     ILiveVariableSupplier varSupp,
     JavaPlugin plugin
@@ -79,6 +85,7 @@ public class MultilineHologram extends ATemplateHandler {
     this.loc = loc;
     this.holoComm = holoComm;
     this.plugin = plugin;
+    this.recipients = recipients;
 
     this.entities = new HashMap<>();
     this.entityIds = new ArrayList<>();
@@ -136,20 +143,34 @@ public class MultilineHologram extends ATemplateHandler {
    * Set the hologram's velocity and internally send all movements
    * which that velocity describes
    * @param velocity Velocity to set
-   * @param complete Callback that's executed the hologram stopped moving
+   * @param gravity Gravity to apply, null is minecraft's default
+   * @param drag Whether to apply drag
+   * @param collisions Whether to apply collision detection
+   * @param onTick Callback providing the current velocity on every tick
+   * @param complete Callback that's executed when the hologram stopped moving
    */
-  public void setVelocity(Vector velocity, Runnable complete) {
+  public void setVelocity(
+    Vector velocity,
+    @Nullable Double gravity,
+    boolean drag,
+    boolean collisions,
+    @Nullable Consumer<Vector> onTick,
+    @Nullable Runnable complete
+  ) {
     // There's already another velocity active
     if (vel != null)
       return;
 
     this.vel = velocity;
+    this.gravity = gravity == null ? GRAVITY_ACCELERATION : gravity;
+    this.drag = drag;
+    this.collisions = collisions;
 
     applyVelocity(
       // The velocity routine needs the position closest to ground, instead of the head
       loc.clone().add(0, INTER_LINE_SPACING * (lineTemplates.size() - 1), 0),
       VELOCITY_MAX_SECS * 20L,
-      complete
+      onTick, complete
     );
   }
 
@@ -157,9 +178,15 @@ public class MultilineHologram extends ATemplateHandler {
    * Recursive helper function which applies and modifies the current velocity
    * @param location Current location of the hologram (persistent location remains unchanged)
    * @param remainingTicks Ticks remaining until the process is exited no matter of the state
+   * @param onTick Callback providing the current velocity on every tick
    * @param complete Completion callback
    */
-  private void applyVelocity(Location location, long remainingTicks, Runnable complete) {
+  private void applyVelocity(
+    Location location,
+    long remainingTicks,
+    @Nullable Consumer<Vector> onTick,
+    @Nullable Runnable complete
+  ) {
     Location preCollide = null;
     Block collidedWith = null;
 
@@ -167,7 +194,7 @@ public class MultilineHologram extends ATemplateHandler {
     Location newLoc = location.clone().add(vel);
 
     // Check for collisions against solid blocks
-    if (newLoc.getBlock().getType().isSolid()) {
+    if (collisions && newLoc.getBlock().getType().isSolid()) {
       Vector dir = vel.clone().normalize();
 
       // Walk the velocity vector step by step until a solid block is encountered
@@ -196,11 +223,20 @@ public class MultilineHologram extends ATemplateHandler {
 
     // Apply drag and gravity
     else {
-      vel.setX(vel.getX() + (vel.getX() < 0 ? DRAG : -DRAG));
-      vel.setY(vel.getY() + (vel.getY() < 0 ? DRAG : -DRAG));
-      vel.setZ(vel.getZ() + (vel.getZ() < 0 ? DRAG : -DRAG));
-      vel.add(new Vector(0, -GRAVITY_ACCELERATION, 0));
+      if (drag && vel.getX() != 0)
+        vel.setX(vel.getX() + (vel.getX() < 0 ? DRAG : -DRAG));
+
+      if (drag && vel.getY() != 0)
+        vel.setY(vel.getY() + (vel.getY() < 0 ? DRAG : -DRAG));
+
+      if (drag && vel.getZ() != 0)
+        vel.setZ(vel.getZ() + (vel.getZ() < 0 ? DRAG : -DRAG));
+
+      vel.add(new Vector(0, -gravity, 0));
     }
+
+    if (onTick != null)
+      onTick.accept(vel);
 
     for (Map.Entry<Player, List<Entity>> pe : entities.entrySet()) {
       Location tail = newLoc.clone();
@@ -219,15 +255,17 @@ public class MultilineHologram extends ATemplateHandler {
     }
 
     // If the vector isn't zero and there are still ticks left,
-    // invoke another tick of processing
-    if (vel.lengthSquared() > 0 && remainingTicks > 0) {
+    // invoke another tick of processing. Also, don't tick destroyed holograms.
+    if (!destroyed && vel.lengthSquared() > 0 && remainingTicks > 0) {
       Location finalL = newLoc;
-      Bukkit.getScheduler().runTaskLater(plugin, () -> applyVelocity(finalL, remainingTicks - 1, complete), 1);
+      Bukkit.getScheduler().runTaskLater(plugin, () -> applyVelocity(finalL, remainingTicks - 1, onTick, complete), 1);
       return;
     }
 
     // Done, reset
-    complete.run();
+    if (complete != null)
+      complete.run();
+
     vel = null;
   }
 
@@ -238,6 +276,9 @@ public class MultilineHologram extends ATemplateHandler {
    */
   public void tick(long time) {
     for (Player t : Bukkit.getOnlinePlayers()) {
+      if (recipients != null && !recipients.contains(t))
+        continue;
+
       if (isRecipient(t))
         tickPlayer(t, time);
 
@@ -255,6 +296,8 @@ public class MultilineHologram extends ATemplateHandler {
    * all online players.
    */
   public void destroy() {
+    this.destroyed = true;
+
     for (Player t : entities.keySet()) {
       for (Entity ent : entities.get(t)) {
         holoComm.deleteLine(t, ent);

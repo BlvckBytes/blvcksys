@@ -6,6 +6,8 @@ import me.blvckbytes.blvcksys.persistence.models.SequenceSortResult;
 import net.minecraft.util.Tuple;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Map;
@@ -87,9 +89,10 @@ public interface IHologramHandler {
   /**
    * Creates a new temporary hologram which is not persisted
    * @param loc Location of the hologram
+   * @param recipients List of recipients, null means all players
    * @param lines List of lines to display
    */
-  MultilineHologram createTemporary(Location loc, List<String> lines);
+  MultilineHologram createTemporary(Location loc, @Nullable List<Player> recipients, List<String> lines);
 
   /**
    * Destroys an existing temporary hologram

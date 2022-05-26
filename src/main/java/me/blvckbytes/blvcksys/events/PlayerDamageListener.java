@@ -6,7 +6,6 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IHologramHandler;
 import me.blvckbytes.blvcksys.handlers.MultilineHologram;
-import net.minecraft.server.level.WorldServer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -29,7 +28,8 @@ import java.util.Random;
   Created On: 05/26/2022
 
   Listens to damage done by a player to another player and spawns a temporary
-  hologram which displays information about the damage done.
+  hologram which displays information about the damage done. Also modifies
+  vanilla death messages to very detailled config values.
 */
 @AutoConstruct
 public class PlayerDamageListener implements Listener {

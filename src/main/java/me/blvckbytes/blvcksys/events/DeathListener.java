@@ -88,6 +88,14 @@ public class DeathListener implements Listener {
           .withVariable("killer", killer.getName())
           .asScalar()
       );
+
+      p.sendMessage(
+        cfg.get(ConfigKey.DEATH_MESSAGES_KILLED_VICTIM)
+          .withPrefix()
+          .withVariable("killer_health", killer.getHealth())
+          .withVariable("killer", killer.getName())
+          .asScalar()
+      );
       return;
     }
   }

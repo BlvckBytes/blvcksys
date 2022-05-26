@@ -68,7 +68,8 @@ public enum ConfigKey {
   //                                Death Messages                           //
   //=========================================================================//
 
-  DEATH_MESSAGES_KILLED("death_messages.killed", "$2{{victim}} $0wurde von $2{{killer}} $0getötet!"),
+  DEATH_MESSAGES_KILLED_VICTIM("death_messages.killed.victim", "$0Du wurdest von $2{{killer}} $0mit &c{{killer_health}} ❤ $0getötet!"),
+  DEATH_MESSAGES_KILLED("death_messages.killed.all", "$2{{victim}} $0wurde von $2{{killer}} $0getötet!"),
   DEATH_MESSAGES_UNKNOWN("death_messages.unknown", "$2{{player}} $0starb durch einen $2unbekannten Grund$0!"),
   DEATH_MESSAGES_FALL("death_messages.fall", "$2{{player}} $0starb durch $2Fallschaden$0!"),
   DEATH_MESSAGES_FALLING_BLOCK("death_messages.falling_block", "$2{{player}} $0wurde vom Block $2{{block}} $0erschlagen!"),

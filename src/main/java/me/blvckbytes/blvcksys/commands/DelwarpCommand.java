@@ -6,16 +6,14 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.handlers.IWarpHandler;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.WarpModel;
-import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
-import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.Optional;
 import java.util.stream.Stream;
 
 /*
@@ -28,12 +26,14 @@ import java.util.stream.Stream;
 public class DelwarpCommand extends APlayerCommand {
 
   private final IPersistence pers;
+  private final IWarpHandler warps;
 
   public DelwarpCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
+    @AutoInject IWarpHandler warps,
     @AutoInject IPersistence pers
   ) {
     super(
@@ -45,6 +45,7 @@ public class DelwarpCommand extends APlayerCommand {
     );
 
     this.pers = pers;
+    this.warps = warps;
   }
 
   //=========================================================================//
@@ -64,14 +65,9 @@ public class DelwarpCommand extends APlayerCommand {
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     String name = argval(args, 0);
 
-    Optional<WarpModel> res = pers.findFirst(
-      new QueryBuilder<>(
-        WarpModel.class,
-        "name", EqualityOperation.EQ_IC, name
-      )
-    );
+    boolean res = warps.deleteWarp(name);
 
-    if (res.isEmpty()) {
+    if (!res) {
       p.sendMessage(
         cfg.get(ConfigKey.WARP_NOT_EXISTING)
           .withPrefix()
@@ -81,13 +77,10 @@ public class DelwarpCommand extends APlayerCommand {
       return;
     }
 
-    WarpModel warp = res.get();
-
-    pers.delete(warp);
     p.sendMessage(
       cfg.get(ConfigKey.WARP_DELETED)
         .withPrefix()
-        .withVariable("name", warp.getName())
+        .withVariable("name", name)
         .asScalar()
     );
   }

@@ -6,10 +6,7 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
-import me.blvckbytes.blvcksys.persistence.IPersistence;
-import me.blvckbytes.blvcksys.persistence.models.WarpModel;
-import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
-import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
+import me.blvckbytes.blvcksys.handlers.IWarpHandler;
 import me.blvckbytes.blvcksys.util.ChatButtons;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.MCReflect;
@@ -27,7 +24,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 @AutoConstruct
 public class SetwarpCommand extends APlayerCommand {
 
-  private final IPersistence pers;
+  private final IWarpHandler warps;
   private final ChatUtil chat;
 
   public SetwarpCommand(
@@ -35,7 +32,7 @@ public class SetwarpCommand extends APlayerCommand {
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
-    @AutoInject IPersistence pers,
+    @AutoInject IWarpHandler warps,
     @AutoInject ChatUtil chat
   ) {
     super(
@@ -46,7 +43,7 @@ public class SetwarpCommand extends APlayerCommand {
       new CommandArgument("<name>", "Name of the warp")
     );
 
-    this.pers = pers;
+    this.warps = warps;
     this.chat = chat;
   }
 
@@ -59,15 +56,10 @@ public class SetwarpCommand extends APlayerCommand {
     String name = argval(args, 0);
     Location l = p.getLocation();
 
-    // Check if a warp with this name already exists
-    boolean exists = pers.count(
-      new QueryBuilder<>(
-        WarpModel.class,
-        "name", EqualityOperation.EQ_IC, name
-      )
-    ) > 0;
+    boolean res = warps.setWarp(name, p, l);
 
-    if (exists) {
+    // Warp already existed
+    if (!res) {
       // Send out an overwrite confirmation prompt
       chat.sendButtons(p, ChatButtons.buildYesNo(
         cfg.get(ConfigKey.WARP_OVERWRITE_PREFIX)
@@ -79,16 +71,10 @@ public class SetwarpCommand extends APlayerCommand {
         // Yes
         () -> {
 
-          // Get the existing model
-          WarpModel existing = pers.findFirst(
-            new QueryBuilder<>(
-              WarpModel.class,
-              "name", EqualityOperation.EQ, name
-            )
-          ).orElse(null);
+          boolean changed = warps.moveWarp(name, p, l);
 
           // Got deleted in the meantime
-          if (existing == null) {
+          if (!changed) {
             p.sendMessage(
               cfg.get(ConfigKey.WARP_NOT_EXISTING)
                 .withPrefix()
@@ -98,10 +84,6 @@ public class SetwarpCommand extends APlayerCommand {
 
             return;
           }
-
-          // Update the location
-          existing.setLoc(p.getLocation());
-          pers.store(existing);
 
           p.sendMessage(
             cfg.get(ConfigKey.WARP_OVERWRITE_SAVED)
@@ -125,10 +107,6 @@ public class SetwarpCommand extends APlayerCommand {
 
       return;
     }
-
-    // Create the new warp
-    WarpModel warp = new WarpModel(name, l, p);
-    pers.store(warp);
 
     p.sendMessage(
       cfg.get(ConfigKey.WARP_CREATED)

@@ -146,6 +146,10 @@ public class PlayerDamageListener implements Listener {
     if (p.getLastDamageCause() instanceof EntityDamageByEntityEvent ee)
       damagingEntity = ee.getDamager();
 
+    // Player caused deaths are handled separately
+    if (damagingEntity instanceof Player)
+      return;
+
     chat.broadcastMessage(
       Bukkit.getOnlinePlayers(),
       cfg.get(deathMessage)

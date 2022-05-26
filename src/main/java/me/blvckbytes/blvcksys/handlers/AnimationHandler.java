@@ -4,20 +4,17 @@ import lombok.AllArgsConstructor;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
-import org.bukkit.Bukkit;
-import org.bukkit.Color;
-import org.bukkit.Location;
-import org.bukkit.Particle;
+import org.bukkit.*;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -36,15 +33,30 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
    */
   @AllArgsConstructor
   private static class ActiveAnimation {
+    // Holder of this location which specifies a "live location"
+    // When null, the Location property will be used
+    @Nullable Player holder;
+
+    // Statically specified location
+    // When null, the location of the holder has to be provided
+    @Nullable Location loc;
+
+    // What player should receive this animation, null means it's played
+    // directly on the world of the location
+    @Nullable List<Player> receivers;
+
+    // Type of animation
     AnimationType type;
+
+    // Current relative time
     long time;
   }
 
   // Delay in ticks between internal animation tick routine calls
-  private static final long TICK_DELAY = 2;
+  private static final long TICK_DELAY = 1;
 
   // Maps players to their currently active animations
-  private final Map<Player, List<ActiveAnimation>> animations;
+  private final List<ActiveAnimation> animations;
 
   private final JavaPlugin plugin;
   private int tickHandle;
@@ -55,7 +67,7 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
     this.plugin = plugin;
     this.tickHandle = -1;
 
-    this.animations = new HashMap<>();
+    this.animations = new ArrayList<>();
   }
 
   //=========================================================================//
@@ -63,30 +75,28 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
   //=========================================================================//
 
   @Override
-  public void startAnimation(Player target, AnimationType animation) {
-    // Create an empty list initially
-    if (!this.animations.containsKey(target))
-      this.animations.put(target, new ArrayList<>());
+  public void startAnimation(Player target, List<Player> receicers, AnimationType animation) {
+    this.animations.add(new ActiveAnimation(target, null, receicers, animation, 0));
+  }
 
-    // Add this new animation and start the time out at zero
-    this.animations.get(target).add(new ActiveAnimation(animation, 0));
+  @Override
+  public void startAnimation(Location loc, List<Player> receicers, AnimationType animation) {
+    this.animations.add(new ActiveAnimation(null, loc, receicers, animation, 0));
   }
 
   @Override
   public boolean stopAnimation(Player target, AnimationType animation) {
-    // No animations for this player
-    if (!this.animations.containsKey(target))
-      return false;
+    return this.animations.removeIf(anim -> target.equals(anim.holder) && anim.type.equals(animation));
+  }
 
-    // Remove all animations of this type
-    this.animations.get(target).removeIf(anim -> anim.type.equals(animation));
-    return true;
+  @Override
+  public boolean stopAnimation(Location loc, AnimationType animation) {
+    return this.animations.removeIf(anim -> loc.equals(anim.loc) && anim.type.equals(animation));
   }
 
   @Override
   public boolean stopAllAnimations(Player target) {
-    List<ActiveAnimation> animations = this.animations.remove(target);
-    return animations != null && animations.size() > 0;
+    return this.animations.removeIf(anim -> target.equals(anim.holder));
   }
 
   @Override
@@ -108,7 +118,7 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
 
   public void onQuit(PlayerQuitEvent e) {
     // Stop all animations for this player
-    animations.remove(e.getPlayer());
+    animations.removeIf(anim -> e.getPlayer().equals(anim.holder));
   }
 
   //=========================================================================//
@@ -119,30 +129,68 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
    * Tick all animations for all players
    */
   private void tick() {
-    for (Map.Entry<Player, List<ActiveAnimation>> playerAnimations : animations.entrySet())
-      for (ActiveAnimation animation : playerAnimations.getValue())
-        tickAnimation(playerAnimations.getKey(), animation);
+    for (ActiveAnimation animation : animations)
+      tickAnimation(animation);
   }
 
   /**
-   * Tick an animation for a specific player
-   * @param p Target player
+   * Tick an animation by increasing it's relative time
    * @param animation Animation that's playing
    */
-  private void tickAnimation(Player p, ActiveAnimation animation) {
+  private void tickAnimation(ActiveAnimation animation) {
+    // Get the destination location and world
+    Location loc = getLocation(animation).orElse(null);
+    if (loc == null || loc.getWorld() == null)
+      return;
+
     // Decide on the actual processor function
     if (animation.type.equals(AnimationType.ROTATING_CONE))
-      tickROTATING_CONE(p, animation);
+      tickROTATING_CONE(animation, loc, loc.getWorld());
 
     // Increase the time tracking variable
     animation.time++;
   }
 
+  /**
+   * Get an animations location, accounting for priorities
+   * @param animation Animation in question
+   * @return Location to play at
+   */
+  private Optional<Location> getLocation(ActiveAnimation animation) {
+    if (animation.holder != null)
+      return Optional.of(animation.holder.getLocation());
+    if (animation.loc != null)
+      return Optional.of(animation.loc);
+    return Optional.empty();
+  }
+
+  /**
+   * Draw a frame of an animation while accounting for the list of receiving players
+   * @param animation Animation handle
+   * @param pixels Pixels to draw
+   * @param particle What particle to draw them as
+   * @param options Options passed to the particle function
+   * @param w World to animate in
+   */
+  private void drawFrame(ActiveAnimation animation, List<Vector> pixels, Particle particle, Particle.DustOptions options, World w) {
+    for (Vector pixel : pixels) {
+      // Play for all players - on the world itself
+      if (animation.receivers == null) {
+        w.spawnParticle(particle, pixel.getX(), pixel.getY(), pixel.getZ(), 1, options);
+        continue;
+      }
+
+      // Play on a per-player basis, using only the receivers
+      for (Player receiver : animation.receivers)
+        receiver.spawnParticle(particle, pixel.getX(), pixel.getY(), pixel.getZ(), 1, options);
+    }
+  }
+
   ///////////////////////////////// ROTATING_CONE ////////////////////////////////////
 
-  private void tickROTATING_CONE(Player p, ActiveAnimation animation) {
-    Location a = p.getEyeLocation().add(0, 0.8, 0); // Head of the cone (a bit above the player's head)
-    Location b = p.getLocation().add(0, 0.1, 0);    // Tail of the cone (a bit above the player's feet, so it's not clamped by the ground)
+  private void tickROTATING_CONE(ActiveAnimation animation, Location loc, World w) {
+    Location a = loc.clone().add(0, 2.8, 0);    // Head of the cone (a bit above the player's head)
+    Location b = loc.clone().add(0, 0.1, 0);    // Tail of the cone (a bit above the player's feet, so it's not clamped by the ground)
 
     int r = 1;                       // Radius of the cone's flat bottom
     double windingPeriods = 0.55;    // How often to wind around while travelling from tail to head
@@ -209,9 +257,6 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
       }
     }
 
-    // Draw all pixels
-    for (Vector pixel : pixels)
-      p.getWorld().spawnParticle(Particle.REDSTONE, pixel.getX(), pixel.getY(), pixel.getZ(), 1, new Particle.DustOptions(Color.PURPLE, (float) pixelSize));
-
+    drawFrame(animation, pixels, Particle.REDSTONE, new Particle.DustOptions(Color.PURPLE, (float) pixelSize), w);
   }
 }

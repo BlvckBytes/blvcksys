@@ -8,6 +8,7 @@ import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.events.IChatListener;
 import me.blvckbytes.blvcksys.packets.communicators.hud.IHudCommunicator;
 import org.bukkit.Bukkit;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -99,8 +100,12 @@ public class CombatLogHandler implements Listener, ICombatLogHandler, IAutoConst
 
     inCombat.remove(p);
 
-    // TODO: Maybe... build a more fancy animation for this?
     p.setHealth(0);
+
+    // Strike a lightning effect at the player's position
+    World w = p.getLocation().getWorld();
+    if (w != null)
+      w.strikeLightningEffect(p.getLocation());
 
     this.chat.broadcastMessage(
       Bukkit.getOnlinePlayers(),

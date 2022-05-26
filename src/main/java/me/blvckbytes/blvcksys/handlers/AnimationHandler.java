@@ -144,7 +144,7 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
       return;
 
     // Decide on the actual processor function
-    if (animation.type.equals(AnimationType.ROTATING_CONE))
+    if (animation.type.equals(AnimationType.PURPLE_ROTATING_CONE))
       tickROTATING_CONE(animation, loc, loc.getWorld());
 
     // Increase the time tracking variable
@@ -168,21 +168,19 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
    * Draw a frame of an animation while accounting for the list of receiving players
    * @param animation Animation handle
    * @param pixels Pixels to draw
-   * @param particle What particle to draw them as
-   * @param options Options passed to the particle function
    * @param w World to animate in
    */
-  private void drawFrame(ActiveAnimation animation, List<Vector> pixels, Particle particle, Particle.DustOptions options, World w) {
+  private void drawFrame(ActiveAnimation animation, List<Vector> pixels, World w) {
     for (Vector pixel : pixels) {
       // Play for all players - on the world itself
       if (animation.receivers == null) {
-        w.spawnParticle(particle, pixel.getX(), pixel.getY(), pixel.getZ(), 1, options);
+        w.spawnParticle(animation.type.getParticle(), pixel.getX(), pixel.getY(), pixel.getZ(), 1, animation.type.getOptions());
         continue;
       }
 
       // Play on a per-player basis, using only the receivers
       for (Player receiver : animation.receivers)
-        receiver.spawnParticle(particle, pixel.getX(), pixel.getY(), pixel.getZ(), 1, options);
+        receiver.spawnParticle(animation.type.getParticle(), pixel.getX(), pixel.getY(), pixel.getZ(), 1, animation.type.getOptions());
     }
   }
 
@@ -257,6 +255,6 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
       }
     }
 
-    drawFrame(animation, pixels, Particle.REDSTONE, new Particle.DustOptions(Color.PURPLE, (float) pixelSize), w);
+    drawFrame(animation, pixels, w);
   }
 }

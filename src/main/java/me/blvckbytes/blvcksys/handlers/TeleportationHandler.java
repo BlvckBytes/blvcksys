@@ -41,7 +41,7 @@ public class TeleportationHandler implements ITeleportationHandler, Listener {
   ) {}
 
   // Which animation to play during teleportation
-  private static final AnimationType TELEPORT_ANIMATION = AnimationType.ROTATING_CONE;
+  private static final AnimationType TELEPORT_ANIMATION = AnimationType.PURPLE_ROTATING_CONE;
 
   // Timeout in ticks for how long not to move during a teleportation
   private static final long TELEPORT_TIMEOUT = 20 * 3;

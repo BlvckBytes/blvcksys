@@ -6,18 +6,22 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IHologramHandler;
 import me.blvckbytes.blvcksys.handlers.MultilineHologram;
+import net.minecraft.server.level.WorldServer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.World;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.FallingBlock;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.entity.EntityDamageByBlockEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
 
-import java.util.List;
 import java.util.Random;
 
 /*
@@ -25,8 +29,7 @@ import java.util.Random;
   Created On: 05/26/2022
 
   Listens to damage done by a player to another player and spawns a temporary
-  hologram which displays information about the damage done. Also spawns kill
-  indicators when a player has been killed by a hit.
+  hologram which displays information about the damage done.
 */
 @AutoConstruct
 public class PlayerDamageListener implements Listener {
@@ -43,15 +46,9 @@ public class PlayerDamageListener implements Listener {
   // Number of hologram vectors to prepare beforehand for the ringbuffer
   private static final int NUM_VECTORS = 20;
 
-  // Time in ticks to display the upwards floating kill indicator for
-  private static final long KILL_INDICATOR_DUR_T = 33;
-
-  // Y velocity of the kill indicator
-  private static final double KILL_INDICATOR_YVEL = 0.1;
-
+  private final ChatListener chat;
   private final IHologramHandler holos;
   private final IConfig cfg;
-  private final JavaPlugin plugin;
 
   private final Vector[] hologramVectors;
   private int hologramVectorsInd;
@@ -59,11 +56,11 @@ public class PlayerDamageListener implements Listener {
   public PlayerDamageListener(
     @AutoInject IHologramHandler holos,
     @AutoInject IConfig cfg,
-    @AutoInject JavaPlugin plugin
+    @AutoInject ChatListener chat
   ) {
     this.holos = holos;
     this.cfg = cfg;
-    this.plugin = plugin;
+    this.chat = chat;
 
     this.hologramVectors = new Vector[NUM_VECTORS];
 
@@ -76,15 +73,89 @@ public class PlayerDamageListener implements Listener {
   //=========================================================================//
 
   @EventHandler
-  public void onDamage(EntityDamageByEntityEvent e) {
+  public void onDamageByAny(EntityDamageEvent e) {
+    // Didn't affect a player
+    if (!(e.getEntity() instanceof Player p))
+      return;
+
+    // Didn't kill them
+    if (p.getHealth() > e.getDamage())
+      return;
+
+    // Decide on what death message to print
+    ConfigKey deathMessage = switch (e.getCause()) {
+      case BLOCK_EXPLOSION -> ConfigKey.DEATH_MESSAGES_BLOCK_EXPLOSION;
+      case FALL -> ConfigKey.DEATH_MESSAGES_FALL;
+      case FALLING_BLOCK -> ConfigKey.DEATH_MESSAGES_FALLING_BLOCK;
+      case CONTACT -> ConfigKey.DEATH_MESSAGES_BLOCK_CONTACT;
+      case CRAMMING -> ConfigKey.DEATH_MESSAGES_TRAMPLED;
+      case DRAGON_BREATH -> ConfigKey.DEATH_MESSAGES_DRAGON;
+      case DROWNING -> ConfigKey.DEATH_MESSAGES_DROWNED;
+      case FIRE -> ConfigKey.DEATH_MESSAGES_IN_FIRE;
+      case FIRE_TICK -> ConfigKey.DEATH_MESSAGES_FIRE;
+      case FLY_INTO_WALL -> ConfigKey.DEATH_MESSAGES_WALL;
+      case FREEZE -> ConfigKey.DEATH_MESSAGES_FREEZE;
+      case HOT_FLOOR -> ConfigKey.DEATH_MESSAGES_MAGMA;
+      case LAVA -> ConfigKey.DEATH_MESSAGES_LAVA;
+      case LIGHTNING -> ConfigKey.DEATH_MESSAGES_LIGHTNING;
+      case MAGIC -> ConfigKey.DEATH_MESSAGES_MAGIC;
+      case POISON -> ConfigKey.DEATH_MESSAGES_POISON;
+      case PROJECTILE -> ConfigKey.DEATH_MESSAGES_PROJECTILE;
+      case STARVATION -> ConfigKey.DEATH_MESSAGES_STARVATION;
+      case SUFFOCATION -> ConfigKey.DEATH_MESSAGES_SUFFOCATION;
+      case SUICIDE -> ConfigKey.DEATH_MESSAGES_SUICIDE;
+      case THORNS -> ConfigKey.DEATH_MESSAGES_THORNS;
+      case VOID -> ConfigKey.DEATH_MESSAGES_VOID;
+      case WITHER -> ConfigKey.DEATH_MESSAGES_WITHER;
+      case ENTITY_ATTACK, ENTITY_EXPLOSION, ENTITY_SWEEP_ATTACK -> ConfigKey.DEATH_MESSAGES_ENTITY;
+      default -> ConfigKey.DEATH_MESSAGES_UNKNOWN;
+    };
+
+    // Figure out what block damaged the player, if any
+    Material damagingBlock = null;
+    if (p.getLastDamageCause() instanceof EntityDamageByBlockEvent be)
+      damagingBlock = be.getDamager() == null ? null : be.getDamager().getType();
+
+    // Check for falling block entities near the player to find out what block type did the damage
+    World w = p.getLocation().getWorld();
+    if (damagingBlock == null && e.getCause() == EntityDamageEvent.DamageCause.FALLING_BLOCK && w != null) {
+       FallingBlock fb = (FallingBlock) w.getNearbyEntities(p.getLocation(), 2, 2, 2)
+         .stream()
+         .filter(ent -> ent instanceof FallingBlock)
+         .findFirst()
+         .orElse(null);
+
+       if (fb != null)
+         damagingBlock = fb.getBlockData().getMaterial();
+    }
+
+    // Check for what block suffocated the player
+    if (damagingBlock == null && e.getCause() == EntityDamageEvent.DamageCause.SUFFOCATION)
+      damagingBlock = p.getLocation().add(0, 1, 0).getBlock().getType();
+
+    // Figure out what entity damaged the player, if any
+    Entity damagingEntity = null;
+    if (p.getLastDamageCause() instanceof EntityDamageByEntityEvent ee)
+      damagingEntity = ee.getDamager();
+
+    chat.broadcastMessage(
+      Bukkit.getOnlinePlayers(),
+      cfg.get(deathMessage)
+        .withPrefix()
+        .withVariable("player", p.getName())
+        .withVariable("block", damagingBlock == null ? "/" : damagingBlock.name())
+        .withVariable("entity", damagingEntity == null ? "/" : damagingEntity.getType().name())
+        .asScalar()
+    );
+  }
+
+  @EventHandler
+  public void onDamageByPlayer(EntityDamageByEntityEvent e) {
     if (!(e.getEntity() instanceof Player victim))
       return;
 
     if (!(e.getDamager() instanceof Player damager))
       return;
-
-    if (victim.getHealth() - e.getDamage() <= 0)
-      spawnKillIndicator(victim, damager);
 
     spawnDamageIndicator(victim, damager, e.getDamage());
   }
@@ -92,25 +163,6 @@ public class PlayerDamageListener implements Listener {
   //=========================================================================//
   //                                 Utilities                               //
   //=========================================================================//
-
-  /**
-   * Spawn a new kill indicating temporary hologram
-   * @param victim Player that has been killed
-   * @param killer Player that has killed
-   */
-  private void spawnKillIndicator(Player victim, Player killer) {
-    MultilineHologram holo = holos.createTemporary(
-      victim.getLocation(),
-      List.of(killer),
-      cfg.get(ConfigKey.KILL_INDICATORS)
-        .withVariable("victim", victim.getName())
-        .withVariable("coins", 10)
-        .asList()
-    );
-
-    holo.setVelocity(new Vector(0, KILL_INDICATOR_YVEL, 0), 0D, false, false, null, null);
-    Bukkit.getScheduler().runTaskLater(plugin, () -> holos.destroyTemporary(holo), KILL_INDICATOR_DUR_T);
-  }
 
   /**
    * Spawn a new damage indicating temporary hologram

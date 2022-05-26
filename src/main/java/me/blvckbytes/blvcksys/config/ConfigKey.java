@@ -65,6 +65,37 @@ public enum ConfigKey {
   LOGGING_PREFIX_ERROR("logging_prefix.error", "$5"),
 
   //=========================================================================//
+  //                                Death Messages                           //
+  //=========================================================================//
+
+  DEATH_MESSAGES_KILLED("death_messages.killed", "$2{{victim}} $0wurde von $2{{killer}} $0getötet!"),
+  DEATH_MESSAGES_UNKNOWN("death_messages.unknown", "$2{{player}} $0starb durch einen $2unbekannten Grund$0!"),
+  DEATH_MESSAGES_FALL("death_messages.fall", "$2{{player}} $0starb durch $2Fallschaden$0!"),
+  DEATH_MESSAGES_FALLING_BLOCK("death_messages.falling_block", "$2{{player}} $0wurde vom Block $2{{block}} $0erschlagen!"),
+  DEATH_MESSAGES_BLOCK_CONTACT("death_messages.block_contact", "$2{{player}} $0starb durch Kontakt mit $2{{block}}$0!"),
+  DEATH_MESSAGES_IN_FIRE("death_messages.in_fire", "$2{{player}} $0verbrannte im $2Feuer$0!"),
+  DEATH_MESSAGES_FIRE("death_messages.fire", "$2{{player}} $0verbrannte durch $2Feuer$0!"),
+  DEATH_MESSAGES_DRAGON("death_messages.block_contact", "$2{{player}} $0starb durch einen $2Drachen$0!"),
+  DEATH_MESSAGES_WALL("death_messages.wall", "$2{{player}} $0starb durch eine $2Wand$0!"),
+  DEATH_MESSAGES_ENTITY("death_messages.entity_attack", "$2{{player}} $0starb durch $2{{entity}}$0!"),
+  DEATH_MESSAGES_FREEZE("death_messages.freeze", "$2{{player}} $0ist $2erfroren$0!"),
+  DEATH_MESSAGES_MAGMA("death_messages.magma", "$2{{player}} $0ist auf $2Magma $0verbrannt!"),
+  DEATH_MESSAGES_LAVA("death_messages.lava", "$2{{player}} $0ist in $2Lava $0verbrannt!"),
+  DEATH_MESSAGES_LIGHTNING("death_messages.lightning", "$2{{player}} $0ist in vom $2Blitz $0getroffen worden!"),
+  DEATH_MESSAGES_DROWNED("death_messages.drowned", "$2{{player}} $0ist $2ertrunken$0!"),
+  DEATH_MESSAGES_MAGIC("death_messages.magic", "$2{{player}} $0starb durch $2Magie$0!"),
+  DEATH_MESSAGES_POISON("death_messages.poison", "$2{{player}} $0starb durch eine $2Vergiftung$0!"),
+  DEATH_MESSAGES_TRAMPLED("death_messages.trampled", "$2{{player}} $0wurde zu Tode $2getrampelt$0!"),
+  DEATH_MESSAGES_PROJECTILE("death_messages.projectile", "$2{{player}} $0wurde mit einem $2Projektil $0erschossen!"),
+  DEATH_MESSAGES_STARVATION("death_messages.starvation", "$2{{player}} $0ist $2verhungert$0!"),
+  DEATH_MESSAGES_SUICIDE("death_messages.starvation", "$2{{player}} $0hat $2Suizid $0begangen!"),
+  DEATH_MESSAGES_THORNS("death_messages.thorns", "$2{{player}} $0ist durch die $2Dornen $0von $2{{entity}} $0gestorben!"),
+  DEATH_MESSAGES_VOID("death_messages.void", "$2{{player}} $0fiel $2aus der Welt$0!"),
+  DEATH_MESSAGES_WITHER("death_messages.wither", "$2{{player}} $0Starb durch den $2Wither-Effekt$0!"),
+  DEATH_MESSAGES_SUFFOCATION("death_messages.suffocation", "$2{{player}} $0wurde durch den Block $2{{block}} $0erstickt!"),
+  DEATH_MESSAGES_BLOCK_EXPLOSION("death_messages.block_explosion", "$2{{player}} $0wurde in die Luft $2gesprengt$0!"),
+
+  //=========================================================================//
   //                              Damage Indicators                          //
   //=========================================================================//
 

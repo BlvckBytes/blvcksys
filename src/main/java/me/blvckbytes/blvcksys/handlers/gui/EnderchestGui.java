@@ -11,6 +11,7 @@ import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.EnderchestModel;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
+import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -44,18 +45,17 @@ import java.util.Optional;
 @AutoConstruct
 public class EnderchestGui extends AGui<OfflinePlayer> {
 
-  // TODO: Properly handle multiple open instances of the same enderchest (/ec foreign)
-
   // Caching enderchests per player, as they will be used quite frequently
-  // Offline player requests (others) are not cached
-  private final Map<OfflinePlayer, EnderchestModel> cache;
+  private final Map<OfflinePlayer, EnderchestInstance> cache;
   private final IPersistence pers;
+  private final ILogger logger;
 
   public EnderchestGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
     @AutoInject IPlayerTextureHandler textures,
-    @AutoInject IPersistence pers
+    @AutoInject IPersistence pers,
+    @AutoInject ILogger logger
   ) {
     super(6, "0-44", i -> (
       cfg.get(ConfigKey.GUI_ENDERCHEST_TITLE)
@@ -63,6 +63,7 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
     ), plugin, cfg, textures);
 
     this.pers = pers;
+    this.logger = logger;
     this.cache = new HashMap<>();
   }
 
@@ -74,30 +75,38 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
 
   @Override
   protected void closed(GuiInstance<OfflinePlayer> inst) {
-    EnderchestModel chest = cache.get(inst.getArg());
+    EnderchestInstance chestInst = cache.get(inst.getArg());
 
     // Whoops, the enderchest got lost somehow, my bad
-    if (chest == null)
+    if (chestInst == null) {
+      logger.logError(new IllegalStateException("No enderchest instance found when closing the GUI"));
       return;
+    }
+
+    chestInst.unregisterAfterChanges(inst.getViewer());
+    EnderchestModel chest = chestInst.getModel();
 
     // Ensure there are no animations playing while saving
     inst.fastForwardAnimating();
 
-    // Sync the current page before storing (as is done when paging)
-    syncCurrentPage(inst, chest);
-    pers.store(chest);
+    // Store the model persistently if there are any changes
+    if (chestInst.hasChanges()) {
+      pers.store(chest);
+      chestInst.stored();
+    }
 
-    // Don't keep offline players in cache
-    if (!inst.getArg().isOnline())
+    // Don't keep offline players in cache if they're not used anymore
+    if (!chestInst.isInUse() && !inst.getArg().isOnline())
       cache.remove(inst.getArg());
   }
 
   @Override
   protected void opening(Player viewer, GuiInstance<OfflinePlayer> inst) {
-    EnderchestModel chest = getOrCreate(inst.getArg());
+    EnderchestInstance chestInst = getOrCreate(inst.getArg());
+    EnderchestModel model = chestInst.getModel();
 
-    // Sync up the page that's being paged away from on paging
-    inst.setBeforePaging(() -> syncCurrentPage(inst, chest));
+    // Redraw paging when changes occurred by other viewers
+    chestInst.registerAfterChanges(viewer, c -> inst.redrawPaging());
 
     // Get the maximum number of slots this player may use
     int maxSlots;
@@ -106,19 +115,19 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
     if (inst.getArg() instanceof Player target) {
       maxSlots = PlayerPermission.COMMAND_ENDERCHEST_MAX_SLOTS.getSuffixNumber(target, true)
         .orElse(EnderchestModel.DEFAULT_MAX_SLOTS);
-      chest.setLastMaxSlots(maxSlots);
+      model.setLastMaxSlots(maxSlots);
     }
 
     // Opened a foreign enderchest of an offline player, use the last number of max slots as the current max slots
     else
-      maxSlots = chest.getLastMaxSlots();
+      maxSlots = model.getLastMaxSlots();
 
     // Add as many items as the enderchest has slots in total
     for (int j = 0; j < EnderchestModel.NUM_PAGES * EnderchestModel.PAGE_ROWS * 9; j++)
       inst.addPagedItem(
         // Dynamic supplier that's reading items directly from the enderchest
         (i, s) -> {
-          ItemStack item = getPageItem(chest, i.getCurrentPage(), s);
+          ItemStack item = getPageItem(model, i.getCurrentPage(), s);
           int absoluteSlot = (i.getCurrentPage() - 1) * i.getPageSize() + s;
 
           // Show locks on locked slots but don't shadow any existing items
@@ -128,6 +137,9 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
           return item;
         },
         e -> {
+          // Immediately sync after a change has been made
+          Bukkit.getScheduler().runTaskLater(plugin, () -> syncCurrentPage(inst, chestInst), 1);
+
           int slot = e.getManipulation().getOriginInventory().equals(e.getGui().getInv()) ? e.getManipulation().getOriginSlot() : e.getManipulation().getTargetSlot();
           int absoluteSlot = (e.getGui().getCurrentPage() - 1) * inst.getPageSize() + slot;
           boolean allowedToUse = absoluteSlot < maxSlots;
@@ -183,8 +195,8 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
    * @param t Target player
    * @return Enderchest
    */
-  private EnderchestModel getOrCreate(OfflinePlayer t) {
-    // Check the cache first for online players
+  private EnderchestInstance getOrCreate(OfflinePlayer t) {
+    // Check the cache first
     if (cache.containsKey(t))
       return cache.get(t);
 
@@ -195,14 +207,15 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
 
     // Found a result in DB
     if (res.isPresent()) {
-      cache.put(t, res.get());
-      return res.get();
+      EnderchestInstance inst = new EnderchestInstance(res.get());
+      cache.put(t, inst);
+      return inst;
     }
 
     // Create a new empty enderchest
     EnderchestModel model = EnderchestModel.createEmpty(t);
     pers.store(model);
-    return model;
+    return new EnderchestInstance(model);
   }
 
   /**
@@ -223,10 +236,11 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
   /**
    * Syncs the current GUI page into the corresponding enderchest page
    * @param inst GUI instance to sync from
-   * @param chest Enderchest to sync into
+   * @param chestInst Enderchest to sync into
    */
-  private void syncCurrentPage(GuiInstance<OfflinePlayer> inst, EnderchestModel chest) {
-    syncInventories(inst.getInv(), getEnderchestPage(chest, inst.getCurrentPage()));
+  private void syncCurrentPage(GuiInstance<OfflinePlayer> inst, EnderchestInstance chestInst) {
+    syncInventories(inst.getInv(), getEnderchestPage(chestInst.getModel(), inst.getCurrentPage()));
+    chestInst.changed(inst.getViewer());
   }
 
   /**

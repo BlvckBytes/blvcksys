@@ -136,6 +136,13 @@ public class GuiInstance<T> {
   }
 
   /**
+   * Redraw only the dynamic page items
+   */
+  public void redrawPaging() {
+    updatePage(null);
+  }
+
+  /**
    * Redraw a specified set of slots for a given player
    * @param slotExpr Slots to redraw
    */

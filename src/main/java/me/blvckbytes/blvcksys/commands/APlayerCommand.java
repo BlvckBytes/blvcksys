@@ -464,6 +464,24 @@ public abstract class APlayerCommand extends Command {
       .filter(n -> n.toLowerCase().contains(args[currArg].toLowerCase()));
   }
 
+  /**
+   * Suggest lines of text, where each line of text has to start with the currently typed out text
+   * @param args Already typed out arguments
+   * @param start Index of the argument to start at
+   * @param lines Lines to suggest
+   * @return Stream of suggestions
+   */
+  protected Stream<String> suggestText(String[] args, int start, Collection<String> lines) {
+    StringBuilder sb = new StringBuilder();
+    for (int i = start; i < args.length; i++)
+      sb.append(i == 0 ? "" : " ").append(args[i].toLowerCase());
+
+    String typed = sb.toString();
+    return lines
+      .stream()
+      .filter(line -> line.toLowerCase().startsWith(typed));
+  }
+
   ///////////////////////////////// Usage ////////////////////////////////////
 
   /**

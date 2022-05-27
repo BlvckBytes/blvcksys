@@ -6,6 +6,7 @@ import me.blvckbytes.blvcksys.commands.APlayerCommand;
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
 import me.blvckbytes.blvcksys.packets.ModificationPriority;
+import me.blvckbytes.blvcksys.packets.PacketSource;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -51,7 +52,7 @@ public class TabCompletionPacketModifier implements IPacketModifier {
   }
 
   @Override
-  public Packet<?> modifyIncoming(UUID sender, NetworkManager nm, Packet<?> incoming) {
+  public Packet<?> modifyIncoming(UUID sender, PacketSource ps, Packet<?> incoming) {
     // Not an active player packet
     if (sender == null)
       return incoming;

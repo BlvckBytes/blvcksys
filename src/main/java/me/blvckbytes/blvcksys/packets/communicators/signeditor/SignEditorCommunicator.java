@@ -5,6 +5,7 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
 import me.blvckbytes.blvcksys.packets.ModificationPriority;
+import me.blvckbytes.blvcksys.packets.PacketSource;
 import me.blvckbytes.blvcksys.packets.communicators.blockspoof.IBlockSpoofCommunicator;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
@@ -139,7 +140,7 @@ public class SignEditorCommunicator implements ISignEditorCommunicator, IPacketM
   }
 
   @Override
-  public Packet<?> modifyIncoming(UUID sender, NetworkManager nm, Packet<?> incoming) {
+  public Packet<?> modifyIncoming(UUID sender, PacketSource ps, Packet<?> incoming) {
     // Only listen to sign updates
     if (incoming instanceof PacketPlayInUpdateSign us) {
       // No callback registered for this client

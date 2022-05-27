@@ -8,6 +8,7 @@ import me.blvckbytes.blvcksys.events.NpcInteraction;
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
 import me.blvckbytes.blvcksys.packets.ModificationPriority;
+import me.blvckbytes.blvcksys.packets.PacketSource;
 import me.blvckbytes.blvcksys.packets.communicators.npc.INpcCommunicator;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.exceptions.DuplicatePropertyException;
@@ -248,7 +249,7 @@ public class NpcHandler implements INpcHandler, IAutoConstructed, IPacketModifie
   }
 
   @Override
-  public Packet<?> modifyIncoming(UUID sender, NetworkManager nm, Packet<?> incoming) {
+  public Packet<?> modifyIncoming(UUID sender, PacketSource ps, Packet<?> incoming) {
     // A player used an entity (left- or right click)
     if (sender != null && incoming instanceof PacketPlayInUseEntity pack) {
 

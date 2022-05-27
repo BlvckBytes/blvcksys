@@ -220,6 +220,15 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
 
       @Override
       public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+
+        PacketSource ps = new PacketSource(nm, pack -> {
+          try {
+            super.channelRead(ctx, pack);
+          } catch (Exception e) {
+            logger.logError(e);
+          }
+        });
+
         // Not a packet, not interested
         if (!(msg instanceof Packet<?> packet)) {
           super.channelRead(ctx, msg);
@@ -230,7 +239,7 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
         try {
           // Run through all global modifiers
           for (Tuple<IPacketModifier, ModificationPriority> modifier : globalModifiers) {
-            packet = modifier.a().modifyIncoming(u, nm, packet);
+            packet = modifier.a().modifyIncoming(u, ps, packet);
 
             // Packet has been terminated
             if (packet == null)
@@ -241,7 +250,7 @@ public class PacketInterceptor implements IPacketInterceptor, Listener, IAutoCon
           ArrayList<Tuple<IPacketModifier, ModificationPriority>> specifics = specificModifiers.get(u);
           if (specifics != null) {
             for (Tuple<IPacketModifier, ModificationPriority> modifier : specifics) {
-              packet = modifier.a().modifyIncoming(u, nm, packet);
+              packet = modifier.a().modifyIncoming(u, ps, packet);
 
               // Packet has been terminated
               if (packet == null)

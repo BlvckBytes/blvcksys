@@ -7,6 +7,7 @@ import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
 import me.blvckbytes.blvcksys.packets.ModificationPriority;
+import me.blvckbytes.blvcksys.packets.PacketSource;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.ObjectStringifier;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
@@ -185,7 +186,7 @@ public class InjectCommand extends APlayerCommand implements IPacketModifier, IA
   //=========================================================================//
 
   @Override
-  public Packet<?> modifyIncoming(UUID sender, NetworkManager nm, Packet<?> incoming) {
+  public Packet<?> modifyIncoming(UUID sender, PacketSource ps, Packet<?> incoming) {
     // No request present yet
     InterceptionRequest req = requests.get(sender);
     if (req == null)

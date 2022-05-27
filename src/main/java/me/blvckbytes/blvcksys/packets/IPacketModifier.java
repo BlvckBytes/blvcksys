@@ -17,11 +17,11 @@ public interface IPacketModifier {
   /**
    * Interception method to modify incoming packets
    * @param sender UUID of the player who's client sent the packet (can be null if not yet connected)
-   * @param nm NetworkManager corresponding to the requesting client
+   * @param ps Source of this packet
    * @param incoming Incoming packet
    * @return Modified incoming packet, null to terminate the packet
    */
-  Packet<?> modifyIncoming(UUID sender, NetworkManager nm, Packet<?> incoming);
+  Packet<?> modifyIncoming(UUID sender, PacketSource ps, Packet<?> incoming);
 
   /**
    * Interception method to modify outgoing packets

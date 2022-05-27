@@ -5,10 +5,9 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
-import me.blvckbytes.blvcksys.handlers.ICombatLogHandler;
-import me.blvckbytes.blvcksys.handlers.IHologramHandler;
-import me.blvckbytes.blvcksys.handlers.MultilineHologram;
+import me.blvckbytes.blvcksys.handlers.*;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -20,7 +19,6 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 
 import java.util.List;
-import java.util.Optional;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -43,12 +41,17 @@ public class DeathListener implements Listener {
   // Y velocity of the kill indicator
   private static final double KILL_INDICATOR_YVEL = 0.1;
 
+  // Double helix that's rising up right below the hologram
+  // D means diameter and BPW is the blocks per windings
+  private static final double KILL_INDICATOR_HELIX_D = .6, KILL_INDICATOR_HELIX_BPW = 2.5;
+
   private final IConfig cfg;
   private final IHologramHandler holos;
   private final JavaPlugin plugin;
   private final ISpawnCommand spawn;
   private final IChatListener chat;
   private final ICombatLogHandler combatlog;
+  private final IAnimationHandler anim;
 
   public DeathListener(
     @AutoInject JavaPlugin plugin,
@@ -56,13 +59,15 @@ public class DeathListener implements Listener {
     @AutoInject IHologramHandler holos,
     @AutoInject IConfig cfg,
     @AutoInject IChatListener chat,
-    @AutoInject ICombatLogHandler combatlog
+    @AutoInject ICombatLogHandler combatlog,
+    @AutoInject IAnimationHandler anim
   ) {
     this.plugin = plugin;
     this.spawn = spawn;
     this.holos = holos;
     this.cfg = cfg;
     this.chat = chat;
+    this.anim = anim;
     this.combatlog = combatlog;
   }
 
@@ -165,9 +170,10 @@ public class DeathListener implements Listener {
    * @param killer Player that has killed
    */
   private void spawnKillIndicator(Player victim, Player killer) {
+    Location loc = victim.getLocation().clone();
+
     MultilineHologram holo = holos.createTemporary(
-      victim.getLocation(),
-      List.of(killer),
+      loc, List.of(killer),
       cfg.get(ConfigKey.KILL_INDICATORS)
         .withVariable("victim", victim.getName())
         .withVariable("killer", killer.getName())
@@ -175,8 +181,17 @@ public class DeathListener implements Listener {
         .asList()
     );
 
-    holo.setVelocity(new Vector(0, KILL_INDICATOR_YVEL, 0), 0D, false, false, null, null);
-    Bukkit.getScheduler().runTaskLater(plugin, () -> holos.destroyTemporary(holo), KILL_INDICATOR_DUR_T);
-  }
+    Vector velocity = new Vector(0, KILL_INDICATOR_YVEL, 0);
 
+    // Start the helix and the hologram rise up at the same velocity
+    holo.setVelocity(velocity, 0D, false, false, null, null);
+    DoubleHelixParameter param = new DoubleHelixParameter(velocity, KILL_INDICATOR_HELIX_BPW, KILL_INDICATOR_HELIX_D / 2);
+    anim.startAnimation(loc, null, AnimationType.ORANGE_DOUBLE_HELIX, param);
+
+    // Stop both the hologram rising and the helix climbing up
+    Bukkit.getScheduler().runTaskLater(plugin, () -> {
+      anim.stopAnimation(loc, AnimationType.ORANGE_DOUBLE_HELIX);
+      holos.destroyTemporary(holo);
+    }, KILL_INDICATOR_DUR_T);
+  }
 }

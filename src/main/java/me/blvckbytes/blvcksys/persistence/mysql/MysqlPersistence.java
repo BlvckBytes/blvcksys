@@ -806,9 +806,16 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
       return;
     }
 
+    // Create foreign key referenced tables beforehand (when they're not self-refs)
+    List<MysqlColumn> columns = table.columns();
+    for (MysqlColumn column : columns) {
+      MysqlTable fk = column.getForeignKey();
+      if (fk != null && fk != table && !isTableExisting(fk))
+        createTableIfNotExists(column.getForeignKey());
+    }
+
     StringBuilder stmt = new StringBuilder("CREATE TABLE IF NOT EXISTS `" + table.name() + "`(");
 
-    List<MysqlColumn> columns = table.columns();
     for (int i = 0; i < columns.size(); i++) {
       MysqlColumn col = columns.get(i);
       stmt

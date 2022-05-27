@@ -17,6 +17,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -30,7 +31,7 @@ import java.util.List;
   the vanilla death messages.
 */
 @AutoConstruct
-public class DeathListener implements Listener {
+public class DeathListener implements Listener, IDeathListener {
 
   // Delay in ticks after death till the automatic respawn
   private final static long RESPAWN_DELAY_T = 15;
@@ -72,6 +73,24 @@ public class DeathListener implements Listener {
   }
 
   //=========================================================================//
+  //                                    API                                  //
+  //=========================================================================//
+
+  @Override
+  public void handleDeath(Player victim, @Nullable Player killer) {
+    // Either get the damager from this event or the last known damager
+    // from the current combatlog session if it wasn't a player
+    Player lastDamager = combatlog.getLastDamager(victim).orElse(killer);
+
+    // Has been slain by another player
+    if (lastDamager != null) {
+      spawnKillIndicator(victim, lastDamager);
+      notifyAboutKill(victim, lastDamager);
+      return;
+    }
+  }
+
+  //=========================================================================//
   //                                  Listener                               //
   //=========================================================================//
 
@@ -85,17 +104,8 @@ public class DeathListener implements Listener {
     if (p.getHealth() > e.getDamage())
       return;
 
-    // Either get the damager from this event or the last known damager
-    // from the current combatlog session if it wasn't a player
-    Player lastDamager = combatlog.getLastDamager(p).orElse(null);
-    Player killer = (e.getDamager() instanceof Player x) ? x : lastDamager;
-
-    // Has been slain by another player
-    if (killer != null) {
-      spawnKillIndicator(p, killer);
-      notifyAboutKill(p, killer);
-      return;
-    }
+    Player killer = (e.getDamager() instanceof Player x) ? x : null;
+    handleDeath(p, killer);
   }
 
   @EventHandler
@@ -110,9 +120,8 @@ public class DeathListener implements Listener {
     Player p = e.getEntity();
 
     // Wasn't already handled by the above event, the player died all by themselves
-    // Check if there was a last damager and notify players of that kill, if so
     if (!(e.getEntity().getLastDamageCause() instanceof EntityDamageByEntityEvent))
-      combatlog.getLastDamager(p).ifPresent(lastDamager -> notifyAboutKill(p, lastDamager));
+      handleDeath(p, null);
 
     e.setDeathMessage(null);
     respawnPlayer(p);

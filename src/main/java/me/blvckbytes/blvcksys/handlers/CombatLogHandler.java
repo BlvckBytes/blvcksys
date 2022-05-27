@@ -4,8 +4,10 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.events.IChatListener;
+import me.blvckbytes.blvcksys.events.IDeathListener;
 import me.blvckbytes.blvcksys.packets.communicators.hud.IHudCommunicator;
 import org.bukkit.Bukkit;
 import org.bukkit.World;
@@ -49,6 +51,9 @@ public class CombatLogHandler implements Listener, ICombatLogHandler, IAutoConst
   private final IChatListener chat;
   private final JavaPlugin plugin;
   private final IHudCommunicator hud;
+
+  @AutoInjectLate
+  private IDeathListener death;
 
   public CombatLogHandler(
     @AutoInject IConfig cfg,
@@ -113,18 +118,6 @@ public class CombatLogHandler implements Listener, ICombatLogHandler, IAutoConst
     if (!inCombat.containsKey(p))
       return;
 
-    // Remove all entries where the last damager was the player that just quit or the victim quit
-    lastDamager.keySet().removeIf(victim -> lastDamager.get(victim).equals(p));
-    lastDamager.remove(p);
-
-    inCombat.remove(p);
-    p.setHealth(0);
-
-    // Strike a lightning effect at the player's position
-    World w = p.getLocation().getWorld();
-    if (w != null)
-      w.strikeLightningEffect(p.getLocation());
-
     this.chat.broadcastMessage(
       Bukkit.getOnlinePlayers(),
       cfg.get(ConfigKey.COMBATLOG_BROADCAST)
@@ -132,6 +125,21 @@ public class CombatLogHandler implements Listener, ICombatLogHandler, IAutoConst
         .withVariable("name", p.getName())
         .asScalar()
     );
+
+    if (death != null)
+      death.handleDeath(p, null);
+
+    // Remove all entries where the last damager was the player that just quit or the victim quit
+    lastDamager.keySet().removeIf(victim -> lastDamager.get(victim).equals(p));
+    lastDamager.remove(p);
+    inCombat.remove(p);
+
+    p.setHealth(0);
+
+    // Strike a lightning effect at the player's position
+    World w = p.getLocation().getWorld();
+    if (w != null)
+      w.strikeLightningEffect(p.getLocation());
   }
 
   @Override

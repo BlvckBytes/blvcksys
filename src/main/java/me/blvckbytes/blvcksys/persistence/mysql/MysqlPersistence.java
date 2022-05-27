@@ -1381,8 +1381,9 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
           if (value == null)
             knownHasNullFields = true;
+          else
+            knownCol.getModelField().set(knownInst, value);
 
-          knownCol.getModelField().set(knownInst, value);
           remainingColumns.remove(targRemCol);
         }
 

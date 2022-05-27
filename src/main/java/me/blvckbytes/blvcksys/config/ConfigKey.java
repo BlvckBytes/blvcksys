@@ -97,6 +97,13 @@ public enum ConfigKey {
   DEATH_MESSAGES_BLOCK_EXPLOSION("death_messages.block_explosion", "$2{{player}} $0wurde in die Luft $2gesprengt$0!"),
 
   //=========================================================================//
+  //                           Server Settings COMMAND                       //
+  //=========================================================================//
+
+  SERVER_SETTINGS_GET("server_settings.get", "$0Wert der Einstellung $2{{setting}}$0: \"$2{{value}}$0\"."),
+  SERVER_SETTINGS_SET("server_settings.set", "$0Neuer Wert der Einstellung $2{{setting}}$0: \"$2{{value}}$0\"."),
+
+  //=========================================================================//
   //                              Damage Indicators                          //
   //=========================================================================//
 

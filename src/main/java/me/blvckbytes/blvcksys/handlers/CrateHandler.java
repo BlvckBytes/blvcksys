@@ -96,8 +96,9 @@ public class CrateHandler implements ICrateHandler {
     if (crate == null)
       return false;
 
+
     CrateItemModel itemModel = new CrateItemModel(crate.getId(), creator, item, probability);
-    pers.store(itemModel);
+    CrateItemModel.pushSequenceMember(itemModel, buildCrateItemsQuery(crate.getId()), pers);
 
     if (!itemsCache.containsKey(crateName.toLowerCase()))
       itemsCache.put(crateName.toLowerCase(), new ArrayList<>());
@@ -115,7 +116,7 @@ public class CrateHandler implements ICrateHandler {
     if (crate == null)
       return Optional.empty();
 
-    List<CrateItemModel> items = pers.find(buildCrateItemsQuery(crate.getId()));
+    List<CrateItemModel> items = CrateItemModel.sequentize(pers.find(buildCrateItemsQuery(crate.getId())));
     itemsCache.put(name, items);
     return Optional.of(items);
   }
@@ -123,7 +124,7 @@ public class CrateHandler implements ICrateHandler {
   @Override
   public boolean deleteItem(CrateItemModel item) {
     itemsCache.values().forEach(items -> items.remove(item));
-    return pers.delete(item);
+    return CrateItemModel.deleteSequenceMember(item, pers);
   }
 
   @Override

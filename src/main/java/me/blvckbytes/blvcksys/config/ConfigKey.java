@@ -1178,6 +1178,17 @@ public enum ConfigKey {
   COMMAND_CRATE_ITEM_DELETED("crate.item_deleted", "$0Das $3Item {{item}} $0der Crate $3{{name}} $0wurde gelöscht."),
 
   //=========================================================================//
+  //                            CRATESORT Command                            //
+  //=========================================================================//
+
+  COMMAND_CRATESORT_NOT_EXISTING("cratesort.not_existing", "$0Es existiert keine Crate namens $4{{name}}$0!"),
+  COMMAND_CRATESORT_MISSING_IDS("cratesort.missing_ids", "$0Es fehlen $4{{num_missing}} IDs $0in der Sequenz!"),
+  COMMAND_CRATESORT_INVALID_ID("cratesort.invalid_id", "$0Die ID $4{{invalid_id}} $0der Sequenz ist $4ungültig$0!"),
+  COMMAND_CRATESORT_SORTED("cratesort.sorted", "$0Die Items der Crate $3{{name}} $0wurden $3sortiert$0."),
+  COMMAND_CRATESORT_LIST_HEADER("cratesort.list.header", "$0Items der Crate $3{{name}}$0:"),
+  COMMAND_CRATESORT_LIST_ENTRY("cratesort.list.entry", "$0[$3{{index}}$0]: $3{{name}}"),
+
+  //=========================================================================//
   //                              HOMES Command                              //
   //=========================================================================//
 

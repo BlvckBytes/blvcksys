@@ -1175,7 +1175,7 @@ public enum ConfigKey {
   COMMAND_CRATE_ITEM_UPDATED("crate.item_updated", "$0Das $3Item {{index}} $0der Crate $3{{name}} $0wurde geändert."),
   COMMAND_CRATE_INVALID_INDEX("crate.invalid_index", "$0Der Index $4{{index}} $0ist $4kein $0verfügbares Item!"),
   COMMAND_CRATE_ITEM_DISAPPEARED("crate.item_disappeared", "$0Das Item $4{{index}} $0wurde in der Zwischenzeit $4gelöscht$0!"),
-  COMMAND_CRATE_ITEM_DELETED("crate.item_deleted", "$0Das $3Item {{index}} $0der Crate $3{{name}} $0wurde gelöscht."),
+  COMMAND_CRATE_ITEM_DELETED("crate.item_deleted", "$0Das $3Item {{item}} $0der Crate $3{{name}} $0wurde gelöscht."),
 
   //=========================================================================//
   //                              HOMES Command                              //
@@ -1369,6 +1369,50 @@ public enum ConfigKey {
     "$0Bildschirmrand angezeigt wird.",
     " ",
     "$0Aktueller Zustand: {{state}}"
+  ),
+
+  //=========================================================================//
+  //                           Crate Item Detail GUI                         //
+  //=========================================================================//
+
+  GUI_CRATE_DETAIL_NAME("gui.crate_detail.name", "$0Crate $2{{name}}"),
+  GUI_CRATE_DETAIL_PROBABILITY_NAME("gui.crate_detail.probability.name", "$0» $2Wahrscheinlichkeit $0«"),
+  GUI_CRATE_DETAIL_PROBABILITY_LORE(
+    "gui.crate_detail.probability.lore",
+    " ",
+    "$0Ändere die $2Wahrscheinlichkeit $0dieses",
+    "$0Item zu ziehen."
+  ),
+  GUI_CRATE_DETAIL_DELETE_NAME("gui.crate_detail.delete.name", "$0» &cEntfernen $0«"),
+  GUI_CRATE_DETAIL_DELETE_LORE(
+    "gui.crate_detail.delete.lore",
+    " ",
+    "&cEntferne $0dieses Item."
+  ),
+  GUI_CRATE_DETAIL_EDIT_NAME("gui.crate_detail.edit.name", "$0» $2Bearbeiten $0«"),
+  GUI_CRATE_DETAIL_EDIT_LORE(
+    "gui.crate_detail.edit.lore",
+    " ",
+    "$0Öffnet den $2Itemeditor$0."
+  ),
+
+  //=========================================================================//
+  //                             Crate Content GUI                           //
+  //=========================================================================//
+
+  GUI_CRATE_CONTENT_NAME("gui.crate_content.name", "$0Crate $2{{name}}"),
+  GUI_CRATE_CONTENT_NONE_NAME("gui.crate_content.none.name", "$0» &cKeine Items"),
+  GUI_CRATE_CONTENT_NONE_LORE(
+    "gui.crate_content.none.lore",
+    " ",
+    "$0Diese Crate hat noch $4keine $0Items!"
+  ),
+  GUI_CRATE_CONTENT_CONTENT_NAME("gui.crate_content.content.name", "$2{{hr_type}}"),
+  GUI_CRATE_CONTENT_CONTENT_LORE(
+    "gui.crate_content.content.lore",
+    " ",
+    "$0Dieses Item ist mit einer Wahrscheinlichkeit",
+    "$0von $2{{probability}}% $0in der Crate $2{{name}} $0vorzufinden."
   ),
 
   //=========================================================================//

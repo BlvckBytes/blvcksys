@@ -8,10 +8,13 @@ import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.ICrateHandler;
+import me.blvckbytes.blvcksys.handlers.gui.AnimationType;
+import me.blvckbytes.blvcksys.handlers.gui.CrateContentGui;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.CrateModel;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import net.minecraft.util.Tuple;
 import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -40,6 +43,7 @@ public class CrateCommand extends APlayerCommand {
     SETCHEST
   }
 
+  private final CrateContentGui crateContentGui;
   private final ICrateHandler crateHandler;
   private final IPersistence pers;
   private final IRegionAdapter regions;
@@ -51,7 +55,8 @@ public class CrateCommand extends APlayerCommand {
     @AutoInject MCReflect refl,
     @AutoInject ICrateHandler crateHandler,
     @AutoInject IPersistence pers,
-    @AutoInject IRegionAdapter regions
+    @AutoInject IRegionAdapter regions,
+    @AutoInject CrateContentGui crateContentGui
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -66,6 +71,7 @@ public class CrateCommand extends APlayerCommand {
     this.crateHandler = crateHandler;
     this.pers = pers;
     this.regions = regions;
+    this.crateContentGui = crateContentGui;
   }
 
   //=========================================================================//
@@ -177,7 +183,19 @@ public class CrateCommand extends APlayerCommand {
     }
 
     if (action == CrateAction.LISTITEMS) {
-      p.sendMessage("§cTODO: Manage items in a GUI");
+      CrateModel crate = crateHandler.getCrate(name).orElse(null);
+
+      if (crate == null) {
+        p.sendMessage(
+          cfg.get(ConfigKey.COMMAND_CRATE_NOT_EXISTING)
+            .withPrefix()
+            .withVariable("name", name)
+            .asScalar()
+        );
+        return;
+      }
+
+      crateContentGui.show(p, new Tuple<>(crate, true), AnimationType.SLIDE_DOWN);
       return;
     }
 

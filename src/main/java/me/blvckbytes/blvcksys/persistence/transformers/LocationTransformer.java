@@ -17,6 +17,9 @@ public class LocationTransformer implements IDataTransformer<LocationModel, Loca
 
   @Override
   public Location revive(LocationModel data) {
+    if (data == null)
+      return null;
+
     World world = Bukkit.getWorld(data.getWorld());
 
     if (world == null)
@@ -31,6 +34,9 @@ public class LocationTransformer implements IDataTransformer<LocationModel, Loca
 
   @Override
   public LocationModel replace(Location data) {
+    if (data == null)
+      return null;
+
     World world = data.getWorld();
 
     if (world == null)

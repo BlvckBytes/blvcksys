@@ -31,6 +31,9 @@ public class ItemStackTransformer implements IDataTransformer<ItemStackModel, It
 
   @Override
   public ItemStack revive(ItemStackModel data) {
+    if (data == null)
+      return null;
+
     try {
       byte[] bytes = Base64Coder.decodeLines(data.getBase64Item());
       ByteArrayInputStream inputStream = new ByteArrayInputStream(bytes);
@@ -49,6 +52,9 @@ public class ItemStackTransformer implements IDataTransformer<ItemStackModel, It
 
   @Override
   public ItemStackModel replace(ItemStack data) {
+    if (data == null)
+      return null;
+
     String base64;
 
     try {

@@ -33,6 +33,9 @@ public class InventoryTransformer implements IDataTransformer<InventoryModel, In
 
   @Override
   public Inventory revive(InventoryModel data) {
+    if (data == null)
+      return null;
+
     Inventory res;
 
     try {
@@ -59,6 +62,9 @@ public class InventoryTransformer implements IDataTransformer<InventoryModel, In
 
   @Override
   public InventoryModel replace(Inventory data) {
+    if (data == null)
+      return null;
+
     String base64;
 
     try {

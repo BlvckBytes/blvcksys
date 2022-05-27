@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.handlers;
 
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -18,14 +19,14 @@ public interface IAnimationHandler {
    * @param target Target player
    * @param animation Target animation
    */
-  void startAnimation(Player target, List<Player> receicers, AnimationType animation);
+  void startAnimation(Player target, List<Player> receicers, AnimationType animation, @Nullable Object parameter);
 
   /**
    * Start playing a specific animation on a fixed location
    * @param loc Location to play at
    * @param animation Target animation
    */
-  void startAnimation(Location loc, List<Player> receicers,AnimationType animation);
+  void startAnimation(Location loc, List<Player> receicers,AnimationType animation, @Nullable Object parameter);
 
   /**
    * Stop a specific animation that runs on a player's location

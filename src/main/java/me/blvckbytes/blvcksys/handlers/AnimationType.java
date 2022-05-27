@@ -14,8 +14,11 @@ import org.bukkit.Particle;
 @Getter
 @AllArgsConstructor
 public enum AnimationType {
-  // Rotating cone around the target player
-  PURPLE_ROTATING_CONE(Particle.REDSTONE, new Particle.DustOptions(Color.PURPLE, 0.55F))
+  // Vertically standing, rotating cone
+  PURPLE_ROTATING_CONE(Particle.REDSTONE, new Particle.DustOptions(Color.PURPLE, .55F)),
+
+  // Two helixes, 180° out of phase, travelling along the specified vector
+  ORANGE_DOUBLE_HELIX(Particle.REDSTONE, new Particle.DustOptions(Color.ORANGE, .55F))
   ;
 
   private final Particle particle;

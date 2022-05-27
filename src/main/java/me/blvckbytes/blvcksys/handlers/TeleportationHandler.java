@@ -104,7 +104,7 @@ public class TeleportationHandler implements ITeleportationHandler, Listener {
     }, TELEPORT_TIMEOUT);
 
     // Start teleporting mode
-    animation.startAnimation(p, null, TELEPORT_ANIMATION);
+    animation.startAnimation(p, null, TELEPORT_ANIMATION, null);
     obj.setBelowNameFlag(p, BelowNameFlag.TELEPORTING, true);
 
     p.sendMessage(

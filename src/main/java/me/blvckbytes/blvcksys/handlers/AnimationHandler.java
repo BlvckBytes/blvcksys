@@ -48,6 +48,9 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
     // Type of animation
     AnimationType type;
 
+    // Parameter passed to this animation instance
+    @Nullable Object parameter;
+
     // Current relative time
     long time;
   }
@@ -75,13 +78,13 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
   //=========================================================================//
 
   @Override
-  public void startAnimation(Player target, List<Player> receicers, AnimationType animation) {
-    this.animations.add(new ActiveAnimation(target, null, receicers, animation, 0));
+  public void startAnimation(Player target, List<Player> receicers, AnimationType animation, @Nullable Object parameter) {
+    this.animations.add(new ActiveAnimation(target, null, receicers, animation, parameter, 0));
   }
 
   @Override
-  public void startAnimation(Location loc, List<Player> receicers, AnimationType animation) {
-    this.animations.add(new ActiveAnimation(null, loc, receicers, animation, 0));
+  public void startAnimation(Location loc, List<Player> receicers, AnimationType animation, @Nullable Object parameter) {
+    this.animations.add(new ActiveAnimation(null, loc, receicers, animation, parameter, 0));
   }
 
   @Override
@@ -135,6 +138,7 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
 
   /**
    * Tick an animation by increasing it's relative time
+   *
    * @param animation Animation that's playing
    */
   private void tickAnimation(ActiveAnimation animation) {
@@ -146,6 +150,8 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
     // Decide on the actual processor function
     if (animation.type.equals(AnimationType.PURPLE_ROTATING_CONE))
       tickROTATING_CONE(animation, loc, loc.getWorld());
+    else if (animation.type.equals(AnimationType.ORANGE_DOUBLE_HELIX))
+      tickDOUBLE_HELIX(animation, loc, loc.getWorld());
 
     // Increase the time tracking variable
     animation.time++;
@@ -153,6 +159,7 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
 
   /**
    * Get an animations location, accounting for priorities
+   *
    * @param animation Animation in question
    * @return Location to play at
    */
@@ -166,9 +173,10 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
 
   /**
    * Draw a frame of an animation while accounting for the list of receiving players
+   *
    * @param animation Animation handle
-   * @param pixels Pixels to draw
-   * @param w World to animate in
+   * @param pixels    Pixels to draw
+   * @param w         World to animate in
    */
   private void drawFrame(ActiveAnimation animation, List<Vector> pixels, World w) {
     for (Vector pixel : pixels) {
@@ -195,7 +203,6 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
     int numSpirals = 4;              // How many spirals to wind with an even distance from each other
     double vertDist = 0.038;         // Distance between pixels vertically
     double degPerSec = 110.0;        // Degrees per second of rotation speed
-    double pixelSize = 0.55;         // Size of a pixel (1 = default)
 
     List<Vector> pixels = new ArrayList<>();
 
@@ -256,5 +263,152 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
     }
 
     drawFrame(animation, pixels, w);
+  }
+
+  ////////////////////////////////// DOUBLE_HELIX /////////////////////////////////////
+
+  private void tickDOUBLE_HELIX(ActiveAnimation animation, Location loc, World w) {
+    List<Vector> pixels = new ArrayList<>();
+
+    if (animation.parameter == null || (!(animation.parameter instanceof DoubleHelixParameter param)))
+      return;
+
+    double pixelDist = 0.050; // Distance between pixels
+
+    // As vectors are in unit blocks/tick, multiply by the elapsed ticks
+    long elapsedTicks = animation.time * TICK_DELAY;
+    Vector v = param.velocity().clone().multiply(elapsedTicks);
+
+    // One step should advance the vector length by pixelDist
+    // This means that step * len should be pixelDist
+    // Which in return means that step = pixelDist / len
+    double length = v.length();
+    double step = pixelDist / length;
+
+    // Walk the vector v
+    for (double i = 0; i <= 1; i += step) {
+      // Get the current position partways into v within the world as a vector
+      Vector currPos = loc.clone().add(v.clone().multiply(i)).toVector();
+
+      // The following section is creating a vector which is at an right angle
+      // relative to the main vector v by first of all eliminating one of the three
+      // axis by dividing by the smallest coordinate (skipping /0).
+      // Vectors are at a right angle, when their dot product is zero, which means
+      // that ax*bx + ay*by + az*bz = 0. If one component already equals zero, there
+      // are only two more to solve for. Imagine x went to zero: ay*by + az*bz = 0.
+      // If a is given and b is searched for, just swap a's x and y in place of b's
+      // and negate one (the bigger) of the two, resulting in (when ay > az):
+      // ay*az + az*(-ay) = ay*az - ay*az = 0. This is true, and thus one of the
+      // infinite vectors which is at a right angle to v. This vector can now be
+      // normalized, scaled and rotated about v to create the helix's pattern.
+
+      // Find the smallest coordinate and divide the whole vector by it
+      double[] cords = { v.getX(), v.getY(), v.getZ() };
+      int smallest = findSmallestIndex(cords);
+      Vector h = v.clone().multiply(1.0 / (cords[smallest] == 0 ? 1 : cords[smallest]));
+
+      // Find the two remaining axies which are not zeroed out:
+      // 0 1 2
+      // x y z
+      // 0 y z  1 2
+      // x 0 z  0 2
+      // x y 0  0 1
+      int a = smallest == 0 ? 1 : 0;
+      int b = smallest == 0 ? 2 : (smallest == 1 ? 2 : 1);
+
+      // Swap a and b and negate the one that's bigger
+      double aVal = cords[a], bVal = cords[b];
+      boolean negateA = Math.abs(aVal) > Math.abs(bVal);
+      setAxisByIndex(h, a, negateA ? cords[b] : -cords[b]);
+      setAxisByIndex(h, b, negateA ? -cords[a] : cords[a]);
+
+      System.out.println(h);
+
+      // Turn it into a vector of that direction and length r
+      h.normalize().multiply(param.radius());
+
+      // Travelled distance "modulo" blocks per winding
+      double dist = length * i;
+      while (dist > param.blocksPerWinding())
+        dist -= param.blocksPerWinding();
+
+      // 0..1 of the winding period, scale to a full rotation angle
+      double period = dist / param.blocksPerWinding();
+      double phi = 2 * Math.PI * period;
+
+      // Add a pixel for the vector added to the current position at phi, and one at 180deg phase shift phi + PI
+      pixels.add(currPos.clone().add(rotateAbout(h, v.clone().normalize(), phi)));
+      pixels.add(currPos.clone().add(rotateAbout(h, v.clone().normalize(), phi + Math.PI)));
+    }
+
+    drawFrame(animation, pixels, w);
+  }
+
+  /**
+   * Rotates the vector v about the vector about by an angle of phi
+   * @param v Vector to rotate
+   * @param about Vector to use as an axis to rotate about
+   * @param phi Angle in radians
+   * @return Rotated input vector
+   */
+  private Vector rotateAbout(Vector v, Vector about, double phi) {
+    // Thank you so much Euler and Rodrigues, great work!
+    // https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
+    return v.clone().multiply(Math.cos(phi))
+      .add(about.clone().crossProduct(v).multiply(Math.sin(phi)))
+      .add(about.multiply(about.dot(v)).multiply(1 - Math.cos(phi)));
+  }
+
+  /**
+   * Set a vector's axis by it's index, where x=0, y=1 and z=2
+   * @param v Vector to manipulate
+   * @param index Index of the target axis
+   * @param value Value to set
+   */
+  private void setAxisByIndex(Vector v, int index, double value) {
+    switch (index) {
+      case 0 -> v.setX(value);
+      case 1 -> v.setY(value);
+      case 2 -> v.setZ(value);
+      default -> throw new IllegalArgumentException("Index " + index + " out of range");
+    }
+  }
+
+  /**
+   * Finds the index of the smallest number (absolute) within an array of elements
+   * @param elements Array of elements
+   * @return Index of the smallest number
+   */
+  private int findSmallestIndex(double[] elements) {
+    int j;
+
+    // Loop all items in the array
+    // Initially assumes the first to be the smallest
+    for (j = 0; j < elements.length; j++) {
+
+      // Assume j to be the smallest
+      boolean smallest = true;
+
+      // Loop all items but j
+      for (int k = 0; k < elements.length; k++) {
+        if (k == j)
+          continue;
+
+        // Item j is smaller than or equals to item k, smallest holds
+        if (Math.abs(elements[k]) >= Math.abs(elements[j]))
+          continue;
+
+        // Bigger, not the smallest, stop searching
+        smallest = false;
+        break;
+      }
+
+      // j was the smallest, stop
+      if (smallest)
+        break;
+    }
+
+    // Last item that broke the outer loop was the smallest
+    return j;
   }
 }

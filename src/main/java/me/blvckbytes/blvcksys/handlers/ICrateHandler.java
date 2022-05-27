@@ -47,6 +47,11 @@ public interface ICrateHandler {
   Optional<CrateModel> getCrate(String name);
 
   /**
+   * List all existing crates and their items
+   */
+  List<Tuple<CrateModel, List<CrateItemModel>>> listCrates();
+
+  /**
    * Add a new item with a given probability to an existing crate
    * @param creator Creating player
    * @param crateName Name of the crate

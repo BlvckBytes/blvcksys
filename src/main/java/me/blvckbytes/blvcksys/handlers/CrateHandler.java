@@ -83,6 +83,13 @@ public class CrateHandler implements ICrateHandler {
   }
 
   @Override
+  public List<Tuple<CrateModel, List<CrateItemModel>>> listCrates() {
+    return pers.list(CrateModel.class).stream()
+      .map(crate -> new Tuple<>(crate, getItems(crate.getName()).orElse(new ArrayList<>())))
+      .toList();
+  }
+
+  @Override
   public boolean addItem(Player creator, String crateName, ItemStack item, double probability) {
     CrateModel crate = getCrate(crateName).orElse(null);
 

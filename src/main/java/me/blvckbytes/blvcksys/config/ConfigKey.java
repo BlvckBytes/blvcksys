@@ -1042,6 +1042,25 @@ public enum ConfigKey {
   TOGGLECHAT_DISABLED("togglechat.disabled", "$0Du empfängst nun $3keine $0Chat-Nachrichten von Spielern mehr."),
 
   //=========================================================================//
+  //                              CRATES Command                             //
+  //=========================================================================//
+
+  COMMAND_CRATES_LIST_NONE("crates.none", "$4Keine Crates gefunden"),
+  COMMAND_CRATES_LIST_TELEPORTED("crates.teleported", "$0Du wurdest zur Crate $3{{name}} $0teleportiert."),
+  COMMAND_CRATES_LIST_NO_LOC("crates.no_loc", "$0Die Crate $4{{name}} $0besitzt noch keine Position."),
+  COMMAND_CRATES_LIST_PREFIX("crates.header", "$0Existierende Crates: "),
+  COMMAND_CRATES_LIST_FORMAT("crates.list.format", "$3{{name}}$1{{sep}}"),
+  COMMAND_CRATES_LIST_HOVER_CREATORS_FORMAT("crates.list.hover.creators_format", "$3{{creator}}$1"),
+  COMMAND_CRATES_LIST_HOVER_TEXT(
+    "crates.list.hover.text",
+    "$0Erstellt am: $3{{created_at}}",
+    "$0Ersteller: $3{{creators}}",
+    "$0Items: $3{{num_items}}",
+    "$0Position: $3{{location}}",
+    "$0Distanz: $3{{distance}} Blöcke"
+  ),
+
+  //=========================================================================//
   //                                 KIT Command                             //
   //=========================================================================//
 
@@ -1138,6 +1157,25 @@ public enum ConfigKey {
   COMMAND_HOLO_LINE_DELETED("holo.line_deleted", "$0Die $3Zeile {{index}} $0vom Hologramm $3{{name}} $0wurde gelöscht."),
   COMMAND_HOLO_LINES_HEADER("holo.lines_header", "$0Zeilen vom Hologramm $3{{name}}$0:"),
   COMMAND_HOLO_LINES_LINE_FORMAT("holo.line_format", "$0[$3{{index}}$0]: {{text}}"),
+
+  //=========================================================================//
+  //                              CRATE Command                              //
+  //=========================================================================//
+
+  COMMAND_CRATE_CREATED("crate.created", "$0Die Crate $3{{name}} $0wurde $3erstellt$0."),
+  COMMAND_CRATE_NOITEM("crate.noitem", "$0Du hast $4kein Item $0zum setzen in der Hand!"),
+  COMMAND_CRATE_NOCHEST("crate.nochest", "$0Du hast aktuell $4keine $0Truhe auf deinem $4Fadenkreuz$0!"),
+  COMMAND_CRATE_NOBUILD("crate.nobuild", "$0Du kannst in diesem Gebiet $4nicht bauen$0!"),
+  COMMAND_CRATE_NOT_EXISTING("crate.not_existing", "$0Es existiert keine Crate namens $4{{name}}$0!"),
+  COMMAND_CRATE_EXISTS("crate.exists", "$0Es existiert bereits eine Crate namens $4{{name}}$0!"),
+  COMMAND_CRATE_DELETED("crate.deleted", "$0Die Crate $3{{name}} $0wurde $3gelöscht$0."),
+  COMMAND_CRATE_MOVED("crate.moved", "$0Die Crate $3{{name}} $0wurde zu $3{{location}} $0bewegt."),
+  COMMAND_CRATE_ITEM_ADDED("crate.item_added", "$0Das $3Item $0wurde mit einer Wahrscheinlichkeit von $3{{probability}}% $0zur Crate $3{{name}} $0hinzugefügt."),
+  COMMAND_CRATE_ITEM_INVALID_PROBABILITY("crate.invalid_probability", "$0Die Wahrscheinlichkeit muss größer als $40% $0und kleiner als $4100% $0sein!"),
+  COMMAND_CRATE_ITEM_UPDATED("crate.item_updated", "$0Das $3Item {{index}} $0der Crate $3{{name}} $0wurde geändert."),
+  COMMAND_CRATE_INVALID_INDEX("crate.invalid_index", "$0Der Index $4{{index}} $0ist $4kein $0verfügbares Item!"),
+  COMMAND_CRATE_ITEM_DISAPPEARED("crate.item_disappeared", "$0Das Item $4{{index}} $0wurde in der Zwischenzeit $4gelöscht$0!"),
+  COMMAND_CRATE_ITEM_DELETED("crate.item_deleted", "$0Das $3Item {{index}} $0der Crate $3{{name}} $0wurde gelöscht."),
 
   //=========================================================================//
   //                              HOMES Command                              //

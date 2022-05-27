@@ -104,6 +104,35 @@ public enum ConfigKey {
   SERVER_SETTINGS_SET("server_settings.set", "$0Neuer Wert der Einstellung $2{{setting}}$0: \"$2{{value}}$0\"."),
 
   //=========================================================================//
+  //                               Survey COMMAND                            //
+  //=========================================================================//
+
+  SURVEY_CANCELLED("survey.cancelled", "$2{{executor}} $0hat die aktuelle Umfrage $2vorzeitig abgebrochen$0!"),
+  SURVEY_EXISTS("survey.exists", "$0Es $4existiert $0bereits eine aktive Umfrage!"),
+  SURVEY_NONE("survey.none", "$0Es ist aktuell $4keine $0Umfrage aktiv!"),
+  SURVEY_INVALID_DURATION("survey.invalid_duration", "$0Die Umfrage muss eine Mindestdauer von $4{{min_duration}} $0aufweisen!"),
+  SURVEY_NO_ANSWERS("survey.no_answers", "$0Du hast $4keine $0Antwortmöglichkeiten angegeben!"),
+  SURVEY_ONE_ANSWER("survey.one_answer", "$0Bitte gib mehr als $4eine $0Antwortmöglichkeit an!"),
+  SURVEY_LAUNCHED(
+    "survey.launched",
+    "$0Es wurde eine neue $2Umfrage $0von $2{{creator}} $0gestartet ($2{{duration}}$0):",
+    "$0Frage: \"$2{{question}}$0\"",
+    "$0Gib deine Stimme mit $2/answer $0ab!"
+  ),
+  SURVEY_COMPLETE_HEAD(
+    "survey.complete.head",
+    "$0Die aktuelle Umfrage wurde $2ausgewertet$0:",
+    "$0Frage: \"$2{{question}}$0\""
+  ),
+  SURVEY_COMPLETE_ANSWERS("survey.complete.answers", "$0\"$2{{answer}}$0\" mit $2{{votes}} Stimmen $0($2{{percent}}%$0)"),
+  SURVEY_COMPLETE_TAIL("survey.complete.tail", "$0Stimmen total: $2{{votes_total}}"),
+  SURVEY_REMAINING("survey.remaining", "$0Die Umfrage \"$2{{question}}$0\" wird in $2{{duration}} $0beendet! $2/answer"),
+  SURVEY_NONE_ACTIVE("survey.none_active", "$0Es ist gerade $4keine $0Umfrage aktiv!"),
+  SURVEY_VOTE_PLACED("survey.vote.placed", "$0Deine Stimme wurde auf \"$2{{answer}}$0\" $0platziert!"),
+  SURVEY_VOTE_MOVED("survey.vote.moved", "$0Deine Stimme wurde auf \"$2{{answer}}$0\" $0geändert!"),
+  SURVEY_VOTE_INVALID("survey.vote.invalid", "$0Diese Antwort ist $4ungültig$0!"),
+
+  //=========================================================================//
   //                               MsgSpy COMMAND                            //
   //=========================================================================//
 

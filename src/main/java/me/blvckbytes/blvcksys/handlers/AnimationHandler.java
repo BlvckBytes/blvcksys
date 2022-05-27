@@ -322,8 +322,6 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
       setAxisByIndex(h, a, negateA ? cords[b] : -cords[b]);
       setAxisByIndex(h, b, negateA ? -cords[a] : cords[a]);
 
-      System.out.println(h);
-
       // Turn it into a vector of that direction and length r
       h.normalize().multiply(param.radius());
 

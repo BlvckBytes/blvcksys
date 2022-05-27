@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
+import com.mojang.datafixers.types.Func;
 import lombok.Getter;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.ConfigValue;
@@ -339,13 +340,13 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
    * @param param Gui parameter
    * @param animation Animation to use when navigating back
    */
-  protected<A> void addBack(String slot, AGui<A> gui, A param, @Nullable AnimationType animation) {
+  protected<A> void addBack(String slot, AGui<A> gui, Function<GuiInstance<T>, A> param, @Nullable AnimationType animation) {
     fixedItem(slot, g -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_GENERICS_NAV_BACK_NAME))
         .withLore(cfg.get(ConfigKey.GUI_GENERICS_NAV_BACK_LORE))
         .build()
-    ), e -> e.getGui().switchTo(e.getGui(), animation, gui, param));
+    ), e -> e.getGui().switchTo(e.getGui(), animation, gui, param == null ? null : param.apply(e.getGui())));
   }
 
   //=========================================================================//

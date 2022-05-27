@@ -37,6 +37,7 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener,
 
   private final IPreferencesHandler prefs;
   private final IIgnoreHandler ignores;
+  private final IMsgSpyCommand spy;
 
   public MsgCommand(
     @AutoInject JavaPlugin plugin,
@@ -44,7 +45,8 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
     @AutoInject IPreferencesHandler prefs,
-    @AutoInject IIgnoreHandler ignores
+    @AutoInject IIgnoreHandler ignores,
+    @AutoInject IMsgSpyCommand spy
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -59,6 +61,7 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener,
 
     this.prefs = prefs;
     this.ignores = ignores;
+    this.spy = spy;
   }
 
   //=========================================================================//
@@ -182,6 +185,21 @@ public class MsgCommand extends APlayerCommand implements IMsgCommand, Listener,
         .withVariable("message", message)
         .asScalar()
     );
+
+    // Notify the spies if either the sender or the receiver is being spied on
+    Stream.concat(
+      spy.getSpies(sender).stream(),
+      spy.getSpies(receiver).stream()
+    ).forEach(s -> {
+      s.sendMessage(
+        cfg.get(ConfigKey.MSGSPY_MESSAGE)
+          .withPrefix()
+          .withVariable("sender", sender.getDisplayName())
+          .withVariable("receiver", receiver.getDisplayName())
+          .withVariable("message", message)
+          .asScalar()
+      );
+    });
   }
 
   //=========================================================================//

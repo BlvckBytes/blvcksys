@@ -104,6 +104,15 @@ public enum ConfigKey {
   SERVER_SETTINGS_SET("server_settings.set", "$0Neuer Wert der Einstellung $2{{setting}}$0: \"$2{{value}}$0\"."),
 
   //=========================================================================//
+  //                               MsgSpy COMMAND                            //
+  //=========================================================================//
+
+  MSGSPY_ENABLED("msgspy.enabled", "$0Du $2empfängst $0nun den privaten Nachrichtenverkehr von $2{{target}}$0."),
+  MSGSPY_DISABLED("msgspy.disabled", "$0Du $2empfängst $2keinen $0privaten Nachrichtenverkehr von $2{{target}} $0mehr."),
+  MSGSPY_SELF("msgspy.self", "$0Du kannst dich nicht $2selbst belauschen$0!"),
+  MSGSPY_MESSAGE("msgspy.message", "&6&lSPY $1($2{{sender}}$1 -> $2{{receiver}}$1)$0: {{message}}"),
+
+  //=========================================================================//
   //                              Damage Indicators                          //
   //=========================================================================//
 

@@ -6,6 +6,7 @@ import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
 import me.blvckbytes.blvcksys.packets.ModificationPriority;
+import me.blvckbytes.blvcksys.packets.PacketSource;
 import me.blvckbytes.blvcksys.packets.communicators.hologram.IHologramCommunicator;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
@@ -31,8 +32,10 @@ import org.bukkit.FluidCollisionMode;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.block.Block;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -295,7 +298,7 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed, IPac
   }
 
   @Override
-  public Packet<?> modifyIncoming(UUID sender, NetworkManager nm, Packet<?> incoming) {
+  public Packet<?> modifyIncoming(UUID sender, PacketSource ps, Packet<?> incoming) {
     // A player used an entity (left- or right click)
     if (sender != null && incoming instanceof PacketPlayInUseEntity pack) {
 
@@ -325,17 +328,30 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed, IPac
           refl.setFieldByType(pack, int.class, npc.get().getEntityId(), 0);
 
         else {
-          // Would have interacted with a block, substitute the packet for a use
-          Block b = p.getTargetBlockExact(5, FluidCollisionMode.NEVER);
-          if (b != null) {
-            Location l = b.getLocation();
-            Vec3D v = new Vec3D(l.getX(), l.getY(), l.getZ());
-            return new PacketPlayInUseItem(EnumHand.a, new MovingObjectPositionBlock(
-              v, EnumDirection.b, new BlockPosition(v), false
-            ));
-          }
+          Bukkit.getScheduler().runTask(plugin, () -> {
+            // Check if there's a player shadowed by this hologram
+            Entity targeted = getPlayerLookingAt(p).orElse(null);
 
-          // Wouldn't have interacted with anything, drop the packet
+            // There's a player, modify and let the packet through
+            if (targeted != null) {
+              refl.setFieldByType(pack, int.class, targeted.getEntityId(), 0);
+              ps.send().accept(pack);
+              return;
+            }
+
+            // Would have interacted with a block, substitute the packet for a use
+            Block b = p.getTargetBlockExact(5, FluidCollisionMode.NEVER);
+            if (b != null) {
+              Location l = b.getLocation();
+              Vec3D v = new Vec3D(l.getX(), l.getY(), l.getZ());
+              ps.send().accept(new PacketPlayInUseItem(EnumHand.a, new MovingObjectPositionBlock(
+                v, EnumDirection.b, new BlockPosition(v), false
+              )));
+            }
+          });
+
+          // Drop the packet in all cases, as it's either going to be re-sent
+          // synchronously or there's nothing real interacted with
           return null;
         }
 
@@ -355,6 +371,50 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed, IPac
   //=========================================================================//
   //                                Utilities                                //
   //=========================================================================//
+
+  /**
+   * Get the player a player's looking at by casting a ray into the world and
+   * checking against near entities whether that ray intersects their bounding box
+   * and there's no block inbetween, blocking sight.
+   * @param p Player to check for
+   * @return Target player, empty if no player is in sight
+   */
+  private Optional<Entity> getPlayerLookingAt(Player p) {
+    double maxDist = 3.0;
+    Location loc = p.getEyeLocation();
+    if (loc.getWorld() == null)
+      return Optional.empty();
+
+    // Get a list of the nearby players (within reach)
+    List<Entity> targets = loc.getWorld().getNearbyEntities(loc, maxDist, maxDist, maxDist)
+      .stream()
+      .filter(ent -> ent instanceof Player && !ent.equals(p))
+      .toList();
+
+    // No targets in reach
+    if (targets.size() == 0)
+      return Optional.empty();
+
+    // Step through the casted ray
+    double stepDist = .25;
+    Vector ray = loc.getDirection().normalize().multiply(maxDist);
+    for (double i = 0; i <= 1; i += stepDist / ray.length()) {
+      Location curr = loc.clone().add(ray.clone().multiply(i));
+
+      // There's a block between the player and any possible targets
+      if (curr.getBlock().getType().isSolid())
+        break;
+
+      // Check all possible targets for intersection
+      for (Entity target : targets) {
+        if (target.getBoundingBox().contains(curr.toVector()))
+          return Optional.of(target);
+      }
+    }
+
+    // No targets within the ray
+    return Optional.empty();
+  }
 
   /**
    * Get all lines a hologram holds and cache results

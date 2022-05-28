@@ -4,16 +4,21 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import net.minecraft.util.Tuple;
+import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
 /*
@@ -31,13 +36,20 @@ public class ChatUtil implements Listener {
   // A player can have multiple sessions of buttons to choose from
   private final Map<Player, List<ChatButtons>> buttonSessions;
 
+  private final Map<Player, Tuple<Consumer<String>, ChatButtons>> prompts;
+
+  private final JavaPlugin plugin;
   private final IConfig cfg;
 
   public ChatUtil(
-    @AutoInject IConfig cfg
+    @AutoInject IConfig cfg,
+    @AutoInject JavaPlugin plugin
   ) {
     this.cfg = cfg;
+    this.plugin = plugin;
+
     this.buttonSessions = new HashMap<>();
+    this.prompts = new HashMap<>();
   }
 
   /**
@@ -50,6 +62,29 @@ public class ChatUtil implements Listener {
     if (!buttonSessions.containsKey(p))
       buttonSessions.put(p, new ArrayList<>());
     buttonSessions.get(p).add(btns);
+  }
+
+  /**
+   * Register a new chat prompt for a player
+   * @param p Target player
+   * @param prompt Prompt message, cancel button is appended with a space
+   * @param input Input callback
+   * @param cancelled Cancellation callback
+   */
+  public void registerPrompt(Player p, String prompt, Consumer<String> input, @Nullable Runnable cancelled) {
+    ChatButtons buttons = new ChatButtons(prompt + " ", true, plugin, cfg, null)
+      .addButton(cfg.get(ConfigKey.CHATBUTTONS_CANCEL), () -> {
+        p.sendMessage(
+          cfg.get(ConfigKey.CHATBUTTONS_PROMPT_CANCELLED)
+            .withPrefix()
+            .asScalar()
+        );
+
+        if (cancelled != null)
+          Bukkit.getScheduler().runTask(plugin, cancelled);
+      });
+    prompts.put(p, new Tuple<>(input, buttons));
+    sendButtons(p, buttons);
   }
 
   /**
@@ -117,5 +152,23 @@ public class ChatUtil implements Listener {
         .withPrefix()
         .asScalar()
     );
+  }
+
+  /**
+   * Processes a pending chat prompt, if available
+   * @param p Sending player
+   * @param message Message entered into the chat
+   * @return True if a chat prompt has been completed, false otherwise
+   */
+  public boolean processPrompt(Player p, String message) {
+    // Check for an active prompt
+    Tuple<Consumer<String>, ChatButtons> prompt = prompts.remove(p);
+    if (prompt == null)
+      return false;
+
+    // Invalidate the cancel button and call the callback with the message
+    removeButtons(p, prompt.b());
+    Bukkit.getScheduler().runTask(plugin, () -> prompt.a().accept(message));
+    return true;
   }
 }

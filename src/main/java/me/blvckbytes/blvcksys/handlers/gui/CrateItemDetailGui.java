@@ -7,8 +7,10 @@ import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.handlers.ICrateHandler;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
+import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.CrateItemModel;
 import me.blvckbytes.blvcksys.persistence.models.CrateModel;
+import me.blvckbytes.blvcksys.util.ChatUtil;
 import net.minecraft.util.Tuple;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -24,6 +26,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> {
 
   private final ICrateHandler crateHandler;
+  private final ChatUtil chatUtil;
+  private final IPersistence pers;
 
   @AutoInjectLate
   private CrateContentGui crateContentGui;
@@ -32,7 +36,9 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
     @AutoInject IPlayerTextureHandler textures,
-    @AutoInject ICrateHandler crateHandler
+    @AutoInject ICrateHandler crateHandler,
+    @AutoInject ChatUtil chatUtil,
+    @AutoInject IPersistence pers
   ) {
     super(6, "", i -> (
       cfg.get(ConfigKey.GUI_CRATE_DETAIL_NAME).
@@ -40,6 +46,8 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
     ), plugin, cfg, textures);
 
     this.crateHandler = crateHandler;
+    this.chatUtil = chatUtil;
+    this.pers = pers;
   }
 
   @Override
@@ -49,18 +57,73 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
 
     addBack("45", crateContentGui, i -> new Tuple<>(i.getArg().a(), true), AnimationType.SLIDE_RIGHT);
 
+    // Selected item showcase
     fixedItem("13", i -> crateContentGui.appendDecoration(i.getArg().a(), i.getArg().b()), null);
 
+    // Probability change
     fixedItem("29", i -> (
       new ItemStackBuilder(Material.GOLD_INGOT)
         .withName(cfg.get(ConfigKey.GUI_CRATE_DETAIL_PROBABILITY_NAME))
         .withLore(cfg.get(ConfigKey.GUI_CRATE_DETAIL_PROBABILITY_LORE))
         .build()
     ), i -> {
-      // TODO: Implement a chat prompt for this new value
-      i.getGui().getViewer().sendMessage("§cChange probability");
+
+      chatUtil.registerPrompt(
+        i.getGui().getViewer(),
+        cfg.get(ConfigKey.GUI_CRATE_DETAIL_PROBABILITY_PROMPT)
+          .withPrefix()
+          .asScalar(),
+
+        // Probability entered
+        probabilityStr -> {
+          CrateItemModel item = i.getGui().getArg().b();
+          Player p = i.getGui().getViewer();
+
+          try {
+            // Parse the probability
+            float probability = Float.parseFloat(probabilityStr);
+            if (probability <= 0 || probability >= 100) {
+              p.sendMessage(
+                cfg.get(ConfigKey.COMMAND_CRATE_ITEM_INVALID_PROBABILITY)
+                  .withPrefix()
+                  .asScalar()
+              );
+            }
+
+            // Set and update the value before re-opening the gui
+            else {
+              item.setProbability(probability);
+              pers.store(item);
+
+              p.sendMessage(
+                cfg.get(ConfigKey.COMMAND_CRATE_ITEM_UPDATED_PROBABILITY)
+                  .withPrefix()
+                  .withVariable("item", crateContentGui.getItemName(item))
+                  .withVariable("probability", Math.round(probability * 100F) / 100F)
+                  .asScalar()
+              );
+            }
+          } catch (NumberFormatException e) {
+            i.getGui().getViewer().sendMessage(
+              cfg.get(ConfigKey.ERR_FLOATPARSE)
+                .withPrefix()
+                .withVariable("number", probabilityStr)
+                .asScalar()
+            );
+            return;
+          }
+
+          i.getGui().reopen(AnimationType.SLIDE_UP);
+        },
+
+        // Cancelled
+        () -> i.getGui().reopen(AnimationType.SLIDE_UP)
+      );
+
+      i.getGui().getViewer().closeInventory();
     });
 
+    // Delete button
     fixedItem("40", i -> (
       new ItemStackBuilder(Material.BARRIER)
         .withName(cfg.get(ConfigKey.GUI_CRATE_DETAIL_DELETE_NAME))
@@ -80,6 +143,7 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
       i.getGui().switchTo(i.getGui(), AnimationType.SLIDE_RIGHT, crateContentGui, new Tuple<>(i.getGui().getArg().a(), true));
     });
 
+    // Invoke itemeditor on this item
     fixedItem("33", i -> (
       new ItemStackBuilder(Material.ARROW)
         .withName(cfg.get(ConfigKey.GUI_CRATE_DETAIL_EDIT_NAME))

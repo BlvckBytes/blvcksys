@@ -36,6 +36,7 @@ public enum ConfigKey {
   //=========================================================================//
 
   CHATBUTTONS_EXPIRED("chatbuttons.expired", "$0Dieser Button ist bereits $4abgelaufen$0!"),
+  CHATBUTTONS_PROMPT_CANCELLED("chatbuttons.prompt.cancelled", "$0Du hast die Eingabeaufforderung $2abgebrochen$0."),
   CHATBUTTONS_YES("chatbuttons.yes", "$1[&aJa$1]"),
   CHATBUTTONS_NO("chatbuttons.no", "$1[&cNein$1]"),
   CHATBUTTONS_EDIT("chatbuttons.edit", "$1[&6Bearbeiten$1]"),
@@ -1172,6 +1173,7 @@ public enum ConfigKey {
   COMMAND_CRATE_MOVED("crate.moved", "$0Die Crate $3{{name}} $0wurde zu $3{{location}} $0bewegt."),
   COMMAND_CRATE_ITEM_ADDED("crate.item_added", "$0Das $3Item $0wurde mit einer Wahrscheinlichkeit von $3{{probability}}% $0zur Crate $3{{name}} $0hinzugefügt."),
   COMMAND_CRATE_ITEM_INVALID_PROBABILITY("crate.invalid_probability", "$0Die Wahrscheinlichkeit muss größer als $40% $0und kleiner als $4100% $0sein!"),
+  COMMAND_CRATE_ITEM_UPDATED_PROBABILITY("crate.updated_probability", "$0Die Wahrscheinlichkeit des Items $2{{item}} $0wurde auf $2{{probability}}% $0gesetzt."),
   COMMAND_CRATE_ITEM_UPDATED("crate.item_updated", "$0Das $3Item {{index}} $0der Crate $3{{name}} $0wurde geändert."),
   COMMAND_CRATE_INVALID_INDEX("crate.invalid_index", "$0Der Index $4{{index}} $0ist $4kein $0verfügbares Item!"),
   COMMAND_CRATE_ITEM_DISAPPEARED("crate.item_disappeared", "$0Das Item $4{{index}} $0wurde in der Zwischenzeit $4gelöscht$0!"),
@@ -1394,6 +1396,7 @@ public enum ConfigKey {
     "$0Ändere die $2Wahrscheinlichkeit $0dieses",
     "$0Item zu ziehen."
   ),
+  GUI_CRATE_DETAIL_PROBABILITY_PROMPT("gui.crate_detail.probability.prompt", "$0Bitte gib die neue $2Wahrscheinlichkeit $0in den $2Chat $0ein."),
   GUI_CRATE_DETAIL_DELETE_NAME("gui.crate_detail.delete.name", "$0» &cEntfernen $0«"),
   GUI_CRATE_DETAIL_DELETE_LORE(
     "gui.crate_detail.delete.lore",
@@ -1462,7 +1465,7 @@ public enum ConfigKey {
   ERR_INTERNAL("errors.internal", "$5Es trat ein interner Fehler auf!"),
   ERR_INTPARSE("errors.intparse", "$4Die Eingabe $5{{number}} $4ist keine Ganzzahl!"),
   ERR_UUIDPARSE("errors.uuidparse", "$4Die Eingabe $5{{uuid}} $4ist keine UUID!"),
-  ERR_FLOATPARSE("errors.floatparse", "$4Die Eingabe $5{{duration}} $4ist keine Kommazahl!"),
+  ERR_FLOATPARSE("errors.floatparse", "$4Die Eingabe $5{{number}} $4ist keine Kommazahl!"),
   ERR_DURATIONPARSE("errors.durationparse", "$4Die Eingabe $5{{number}} $4ist keine gültige Dauer (<Anzahl><y/m/w/d/h/m/s>!"),
   ERR_PERMISSION("errors.permission", "$4Dir fehlt das Recht $5{{permission}} $4um diesen Befehl ausführen zu können!"),
   ERR_OPTIONPARSE("errors.optionparse", "$4Die Eingabe $5{{option}} $4ist keine gültige Wahl!"),

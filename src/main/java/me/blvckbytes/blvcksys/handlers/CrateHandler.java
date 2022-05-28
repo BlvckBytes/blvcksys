@@ -38,8 +38,11 @@ import java.util.*;
 @AutoConstruct
 public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
 
+  private static final Random rand = new Random();
+
   private final Map<String, CrateModel> crateCache;
   private final Map<String, List<CrateItemModel>> itemsCache;
+  private final Map<String, Tuple<Double, List<Double>>> probabilityRanges;
 
   @AutoInjectLate
   private CrateDrawGui drawGui;
@@ -55,6 +58,7 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
     this.pers = pers;
     this.crateCache = new HashMap<>();
     this.itemsCache = new HashMap<>();
+    this.probabilityRanges = new HashMap<>();
   }
 
   //=========================================================================//
@@ -129,7 +133,6 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
     if (crate == null)
       return false;
 
-
     CrateItemModel itemModel = new CrateItemModel(crate.getId(), creator, item, probability);
     CrateItemModel.pushSequenceMember(itemModel, buildCrateItemsQuery(crate.getId()), pers);
 
@@ -137,6 +140,7 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
       itemsCache.put(crateName.toLowerCase(), new ArrayList<>());
     itemsCache.get(crateName.toLowerCase()).add(itemModel);
 
+    buildProbabilityRanges(crateName);
     return true;
   }
 
@@ -157,12 +161,19 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
   @Override
   public boolean deleteItem(CrateItemModel item) {
     itemsCache.values().forEach(items -> items.remove(item));
+    findCrateById(item.getCrateId()).ifPresent(crate -> buildProbabilityRanges(crate.getName()));
     return CrateItemModel.deleteSequenceMember(item, pers);
   }
 
   @Override
-  public Tuple<SequenceSortResult, Integer> sortItems(String crateName, int[] itemIdSequence) throws PersistenceException {
+  public boolean updateItem(CrateItemModel item) {
+    pers.store(item);
+    findCrateById(item.getCrateId()).ifPresent(crate -> buildProbabilityRanges(crate.getName()));
+    return true;
+  }
 
+  @Override
+  public Tuple<SequenceSortResult, Integer> sortItems(String crateName, int[] itemIdSequence) throws PersistenceException {
     CrateModel crate = getCrate(crateName).orElse(null);
     if (crate == null)
       return new Tuple<>(SequenceSortResult.MODEL_UNKNOWN, 0);
@@ -173,6 +184,23 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
       itemsCache.put(crateName.toLowerCase(), pers.find(buildCrateItemsQuery(crate.getId())));
 
     return res;
+  }
+
+  @Override
+  public Optional<CrateItemModel> drawItem(String crateName) {
+    List<CrateItemModel> items = itemsCache.get(crateName);
+    Tuple<Double, List<Double>> probData = probabilityRanges.get(crateName);
+
+    if (probData == null || items == null)
+      return Optional.empty();
+
+    double targetRange = rand.nextDouble() * probData.a();
+    for (int i = 0; i < probData.b().size(); i++) {
+      if (probData.b().get(i) >= targetRange)
+        return Optional.of(items.get(i));
+    }
+
+    return Optional.empty();
   }
 
   //=========================================================================//
@@ -215,6 +243,10 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
   //                                 Utilities                               //
   //=========================================================================//
 
+  /**
+   * Build a query to select a crate's items by their crate ID
+   * @param crateId ID of the target crate
+   */
   private QueryBuilder<CrateItemModel> buildCrateItemsQuery(UUID crateId) {
     return new QueryBuilder<>(
       CrateItemModel.class,
@@ -222,11 +254,42 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
     );
   }
 
+  /**
+   * Build a query to select a crate by it's name
+   * @param name Name of the target crate
+   */
   private QueryBuilder<CrateModel> buildCrateQuery(String name) {
     return new QueryBuilder<>(
       CrateModel.class,
       "name", EqualityOperation.EQ_IC, name
     );
+  }
+
+  /**
+   * Find a crate by it's ID within the cache
+   * @param id ID of the target crate
+   */
+  private Optional<CrateModel> findCrateById(UUID id) {
+    return crateCache.values().stream().filter(c -> c.getId().equals(id)).findFirst();
+  }
+
+  /**
+   * Build probability ranges for all items of the target crate
+   * @param name Name of the crate
+   */
+  private void buildProbabilityRanges(String name) {
+    List<CrateItemModel> items = itemsCache.get(name.toLowerCase());
+    if (items == null)
+      return;
+
+    List<Double> ranges = new ArrayList<>();
+    double accumulator = 0;
+    for (CrateItemModel item : items) {
+      accumulator += item.getProbability();
+      ranges.add(accumulator);
+    }
+
+    probabilityRanges.put(name.toLowerCase(), new Tuple<>(accumulator, ranges));
   }
 
   @Override
@@ -237,5 +300,6 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
     // Load all creates and all items on start
     pers.list(CrateModel.class).forEach(crate -> crateCache.put(crate.getName().toLowerCase(), crate));
     crateCache.keySet().forEach(this::getItems);
+    crateCache.keySet().forEach(this::buildProbabilityRanges);
   }
 }

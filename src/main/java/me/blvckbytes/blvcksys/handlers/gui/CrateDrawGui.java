@@ -5,7 +5,7 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
-import me.blvckbytes.blvcksys.handlers.CrateHandler;
+import me.blvckbytes.blvcksys.handlers.ICrateHandler;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.persistence.models.CrateItemModel;
 import me.blvckbytes.blvcksys.persistence.models.CrateModel;
@@ -37,7 +37,7 @@ public class CrateDrawGui extends AGui<CrateModel> {
 
   private static final Random rand = new Random();
 
-  private final CrateHandler crateHandler;
+  private final ICrateHandler crateHandler;
   private final CrateContentGui crateContentGui;
   private final IGiveCommand give;
 
@@ -45,7 +45,7 @@ public class CrateDrawGui extends AGui<CrateModel> {
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
     @AutoInject IPlayerTextureHandler textures,
-    @AutoInject CrateHandler crateHandler,
+    @AutoInject ICrateHandler crateHandler,
     @AutoInject CrateContentGui crateContentGui,
     @AutoInject IGiveCommand give
   ) {
@@ -95,8 +95,8 @@ public class CrateDrawGui extends AGui<CrateModel> {
 
     Tuple<List<ItemStack>, CrateItemModel> loopData = createItemLoop(crate, itemModels, animSlots.size(), relOut);
 
-    // The layout specified an invalid output slot
-    if (relOut < 0) {
+    // The layout specified an invalid output slot or the item could not be drawn
+    if (relOut < 0 || loopData == null) {
       viewer.closeInventory();
       viewer.sendMessage(
         cfg.get(ConfigKey.GUI_CRATE_DRAW_NO_ITEMS)
@@ -185,17 +185,6 @@ public class CrateDrawGui extends AGui<CrateModel> {
   }
 
   /**
-   * Chooses a prize within the list of available items based on the
-   * probability of the item itself
-   * @param items List of available items
-   * @return Chosen prize
-   */
-  private CrateItemModel choosePrize(List<CrateItemModel> items) {
-    // TODO: Implement proper choices
-    return items.get(rand.nextInt(items.size()));
-  }
-
-  /**
    * Create the loop of items which is to be animated within the GUI by cloning the available
    * list of items until there are enough total items to take up all available slots. While creating
    * this list, the price is chosen internally and the final randomized loop is rotated in a way that
@@ -210,8 +199,11 @@ public class CrateDrawGui extends AGui<CrateModel> {
       .map(model -> crateContentGui.appendDecoration(crate, model))
       .toList();
 
-    // Choose a prize and get it's corresponding transformed item
-    CrateItemModel prize = choosePrize(itemModels);
+    CrateItemModel prize = crateHandler.drawItem(crate.getName()).orElse(null);
+    if (prize == null)
+      return null;
+
+    // Get the prize's corresponding transformed item
     ItemStack prizeItem = items.get(itemModels.indexOf(prize));
 
     // Make sure there are enough items in the loop to wrap once

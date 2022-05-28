@@ -84,6 +84,12 @@ public interface ICrateHandler {
   boolean deleteItem(CrateItemModel item);
 
   /**
+   * Update a crate item by reference
+   * @param item Item to update
+   */
+  boolean updateItem(CrateItemModel item);
+
+  /**
    * Sort all items of an existing crate to the sequence of the
    * provided item IDs, where 0 is the first item and n is the last
    * item, handled as currently stored in persistence. All n IDs
@@ -93,4 +99,6 @@ public interface ICrateHandler {
    * @return Zero on success, number of missing IDs when missing IDs
    */
   Tuple<SequenceSortResult, Integer> sortItems(String crateName, int[] lineIdSequence) throws PersistenceException;
+
+  Optional<CrateItemModel> drawItem(String crateName);
 }

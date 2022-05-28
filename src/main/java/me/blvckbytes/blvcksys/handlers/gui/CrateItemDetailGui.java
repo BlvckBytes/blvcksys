@@ -93,10 +93,10 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
             // Set and update the value before re-opening the gui
             else {
               item.setProbability(probability);
-              pers.store(item);
+              boolean res = crateHandler.updateItem(item);
 
               p.sendMessage(
-                cfg.get(ConfigKey.COMMAND_CRATE_ITEM_UPDATED_PROBABILITY)
+                cfg.get(res ? ConfigKey.COMMAND_CRATE_ITEM_UPDATED_PROBABILITY : ConfigKey.COMMAND_CRATE_ITEM_DISAPPEARED)
                   .withPrefix()
                   .withVariable("item", crateContentGui.getItemName(item))
                   .withVariable("probability", Math.round(probability * 100F) / 100F)

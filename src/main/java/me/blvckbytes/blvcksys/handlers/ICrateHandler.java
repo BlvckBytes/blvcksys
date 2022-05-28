@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.handlers;
 
+import me.blvckbytes.blvcksys.handlers.gui.CrateDrawLayout;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.CrateItemModel;
 import me.blvckbytes.blvcksys.persistence.models.CrateModel;
@@ -19,10 +20,9 @@ public interface ICrateHandler {
    * Creates a new empty crate
    * @param creator Creating player
    * @param name Name of the crate
-   * @param loc Location of the crate, optional
    * @return True on success, false if a crate with this name already existed
    */
-  boolean createCrate(Player creator, String name, @Nullable Location loc);
+  boolean createCrate(Player creator, String name);
 
   /**
    * Delete a crate by it's name
@@ -38,6 +38,14 @@ public interface ICrateHandler {
    * @return True on success, false if there was no crate with this name
    */
   boolean moveCrate(String name, @Nullable Location loc);
+
+  /**
+   * Change a crate's drawing layout
+   * @param name Name of the crate
+   * @param layout Layout to use when drawing
+   * @return True on success, false if there was no crate with this name
+   */
+  boolean setCrateLayout(String name, @Nullable CrateDrawLayout layout);
 
   /**
    * Get a crate by it's name

@@ -10,6 +10,7 @@ import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.ICrateHandler;
 import me.blvckbytes.blvcksys.handlers.gui.AnimationType;
 import me.blvckbytes.blvcksys.handlers.gui.CrateContentGui;
+import me.blvckbytes.blvcksys.handlers.gui.CrateDrawLayout;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.CrateModel;
 import me.blvckbytes.blvcksys.util.MCReflect;
@@ -40,7 +41,8 @@ public class CrateCommand extends APlayerCommand {
     DELETE,
     ADDITEM,
     LISTITEMS,
-    SETCHEST
+    SETCHEST,
+    SETLAYOUT
   }
 
   private final CrateContentGui crateContentGui;
@@ -65,7 +67,7 @@ public class CrateCommand extends APlayerCommand {
       PlayerPermission.COMMAND_CRATE,
       new CommandArgument("<name>", "Name of the crate"),
       new CommandArgument("<action>", "Action to perform"),
-      new CommandArgument("[probability]", "Probability of the new item")
+      new CommandArgument("[value]", "Value to set")
     );
 
     this.crateHandler = crateHandler;
@@ -87,8 +89,11 @@ public class CrateCommand extends APlayerCommand {
     if (currArg == 1)
       return suggestEnum(args, currArg, CrateAction.class);
 
-    if (currArg == 2)
+    if (currArg == 2) {
+      if (args[1].equalsIgnoreCase(CrateAction.SETLAYOUT.name()))
+        return suggestEnum(args, currArg, CrateDrawLayout.class);
       return Stream.of(getArgumentPlaceholder(currArg));
+    }
 
     return super.onTabCompletion(p, args, currArg);
   }
@@ -99,7 +104,7 @@ public class CrateCommand extends APlayerCommand {
     CrateAction action = parseEnum(CrateAction.class, args, 1, null);
 
     if (action == CrateAction.CREATE) {
-      if (crateHandler.createCrate(p, name, null)) {
+      if (crateHandler.createCrate(p, name)) {
         p.sendMessage(
           cfg.get(ConfigKey.COMMAND_CRATE_CREATED)
             .withPrefix()
@@ -124,6 +129,28 @@ public class CrateCommand extends APlayerCommand {
           cfg.get(ConfigKey.COMMAND_CRATE_DELETED)
             .withPrefix()
             .withVariable("name", name)
+            .asScalar()
+        );
+        return;
+      }
+
+      p.sendMessage(
+        cfg.get(ConfigKey.COMMAND_CRATE_NOT_EXISTING)
+          .withPrefix()
+          .withVariable("name", name)
+          .asScalar()
+      );
+      return;
+    }
+
+    if (action == CrateAction.SETLAYOUT) {
+      CrateDrawLayout layout = parseEnum(CrateDrawLayout.class, args, 2, null);
+      if (crateHandler.setCrateLayout(name, layout)) {
+        p.sendMessage(
+          cfg.get(ConfigKey.COMMAND_CRATE_LAYOUT_SET)
+            .withPrefix()
+            .withVariable("name", name)
+            .withVariable("layout", layout.name())
             .asScalar()
         );
         return;

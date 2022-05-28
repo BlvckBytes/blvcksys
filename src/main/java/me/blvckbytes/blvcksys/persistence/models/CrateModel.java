@@ -1,6 +1,8 @@
 package me.blvckbytes.blvcksys.persistence.models;
 
 import lombok.*;
+import me.blvckbytes.blvcksys.handlers.gui.CrateDrawLayout;
+import me.blvckbytes.blvcksys.persistence.MigrationDefault;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
@@ -25,5 +27,8 @@ public class CrateModel extends APersistentModel {
 
   @ModelProperty(isNullable = true)
   private Location loc;
+
+  @ModelProperty(migrationDefault = MigrationDefault.NULL, isNullable = true)
+  private CrateDrawLayout layout;
 
 }

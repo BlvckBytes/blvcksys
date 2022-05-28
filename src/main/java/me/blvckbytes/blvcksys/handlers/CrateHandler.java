@@ -7,6 +7,7 @@ import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.handlers.gui.AnimationType;
 import me.blvckbytes.blvcksys.handlers.gui.CrateContentGui;
 import me.blvckbytes.blvcksys.handlers.gui.CrateDrawGui;
+import me.blvckbytes.blvcksys.handlers.gui.CrateDrawLayout;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.exceptions.DuplicatePropertyException;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
@@ -61,9 +62,9 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
   //=========================================================================//
 
   @Override
-  public boolean createCrate(Player creator, String name, @Nullable Location loc) {
+  public boolean createCrate(Player creator, String name) {
     try {
-      CrateModel crate = new CrateModel(creator, name, loc);
+      CrateModel crate = new CrateModel(creator, name, null, null);
       pers.store(crate);
       crateCache.put(name.toLowerCase(), crate);
       return true;
@@ -86,6 +87,18 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
       return false;
 
     crate.setLoc(loc);
+    pers.store(crate);
+    return true;
+  }
+
+  @Override
+  public boolean setCrateLayout(String name, @Nullable CrateDrawLayout layout) {
+    CrateModel crate = getCrate(name).orElse(null);
+
+    if (crate == null)
+      return false;
+
+    crate.setLayout(layout);
     pers.store(crate);
     return true;
   }

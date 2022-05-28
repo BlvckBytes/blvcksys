@@ -51,7 +51,7 @@ public class CrateContentGui extends AGui<Tuple<CrateModel, Boolean>> {
   @Override
   protected void prepare() {
     addBorder(Material.BLACK_STAINED_GLASS_PANE);
-    addPagination("46", "49", "52");
+    addPagination(46, 49, 52);
   }
 
   @Override

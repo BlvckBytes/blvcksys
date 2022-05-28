@@ -55,13 +55,13 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
     addFill(Material.BLACK_STAINED_GLASS_PANE);
     fixedItem("12,14,22", i -> new ItemStackBuilder(Material.PURPLE_STAINED_GLASS_PANE).build(), null);
 
-    addBack("45", crateContentGui, i -> new Tuple<>(i.getArg().a(), true), AnimationType.SLIDE_RIGHT);
+    addBack(45, crateContentGui, i -> new Tuple<>(i.getArg().a(), true), AnimationType.SLIDE_RIGHT);
 
     // Selected item showcase
-    fixedItem("13", i -> crateContentGui.appendDecoration(i.getArg().a(), i.getArg().b()), null);
+    fixedItem(13, i -> crateContentGui.appendDecoration(i.getArg().a(), i.getArg().b()), null);
 
     // Probability change
-    fixedItem("29", i -> (
+    fixedItem(29, i -> (
       new ItemStackBuilder(Material.GOLD_INGOT)
         .withName(cfg.get(ConfigKey.GUI_CRATE_DETAIL_PROBABILITY_NAME))
         .withLore(cfg.get(ConfigKey.GUI_CRATE_DETAIL_PROBABILITY_LORE))
@@ -124,7 +124,7 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
     });
 
     // Delete button
-    fixedItem("40", i -> (
+    fixedItem(40, i -> (
       new ItemStackBuilder(Material.BARRIER)
         .withName(cfg.get(ConfigKey.GUI_CRATE_DETAIL_DELETE_NAME))
         .withLore(cfg.get(ConfigKey.GUI_CRATE_DETAIL_DELETE_LORE))
@@ -144,7 +144,7 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
     });
 
     // Invoke itemeditor on this item
-    fixedItem("33", i -> (
+    fixedItem(33, i -> (
       new ItemStackBuilder(Material.ARROW)
         .withName(cfg.get(ConfigKey.GUI_CRATE_DETAIL_EDIT_NAME))
         .withLore(cfg.get(ConfigKey.GUI_CRATE_DETAIL_EDIT_LORE))

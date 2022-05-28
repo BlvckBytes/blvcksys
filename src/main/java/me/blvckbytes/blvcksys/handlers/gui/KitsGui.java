@@ -72,16 +72,13 @@ public class KitsGui extends AGui<Object> implements Listener {
   }
 
   @Override
-  protected void prepare() {
-    addBorder(Material.BLACK_STAINED_GLASS_PANE);
-    addPagination(37, 40, 43);
-  }
-
-  @Override
   protected void closed(GuiInstance<Object> inst) {}
 
   @Override
   protected void opening(Player viewer, GuiInstance<Object> inst) {
+    inst.addBorder(Material.BLACK_STAINED_GLASS_PANE);
+    inst.addPagination(37, 40, 43);
+
     List<KitModel> kits = pers.list(KitModel.class);
 
     // Create the cooldown map initially

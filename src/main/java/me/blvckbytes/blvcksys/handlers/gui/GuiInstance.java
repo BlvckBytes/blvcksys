@@ -2,7 +2,12 @@ package me.blvckbytes.blvcksys.handlers.gui;
 
 import lombok.Getter;
 import lombok.Setter;
+import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
+import me.blvckbytes.blvcksys.util.SymbolicHead;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -11,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -32,9 +38,12 @@ public class GuiInstance<T> {
   @Getter
   private final T arg;
 
-  // A list of pages, where each page maps a used page slot to an item
+  // Items which are on fixed slots
   private final Map<Integer, GuiItem<T>> fixedItems;
+
+  // A list of pages, where each page maps a used page slot to an item
   private final List<Map<Integer, GuiItem<T>>> pages;
+
   private int currPage;
   private GuiAnimation currAnimation;
 
@@ -45,6 +54,8 @@ public class GuiInstance<T> {
 
   @Getter
   private final AGui<T> template;
+  private final IPlayerTextureHandler textures;
+  private final IConfig cfg;
 
   @Getter
   private final AtomicBoolean animating;
@@ -54,15 +65,19 @@ public class GuiInstance<T> {
    * @param viewer Viewer of this instance
    * @param template Template instance
    * @param arg Argument of this instance
+   * @param textures Texture handler ref
+   * @param cfg Config ref
    * @param plugin JavaPlugin ref
    */
-  public GuiInstance(Player viewer, AGui<T> template, T arg, JavaPlugin plugin) {
+  public GuiInstance(Player viewer, AGui<T> template, T arg, IPlayerTextureHandler textures, IConfig cfg, JavaPlugin plugin) {
     this.viewer = viewer;
     this.template = template;
     this.arg = arg;
     this.plugin = plugin;
+    this.cfg = cfg;
+    this.textures = textures;
 
-    this.fixedItems = new HashMap<>(template.getFixedItems());
+    this.fixedItems = new HashMap<>();
     this.pages = new ArrayList<>();
     this.animating = new AtomicBoolean(false);
 
@@ -237,6 +252,142 @@ public class GuiInstance<T> {
     @Nullable Consumer<GuiClickEvent<T>> onClick
   ) {
     fixedItem(slotExpr, item, onClick, null);
+  }
+
+  /**
+   * Adds a previous, an indicator as well as a next item as fixed and
+   * standardized items to the GUI
+   * @param prevSlot Slot of the previous button
+   * @param indicatorSlot Slot of the page indicator
+   * @param nextSlot Slot of the next button
+   */
+  protected void addPagination(int prevSlot, int indicatorSlot, int nextSlot) {
+    fixedItem(prevSlot, g -> (
+      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner()))
+        .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_NAME))
+        .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_LORE))
+        .build()
+    ), e -> {
+      e.getGui().previousPage(AnimationType.SLIDE_RIGHT);
+      e.getGui().redraw(String.valueOf(indicatorSlot));
+    }, null);
+
+    fixedItem(indicatorSlot, g -> (
+      new ItemStackBuilder(Material.PAPER)
+        .withName(
+          cfg.get(ConfigKey.GUI_GENERICS_PAGING_INDICATOR_NAME)
+            .withVariable("curr_page", g.getCurrentPage())
+            .withVariable("num_pages", g.getNumPages())
+        )
+        .withLore(
+          cfg.get(ConfigKey.GUI_GENERICS_PAGING_INDICATOR_LORE)
+            .withVariable("num_items", g.getCurrPageNumItems())
+            .withVariable("max_items", g.getPageSize())
+        )
+        .build()
+    ), null, null);
+
+    fixedItem(nextSlot, g -> (
+      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_RIGHT.getOwner()))
+        .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_NAME))
+        .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_LORE))
+        .build()
+    ), e -> {
+      e.getGui().nextPage(AnimationType.SLIDE_LEFT);
+      e.getGui().redraw(String.valueOf(indicatorSlot));
+    }, null);
+  }
+
+  /**
+   * Add a standardized state toggle button to the GUI
+   * @param slot Where to set the item
+   * @param update What slots to update separately when the state changed
+   * @param state State supplier
+   * @param onClick Click event, providing the current state and the player
+   */
+  protected void addStateToggle(int slot, @Nullable Integer update, Function<GuiInstance<T>, Boolean> state, BiConsumer<Boolean, GuiInstance<T>> onClick) {
+    fixedItem(slot, i -> {
+      boolean s = state.apply(i);
+
+      return new ItemStackBuilder(s ? Material.GREEN_DYE : Material.RED_DYE)
+        .withName(cfg.get(s ? ConfigKey.GUI_GENERICS_BUTTONS_DISABLE_NAME : ConfigKey.GUI_GENERICS_BUTTONS_ENABLE_NAME))
+        .withLore(cfg.get(s ? ConfigKey.GUI_GENERICS_BUTTONS_DISABLE_LORE : ConfigKey.GUI_GENERICS_BUTTONS_ENABLE_LORE))
+        .build();
+    }, e -> {
+      onClick.accept(state.apply(e.getGui()), e.getGui());
+      e.getGui().redraw(slot + "," + (update == null ? "" : update));
+    }, null);
+  }
+
+  /**
+   * Get the standardized state placeholder based on a state
+   * @param state State
+   * @return State placeholder
+   */
+  protected String statePlaceholder(boolean state) {
+    return cfg.get(state ? ConfigKey.GUI_GENERICS_PLACEHOLDERS_ENABLED : ConfigKey.GUI_GENERICS_PLACEHOLDERS_DISABLED).asScalar();
+  }
+
+  /**
+   * Adds a fill of fixed items consiting of the provided material to the GUI
+   * @param mat Material to use to fill
+   */
+  protected void addFill(Material mat) {
+    StringBuilder slotExpr = new StringBuilder();
+
+    for (int i = 0; i < template.getRows() * 9; i++) {
+      if (template.getPageSlots().contains(i))
+        continue;
+
+      slotExpr.append(i == 0 ? "" : ",").append(i);
+    }
+
+    fixedItem(slotExpr.toString(), g -> new ItemStackBuilder(mat).build(), null, null);
+  }
+
+  /**
+   * Adds a border of fixed items consiting of the provided material to the GUI
+   * @param mat Material to use as a border
+   */
+  protected void addBorder(Material mat) {
+    StringBuilder slotExpr = new StringBuilder();
+
+    for (int i = 0; i < template.getRows(); i++) {
+      int firstSlot = 9 * i, lastSlot = firstSlot + 8;
+
+      slotExpr.append(i == 0 ? "" : ",").append(firstSlot);
+
+      // First or last, use full range
+      if (i == 0 || i == template.getRows() - 1)
+        slotExpr.append('-');
+
+        // Inbetween, only use first and last
+      else
+        slotExpr.append(',');
+
+      slotExpr.append(lastSlot);
+    }
+
+    fixedItem(slotExpr.toString(), g -> (
+      new ItemStackBuilder(mat)
+        .build()
+    ), null, null);
+  }
+
+  /**
+   * Adds a back button as a fixed item to the GUI
+   * @param slot Slot of the back button
+   * @param gui Gui to open on click
+   * @param param Gui parameter
+   * @param animation Animation to use when navigating back
+   */
+  protected<A> void addBack(int slot, AGui<A> gui, Function<GuiInstance<T>, A> param, @Nullable AnimationType animation) {
+    fixedItem(slot, g -> (
+      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner()))
+        .withName(cfg.get(ConfigKey.GUI_GENERICS_NAV_BACK_NAME))
+        .withLore(cfg.get(ConfigKey.GUI_GENERICS_NAV_BACK_LORE))
+        .build()
+    ), e -> e.getGui().switchTo(e.getGui(), animation, gui, param == null ? null : param.apply(e.getGui())), null);
   }
 
   /**

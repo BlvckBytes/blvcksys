@@ -40,20 +40,24 @@ public class PreferencesGui extends AGui<Object> {
   }
 
   @Override
-  protected void prepare() {
-    addFill(Material.BLACK_STAINED_GLASS_PANE);
+  protected void closed(GuiInstance<Object> inst) {
+  }
 
-    fixedItem(11, i -> (
+  @Override
+  protected void opening(Player viewer, GuiInstance<Object> inst) {
+    inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
+
+    inst.fixedItem(11, i -> (
       new ItemStackBuilder(Material.NAME_TAG)
         .withName(cfg.get(ConfigKey.GUI_PREFERENCES_MSG_NAME))
         .withLore(
           cfg.get(ConfigKey.GUI_PREFERENCES_MSG_LORE)
-            .withVariable("state", statePlaceholder(!prefs.isMsgDisabled(i.getViewer())))
+            .withVariable("state", inst.statePlaceholder(!prefs.isMsgDisabled(i.getViewer())))
         )
         .build()
     ), null);
 
-    fixedItem(13, i -> (
+    inst.fixedItem(13, i -> (
       new ItemStackBuilder(Material.PAPER)
         .withName(cfg.get(ConfigKey.GUI_PREFERENCES_CHAT_NAME))
         .withLore(
@@ -63,7 +67,7 @@ public class PreferencesGui extends AGui<Object> {
         .build()
     ), null);
 
-    fixedItem(15, i -> (
+    inst.fixedItem(15, i -> (
       new ItemStackBuilder(Material.LADDER)
         .withName(cfg.get(ConfigKey.GUI_PREFERENCES_SCOREBOARD_NAME))
         .withLore(
@@ -73,15 +77,8 @@ public class PreferencesGui extends AGui<Object> {
         .build()
     ), null);
 
-    addStateToggle(20, 11, i -> !prefs.isMsgDisabled(i.getViewer()), (s, i) -> prefs.setMsgDisabled(i.getViewer(), s));
-    addStateToggle(22, 13, i -> !prefs.isChatHidden(i.getViewer()), (s, i) -> prefs.setChatHidden(i.getViewer(), s));
-    addStateToggle(24, 15, i -> obj.getSidebarVisibility(i.getViewer()), (s, i) -> obj.setSidebarVisibility(i.getViewer(), !s));
+    inst.addStateToggle(20, 11, i -> !prefs.isMsgDisabled(i.getViewer()), (s, i) -> prefs.setMsgDisabled(i.getViewer(), s));
+    inst.addStateToggle(22, 13, i -> !prefs.isChatHidden(i.getViewer()), (s, i) -> prefs.setChatHidden(i.getViewer(), s));
+    inst.addStateToggle(24, 15, i -> obj.getSidebarVisibility(i.getViewer()), (s, i) -> obj.setSidebarVisibility(i.getViewer(), !s));
   }
-
-  @Override
-  protected void closed(GuiInstance<Object> inst) {
-  }
-
-  @Override
-  protected void opening(Player viewer, GuiInstance<Object> inst) {}
 }

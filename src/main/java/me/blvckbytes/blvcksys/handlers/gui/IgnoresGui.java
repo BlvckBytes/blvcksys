@@ -42,17 +42,13 @@ public class IgnoresGui extends AGui<Object> {
   }
 
   @Override
-  protected void prepare() {
-    addFill(Material.BLACK_STAINED_GLASS_PANE);
-    addPagination(28, 31, 34);
-  }
-
-  @Override
-  protected void closed(GuiInstance<Object> inst) {
-  }
+  protected void closed(GuiInstance<Object> inst) {}
 
   @Override
   protected void opening(Player viewer, GuiInstance<Object> inst) {
+    inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
+    inst.addPagination(28, 31, 34);
+
     List<PlayerIgnoreModel> active = ignore.listActiveIgnores(viewer);
 
     if (active.size() == 0) {
@@ -75,8 +71,8 @@ public class IgnoresGui extends AGui<Object> {
           )
           .withLore(
             cfg.get(ConfigKey.GUI_IGNORES_PLAYER_LORE)
-              .withVariable("msg_state", statePlaceholder(ignore.isIgnoresMsg()))
-              .withVariable("chat_state", statePlaceholder(ignore.isIgnoresChat()))
+              .withVariable("msg_state", inst.statePlaceholder(ignore.isIgnoresMsg()))
+              .withVariable("chat_state", inst.statePlaceholder(ignore.isIgnoresChat()))
           )
           .build()
       ), e -> e.getGui().switchTo(e.getGui(), AnimationType.SLIDE_LEFT, ignoreDetailGui, ignore.getTarget()), null);

@@ -68,12 +68,6 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
   }
 
   @Override
-  protected void prepare() {
-    fixedItem("45,47,48,50,51,53", i -> new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build(), null);
-    addPagination(46, 49, 52);
-  }
-
-  @Override
   protected void closed(GuiInstance<OfflinePlayer> inst) {
     EnderchestInstance chestInst = cache.get(inst.getArg());
 
@@ -102,6 +96,9 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
 
   @Override
   protected void opening(Player viewer, GuiInstance<OfflinePlayer> inst) {
+    inst.fixedItem("45,47,48,50,51,53", i -> new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build(), null);
+    inst.addPagination(46, 49, 52);
+
     EnderchestInstance chestInst = getOrCreate(inst.getArg());
     EnderchestModel model = chestInst.getModel();
 

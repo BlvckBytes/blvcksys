@@ -1,28 +1,22 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import lombok.Getter;
-import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.events.InventoryManipulationEvent;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
-import me.blvckbytes.blvcksys.util.SymbolicHead;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.IntStream;
 
@@ -48,10 +42,6 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
 
   @Getter
   private final int rows;
-
-  // Mapping slots to their corresponding fixed item
-  @Getter
-  private final Map<Integer, GuiItem<T>> fixedItems;
 
   // Set of slots which are reserved for pages (items may differ for every session)
   @Getter
@@ -79,7 +69,6 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     this.textures = textures;
 
     this.pageSlots = slotExprToSlots(pageSlotExpr);
-    this.fixedItems = new HashMap<>();
     this.activeInstances = new HashMap<>();
     this.tickerHandle = -1;
   }
@@ -105,7 +94,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
       activeInstances.put(viewer, new ArrayList<>());
 
     // Create and register a new GUI instance
-    GuiInstance<T> inst = new GuiInstance<>(viewer, this, arg, plugin);
+    GuiInstance<T> inst = new GuiInstance<>(viewer, this, arg, textures, cfg, plugin);
     activeInstances.get(viewer).add(inst);
 
     // Call the opening event before actually opening
@@ -166,8 +155,6 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
         time++;
       }
     }, 0L, 1L);
-
-    prepare();
   }
 
   //=========================================================================//
@@ -186,214 +173,6 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
    * @param inst Instance of the GUI opening
    */
   abstract protected void opening(Player viewer, GuiInstance<T> inst);
-
-  /**
-   * Called right after autoconstruction is complete and
-   * is ment to prepare all fixed items within the GUI
-   */
-  abstract protected void prepare();
-
-
-  /**
-   * Add a fixed item, which is an item that will always have the same position,
-   * no matter of the viewer's state
-   * @param slot Slot to set this item to
-   * @param item An item supplier which provides the viewer's instance
-   * @param onClick Action to run when this item has been clicked
-   */
-  protected void fixedItem(
-    int slot,
-    Function<GuiInstance<T>, ItemStack> item,
-    @Nullable Consumer<GuiClickEvent<T>> onClick
-  ) {
-    fixedItem(String.valueOf(slot), item, onClick, null);
-  }
-
-  /**
-   * Add a fixed item, which is an item that will always have the same position,
-   * no matter of the viewer's state
-   * @param slot Slot to set this item to
-   * @param item An item supplier which provides the viewer's instance
-   * @param onClick Action to run when this item has been clicked
-   * @param updatePeriod Item update period in ticks, null means never
-   */
-  protected void fixedItem(
-    int slot,
-    Function<GuiInstance<T>, ItemStack> item,
-    @Nullable Consumer<GuiClickEvent<T>> onClick,
-    Integer updatePeriod
-  ) {
-    fixedItem(String.valueOf(slot), item, onClick, updatePeriod);
-  }
-
-  /**
-   * Add a fixed item, which is an item that will always have the same position,
-   * no matter of the viewer's state
-   * @param slotExpr Slot(s) to set this item to
-   * @param item An item supplier which provides the viewer's instance
-   * @param onClick Action to run when this item has been clicked
-   * @param updatePeriod Item update period in ticks, null means never
-   */
-  protected void fixedItem(
-    String slotExpr,
-    Function<GuiInstance<T>, ItemStack> item,
-    @Nullable Consumer<GuiClickEvent<T>> onClick,
-    Integer updatePeriod
-  ) {
-    for (int slotNumber : slotExprToSlots(slotExpr))
-      fixedItems.put(slotNumber, new GuiItem<>((i, s) -> item.apply(i), onClick, updatePeriod));
-  }
-
-  /**
-   * Add a fixed item, which is an item that will always have the same position,
-   * no matter of the viewer's state
-   * @param slotExpr Slot(s) to set this item to
-   * @param item An item supplier which provides the viewer's instance
-   * @param onClick Action to run when this item has been clicked
-   */
-  protected void fixedItem(
-    String slotExpr,
-    Function<GuiInstance<T>, ItemStack> item,
-    @Nullable Consumer<GuiClickEvent<T>> onClick
-  ) {
-    fixedItem(slotExpr, item, onClick, null);
-  }
-
-  /**
-   * Adds a previous, an indicator as well as a next item as fixed and
-   * standardized items to the GUI
-   * @param prevSlot Slot of the previous button
-   * @param indicatorSlot Slot of the page indicator
-   * @param nextSlot Slot of the next button
-   */
-  protected void addPagination(int prevSlot, int indicatorSlot, int nextSlot) {
-    fixedItem(prevSlot, g -> (
-      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner()))
-        .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_NAME))
-        .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_LORE))
-        .build()
-    ), e -> {
-      e.getGui().previousPage(AnimationType.SLIDE_RIGHT);
-      e.getGui().redraw(String.valueOf(indicatorSlot));
-    }, null);
-
-    fixedItem(indicatorSlot, g -> (
-      new ItemStackBuilder(Material.PAPER)
-        .withName(
-          cfg.get(ConfigKey.GUI_GENERICS_PAGING_INDICATOR_NAME)
-            .withVariable("curr_page", g.getCurrentPage())
-            .withVariable("num_pages", g.getNumPages())
-        )
-        .withLore(
-          cfg.get(ConfigKey.GUI_GENERICS_PAGING_INDICATOR_LORE)
-            .withVariable("num_items", g.getCurrPageNumItems())
-            .withVariable("max_items", g.getPageSize())
-        )
-        .build()
-    ), null, null);
-
-    fixedItem(nextSlot, g -> (
-      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_RIGHT.getOwner()))
-        .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_NAME))
-        .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_LORE))
-        .build()
-    ), e -> {
-      e.getGui().nextPage(AnimationType.SLIDE_LEFT);
-      e.getGui().redraw(String.valueOf(indicatorSlot));
-    }, null);
-  }
-
-  /**
-   * Add a standardized state toggle button to the GUI
-   * @param slot Where to set the item
-   * @param update What slots to update separately when the state changed
-   * @param state State supplier
-   * @param onClick Click event, providing the current state and the player
-   */
-  protected void addStateToggle(int slot, @Nullable Integer update, Function<GuiInstance<T>, Boolean> state, BiConsumer<Boolean, GuiInstance<T>> onClick) {
-    fixedItem(slot, i -> {
-      boolean s = state.apply(i);
-
-      return new ItemStackBuilder(s ? Material.GREEN_DYE : Material.RED_DYE)
-        .withName(cfg.get(s ? ConfigKey.GUI_GENERICS_BUTTONS_DISABLE_NAME : ConfigKey.GUI_GENERICS_BUTTONS_ENABLE_NAME))
-        .withLore(cfg.get(s ? ConfigKey.GUI_GENERICS_BUTTONS_DISABLE_LORE : ConfigKey.GUI_GENERICS_BUTTONS_ENABLE_LORE))
-        .build();
-    }, e -> {
-      onClick.accept(state.apply(e.getGui()), e.getGui());
-      e.getGui().redraw(slot + "," + (update == null ? "" : update));
-    }, null);
-  }
-
-  /**
-   * Get the standardized state placeholder based on a state
-   * @param state State
-   * @return State placeholder
-   */
-  protected String statePlaceholder(boolean state) {
-    return cfg.get(state ? ConfigKey.GUI_GENERICS_PLACEHOLDERS_ENABLED : ConfigKey.GUI_GENERICS_PLACEHOLDERS_DISABLED).asScalar();
-  }
-
-  /**
-   * Adds a fill of fixed items consiting of the provided material to the GUI
-   * @param mat Material to use to fill
-   */
-  protected void addFill(Material mat) {
-    StringBuilder slotExpr = new StringBuilder();
-
-    for (int i = 0; i < rows * 9; i++) {
-      if (pageSlots.contains(i))
-        continue;
-
-      slotExpr.append(i == 0 ? "" : ",").append(i);
-    }
-
-    fixedItem(slotExpr.toString(), g -> new ItemStackBuilder(mat).build(), null, null);
-  }
-
-  /**
-   * Adds a border of fixed items consiting of the provided material to the GUI
-   * @param mat Material to use as a border
-   */
-  protected void addBorder(Material mat) {
-    StringBuilder slotExpr = new StringBuilder();
-
-    for (int i = 0; i < rows; i++) {
-      int firstSlot = 9 * i, lastSlot = firstSlot + 8;
-
-      slotExpr.append(i == 0 ? "" : ",").append(firstSlot);
-
-      // First or last, use full range
-      if (i == 0 || i == rows - 1)
-        slotExpr.append('-');
-
-      // Inbetween, only use first and last
-      else
-        slotExpr.append(',');
-
-      slotExpr.append(lastSlot);
-    }
-
-    fixedItem(slotExpr.toString(), g -> (
-      new ItemStackBuilder(mat)
-        .build()
-    ), null, null);
-  }
-
-  /**
-   * Adds a back button as a fixed item to the GUI
-   * @param slot Slot of the back button
-   * @param gui Gui to open on click
-   * @param param Gui parameter
-   * @param animation Animation to use when navigating back
-   */
-  protected<A> void addBack(int slot, AGui<A> gui, Function<GuiInstance<T>, A> param, @Nullable AnimationType animation) {
-    fixedItem(slot, g -> (
-      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner()))
-        .withName(cfg.get(ConfigKey.GUI_GENERICS_NAV_BACK_NAME))
-        .withLore(cfg.get(ConfigKey.GUI_GENERICS_NAV_BACK_LORE))
-        .build()
-    ), e -> e.getGui().switchTo(e.getGui(), animation, gui, param == null ? null : param.apply(e.getGui())), null);
-  }
 
   //=========================================================================//
   //                                Listener                                 //

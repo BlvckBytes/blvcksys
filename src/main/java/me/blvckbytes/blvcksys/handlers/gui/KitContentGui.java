@@ -39,16 +39,13 @@ public class KitContentGui extends AGui<KitModel> {
   }
 
   @Override
-  protected void prepare() {
-    addBorder(Material.BLACK_STAINED_GLASS_PANE);
-    addBack(36, kitsGui, null, AnimationType.SLIDE_RIGHT);
-  }
-
-  @Override
   protected void closed(GuiInstance<KitModel> inst) {}
 
   @Override
   protected void opening(Player viewer, GuiInstance<KitModel> inst) {
+    inst.addBorder(Material.BLACK_STAINED_GLASS_PANE);
+    inst.addBack(36, kitsGui, null, AnimationType.SLIDE_RIGHT);
+
     for (ItemStack content : inst.getArg().getItems().getContents()) {
 
       if (content == null)

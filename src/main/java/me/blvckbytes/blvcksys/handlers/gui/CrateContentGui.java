@@ -49,16 +49,13 @@ public class CrateContentGui extends AGui<Tuple<CrateModel, Boolean>> {
   }
 
   @Override
-  protected void prepare() {
-    addBorder(Material.BLACK_STAINED_GLASS_PANE);
-    addPagination(46, 49, 52);
-  }
-
-  @Override
   protected void closed(GuiInstance<Tuple<CrateModel, Boolean>> inst) {}
 
   @Override
   protected void opening(Player viewer, GuiInstance<Tuple<CrateModel, Boolean>> inst) {
+    inst.addBorder(Material.BLACK_STAINED_GLASS_PANE);
+    inst.addPagination(46, 49, 52);
+
     CrateModel crate = inst.getArg().a();
     boolean editMode = inst.getArg().b();
 

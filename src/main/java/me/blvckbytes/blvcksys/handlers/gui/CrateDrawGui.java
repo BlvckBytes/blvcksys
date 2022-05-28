@@ -58,11 +58,6 @@ public class CrateDrawGui extends AGui<CrateModel> {
   }
 
   @Override
-  protected void prepare() {
-    addFill(Material.BLACK_STAINED_GLASS_PANE);
-  }
-
-  @Override
   protected void closed(GuiInstance<CrateModel> inst) {}
 
   @Override
@@ -108,6 +103,7 @@ public class CrateDrawGui extends AGui<CrateModel> {
 
     // Resize to only show the rows required by the layout
     inst.resize(layout.getRowsRequired(), false);
+    inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
 
     inst.fixedItem(layout.getMarkerSlots(), i -> (
       new ItemStackBuilder(Material.PURPLE_STAINED_GLASS_PANE)

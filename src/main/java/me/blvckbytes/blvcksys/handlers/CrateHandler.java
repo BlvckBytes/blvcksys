@@ -202,8 +202,9 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
     e.setCancelled(true);
 
     // Open the crate and start a draw
+    // TODO: Check for keys
     if (e.getAction() == Action.RIGHT_CLICK_BLOCK && drawGui != null)
-      drawGui.show(e.getPlayer(), targetCrate, AnimationType.SLIDE_UP);
+      drawGui.show(e.getPlayer(), targetCrate, AnimationType.SLIDE_RIGHT);
 
     // Show the crate contents
     else if (e.getAction() == Action.LEFT_CLICK_BLOCK && contentGui != null)

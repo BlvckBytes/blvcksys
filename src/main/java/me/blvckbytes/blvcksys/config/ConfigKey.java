@@ -1423,6 +1423,7 @@ public enum ConfigKey {
     "$0Markiert den Slot der Gewinnausgabe."
   ),
   GUI_CRATE_DRAW_NO_ITEMS("gui.crate_draw.no_items", "$0Die Crate $4{{name}} $0besitzt noch $4keine Items$0!"),
+  GUI_CRATE_DRAW_PRIZE("gui.crate_draw.prize", "$0Du hast das Item $2{{item}} $0gewonnen!"),
 
   //=========================================================================//
   //                             Crate Content GUI                           //

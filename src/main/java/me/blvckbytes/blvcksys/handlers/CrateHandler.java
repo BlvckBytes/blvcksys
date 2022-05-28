@@ -2,6 +2,11 @@ package me.blvckbytes.blvcksys.handlers;
 
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.di.AutoInjectLate;
+import me.blvckbytes.blvcksys.di.IAutoConstructed;
+import me.blvckbytes.blvcksys.handlers.gui.AnimationType;
+import me.blvckbytes.blvcksys.handlers.gui.CrateContentGui;
+import me.blvckbytes.blvcksys.handlers.gui.CrateDrawGui;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.exceptions.DuplicatePropertyException;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
@@ -13,6 +18,11 @@ import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import net.minecraft.util.Tuple;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
+import org.bukkit.event.Listener;
+import org.bukkit.event.block.Action;
+import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,10 +35,16 @@ import java.util.*;
   Handles managing a crate and it's associated list of items.
 */
 @AutoConstruct
-public class CrateHandler implements ICrateHandler {
+public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
 
   private final Map<String, CrateModel> crateCache;
   private final Map<String, List<CrateItemModel>> itemsCache;
+
+  @AutoInjectLate
+  private CrateDrawGui drawGui;
+
+  @AutoInjectLate
+  private CrateContentGui contentGui;
 
   private final IPersistence pers;
 
@@ -39,6 +55,10 @@ public class CrateHandler implements ICrateHandler {
     this.crateCache = new HashMap<>();
     this.itemsCache = new HashMap<>();
   }
+
+  //=========================================================================//
+  //                                   API                                   //
+  //=========================================================================//
 
   @Override
   public boolean createCrate(Player creator, String name, @Nullable Location loc) {
@@ -142,6 +162,45 @@ public class CrateHandler implements ICrateHandler {
     return res;
   }
 
+  //=========================================================================//
+  //                                 Handler                                 //
+  //=========================================================================//
+
+  @EventHandler
+  public void onBreak(BlockBreakEvent e) {
+    if (crateCache.values().stream().anyMatch(crate -> crate.getLoc().equals(e.getBlock().getLocation())))
+      e.setCancelled(true);
+  }
+
+  @EventHandler
+  public void onInteract(PlayerInteractEvent e) {
+    if (e.getClickedBlock() == null)
+      return;
+
+    Location l = e.getClickedBlock().getLocation();
+    CrateModel targetCrate = crateCache.values().stream()
+      .filter(crate -> crate.getLoc().equals(l))
+      .findFirst()
+      .orElse(null);
+
+    if (targetCrate == null)
+      return;
+
+    e.setCancelled(true);
+
+    // Open the crate and start a draw
+    if (e.getAction() == Action.RIGHT_CLICK_BLOCK && drawGui != null)
+      drawGui.show(e.getPlayer(), targetCrate, AnimationType.SLIDE_UP);
+
+    // Show the crate contents
+    else if (e.getAction() == Action.LEFT_CLICK_BLOCK && contentGui != null)
+      contentGui.show(e.getPlayer(), new Tuple<>(targetCrate, false), AnimationType.SLIDE_UP);
+  }
+
+  //=========================================================================//
+  //                                 Utilities                               //
+  //=========================================================================//
+
   private QueryBuilder<CrateItemModel> buildCrateItemsQuery(UUID crateId) {
     return new QueryBuilder<>(
       CrateItemModel.class,
@@ -154,5 +213,15 @@ public class CrateHandler implements ICrateHandler {
       CrateModel.class,
       "name", EqualityOperation.EQ_IC, name
     );
+  }
+
+  @Override
+  public void cleanup() {}
+
+  @Override
+  public void initialize() {
+    // Load all creates and all items on start
+    pers.list(CrateModel.class).forEach(crate -> crateCache.put(crate.getName().toLowerCase(), crate));
+    crateCache.keySet().forEach(this::getItems);
   }
 }

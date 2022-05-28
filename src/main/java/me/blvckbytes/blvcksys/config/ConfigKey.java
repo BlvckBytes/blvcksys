@@ -1411,6 +1411,18 @@ public enum ConfigKey {
   ),
 
   //=========================================================================//
+  //                                Crate Draw GUI                           //
+  //=========================================================================//
+
+  GUI_CRATE_DRAW_NAME("gui.crate_draw.name", "$0Crate $2{{name}}"),
+  GUI_CRATE_DRAW_INDICATOR_NAME("gui.crate_draw.indicator.name", "$0» $2Dein Gewinn"),
+  GUI_CRATE_DRAW_INDICATOR_LORE(
+    "gui.crate_draw.indicator.lore",
+    " ",
+    "$0Markiert den Slot der Gewinnausgabe."
+  ),
+
+  //=========================================================================//
   //                             Crate Content GUI                           //
   //=========================================================================//
 

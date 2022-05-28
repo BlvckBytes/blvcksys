@@ -93,6 +93,15 @@ public class GuiInstance<T> {
       viewer.closeInventory();
   }
 
+  /**
+   * Reopens another instance from the template with the
+   * exact same viewer and argument
+   * @param animation Animation to play when opening
+   */
+  public void reopen(AnimationType animation) {
+    getTemplate().show(getViewer(), getArg(), animation, null);
+  }
+
   //////////////////////////////// Inventory //////////////////////////////////
 
   /**

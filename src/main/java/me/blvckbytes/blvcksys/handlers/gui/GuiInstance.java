@@ -13,6 +13,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -32,6 +33,7 @@ public class GuiInstance<T> {
   private final T arg;
 
   // A list of pages, where each page maps a used page slot to an item
+  private final Map<Integer, GuiItem<T>> fixedItems;
   private final List<Map<Integer, GuiItem<T>>> pages;
   private int currPage;
   private GuiAnimation currAnimation;
@@ -60,6 +62,7 @@ public class GuiInstance<T> {
     this.arg = arg;
     this.plugin = plugin;
 
+    this.fixedItems = new HashMap<>(template.getFixedItems());
     this.pages = new ArrayList<>();
     this.animating = new AtomicBoolean(false);
 
@@ -172,6 +175,71 @@ public class GuiInstance<T> {
   }
 
   /**
+   * Add a fixed item, which is an item that will always have the same position,
+   * no matter of the viewer's state
+   * @param slot Slot to set this item to
+   * @param item An item supplier which provides the viewer's instance
+   * @param onClick Action to run when this item has been clicked
+   */
+  protected void fixedItem(
+    int slot,
+    Function<GuiInstance<T>, ItemStack> item,
+    @Nullable Consumer<GuiClickEvent<T>> onClick
+  ) {
+    fixedItem(String.valueOf(slot), item, onClick, null);
+  }
+
+  /**
+   * Add a fixed item, which is an item that will always have the same position,
+   * no matter of the viewer's state
+   * @param slot Slot to set this item to
+   * @param item An item supplier which provides the viewer's instance
+   * @param onClick Action to run when this item has been clicked
+   * @param updatePeriod Item update period in ticks, null means never
+   */
+  protected void fixedItem(
+    int slot,
+    Function<GuiInstance<T>, ItemStack> item,
+    @Nullable Consumer<GuiClickEvent<T>> onClick,
+    Integer updatePeriod
+  ) {
+    fixedItem(String.valueOf(slot), item, onClick, updatePeriod);
+  }
+
+  /**
+   * Add a fixed item, which is an item that will always have the same position,
+   * no matter of the viewer's state
+   * @param slotExpr Slot(s) to set this item to
+   * @param item An item supplier which provides the viewer's instance
+   * @param onClick Action to run when this item has been clicked
+   * @param updatePeriod Item update period in ticks, null means never
+   */
+  protected void fixedItem(
+    String slotExpr,
+    Function<GuiInstance<T>, ItemStack> item,
+    @Nullable Consumer<GuiClickEvent<T>> onClick,
+    Integer updatePeriod
+  ) {
+    for (int slotNumber : template.slotExprToSlots(slotExpr))
+      fixedItems.put(slotNumber, new GuiItem<>((i, s) -> item.apply(i), onClick, updatePeriod));
+  }
+
+  /**
+   * Add a fixed item, which is an item that will always have the same position,
+   * no matter of the viewer's state
+   * @param slotExpr Slot(s) to set this item to
+   * @param item An item supplier which provides the viewer's instance
+   * @param onClick Action to run when this item has been clicked
+   */
+  protected void fixedItem(
+    String slotExpr,
+    Function<GuiInstance<T>, ItemStack> item,
+    @Nullable Consumer<GuiClickEvent<T>> onClick
+  ) {
+    fixedItem(slotExpr, item, onClick, null);
+  }
+
+  /**
    * Redraw only the dynamic page items
    */
   public void redrawPaging() {
@@ -203,7 +271,7 @@ public class GuiInstance<T> {
    */
   public Optional<GuiItem<T>> getItem(int slot) {
     // Check for fixed items
-    GuiItem<T> fixed = template.getFixedItems().get(slot);
+    GuiItem<T> fixed = fixedItems.get(slot);
     if (fixed != null)
       return Optional.of(fixed);
 
@@ -346,7 +414,7 @@ public class GuiInstance<T> {
    */
   public void tick(long time) {
     // Tick all fixed items
-    for (Map.Entry<Integer, GuiItem<T>> itemE : template.getFixedItems().entrySet()) {
+    for (Map.Entry<Integer, GuiItem<T>> itemE : fixedItems.entrySet()) {
       GuiItem<T> item = itemE.getValue();
 
       // Only tick this item if it has a period which has elapsed

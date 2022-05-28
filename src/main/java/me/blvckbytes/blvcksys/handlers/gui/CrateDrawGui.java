@@ -35,8 +35,6 @@ public class CrateDrawGui extends AGui<CrateModel> {
   private static final int[] SPEED_TICKS = { 1,   2,  3, 4, 5, 10 },
                              SPEED_ITERS = { 30, 30, 20, 5, 4,  3 };
 
-  private static final Random rand = new Random();
-
   private final ICrateHandler crateHandler;
   private final CrateContentGui crateContentGui;
   private final IGiveCommand give;
@@ -73,6 +71,7 @@ public class CrateDrawGui extends AGui<CrateModel> {
 
     // Get the drawing layout from the crate or use a fallback value
     CrateDrawLayout layout = crate.getLayout();
+    System.out.println(layout);
     if (layout == null)
       layout = CrateDrawLayout.HORIZONTAL_LINE;
 
@@ -110,7 +109,7 @@ public class CrateDrawGui extends AGui<CrateModel> {
     // Resize to only show the rows required by the layout
     inst.resize(layout.getRowsRequired(), false);
 
-    fixedItem(layout.getMarkerSlots(), i -> (
+    inst.fixedItem(layout.getMarkerSlots(), i -> (
       new ItemStackBuilder(Material.PURPLE_STAINED_GLASS_PANE)
         .withName(cfg.get(ConfigKey.GUI_CRATE_DRAW_INDICATOR_NAME))
         .withLore(cfg.get(ConfigKey.GUI_CRATE_DRAW_INDICATOR_LORE))
@@ -124,7 +123,7 @@ public class CrateDrawGui extends AGui<CrateModel> {
 
     // Set a fixed item into each slot of the animation which updates on every tick
     for (int slot : animSlots) {
-      fixedItem(slot, i -> {
+      inst.fixedItem(slot, i -> {
         int speedTicks = SPEED_TICKS[currSpeed.get()];
         int calls = totalCalls.incrementAndGet();
         int slotIndex = animSlots.indexOf(slot);

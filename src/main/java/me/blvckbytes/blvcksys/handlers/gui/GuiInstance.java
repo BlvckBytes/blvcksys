@@ -135,6 +135,14 @@ public class GuiInstance<T> {
   }
 
   /**
+   * Closes this inventory
+   */
+  public void close() {
+    if (viewer.getOpenInventory().getTopInventory().equals(inv))
+      viewer.closeInventory();
+  }
+
+  /**
    * Fast forwards the currently active animation, if there is any
    */
   public void fastForwardAnimating() {

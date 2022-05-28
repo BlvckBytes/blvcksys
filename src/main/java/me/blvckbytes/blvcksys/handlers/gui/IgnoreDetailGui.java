@@ -46,9 +46,9 @@ public class IgnoreDetailGui extends AGui<OfflinePlayer> {
   @Override
   protected void prepare() {
     addFill(Material.BLACK_STAINED_GLASS_PANE);
-    addBack("27", ignoresGui, null, AnimationType.SLIDE_RIGHT);
+    addBack(27, ignoresGui, null, AnimationType.SLIDE_RIGHT);
 
-    fixedItem("12", i -> (
+    fixedItem(12, i -> (
       new ItemStackBuilder(Material.NAME_TAG)
         .withName(cfg.get(ConfigKey.GUI_IGNORE_MSG_NAME))
         .withLore(
@@ -59,7 +59,7 @@ public class IgnoreDetailGui extends AGui<OfflinePlayer> {
         .build()
     ), null);
 
-    fixedItem("14", i -> (
+    fixedItem(14, i -> (
       new ItemStackBuilder(Material.PAPER)
         .withName(cfg.get(ConfigKey.GUI_IGNORE_CHAT_NAME))
         .withLore(
@@ -70,8 +70,8 @@ public class IgnoreDetailGui extends AGui<OfflinePlayer> {
         .build()
     ), null);
 
-    addStateToggle("21", "12", i -> ignore.getMsgIgnore(i.getViewer(), i.getArg()), (s, i) -> ignore.setMsgIgnore(i.getViewer(), i.getArg(), !s));
-    addStateToggle("23", "14", i -> ignore.getChatIgnore(i.getViewer(), i.getArg()), (s, i) -> ignore.setChatIgnore(i.getViewer(), i.getArg(), !s));
+    addStateToggle(21, 12, i -> ignore.getMsgIgnore(i.getViewer(), i.getArg()), (s, i) -> ignore.setMsgIgnore(i.getViewer(), i.getArg(), !s));
+    addStateToggle(23, 14, i -> ignore.getChatIgnore(i.getViewer(), i.getArg()), (s, i) -> ignore.setChatIgnore(i.getViewer(), i.getArg(), !s));
   }
 
   @Override

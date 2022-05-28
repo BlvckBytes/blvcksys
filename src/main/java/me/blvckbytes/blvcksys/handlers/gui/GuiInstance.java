@@ -26,7 +26,7 @@ public class GuiInstance<T> {
   private final Player viewer;
 
   @Getter
-  private final Inventory inv;
+  private Inventory inv;
 
   @Getter
   private final T arg;
@@ -105,6 +105,25 @@ public class GuiInstance<T> {
   //////////////////////////////// Inventory //////////////////////////////////
 
   /**
+   * Resizes the inventory to a given number of rows and copies over as much of
+   * the previous content as will fit
+   * @param rows Number of new rows
+   * @param update Whether to directly open the new inventory to the viewer
+   */
+  public void resize(int rows, boolean update) {
+    Inventory newInv = Bukkit.createInventory(null, rows * 9, template.getTitle().apply(this).asScalar());
+
+    // Copy over contents
+    for (int i = 0; i < Math.min(this.inv.getSize(), newInv.getSize()); i++)
+      newInv.setItem(i, this.inv.getItem(i));
+
+    this.inv = newInv;
+
+    if (update)
+      this.viewer.openInventory(this.inv);
+  }
+
+  /**
    * Opens the inventory for it's viewer
    * @param animation Animation to display when opening the GUI
    * @param animateFrom Inventory to animate based off of (transitions)
@@ -157,7 +176,7 @@ public class GuiInstance<T> {
    */
   public void redraw(String slotExpr) {
     // Iterate all slots which should be redrawn
-    for (int slot : template.slotExprToSlots(slotExpr, template.getRows())) {
+    for (int slot : template.slotExprToSlots(slotExpr)) {
 
       // Vacant slot, skip
       GuiItem<T> target = getItem(slot).orElse(null);
@@ -165,7 +184,7 @@ public class GuiInstance<T> {
         continue;
 
       // Update the item by re-calling it's supplier
-      inv.setItem(slot, target.item().apply(this, slot));
+      setItem(slot, target.item().apply(this, slot));
     }
   }
 
@@ -287,7 +306,7 @@ public class GuiInstance<T> {
     // There are no pages yet, clear all page slots
     if (pages.size() == 0) {
       for (int pageSlot : template.getPageSlots())
-        inv.setItem(pageSlot, null);
+        setItem(pageSlot, null);
       return;
     }
 
@@ -301,13 +320,13 @@ public class GuiInstance<T> {
 
       // Only update on force updates or if the time is a multiple of the item's period
       if (time == null || (item.updatePeriod() != null && item.updatePeriod() > 0 && time % item.updatePeriod() == 0))
-        inv.setItem(pageItem.getKey(), item.item().apply(this, pageItem.getKey()));
+        setItem(pageItem.getKey(), item.item().apply(this, pageItem.getKey()));
     }
 
     // Clear unused page slots if they're not already vacant
     for (Integer vacantPageSlot : pageSlots) {
       if (inv.getItem(vacantPageSlot) != null)
-        inv.setItem(vacantPageSlot, null);
+        setItem(vacantPageSlot, null);
     }
   }
 
@@ -324,7 +343,7 @@ public class GuiInstance<T> {
 
       // Only tick this item if it has a period which has elapsed
       if (item.updatePeriod() != null && time % item.updatePeriod() == 0)
-        inv.setItem(itemE.getKey(), item.item().apply(this, itemE.getKey()));
+        setItem(itemE.getKey(), item.item().apply(this, itemE.getKey()));
     }
 
     // Tick all page items
@@ -368,5 +387,16 @@ public class GuiInstance<T> {
     );
 
     return true;
+  }
+
+  /**
+   * Sets an item to a specified slot in the current inventory and
+   * protects against index out of range calls
+   * @param slot Slot to set at
+   * @param item Item to set
+   */
+  private void setItem(int slot, ItemStack item) {
+    if (slot < inv.getSize())
+      inv.setItem(slot, item);
   }
 }

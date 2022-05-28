@@ -70,7 +70,7 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
   @Override
   protected void prepare() {
     fixedItem("45,47,48,50,51,53", i -> new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build(), null);
-    addPagination("46", "49", "52");
+    addPagination(46, 49, 52);
   }
 
   @Override

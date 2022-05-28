@@ -44,7 +44,7 @@ public class IgnoresGui extends AGui<Object> {
   @Override
   protected void prepare() {
     addFill(Material.BLACK_STAINED_GLASS_PANE);
-    addPagination("28", "31", "34");
+    addPagination(28, 31, 34);
   }
 
   @Override

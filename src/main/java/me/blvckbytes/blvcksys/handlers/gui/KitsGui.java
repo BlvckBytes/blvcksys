@@ -74,7 +74,7 @@ public class KitsGui extends AGui<Object> implements Listener {
   @Override
   protected void prepare() {
     addBorder(Material.BLACK_STAINED_GLASS_PANE);
-    addPagination("37", "40", "43");
+    addPagination(37, 40, 43);
   }
 
   @Override

@@ -1,6 +1,5 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
-import com.mojang.datafixers.types.Func;
 import lombok.Getter;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.ConfigValue;
@@ -14,7 +13,6 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
@@ -35,9 +33,6 @@ import java.util.stream.IntStream;
   The base of all GUIs which implements basic functionality.
 */
 public abstract class AGui<T> implements IAutoConstructed, Listener {
-
-  // The time between GUI ticks
-  private static final long TICKER_PERIOD_T = 10L;
 
   protected final JavaPlugin plugin;
   protected final IConfig cfg;
@@ -83,7 +78,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     this.cfg = cfg;
     this.textures = textures;
 
-    this.pageSlots = slotExprToSlots(pageSlotExpr, rows);
+    this.pageSlots = slotExprToSlots(pageSlotExpr);
     this.fixedItems = new HashMap<>();
     this.activeInstances = new HashMap<>();
     this.tickerHandle = -1;
@@ -158,7 +153,8 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
 
         // Tick all instances of all players
         for (List<GuiInstance<T>> instances : activeInstances.values()) {
-          for (GuiInstance<T> instance : instances) {
+          for (int i = instances.size() - 1; i >= 0; i--) {
+            GuiInstance<T> instance = instances.get(i);
             // Don't tick animating GUIs
             if (instance.getAnimating().get())
               continue;
@@ -167,9 +163,9 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
           }
         }
 
-        time += TICKER_PERIOD_T;
+        time++;
       }
-    }, 0L, TICKER_PERIOD_T);
+    }, 0L, 1L);
 
     prepare();
   }
@@ -197,6 +193,57 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
    */
   abstract protected void prepare();
 
+
+  /**
+   * Add a fixed item, which is an item that will always have the same position,
+   * no matter of the viewer's state
+   * @param slot Slot to set this item to
+   * @param item An item supplier which provides the viewer's instance
+   * @param onClick Action to run when this item has been clicked
+   */
+  protected void fixedItem(
+    int slot,
+    Function<GuiInstance<T>, ItemStack> item,
+    @Nullable Consumer<GuiClickEvent<T>> onClick
+  ) {
+    fixedItem(String.valueOf(slot), item, onClick, null);
+  }
+
+  /**
+   * Add a fixed item, which is an item that will always have the same position,
+   * no matter of the viewer's state
+   * @param slot Slot to set this item to
+   * @param item An item supplier which provides the viewer's instance
+   * @param onClick Action to run when this item has been clicked
+   * @param updatePeriod Item update period in ticks, null means never
+   */
+  protected void fixedItem(
+    int slot,
+    Function<GuiInstance<T>, ItemStack> item,
+    @Nullable Consumer<GuiClickEvent<T>> onClick,
+    Integer updatePeriod
+  ) {
+    fixedItem(String.valueOf(slot), item, onClick, updatePeriod);
+  }
+
+  /**
+   * Add a fixed item, which is an item that will always have the same position,
+   * no matter of the viewer's state
+   * @param slotExpr Slot(s) to set this item to
+   * @param item An item supplier which provides the viewer's instance
+   * @param onClick Action to run when this item has been clicked
+   * @param updatePeriod Item update period in ticks, null means never
+   */
+  protected void fixedItem(
+    String slotExpr,
+    Function<GuiInstance<T>, ItemStack> item,
+    @Nullable Consumer<GuiClickEvent<T>> onClick,
+    Integer updatePeriod
+  ) {
+    for (int slotNumber : slotExprToSlots(slotExpr))
+      fixedItems.put(slotNumber, new GuiItem<>((i, s) -> item.apply(i), onClick, updatePeriod));
+  }
+
   /**
    * Add a fixed item, which is an item that will always have the same position,
    * no matter of the viewer's state
@@ -209,8 +256,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     Function<GuiInstance<T>, ItemStack> item,
     @Nullable Consumer<GuiClickEvent<T>> onClick
   ) {
-    for (int slotNumber : slotExprToSlots(slotExpr, rows))
-      fixedItems.put(slotNumber, new GuiItem<>((i, s) -> item.apply(i), onClick, null));
+    fixedItem(slotExpr, item, onClick, null);
   }
 
   /**
@@ -220,7 +266,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
    * @param indicatorSlot Slot of the page indicator
    * @param nextSlot Slot of the next button
    */
-  protected void addPagination(String prevSlot, String indicatorSlot, String nextSlot) {
+  protected void addPagination(int prevSlot, int indicatorSlot, int nextSlot) {
     fixedItem(prevSlot, g -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_NAME))
@@ -228,8 +274,8 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
         .build()
     ), e -> {
       e.getGui().previousPage(AnimationType.SLIDE_RIGHT);
-      e.getGui().redraw(indicatorSlot);
-    });
+      e.getGui().redraw(String.valueOf(indicatorSlot));
+    }, null);
 
     fixedItem(indicatorSlot, g -> (
       new ItemStackBuilder(Material.PAPER)
@@ -244,7 +290,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
             .withVariable("max_items", g.getPageSize())
         )
         .build()
-    ), null);
+    ), null, null);
 
     fixedItem(nextSlot, g -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_RIGHT.getOwner()))
@@ -253,8 +299,8 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
         .build()
     ), e -> {
       e.getGui().nextPage(AnimationType.SLIDE_LEFT);
-      e.getGui().redraw(indicatorSlot);
-    });
+      e.getGui().redraw(String.valueOf(indicatorSlot));
+    }, null);
   }
 
   /**
@@ -264,7 +310,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
    * @param state State supplier
    * @param onClick Click event, providing the current state and the player
    */
-  protected void addStateToggle(String slot, @Nullable String update, Function<GuiInstance<T>, Boolean> state, BiConsumer<Boolean, GuiInstance<T>> onClick) {
+  protected void addStateToggle(int slot, @Nullable Integer update, Function<GuiInstance<T>, Boolean> state, BiConsumer<Boolean, GuiInstance<T>> onClick) {
     fixedItem(slot, i -> {
       boolean s = state.apply(i);
 
@@ -275,7 +321,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     }, e -> {
       onClick.accept(state.apply(e.getGui()), e.getGui());
       e.getGui().redraw(slot + "," + (update == null ? "" : update));
-    });
+    }, null);
   }
 
   /**
@@ -301,7 +347,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
       slotExpr.append(i == 0 ? "" : ",").append(i);
     }
 
-    fixedItem(slotExpr.toString(), g -> new ItemStackBuilder(mat).build(), null);
+    fixedItem(slotExpr.toString(), g -> new ItemStackBuilder(mat).build(), null, null);
   }
 
   /**
@@ -330,7 +376,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     fixedItem(slotExpr.toString(), g -> (
       new ItemStackBuilder(mat)
         .build()
-    ), null);
+    ), null, null);
   }
 
   /**
@@ -340,13 +386,13 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
    * @param param Gui parameter
    * @param animation Animation to use when navigating back
    */
-  protected<A> void addBack(String slot, AGui<A> gui, Function<GuiInstance<T>, A> param, @Nullable AnimationType animation) {
+  protected<A> void addBack(int slot, AGui<A> gui, Function<GuiInstance<T>, A> param, @Nullable AnimationType animation) {
     fixedItem(slot, g -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_GENERICS_NAV_BACK_NAME))
         .withLore(cfg.get(ConfigKey.GUI_GENERICS_NAV_BACK_LORE))
         .build()
-    ), e -> e.getGui().switchTo(e.getGui(), animation, gui, param == null ? null : param.apply(e.getGui())));
+    ), e -> e.getGui().switchTo(e.getGui(), animation, gui, param == null ? null : param.apply(e.getGui())), null);
   }
 
   //=========================================================================//
@@ -435,18 +481,18 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
    * Convert a slot expression to a set of slot indices
    * @param slotExpr Slot expression
    */
-  public List<Integer> slotExprToSlots(String slotExpr, int rows) {
+  public List<Integer> slotExprToSlots(String slotExpr) {
     if (slotExpr.isBlank())
       return new ArrayList<>();
 
-    Set<Integer> slots = new HashSet<>();
+    List<Integer> slots = new ArrayList<>();
 
     for (String range : slotExpr.split(",")) {
       String[] rangeData = range.split("-");
 
       if (rangeData[0].equals("*")) {
         IntStream.range(0, rows * 9).forEach(slots::add);
-        continue;
+        break;
       }
 
       int from = Integer.parseInt(rangeData[0]);
@@ -456,17 +502,14 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
         continue;
       }
 
-      for (int i = from; i <= Integer.parseInt(rangeData[1]); i++) {
-        if (i < 0 || i >= rows * 9)
-          continue;
+      int to = Integer.parseInt(rangeData[1]);
 
-        slots.add(i);
+      for (int i = from; from > to ? (i >= to) : (i <= to); i += (from > to ? -1 : 1)) {
+        if (i >= 0 && i < rows * 9)
+          slots.add(i);
       }
     }
 
-    // Sort slots in ascending order to start appending top left
-    return slots.stream()
-      .sorted()
-      .toList();
+    return slots;
   }
 }

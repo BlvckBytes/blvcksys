@@ -254,6 +254,20 @@ public class HelpCommand extends APlayerCommand implements IFontWidthTable {
     if (c < 32 || c == 127)
       return 0;
 
+    c = switch (c) {
+      case 'ü' -> 'u';
+      case 'Ü' -> 'U';
+      case 'ä' -> 'a';
+      case 'Ä' -> 'A';
+      case 'ö' -> 'o';
+      case 'Ö' -> 'O';
+      default -> c;
+    };
+
+    // Non-ascii character, assume 5
+    if (c > 127)
+      return 5;
+
     // Either return the exception or return 5 (as is the case for all printable chars not in the table)
     return dotWidths[c] == 0 ? 5 : dotWidths[c];
   }

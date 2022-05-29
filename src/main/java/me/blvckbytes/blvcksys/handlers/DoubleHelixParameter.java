@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.handlers;
 
+import org.bukkit.Color;
 import org.bukkit.util.Vector;
 
 /*
@@ -16,5 +17,8 @@ public record DoubleHelixParameter(
   double blocksPerWinding,
 
   // 2*radius will be the space between the two 180° out of phase helix's
-  double radius
+  double radius,
+
+  // Color of the helix
+  Color color
 ) {}

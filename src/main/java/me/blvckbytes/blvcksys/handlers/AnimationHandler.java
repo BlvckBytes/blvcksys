@@ -13,6 +13,7 @@ import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -43,7 +44,7 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
 
     // What player should receive this animation, null means it's played
     // directly on the world of the location
-    @Nullable List<Player> receivers;
+    @Nullable Collection<? extends Player> receivers;
 
     // Type of animation
     AnimationType type;
@@ -78,12 +79,12 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
   //=========================================================================//
 
   @Override
-  public void startAnimation(Player target, List<Player> receicers, AnimationType animation, @Nullable Object parameter) {
+  public void startAnimation(Player target, Collection<? extends Player> receicers, AnimationType animation, @Nullable Object parameter) {
     this.animations.add(new ActiveAnimation(target, null, receicers, animation, parameter, 0));
   }
 
   @Override
-  public void startAnimation(Location loc, List<Player> receicers, AnimationType animation, @Nullable Object parameter) {
+  public void startAnimation(Location loc, Collection<? extends Player> receicers, AnimationType animation, @Nullable Object parameter) {
     this.animations.add(new ActiveAnimation(null, loc, receicers, animation, parameter, 0));
   }
 
@@ -150,7 +151,7 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
     // Decide on the actual processor function
     if (animation.type.equals(AnimationType.PURPLE_ROTATING_CONE))
       tickROTATING_CONE(animation, loc, loc.getWorld());
-    else if (animation.type.equals(AnimationType.ORANGE_DOUBLE_HELIX))
+    else if (animation.type.equals(AnimationType.DOUBLE_HELIX))
       tickDOUBLE_HELIX(animation, loc, loc.getWorld());
 
     // Increase the time tracking variable
@@ -177,18 +178,26 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
    * @param animation Animation handle
    * @param pixels    Pixels to draw
    * @param w         World to animate in
+   * @param colorOverride Color used to override the default color
    */
-  private void drawFrame(ActiveAnimation animation, List<Vector> pixels, World w) {
+  private void drawFrame(ActiveAnimation animation, List<Vector> pixels, World w, @Nullable Color colorOverride) {
+
+    // Allow for color overrides
+    Particle.DustOptions options = new Particle.DustOptions(
+      colorOverride == null ? animation.type.getOptions().getColor() : colorOverride,
+      animation.type.getOptions().getSize()
+    );
+
     for (Vector pixel : pixels) {
       // Play for all players - on the world itself
       if (animation.receivers == null) {
-        w.spawnParticle(animation.type.getParticle(), pixel.getX(), pixel.getY(), pixel.getZ(), 1, animation.type.getOptions());
+        w.spawnParticle(animation.type.getParticle(), pixel.getX(), pixel.getY(), pixel.getZ(), 1, options);
         continue;
       }
 
       // Play on a per-player basis, using only the receivers
       for (Player receiver : animation.receivers)
-        receiver.spawnParticle(animation.type.getParticle(), pixel.getX(), pixel.getY(), pixel.getZ(), 1, animation.type.getOptions());
+        receiver.spawnParticle(animation.type.getParticle(), pixel.getX(), pixel.getY(), pixel.getZ(), 1, options);
     }
   }
 
@@ -262,11 +271,12 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
       }
     }
 
-    drawFrame(animation, pixels, w);
+    drawFrame(animation, pixels, w, null);
   }
 
   ////////////////////////////////// DOUBLE_HELIX /////////////////////////////////////
 
+  // FIXME: The pixels are way too far apart when having bigger radii
   private void tickDOUBLE_HELIX(ActiveAnimation animation, Location loc, World w) {
     List<Vector> pixels = new ArrayList<>();
 
@@ -339,7 +349,7 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
       pixels.add(currPos.clone().add(rotateAbout(h, v.clone().normalize(), phi + Math.PI)));
     }
 
-    drawFrame(animation, pixels, w);
+    drawFrame(animation, pixels, w, param.color());
   }
 
   /**

@@ -7,6 +7,7 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.*;
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -194,12 +195,12 @@ public class DeathListener implements Listener, IDeathListener {
 
     // Start the helix and the hologram rise up at the same velocity
     holo.setVelocity(velocity, 0D, false, false, null, null);
-    DoubleHelixParameter param = new DoubleHelixParameter(velocity, KILL_INDICATOR_HELIX_BPW, KILL_INDICATOR_HELIX_D / 2);
-    anim.startAnimation(loc, null, AnimationType.ORANGE_DOUBLE_HELIX, param);
+    DoubleHelixParameter param = new DoubleHelixParameter(velocity, KILL_INDICATOR_HELIX_BPW, KILL_INDICATOR_HELIX_D / 2, Color.ORANGE);
+    anim.startAnimation(loc, null, AnimationType.DOUBLE_HELIX, param);
 
     // Stop both the hologram rising and the helix climbing up
     Bukkit.getScheduler().runTaskLater(plugin, () -> {
-      anim.stopAnimation(loc, AnimationType.ORANGE_DOUBLE_HELIX);
+      anim.stopAnimation(loc, AnimationType.DOUBLE_HELIX);
       holos.destroyTemporary(holo);
     }, KILL_INDICATOR_DUR_T);
   }

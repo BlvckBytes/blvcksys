@@ -4,6 +4,7 @@ import com.mojang.authlib.GameProfile;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import net.minecraft.util.Tuple;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +23,7 @@ import java.util.regex.Pattern;
 */
 public class ItemStackBuilder {
 
+  private final Map<Enchantment, Integer> enchantments;
   private final Material mat;
   private final int amount;
   private ConfigValue displayName;
@@ -38,6 +40,7 @@ public class ItemStackBuilder {
     this.mat = Material.PLAYER_HEAD;
     this.amount = 1;
     this.profile = profile;
+    this.enchantments = new HashMap<>();
   }
 
   /**
@@ -54,6 +57,7 @@ public class ItemStackBuilder {
       this.meta = stack.getItemMeta();
     }
 
+    this.enchantments = new HashMap<>();
     this.amount = amount;
   }
 
@@ -63,6 +67,7 @@ public class ItemStackBuilder {
    * @param amount Amount of items
    */
   public ItemStackBuilder(Material mat, int amount) {
+    this.enchantments = new HashMap<>();
     this.mat = mat;
     this.amount = amount;
   }
@@ -73,6 +78,16 @@ public class ItemStackBuilder {
    */
   public ItemStackBuilder(Material mat) {
     this(mat, 1);
+  }
+
+  /**
+   * Add an enchantment with a specific level to this item
+   * @param enchantment Enchantment to add
+   * @param level Level to add the enchantment with
+   */
+  public ItemStackBuilder withEnchantment(Enchantment enchantment, int level) {
+    this.enchantments.put(enchantment, level);
+    return this;
   }
 
   /**
@@ -143,6 +158,10 @@ public class ItemStackBuilder {
       } catch (Exception e) {
         e.printStackTrace();
       }
+    }
+
+    for (Map.Entry<Enchantment, Integer> ench : enchantments.entrySet()) {
+      meta.addEnchant(ench.getKey(), ench.getValue(), true);
     }
 
     stack.setItemMeta(meta);

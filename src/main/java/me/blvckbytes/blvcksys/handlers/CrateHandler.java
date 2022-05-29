@@ -47,13 +47,11 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
   // Velocity of the rising helix animation, blocks per winding, the total height as well as the radius
   private static final double EFFECTS_VELOCITY = .055, EFFECTS_BPW = .9, EFFECTS_HEIGHT = 1.2, EFFECTS_RAD = .7;
 
-  // Random used for drawing
-  private static final Random rand = new Random();
+  // Mapping crate names to cached crate instances
+  private final Map<String, CachedCrate> crateCache;
 
+  // Mapping players to a map of crate names and the corresponding keys
   private final Map<OfflinePlayer, Map<String, CrateKeyModel>> keyCache;
-  private final Map<String, CrateModel> crateCache;
-  private final Map<String, List<CrateItemModel>> itemsCache;
-  private final Map<String, Tuple<Double, List<Double>>> probabilityRanges;
 
   @AutoInjectLate
   private CrateDrawGui drawGui;
@@ -78,8 +76,6 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
 
     this.crateCache = new HashMap<>();
     this.keyCache = new HashMap<>();
-    this.itemsCache = new HashMap<>();
-    this.probabilityRanges = new HashMap<>();
   }
 
   //=========================================================================//
@@ -89,9 +85,12 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
   @Override
   public boolean createCrate(Player creator, String name) {
     try {
+      // Create a new crate with default null values
       CrateModel crate = new CrateModel(creator, name, null, null, null);
       pers.store(crate);
-      crateCache.put(name.toLowerCase(), crate);
+
+      // Cache the crate with no items
+      crateCache.put(name.toLowerCase(), new CachedCrate(crate, new ArrayList<>()));
       return true;
     } catch (DuplicatePropertyException e) {
       return false;
@@ -142,113 +141,82 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
 
   @Override
   public Optional<CrateModel> getCrate(String name) {
-    if (crateCache.containsKey(name.toLowerCase()))
-      return Optional.of(crateCache.get(name.toLowerCase()));
-
-    return pers.findFirst(buildCrateQuery(name))
-      .map(crate -> {
-        crateCache.put(name.toLowerCase(), crate);
-        return crate;
-      });
+    return crateCache.values().stream()
+      .map(CachedCrate::getCrate)
+      .filter(c -> c.getName().equals(name))
+      .findFirst();
   }
 
   @Override
   public Optional<CrateModel> getCrate(UUID id) {
     return crateCache.values().stream()
+      .map(CachedCrate::getCrate)
       .filter(c -> c.getId().equals(id))
-      .findFirst()
-      .or(() -> (
-          pers.findFirst(buildCrateQuery(id))
-            .map(crate -> {
-              crateCache.put(crate.getName().toLowerCase(), crate);
-              return crate;
-            })
-        )
-      );
+      .findFirst();
   }
 
   @Override
   public List<Tuple<CrateModel, List<CrateItemModel>>> listCrates() {
-    return pers.list(CrateModel.class).stream()
-      .map(crate -> new Tuple<>(crate, getItems(crate.getName()).orElse(new ArrayList<>())))
-      .toList();
+    return crateCache.values().stream().map(CachedCrate::asTuple).toList();
   }
 
   @Override
   public boolean addItem(Player creator, String crateName, ItemStack item, double probability) {
-    CrateModel crate = getCrate(crateName).orElse(null);
-
-    if (crate == null)
+    CachedCrate cc = crateCache.get(crateName.toLowerCase());
+    if (cc == null)
       return false;
 
-    CrateItemModel itemModel = new CrateItemModel(crate.getId(), creator, item, probability);
-    CrateItemModel.pushSequenceMember(itemModel, buildCrateItemsQuery(crate.getId()), pers);
+    // Push the new item into the sorted sequence of it's parent
+    CrateItemModel itemModel = new CrateItemModel(cc.getCrate().getId(), creator, item, probability);
+    CrateItemModel.pushSequenceMember(itemModel, buildCrateItemsQuery(cc.getCrate().getId()), pers);
+    cc.addItem(itemModel);
 
-    if (!itemsCache.containsKey(crateName.toLowerCase()))
-      itemsCache.put(crateName.toLowerCase(), new ArrayList<>());
-    itemsCache.get(crateName.toLowerCase()).add(itemModel);
-
-    buildProbabilityRanges(crateName);
     return true;
   }
 
   @Override
   public Optional<List<CrateItemModel>> getItems(String name) {
-    if (itemsCache.containsKey(name.toLowerCase()))
-      return Optional.of(itemsCache.get(name.toLowerCase()));
-
-    CrateModel crate = getCrate(name).orElse(null);
-    if (crate == null)
-      return Optional.empty();
-
-    List<CrateItemModel> items = CrateItemModel.sequentize(pers.find(buildCrateItemsQuery(crate.getId())));
-    itemsCache.put(name, items);
-    return Optional.of(items);
+    if (crateCache.containsKey(name.toLowerCase()))
+      return Optional.of(crateCache.get(name.toLowerCase()).getItems());
+    return Optional.empty();
   }
 
   @Override
   public boolean deleteItem(CrateItemModel item) {
-    itemsCache.values().forEach(items -> items.remove(item));
-    findCrateById(item.getCrateId()).ifPresent(crate -> buildProbabilityRanges(crate.getName()));
+    crateCache.values().forEach(cc -> cc.removeItem(item));
     return CrateItemModel.deleteSequenceMember(item, pers);
   }
 
   @Override
   public boolean updateItem(CrateItemModel item) {
     pers.store(item);
-    findCrateById(item.getCrateId()).ifPresent(crate -> buildProbabilityRanges(crate.getName()));
+    crateCache.values().stream().filter(cc -> cc.getCrate().getId().equals(item.getCrateId())).forEach(CachedCrate::update);
     return true;
   }
 
   @Override
   public Tuple<SequenceSortResult, Integer> sortItems(String crateName, int[] itemIdSequence) throws PersistenceException {
-    CrateModel crate = getCrate(crateName).orElse(null);
+    CachedCrate crate = crateCache.get(crateName.toLowerCase());
     if (crate == null)
       return new Tuple<>(SequenceSortResult.MODEL_UNKNOWN, 0);
 
-    Tuple<SequenceSortResult, Integer> res = CrateItemModel.alterSequence(buildCrateItemsQuery(crate.getId()), itemIdSequence, pers);
+    Tuple<SequenceSortResult, Integer> res = CrateItemModel.alterSequence(buildCrateItemsQuery(crate.getCrate().getId()), itemIdSequence, pers);
 
+    // Update the items in cache by re-fetching to receive the new order
     if (res.a() == SequenceSortResult.SORTED)
-      itemsCache.put(crateName.toLowerCase(), pers.find(buildCrateItemsQuery(crate.getId())));
+      crate.setItems(CrateItemModel.sequentize(pers.find(buildCrateItemsQuery(crate.getCrate().getId()))));
 
     return res;
   }
 
   @Override
   public Optional<CrateItemModel> drawItem(String crateName) {
-    List<CrateItemModel> items = getItems(crateName).orElse(null);
-    Tuple<Double, List<Double>> probData = probabilityRanges.get(crateName);
+    CachedCrate cc = crateCache.get(crateName.toLowerCase());
 
-    if (probData == null || items == null)
+    if (cc == null)
       return Optional.empty();
 
-    double targetRange = rand.nextDouble() * probData.a();
-    for (int i = 0; i < probData.b().size(); i++) {
-      if (probData.b().get(i) >= targetRange)
-        return Optional.of(items.get(i));
-    }
-
-    return Optional.empty();
+    return cc.drawItem();
   }
 
   @Override
@@ -264,6 +232,7 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
     // Check for missing key models and create them
     keys.addAll(
       crateCache.values().stream()
+        .map(CachedCrate::getCrate)
         .filter(c -> keys.stream().noneMatch(k -> k.getCrateId().equals(c.getId())))
         .map(c -> {
           CrateKeyModel model = new CrateKeyModel(p, c.getId(), 0);
@@ -273,6 +242,7 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
         .toList()
     );
 
+    // Add keys to cache
     for (CrateKeyModel key : keys) {
       getCrate(key.getCrateId())
         .ifPresent(crate -> keyCache.get(p).put(crate.getName().toLowerCase(), key));
@@ -318,7 +288,11 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
 
   @EventHandler
   public void onBreak(BlockBreakEvent e) {
-    if (crateCache.values().stream().anyMatch(crate -> crate.getLoc().equals(e.getBlock().getLocation())))
+    if (
+      crateCache.values().stream()
+        .map(CachedCrate::getCrate)
+        .anyMatch(crate -> crate.getLoc().equals(e.getBlock().getLocation()))
+    )
       e.setCancelled(true);
   }
 
@@ -329,6 +303,7 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
 
     Location l = e.getClickedBlock().getLocation();
     CrateModel targetCrate = crateCache.values().stream()
+      .map(CachedCrate::getCrate)
       .filter(crate -> crate.getLoc().equals(l))
       .findFirst()
       .orElse(null);
@@ -368,17 +343,6 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
   }
 
   /**
-   * Build a query to select a crate by it's id
-   * @param id ID of the target crate
-   */
-  private QueryBuilder<CrateModel> buildCrateQuery(UUID id) {
-    return new QueryBuilder<>(
-      CrateModel.class,
-      "id", EqualityOperation.EQ, id
-    );
-  }
-
-  /**
    * Build a query to select a crate by it's name
    * @param name Name of the target crate
    */
@@ -406,52 +370,29 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
     return query;
   }
 
-  /**
-   * Find a crate by it's ID within the cache
-   * @param id ID of the target crate
-   */
-  private Optional<CrateModel> findCrateById(UUID id) {
-    return crateCache.values().stream().filter(c -> c.getId().equals(id)).findFirst();
-  }
-
-  /**
-   * Build probability ranges for all items of the target crate
-   * @param name Name of the crate
-   */
-  private void buildProbabilityRanges(String name) {
-    List<CrateItemModel> items = itemsCache.get(name.toLowerCase());
-    if (items == null)
-      return;
-
-    List<Double> ranges = new ArrayList<>();
-    double accumulator = 0;
-    for (CrateItemModel item : items) {
-      accumulator += item.getProbability();
-      ranges.add(accumulator);
-    }
-
-    probabilityRanges.put(name.toLowerCase(), new Tuple<>(accumulator, ranges));
-  }
-
   @Override
   public void cleanup() {
     if (effectTaskHandle != null)
       effectTaskHandle.cancel();
+
+    crateCache.clear();
+    keyCache.clear();
   }
 
   @Override
   public void initialize() {
-    // Load all creates and all items on start
-    pers.list(CrateModel.class).forEach(crate -> crateCache.put(crate.getName().toLowerCase(), crate));
-    crateCache.keySet().forEach(this::getItems);
-    crateCache.keySet().forEach(this::buildProbabilityRanges);
+    // Load all creates and all items into the cache
+    pers.list(CrateModel.class).forEach(crate -> {
+      List<CrateItemModel> items = CrateItemModel.sequentize(pers.find(buildCrateItemsQuery(crate.getId())));
+      crateCache.put(crate.getName().toLowerCase(), new CachedCrate(crate, items));
+    });
 
     // Task used to play crate effects
     effectTaskHandle = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
 
       // Loop all known crates
-      for (CrateModel crate : crateCache.values()) {
-        Location loc = crate.getLoc();
+      for (CachedCrate crate : crateCache.values()) {
+        Location loc = crate.getCrate().getLoc();
 
         // Hasn't got a location yet
         if (loc == null)
@@ -467,7 +408,7 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
           AnimationType.DOUBLE_HELIX,
           new DoubleHelixParameter(
             new Vector(0, EFFECTS_VELOCITY, 0), EFFECTS_BPW, EFFECTS_RAD,
-            crate.getParticleEffectColor().getColor()
+            crate.getCrate().getParticleEffectColor().getColor()
           )
         );
 

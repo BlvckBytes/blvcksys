@@ -373,6 +373,25 @@ public class GuiInstance<T> {
   }
 
   /**
+   * Builds the standardized back button
+   */
+  private ItemStack buildBackButton() {
+    return new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner()))
+      .withName(cfg.get(ConfigKey.GUI_GENERICS_NAV_BACK_NAME))
+      .withLore(cfg.get(ConfigKey.GUI_GENERICS_NAV_BACK_LORE))
+      .build();
+  }
+
+  /**
+   * Adds a back button as a fixed item to the GUI
+   * @param slot Slot of the back button
+   * @param clicked Event callback
+   */
+  protected<A> void addBack(int slot, Consumer<GuiClickEvent<T>> clicked) {
+    fixedItem(slot, g -> buildBackButton(), clicked);
+  }
+
+  /**
    * Adds a back button as a fixed item to the GUI
    * @param slot Slot of the back button
    * @param gui Gui to open on click
@@ -380,12 +399,7 @@ public class GuiInstance<T> {
    * @param animation Animation to use when navigating back
    */
   protected<A> void addBack(int slot, AGui<A> gui, Function<GuiInstance<T>, A> param, @Nullable AnimationType animation) {
-    fixedItem(slot, g -> (
-      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner()))
-        .withName(cfg.get(ConfigKey.GUI_GENERICS_NAV_BACK_NAME))
-        .withLore(cfg.get(ConfigKey.GUI_GENERICS_NAV_BACK_LORE))
-        .build()
-    ), e -> e.getGui().switchTo(animation, gui, param == null ? null : param.apply(e.getGui())), null);
+    fixedItem(slot, g -> buildBackButton(), e -> e.getGui().switchTo(animation, gui, param == null ? null : param.apply(e.getGui())), null);
   }
 
   /**

@@ -105,6 +105,12 @@ public enum ConfigKey {
   SERVER_SETTINGS_SET("server_settings.set", "$0Neuer Wert der Einstellung $2{{setting}}$0: \"$2{{value}}$0\"."),
 
   //=========================================================================//
+  //                             ItemEditor COMMAND                          //
+  //=========================================================================//
+
+  ITEMEDITOR_NO_ITEM("itemeditor.no_item", "$0Du hältst $4kein Item $0in der Hand!"),
+
+  //=========================================================================//
   //                               Survey COMMAND                            //
   //=========================================================================//
 
@@ -1383,6 +1389,32 @@ public enum ConfigKey {
     " ",
     "$0Aktueller Zustand: {{state}}"
   ),
+
+  //=========================================================================//
+  //                            SingleChoice GUI                             //
+  //=========================================================================//
+
+  GUI_SINGLECHOICE_TITLE("gui.singlechoice.title", "$0Auswahl $2{{type}}"),
+
+  //=========================================================================//
+  //                             ItemEditor GUI                              //
+  //=========================================================================//
+
+  GUI_ITEMEDITOR_TITLE("gui.itemeditor.title", "$0Itemeditor $2{{item_type}}"),
+  GUI_ITEMEDITOR_MATERIAL_NAME("gui.itemeditor.material.name", "$0» $2Material $0«"),
+  GUI_ITEMEDITOR_MATERIAL_LORE(
+    "gui.itemeditor.material.lore",
+    " ",
+    "$0Ändere das $2Material dieses $0Items."
+  ),
+  GUI_ITEMEDITOR_CHOICE_MATERIAL_TITLE("gui.itemeditor.choice.material.title", "$2Material"),
+  GUI_ITEMEDITOR_CHOICE_MATERIAL_NAME("gui.itemeditor.choice.material.name", "$2{{hr_type}}"),
+  GUI_ITEMEDITOR_CHOICE_MATERIAL_LORE(
+    "gui.itemeditor.choice.material.lore",
+    " ",
+    "$0Klicke um dieses Material zu wählen"
+  ),
+  GUI_ITEMEDITOR_MATERIAL_CHANGED("gui.itemeditor.material.changed", "$0Du hast das Material $2{{material}} $0gewählt."),
 
   //=========================================================================//
   //                             Preferences GUI                             //

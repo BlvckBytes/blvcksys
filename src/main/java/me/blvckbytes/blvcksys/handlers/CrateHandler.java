@@ -279,7 +279,7 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
     if (model == null)
       return false;
 
-    model.setNumberOfKeys(keys);
+    model.setNumberOfKeys(Math.max(0, keys));
     pers.store(model);
     return true;
   }
@@ -311,7 +311,6 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
     e.setCancelled(true);
 
     // Open the crate and start a draw
-    // TODO: Check for keys
     if (e.getAction() == Action.RIGHT_CLICK_BLOCK && drawGui != null)
       drawGui.show(e.getPlayer(), targetCrate, AnimationType.SLIDE_RIGHT);
 

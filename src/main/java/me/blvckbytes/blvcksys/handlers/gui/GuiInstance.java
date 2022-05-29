@@ -93,20 +93,18 @@ public class GuiInstance<T> {
   //////////////////////////////// Switching //////////////////////////////////
 
   /**
-   * Switches to another GUI or just closes the screen if the GUI is null
-   * @param current Currently open instance
+   * Switches to another GUI
    * @param transition Transition to play while switching GUIs
    * @param gui GUI to switch to
    * @param arg Argument for the gui
    */
   public<A> void switchTo(
-    GuiInstance<?> current,
     @Nullable AnimationType transition,
     @Nullable AGui<A> gui,
     A arg
   ) {
     if (gui != null)
-      gui.show(viewer, arg, transition, current.getInv());
+      gui.show(viewer, arg, transition, inv);
     else
       viewer.closeInventory();
   }
@@ -387,7 +385,7 @@ public class GuiInstance<T> {
         .withName(cfg.get(ConfigKey.GUI_GENERICS_NAV_BACK_NAME))
         .withLore(cfg.get(ConfigKey.GUI_GENERICS_NAV_BACK_LORE))
         .build()
-    ), e -> e.getGui().switchTo(e.getGui(), animation, gui, param == null ? null : param.apply(e.getGui())), null);
+    ), e -> e.getGui().switchTo(animation, gui, param == null ? null : param.apply(e.getGui())), null);
   }
 
   /**

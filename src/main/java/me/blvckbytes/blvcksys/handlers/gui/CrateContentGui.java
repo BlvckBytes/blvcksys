@@ -84,7 +84,7 @@ public class CrateContentGui extends AGui<Tuple<CrateModel, Boolean>> {
         if (!editMode)
           return;
 
-        e.getGui().switchTo(e.getGui(), AnimationType.SLIDE_LEFT, detailGui, new Tuple<>(crate, content));
+        e.getGui().switchTo(AnimationType.SLIDE_LEFT, detailGui, new Tuple<>(crate, content));
       }, null);
     }
 

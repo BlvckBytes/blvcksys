@@ -77,7 +77,7 @@ public class IgnoresGui extends AGui<Object> {
               .withVariable("chat_state", inst.statePlaceholder(ignore.isIgnoresChat()))
           )
           .build()
-      ), e -> e.getGui().switchTo(e.getGui(), AnimationType.SLIDE_LEFT, ignoreDetailGui, ignore.getTarget()), null);
+      ), e -> e.getGui().switchTo(AnimationType.SLIDE_LEFT, ignoreDetailGui, ignore.getTarget()), null);
     }
 
     return true;

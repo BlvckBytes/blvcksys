@@ -145,7 +145,7 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
           .asScalar()
       );
 
-      i.getGui().switchTo(i.getGui(), AnimationType.SLIDE_RIGHT, crateContentGui, new Tuple<>(i.getGui().getArg().a(), true));
+      i.getGui().switchTo(AnimationType.SLIDE_RIGHT, crateContentGui, new Tuple<>(i.getGui().getArg().a(), true));
     });
 
     // Invoke itemeditor on this item

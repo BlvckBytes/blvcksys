@@ -123,7 +123,7 @@ public class KitsGui extends AGui<Object> implements Listener {
 
         // Right click performs a switch to the kit content preview
         else if (click == ClickType.RIGHT || click == ClickType.SHIFT_RIGHT)
-          e.getGui().switchTo(e.getGui(), AnimationType.SLIDE_LEFT, kitContentGui, kit);
+          e.getGui().switchTo(AnimationType.SLIDE_LEFT, kitContentGui, kit);
       }, 10);
     }
 

@@ -276,14 +276,25 @@ public class AnimationHandler implements IAnimationHandler, Listener, IAutoConst
 
   ////////////////////////////////// DOUBLE_HELIX /////////////////////////////////////
 
-  // FIXME: The pixels are way too far apart when having bigger radii
   private void tickDOUBLE_HELIX(ActiveAnimation animation, Location loc, World w) {
     List<Vector> pixels = new ArrayList<>();
 
     if (animation.parameter == null || (!(animation.parameter instanceof DoubleHelixParameter param)))
       return;
 
-    double pixelDist = 0.050; // Distance between pixels
+    // pixelDist = map(bpw, .5, 2.5, 0.010, 0.050)
+    // Compensates for the lower resolution when we would have the same number
+    // of steps from 0..1 in the whole vector but due to a higher winding frequency
+    // there suddenly are many more pixels to render. This way, there are more
+    // vector steps when there's a higher frequency, to attempt to keep the pixel
+    // density constant, regardless of parameters.
+    double bpwMax = 2.5, distMax = 0.050, bpwMin = .5, distMin = 0.010;
+    double ratio = (distMin - distMax) / (bpwMin - bpwMax);
+    double pixelDist = ratio * param.blocksPerWinding() + distMin - ratio * bpwMin;
+
+    // Never go below the lower bound
+    if (pixelDist < distMin)
+      pixelDist = distMin;
 
     // As vectors are in unit blocks/tick, multiply by the elapsed ticks
     long elapsedTicks = animation.time * TICK_DELAY;

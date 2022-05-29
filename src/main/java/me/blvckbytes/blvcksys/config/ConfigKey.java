@@ -1401,11 +1401,31 @@ public enum ConfigKey {
   //=========================================================================//
 
   GUI_ITEMEDITOR_TITLE("gui.itemeditor.title", "$0Itemeditor $2{{item_type}}"),
+  GUI_ITEMEDITOR_META_UNAVAILABLE("gui.itemeditor.meta_unavailable", "$0Auf die ItemMeta dieses Items konnte $4nicht $0zugegriffen werden!"),
+  GUI_ITEMEDITOR_AMOUNT_CHANGED("gui.itemeditor.amount.changed", "$0Du hast die Anzahl auf $2{{amount}} $0gesetzt."),
+  GUI_ITEMEDITOR_AMOUNT_INCREASE_NAME("gui.itemeditor.amount.increase.name", "$0» $2Anzahl erhöhen $0«"),
+  GUI_ITEMEDITOR_AMOUNT_INCREASE_LORE(
+    "gui.itemeditor.amount.increase.lore",
+    " ",
+    "$0Linksklick: $2+1",
+    "$0Shift + Linksklick: $2+64",
+    "$0Rechtsklick: $2+8",
+    "$0Shift + Rechtsklick: $2=64"
+  ),
+  GUI_ITEMEDITOR_AMOUNT_DECREASE_NAME("gui.itemeditor.amount.decrease.name", "$0» $2Anzahl verringern $0«"),
+  GUI_ITEMEDITOR_AMOUNT_DECREASE_LORE(
+    "gui.itemeditor.amount.decrease.lore",
+    " ",
+    "$0Linksklick: $2-1",
+    "$0Shift + Linksklick: $2-64",
+    "$0Rechtsklick: $2-8",
+    "$0Shift + Rechtsklick: $2=1"
+  ),
   GUI_ITEMEDITOR_MATERIAL_NAME("gui.itemeditor.material.name", "$0» $2Material $0«"),
   GUI_ITEMEDITOR_MATERIAL_LORE(
     "gui.itemeditor.material.lore",
     " ",
-    "$0Ändere das $2Material dieses $0Items."
+    "$0Ändere das $2Material $0dieses Items."
   ),
   GUI_ITEMEDITOR_CHOICE_MATERIAL_TITLE("gui.itemeditor.choice.material.title", "$2Material"),
   GUI_ITEMEDITOR_CHOICE_MATERIAL_NAME("gui.itemeditor.choice.material.name", "$2{{hr_type}}"),
@@ -1415,6 +1435,23 @@ public enum ConfigKey {
     "$0Klicke um dieses Material zu wählen"
   ),
   GUI_ITEMEDITOR_MATERIAL_CHANGED("gui.itemeditor.material.changed", "$0Du hast das Material $2{{material}} $0gewählt."),
+  GUI_ITEMEDITOR_FLAGS_NAME("gui.itemeditor.flags.name", "$0» $2Flags $0«"),
+  GUI_ITEMEDITOR_FLAGS_LORE(
+    "gui.itemeditor.flags.lore",
+    " ",
+    "$0Aktiviere/Deaktiviere $2Flags$0."
+  ),
+  GUI_ITEMEDITOR_CHOICE_FLAG_TITLE("gui.itemeditor.choice.flag.title", "$2Flags"),
+  GUI_ITEMEDITOR_CHOICE_FLAG_NAME("gui.itemeditor.choice.flag.name", "$2{{flag}}"),
+  GUI_ITEMEDITOR_CHOICE_FLAG_ACTIVE("gui.itemeditor.choice.flag.inactive", "&aAktiviert"),
+  GUI_ITEMEDITOR_CHOICE_FLAG_INACTIVE("gui.itemeditor.choice.flag.active", "&cDeaktiviert"),
+  GUI_ITEMEDITOR_CHOICE_FLAG_LORE(
+    "gui.itemeditor.choice.flag.lore",
+    " ",
+    "$0Aktueller Zustand: {{state}}",
+    "$0Klicke, um den Zustand zu wechseln."
+  ),
+  GUI_ITEMEDITOR_FLAG_CHANGED("gui.itemeditor.flag.changed", "$0Du hast den Flag $2{{flag}} $0auf $2{{state}} $0geändert."),
 
   //=========================================================================//
   //                             Preferences GUI                             //

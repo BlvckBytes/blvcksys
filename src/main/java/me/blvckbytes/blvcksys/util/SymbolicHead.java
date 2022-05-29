@@ -14,7 +14,9 @@ import lombok.Getter;
 @AllArgsConstructor
 public enum SymbolicHead {
   ARROW_LEFT("MHF_ArrowLeft"),
-  ARROW_RIGHT("MHF_ArrowRight");
+  ARROW_RIGHT("MHF_ArrowRight"),
+  ARROW_UP("MHF_ArrowUp"),
+  ARROW_DOWN("MHF_ArrowDown");
 
   private final String owner;
 

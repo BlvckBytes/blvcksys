@@ -7,6 +7,7 @@ import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.handlers.ICrateHandler;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
+import me.blvckbytes.blvcksys.handlers.TriResult;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.CrateItemModel;
 import me.blvckbytes.blvcksys.persistence.models.CrateModel;
@@ -28,6 +29,7 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
   private final ICrateHandler crateHandler;
   private final ChatUtil chatUtil;
   private final IPersistence pers;
+  private final ConfirmationGui confirmationGui;
 
   @AutoInjectLate
   private CrateContentGui crateContentGui;
@@ -38,7 +40,8 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject ICrateHandler crateHandler,
     @AutoInject ChatUtil chatUtil,
-    @AutoInject IPersistence pers
+    @AutoInject IPersistence pers,
+    @AutoInject ConfirmationGui confirmationGui
   ) {
     super(6, "", i -> (
       cfg.get(ConfigKey.GUI_CRATE_DETAIL_NAME).
@@ -48,6 +51,7 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
     this.crateHandler = crateHandler;
     this.chatUtil = chatUtil;
     this.pers = pers;
+    this.confirmationGui = confirmationGui;
   }
 
   @Override
@@ -135,17 +139,39 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
         .withLore(cfg.get(ConfigKey.GUI_CRATE_DETAIL_DELETE_LORE))
         .build()
     ), i -> {
-      boolean res = crateHandler.deleteItem(i.getGui().getArg().b());
+      // Prompt for deletion confirmation
+      i.getGui().switchTo(AnimationType.SLIDE_LEFT, confirmationGui, (confirmed, inv) -> {
 
-      i.getGui().getViewer().sendMessage(
-        cfg.get(res ? ConfigKey.COMMAND_CRATE_ITEM_DELETED : ConfigKey.COMMAND_CRATE_ITEM_DISAPPEARED)
-          .withPrefix()
-          .withVariable("item", crateContentGui.getItemName(i.getGui().getArg().b()))
-          .withVariable("name", i.getGui().getArg().a().getName())
-          .asScalar()
-      );
+        // Confirmed
+        if (confirmed == TriResult.SUCC) {
+          boolean res = crateHandler.deleteItem(i.getGui().getArg().b());
 
-      i.getGui().switchTo(AnimationType.SLIDE_RIGHT, crateContentGui, new Tuple<>(i.getGui().getArg().a(), true));
+          i.getGui().getViewer().sendMessage(
+            cfg.get(res ? ConfigKey.COMMAND_CRATE_ITEM_DELETED : ConfigKey.COMMAND_CRATE_ITEM_DISAPPEARED)
+              .withPrefix()
+              .withVariable("item", crateContentGui.getItemName(i.getGui().getArg().b()))
+              .withVariable("name", i.getGui().getArg().a().getName())
+              .asScalar()
+          );
+
+          // Move back to the content gui
+          crateContentGui.show(i.getGui().getViewer(), new Tuple<>(i.getGui().getArg().a(), true), AnimationType.SLIDE_RIGHT, inv);
+          return false;
+        }
+
+        i.getGui().getViewer().sendMessage(
+          cfg.get(ConfigKey.GUI_CRATE_DETAIL_DELETE_CANCELLED)
+            .withPrefix()
+            .withVariable("item", crateContentGui.getItemName(i.getGui().getArg().b()))
+            .asScalar()
+        );
+
+        // Re-open the detail GUI if the confirmation wasn't closed
+        if (confirmed != TriResult.EMPTY)
+          this.show(i.getGui().getViewer(), i.getGui().getArg(), AnimationType.SLIDE_RIGHT, inv);
+
+        return false;
+      });
     });
 
     // Invoke itemeditor on this item

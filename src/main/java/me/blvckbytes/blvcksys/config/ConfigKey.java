@@ -1431,6 +1431,7 @@ public enum ConfigKey {
     "$0Item zu ziehen."
   ),
   GUI_CRATE_DETAIL_PROBABILITY_PROMPT("gui.crate_detail.probability.prompt", "$0Bitte gib die neue $2Wahrscheinlichkeit $0in den $2Chat $0ein."),
+  GUI_CRATE_DETAIL_DELETE_CANCELLED("gui.crate_detail.delete.cancelled", "$0Die Entfernung des Items $2{{item}} $0wurde $2abgebrochen$0."),
   GUI_CRATE_DETAIL_DELETE_NAME("gui.crate_detail.delete.name", "$0» &cEntfernen $0«"),
   GUI_CRATE_DETAIL_DELETE_LORE(
     "gui.crate_detail.delete.lore",

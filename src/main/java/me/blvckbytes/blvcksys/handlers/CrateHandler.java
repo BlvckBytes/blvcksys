@@ -328,7 +328,7 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
     if (e.getAction() == Action.RIGHT_CLICK_BLOCK && drawGui != null) {
       confirmationGui.show(p, (confirmed, inv) -> {
         // Open the crate and start a draw on confirmation
-        if (confirmed) {
+        if (confirmed == TriResult.SUCC) {
           drawGui.show(p, targetCrate, me.blvckbytes.blvcksys.handlers.gui.AnimationType.SLIDE_RIGHT, inv);
           return false;
         }

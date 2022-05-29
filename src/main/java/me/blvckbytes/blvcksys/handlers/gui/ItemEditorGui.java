@@ -5,11 +5,14 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
+import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.SymbolicHead;
+import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.util.Tuple;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.Inventory;
@@ -18,7 +21,11 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -33,12 +40,16 @@ import java.util.function.Consumer;
 public class ItemEditorGui extends AGui<ItemStack> {
 
   private final SingleChoiceGui singleChoiceGui;
+  private final ILogger logger;
+  private final ChatUtil chatUtil;
 
   public ItemEditorGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
     @AutoInject IPlayerTextureHandler textures,
-    @AutoInject SingleChoiceGui singleChoiceGui
+    @AutoInject SingleChoiceGui singleChoiceGui,
+    @AutoInject ILogger logger,
+    @AutoInject ChatUtil chatUtil
   ) {
     super(5, "", i -> (
       cfg.get(ConfigKey.GUI_ITEMEDITOR_TITLE)
@@ -46,6 +57,8 @@ public class ItemEditorGui extends AGui<ItemStack> {
     ), plugin, cfg, textures);
 
     this.singleChoiceGui = singleChoiceGui;
+    this.logger = logger;
+    this.chatUtil = chatUtil;
   }
 
   @Override
@@ -272,6 +285,144 @@ public class ItemEditorGui extends AGui<ItemStack> {
               .asScalar()
           );
           return false;
+        }, closed, backButton
+      ));
+    });
+
+    //////////////////////////////////// Enchantments ////////////////////////////////////
+
+    inst.fixedItem(30, i -> (
+      new ItemStackBuilder(Material.ENCHANTED_BOOK)
+        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_ENCHANTMENTS_NAME))
+        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_ENCHANTMENTS_LORE))
+        .build()
+    ), e -> {
+
+      List<Enchantment> enchantments = new ArrayList<>();
+
+      // Get all available enchantments from the abstract enchantment class's list of constant fields
+      try {
+        List<Field> constants = Arrays.stream(Enchantment.class.getDeclaredFields())
+          .filter(field -> field.getType().equals(Enchantment.class) && Modifier.isStatic(field.getModifiers()))
+          .toList();
+
+        for (Field constant : constants)
+          enchantments.add((Enchantment) constant.get(null));
+      } catch (Exception ex) {
+        logger.logError(ex);
+      }
+
+      // Representitive items for each enchantment
+      List<Tuple<Object, ItemStack>> representitives = enchantments.stream()
+        // Sort by relevance
+        .sorted(Comparator.comparing(ench -> ench.canEnchantItem(item), Comparator.reverseOrder()))
+        .map(ench -> {
+            boolean has = meta.hasEnchant(ench);
+            int level = -1;
+
+            if (has)
+              level = meta.getEnchantLevel(ench);
+
+            return new Tuple<>((Object) ench, (
+              new ItemStackBuilder(has ? Material.ENCHANTED_BOOK : Material.BOOK)
+                .withEnchantment(ench, 1)
+                .withName(
+                  cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_NAME)
+                    .withVariable(
+                      "enchantment",
+                      WordUtils.capitalizeFully(ench.getKey().getKey().replace("_", " "))
+                    )
+                )
+                .withLore(
+                  cfg.get(has ? ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_LORE_ACTIVE : ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_LORE_INACTIVE)
+                    .withVariable(
+                      "state",
+                      cfg.get(has ? ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_ACTIVE : ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_INACTIVE)
+                        .asScalar()
+                    )
+                    .withVariable("level", level)
+                )
+                .build()
+            ));
+          }
+        ).toList();
+
+      // Invoke a new single choice gui for available enchantments
+      inst.switchTo(AnimationType.SLIDE_LEFT, singleChoiceGui, new SingleChoiceParam(
+        cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_TITLE).asScalar(), representitives,
+
+        // Enchantment selected
+        (ench, inv) -> {
+          Enchantment enchantment = (Enchantment) ench;
+          boolean has = meta.hasEnchant(enchantment);
+
+          // Undo the enchantment
+          if (has) {
+            meta.removeEnchant(enchantment);
+            item.setItemMeta(meta);
+
+            p.sendMessage(
+              cfg.get(ConfigKey.GUI_ITEMEDITOR_ENCHANTMENT_REMOVED)
+                .withPrefix()
+                .withVariable(
+                  "enchantment",
+                  WordUtils.capitalizeFully(enchantment.getKey().getKey().replace("_", " "))
+                )
+                .asScalar()
+            );
+
+            this.show(p, item, AnimationType.SLIDE_RIGHT, inv);
+            return false;
+          }
+
+          // Prompt for the desired level in the chat
+          chatUtil.registerPrompt(
+            viewer,
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_ENCHANTMENT_LEVEL_PROMPT)
+              .withPrefix()
+              .asScalar(),
+
+            // Level entered
+            levelStr -> {
+
+              // Parse the level from the string
+              int level;
+              try {
+                level = Integer.parseInt(levelStr);
+              } catch (NumberFormatException ex) {
+                viewer.sendMessage(
+                  cfg.get(ConfigKey.ERR_INTPARSE)
+                    .withPrefix()
+                    .withVariable("number", levelStr)
+                    .asScalar()
+                );
+
+                this.show(p, item, AnimationType.SLIDE_RIGHT, inv);
+                return;
+              }
+
+              meta.addEnchant(enchantment, level, true);
+              item.setItemMeta(meta);
+
+              p.sendMessage(
+                cfg.get(ConfigKey.GUI_ITEMEDITOR_ENCHANTMENT_ADDED)
+                  .withPrefix()
+                  .withVariable(
+                    "enchantment",
+                    WordUtils.capitalizeFully(enchantment.getKey().getKey().replace("_", " "))
+                  )
+                  .withVariable("level", level)
+                  .asScalar()
+              );
+
+              this.show(p, item, AnimationType.SLIDE_RIGHT, inv);
+            },
+
+            closed
+          );
+
+          // Close the GUI when prompting for the chat message
+          return true;
         }, closed, backButton
       ));
     });

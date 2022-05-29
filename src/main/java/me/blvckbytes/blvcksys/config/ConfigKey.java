@@ -1452,6 +1452,34 @@ public enum ConfigKey {
     "$0Klicke, um den Zustand zu wechseln."
   ),
   GUI_ITEMEDITOR_FLAG_CHANGED("gui.itemeditor.flag.changed", "$0Du hast den Flag $2{{flag}} $0auf $2{{state}} $0geändert."),
+  GUI_ITEMEDITOR_ENCHANTMENTS_NAME("gui.itemeditor.enchantments.name", "$0» $2Verzauberungen $0«"),
+  GUI_ITEMEDITOR_ENCHANTMENTS_LORE(
+    "gui.itemeditor.enchantments.lore",
+    " ",
+    "$0Füge Verzauberungen $2hinzu$0, $2entferne",
+    "$0bestehende Verzauberungen und",
+    "$0verwalte deren $2Level$0."
+  ),
+  GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_TITLE("gui.itemeditor.choice.enchantment.title", "$2Verzauberung"),
+  GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_NAME("gui.itemeditor.choice.enchantment.name", "$2{{enchantment}}"),
+  GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_ACTIVE("gui.itemeditor.choice.enchantment.inactive", "&cBereits angewandt"),
+  GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_INACTIVE("gui.itemeditor.choice.enchantment.active", "&aNoch nicht angewandt"),
+  GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_LORE_ACTIVE(
+    "gui.itemeditor.choice.enchantments.lore.active",
+    " ",
+    "$0Aktueller Zustand: {{state}}",
+    "$0Angewandter Level: $2{{level}}",
+    "$0Klicke um die Verzauberung zu &centfernen$0."
+  ),
+  GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_LORE_INACTIVE(
+    "gui.itemeditor.choice.enchantments.lore.inactive",
+    " ",
+    "$0Aktueller Zustand: {{state}}",
+    "$0Klicke um die Verzauberung &ahinzuzufügen$0."
+  ),
+  GUI_ITEMEDITOR_ENCHANTMENT_ADDED("gui.itemeditor.enchantment.changed", "$0Du hast die Verzauberung $2{{enchantment}} $0auf Level $2{{level}} $0hinzugefügt."),
+  GUI_ITEMEDITOR_ENCHANTMENT_REMOVED("gui.itemeditor.enchantment.removed", "$0Du hast die Verzauberung $2{{enchantment}} $0entfernt."),
+  GUI_ITEMEDITOR_ENCHANTMENT_LEVEL_PROMPT("gui.itemeditor.enchantment.level_prompt", "$0Bitte gib das gewünschte $2Verzauberungslevel $0in den $2Chat $0ein."),
 
   //=========================================================================//
   //                             Preferences GUI                             //

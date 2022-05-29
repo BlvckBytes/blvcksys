@@ -45,7 +45,7 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
   private static final long EFFECTS_PERIOD_T = 20 * 5;
 
   // Velocity of the rising helix animation, blocks per winding, the total height as well as the radius
-  private static final double EFFECTS_VELOCITY = .06, EFFECTS_BPW = .5, EFFECTS_HEIGHT = 1.45, EFFECTS_RAD = .7;
+  private static final double EFFECTS_VELOCITY = .055, EFFECTS_BPW = .9, EFFECTS_HEIGHT = 1.2, EFFECTS_RAD = .7;
 
   // Random used for drawing
   private static final Random rand = new Random();

@@ -1,9 +1,12 @@
 package me.blvckbytes.blvcksys.handlers;
 
+import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
+import me.blvckbytes.blvcksys.handlers.gui.ConfirmationGui;
 import me.blvckbytes.blvcksys.handlers.gui.CrateContentGui;
 import me.blvckbytes.blvcksys.handlers.gui.CrateDrawGui;
 import me.blvckbytes.blvcksys.handlers.gui.CrateDrawLayout;
@@ -62,17 +65,23 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
   private final IPersistence pers;
   private final JavaPlugin plugin;
   private final IAnimationHandler animationHandler;
+  private final ConfirmationGui confirmationGui;
+  private final IConfig cfg;
 
   private BukkitTask effectTaskHandle;
 
   public CrateHandler(
     @AutoInject IPersistence pers,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IAnimationHandler animationHandler
+    @AutoInject IAnimationHandler animationHandler,
+    @AutoInject ConfirmationGui confirmationGui,
+    @AutoInject IConfig cfg
   ) {
     this.pers = pers;
     this.plugin = plugin;
     this.animationHandler = animationHandler;
+    this.confirmationGui = confirmationGui;
+    this.cfg = cfg;
 
     this.crateCache = new HashMap<>();
     this.keyCache = new HashMap<>();
@@ -301,6 +310,8 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
     if (e.getClickedBlock() == null)
       return;
 
+    Player p = e.getPlayer();
+
     Location l = e.getClickedBlock().getLocation();
     CrateModel targetCrate = crateCache.values().stream()
       .map(CachedCrate::getCrate)
@@ -313,13 +324,29 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
 
     e.setCancelled(true);
 
-    // Open the crate and start a draw
-    if (e.getAction() == Action.RIGHT_CLICK_BLOCK && drawGui != null)
-      drawGui.show(e.getPlayer(), targetCrate, me.blvckbytes.blvcksys.handlers.gui.AnimationType.SLIDE_RIGHT);
+    // Prompt the user for confirmation before opening the crate
+    if (e.getAction() == Action.RIGHT_CLICK_BLOCK && drawGui != null) {
+      confirmationGui.show(p, (confirmed, inv) -> {
+        // Open the crate and start a draw on confirmation
+        if (confirmed) {
+          drawGui.show(p, targetCrate, me.blvckbytes.blvcksys.handlers.gui.AnimationType.SLIDE_RIGHT, inv);
+          return false;
+        }
+
+        p.sendMessage(
+          cfg.get(ConfigKey.GUI_CRATE_DRAW_KEY_CANCELLED)
+            .withPrefix()
+            .withVariable("name", targetCrate.getName())
+            .asScalar()
+        );
+
+        return true;
+      }, me.blvckbytes.blvcksys.handlers.gui.AnimationType.SLIDE_UP);
+    }
 
     // Show the crate contents
     else if (e.getAction() == Action.LEFT_CLICK_BLOCK && contentGui != null)
-      contentGui.show(e.getPlayer(), new Tuple<>(targetCrate, false), me.blvckbytes.blvcksys.handlers.gui.AnimationType.SLIDE_UP);
+      contentGui.show(p, new Tuple<>(targetCrate, false), me.blvckbytes.blvcksys.handlers.gui.AnimationType.SLIDE_UP);
   }
 
   @EventHandler

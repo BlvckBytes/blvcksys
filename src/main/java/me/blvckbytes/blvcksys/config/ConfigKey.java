@@ -1458,6 +1458,7 @@ public enum ConfigKey {
   GUI_CRATE_DRAW_NO_ITEMS("gui.crate_draw.no_items", "$0Die Crate $4{{name}} $0besitzt noch $4keine Items$0!"),
   GUI_CRATE_DRAW_NO_KEYS("gui.crate_draw.no_keys", "$0Du besitzt $4keinen Schlüssel $0für die Crate $4{{name}}$0!"),
   GUI_CRATE_DRAW_KEY_USED("gui.crate_draw.key_used", "$0Du hast einen $2Schlüssel $0für die Crate $2{{name}} $0eingelöst."),
+  GUI_CRATE_DRAW_KEY_CANCELLED("gui.crate_draw.key_cancelled", "$0Die Öffnung der Crate $2{{name}} $0wurde $2abgebrochen$0."),
   GUI_CRATE_DRAW_PRIZE("gui.crate_draw.prize", "$0Du hast das Item $2{{item}} $0gewonnen!"),
 
   //=========================================================================//
@@ -1503,8 +1504,27 @@ public enum ConfigKey {
   ),
 
   //=========================================================================//
+  //                            Confirmation GUI                             //
+  //=========================================================================//
+
+  GUI_CONFIRMATION_TITLE("gui.confirmation.title", "$0Bestätigung"),
+  GUI_CONFIRMATION_CONFIRM_NAME("gui.confirmation.confirm.name", "$0» &aBestätigen"),
+  GUI_CONFIRMATION_CONFIRM_LORE(
+    "gui.confirmation.confirm.lore",
+    " ",
+    "$0Bestätigt diese Aktion."
+  ),
+  GUI_CONFIRMATION_CANCEL_NAME("gui.confirmation.cancel.name", "$0» &cAbbrechen"),
+  GUI_CONFIRMATION_CANCEL_LORE(
+    "gui.confirmation.cancel.lore",
+    " ",
+    "$0Bricht diese Aktion ab."
+  ),
+
+  //=========================================================================//
   //                            Generic Messages                             //
   //=========================================================================//
+
   GENERIC_JOINED("generic.joined", "$0Der Spieler $2{{name}} $0ist dem Server $2beigetreten$0!"),
   GENERIC_QUIT("generic.quit", "$0Der Spieler $2{{name}} $0hat den Server $2verlassen$0!"),
 

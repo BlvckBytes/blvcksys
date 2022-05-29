@@ -8,9 +8,11 @@ import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.SymbolicHead;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import net.minecraft.network.chat.ChatComponentText;
 import net.minecraft.util.Tuple;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
@@ -397,7 +399,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
                     .asScalar()
                 );
 
-                this.show(p, item, AnimationType.SLIDE_RIGHT, inv);
+                this.show(p, item, AnimationType.SLIDE_UP);
                 return;
               }
 
@@ -415,7 +417,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
                   .asScalar()
               );
 
-              this.show(p, item, AnimationType.SLIDE_RIGHT, inv);
+              this.show(p, item, AnimationType.SLIDE_UP);
             },
 
             closed
@@ -427,6 +429,47 @@ public class ItemEditorGui extends AGui<ItemStack> {
       ));
     });
 
+    //////////////////////////////////// Displayname ////////////////////////////////////
+
+    inst.fixedItem(31, i -> (
+      new ItemStackBuilder(Material.PAPER)
+        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_DISPLAYNAME_NAME))
+        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_DISPLAYNAME_LORE))
+        .build()
+    ), e -> {
+
+      // Prompt for the desired displayname in the chat
+      chatUtil.registerPrompt(
+        viewer,
+        cfg.get(ConfigKey.GUI_ITEMEDITOR_DISPLAYNAME_PROMPT)
+          .withPrefix()
+          .asScalar(),
+
+        // Name entered
+        nameStr -> {
+          boolean reset = nameStr.equalsIgnoreCase("null");
+          nameStr = ChatColor.translateAlternateColorCodes('&', nameStr);
+
+          meta.setDisplayName(reset ? null : nameStr);
+          item.setItemMeta(meta);
+
+          p.sendMessage(
+            cfg.get(reset ? ConfigKey.GUI_ITEMEDITOR_DISPLAYNAME_RESET : ConfigKey.GUI_ITEMEDITOR_DISPLAYNAME_SET)
+              .withPrefix()
+              .withVariable("name", nameStr)
+              .asScalar()
+          );
+
+          this.show(p, item, AnimationType.SLIDE_UP);
+        },
+
+        closed
+      );
+
+      // Close the GUI when prompting for the chat message
+      e.getGui().close();
+    });
+
     return true;
+    }
   }
-}

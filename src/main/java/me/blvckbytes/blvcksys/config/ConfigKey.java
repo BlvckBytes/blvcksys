@@ -1480,6 +1480,15 @@ public enum ConfigKey {
   GUI_ITEMEDITOR_ENCHANTMENT_ADDED("gui.itemeditor.enchantment.changed", "$0Du hast die Verzauberung $2{{enchantment}} $0auf Level $2{{level}} $0hinzugefügt."),
   GUI_ITEMEDITOR_ENCHANTMENT_REMOVED("gui.itemeditor.enchantment.removed", "$0Du hast die Verzauberung $2{{enchantment}} $0entfernt."),
   GUI_ITEMEDITOR_ENCHANTMENT_LEVEL_PROMPT("gui.itemeditor.enchantment.level_prompt", "$0Bitte gib das gewünschte $2Verzauberungslevel $0in den $2Chat $0ein."),
+  GUI_ITEMEDITOR_DISPLAYNAME_NAME("gui.itemeditor.displayname.name", "$0» $2Anzeigename $0«"),
+  GUI_ITEMEDITOR_DISPLAYNAME_LORE(
+    "gui.itemeditor.displayname.lore",
+    " ",
+    "$0Ändere den $2Namen $0des Items."
+  ),
+  GUI_ITEMEDITOR_DISPLAYNAME_PROMPT("gui.itemeditor.displayname.prompt", "$0Bitte gib den gewünschten $2Anzeigenamen $0in den $2Chat $0ein (tippe \"null\" um diesen zurückzusetzen)."),
+  GUI_ITEMEDITOR_DISPLAYNAME_SET("gui.itemeditor.displayname.set", "$0Du hast den Anzeigenamen auf &r{{name}} $0gesetzt."),
+  GUI_ITEMEDITOR_DISPLAYNAME_RESET("gui.itemeditor.displayname.reset", "$0Du hast den Anzeigenamen $2zurückgesetzt$0."),
 
   //=========================================================================//
   //                             Preferences GUI                             //

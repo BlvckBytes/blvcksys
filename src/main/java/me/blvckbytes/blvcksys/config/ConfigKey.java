@@ -1181,6 +1181,38 @@ public enum ConfigKey {
   COMMAND_CRATE_ITEM_DELETED("crate.item_deleted", "$0Das $3Item {{item}} $0der Crate $3{{name}} $0wurde gelöscht."),
 
   //=========================================================================//
+  //                            CRATEKEYS Command                            //
+  //=========================================================================//
+
+  COMMAND_CRATEKEYS_LIST_HEADER_SELF(
+    "cratekeys.list.header.self",
+    "$0Deine $2Crate-Keys$0:",
+    "$1| $3Crate $1| $3Schlüssel $1|"
+  ),
+  COMMAND_CRATEKEYS_LIST_HEADER_OTHERS(
+    "cratekeys.list.header.others",
+    "$0Crate-Keys von $2{{target}}$0:",
+    "$1| $3Crate $1| $3Schlüssel $1|"
+  ),
+  COMMAND_CRATEKEYS_LIST_KEY_FORMAT("cratekeys.list.key_format", "$1| $2{{crate}} $1| $2{{keys}} $1|"),
+  COMMAND_CRATEKEYS_SET_SELF("cratekeys.set.self", "$0Dein Crate-Konto der Crate $3{{crate}} $0wurde auf $3{{keys}} Schlüssel $0gesetzt ($3{{delta}} &6✒$0)."),
+  COMMAND_CRATEKEYS_SET_NOT_FOUND("cratekeys.set.not_found", "$0Die Crate $4{{crate}} $0existiert nicht!"),
+  COMMAND_CRATEKEYS_SET_OTHERS_SENDER("cratekeys.set.others.sender", "$0Du hast das Crate-Konto der Crate $3{{crate}} $0von $3{{target}} $0auf $3{{keys}} Schlüssel $0gesetzt ($3{{delta}} &6✒$0)."),
+  COMMAND_CRATEKEYS_SET_OTHERS_RECEIVER("cratekeys.set.others.receiver", "$0Dein Crate-Konto der Crate $3{{crate}} $0wurde von $3{{issuer}} $0auf $3{{keys}} Schlüssel $0gesetzt ($3{{delta}} &6✒$0)."),
+
+  //=========================================================================//
+  //                             CRATEPAY Command                            //
+  //=========================================================================//
+
+  CRATEPAY_INVALID_AMOUNT("cratepay.invalid_amount", "$0Die Schlüsselanzahl muss $4größer als 0 $0sein!"),
+  CRATEPAY_TOO_MUCH("cratepay.too_much", "$0Du kannst maximal $4{{available}} Schlüssel $0für die Crate $4{{crate}} $0überweisen!"),
+  CRATEPAY_SELF("cratepay.self", "$0Du kannst $4nicht $0an dich $4selbst $0überweisen!"),
+  CRATEPAY_HAS_NONE("cratepay.has_none", "$0Du hast $4keine Schlüssel $0für die Crate $4{{crate}}$0!"),
+  CRATEPAY_NOT_FOUND("cratepay.not_found", "$0Die Crate $4{{crate}} $0existiert nicht!"),
+  CRATEPAY_TRANSFERED_SENDER("cratepay.transfered.sender", "$0Du hast $3{{keys}} Schlüssel $0für die Crate $3{{crate}} $0an $3{{target}} $0überwiesen."),
+  CRATEPAY_TRANSFERED_RECEIVER("cratepay.transfered.receiver", "$3{{sender}} $0hat $3{{keys}} Schlüssel $0für die Crate $3{{crate}} $0an dich überwiesen."),
+
+  //=========================================================================//
   //                            CRATESORT Command                            //
   //=========================================================================//
 

@@ -3,6 +3,12 @@ package me.blvckbytes.blvcksys.handlers.gui;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 05/29/2022
+
+  List of supported crate draw animation layouts.
+*/
 @Getter
 @AllArgsConstructor
 public enum CrateDrawLayout {

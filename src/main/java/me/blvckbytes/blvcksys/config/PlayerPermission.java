@@ -22,13 +22,19 @@ public enum PlayerPermission {
   //                               Teleportations                            //
   //=========================================================================//
 
-  TELEPORTATIONS_BYPASS("teleportations.bypass"),
+  TELEPORTATIONS_BYPASS("bvs.teleportations.bypass"),
 
   //=========================================================================//
   //                                  ToggleChat                             //
   //=========================================================================//
 
-  TOGGLECHAT_BYPASS("togglechat.bypass"),
+  TOGGLECHAT_BYPASS("bvs.togglechat.bypass"),
+
+  //=========================================================================//
+  //                              CRATEKEYS Command                          //
+  //=========================================================================//
+
+  COMMAND_CRATEKEYS_MANAGE("bvs.cratekeys.manage"),
 
   //=========================================================================//
   //                                MSGSPY Command                           //

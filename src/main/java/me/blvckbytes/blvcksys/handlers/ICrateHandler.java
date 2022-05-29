@@ -3,16 +3,19 @@ package me.blvckbytes.blvcksys.handlers;
 import me.blvckbytes.blvcksys.handlers.gui.CrateDrawLayout;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.CrateItemModel;
+import me.blvckbytes.blvcksys.persistence.models.CrateKeyModel;
 import me.blvckbytes.blvcksys.persistence.models.CrateModel;
 import me.blvckbytes.blvcksys.persistence.models.SequenceSortResult;
 import net.minecraft.util.Tuple;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 public interface ICrateHandler {
 
@@ -53,6 +56,13 @@ public interface ICrateHandler {
    * @return Optional crate, empty if there was no crate with this name
    */
   Optional<CrateModel> getCrate(String name);
+
+  /**
+   * Get a crate by it's ID
+   * @param id ID of the target crate
+   * @return Optional crate, empty if there was no crate with this ID
+   */
+  Optional<CrateModel> getCrate(UUID id);
 
   /**
    * List all existing crates and their items
@@ -100,5 +110,21 @@ public interface ICrateHandler {
    */
   Tuple<SequenceSortResult, Integer> sortItems(String crateName, int[] lineIdSequence) throws PersistenceException;
 
+  /**
+   * Draw an item randomly based on the item's probabilities
+   * @param crateName Crate to draw from
+   * @return Optional drawn item, empty if there was crate with this name
+   */
   Optional<CrateItemModel> drawItem(String crateName);
+
+  /**
+   * Get all crate keys of a player
+   * @param p
+   * @return
+   */
+  List<CrateKeyModel> getAllKeys(OfflinePlayer p);
+
+  Optional<CrateKeyModel> getKeys(OfflinePlayer p, String crateName);
+
+  boolean updateKeys(OfflinePlayer p, String crateName, int keys);
 }

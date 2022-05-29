@@ -12,18 +12,21 @@ import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.exceptions.DuplicatePropertyException;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.CrateItemModel;
+import me.blvckbytes.blvcksys.persistence.models.CrateKeyModel;
 import me.blvckbytes.blvcksys.persistence.models.CrateModel;
 import me.blvckbytes.blvcksys.persistence.models.SequenceSortResult;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import net.minecraft.util.Tuple;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,6 +43,7 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
 
   private static final Random rand = new Random();
 
+  private final Map<OfflinePlayer, Map<String, CrateKeyModel>> keyCache;
   private final Map<String, CrateModel> crateCache;
   private final Map<String, List<CrateItemModel>> itemsCache;
   private final Map<String, Tuple<Double, List<Double>>> probabilityRanges;
@@ -57,6 +61,7 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
   ) {
     this.pers = pers;
     this.crateCache = new HashMap<>();
+    this.keyCache = new HashMap<>();
     this.itemsCache = new HashMap<>();
     this.probabilityRanges = new HashMap<>();
   }
@@ -117,6 +122,21 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
         crateCache.put(name.toLowerCase(), crate);
         return crate;
       });
+  }
+
+  @Override
+  public Optional<CrateModel> getCrate(UUID id) {
+    return crateCache.values().stream()
+      .filter(c -> c.getId().equals(id))
+      .findFirst()
+      .or(() -> (
+          pers.findFirst(buildCrateQuery(id))
+            .map(crate -> {
+              crateCache.put(crate.getName().toLowerCase(), crate);
+              return crate;
+            })
+        )
+      );
   }
 
   @Override
@@ -188,7 +208,7 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
 
   @Override
   public Optional<CrateItemModel> drawItem(String crateName) {
-    List<CrateItemModel> items = itemsCache.get(crateName);
+    List<CrateItemModel> items = getItems(crateName).orElse(null);
     Tuple<Double, List<Double>> probData = probabilityRanges.get(crateName);
 
     if (probData == null || items == null)
@@ -201,6 +221,67 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
     }
 
     return Optional.empty();
+  }
+
+  @Override
+  public List<CrateKeyModel> getAllKeys(OfflinePlayer p) {
+    if (keyCache.containsKey(p))
+      return new ArrayList<>(keyCache.get(p).values());
+
+    List<CrateKeyModel> keys = pers.find(buildKeyQuery(p, null));
+
+    if (!keyCache.containsKey(p))
+      keyCache.put(p, new HashMap<>());
+
+    // Check for missing key models and create them
+    keys.addAll(
+      crateCache.values().stream()
+        .filter(c -> keys.stream().noneMatch(k -> k.getCrateId().equals(c.getId())))
+        .map(c -> {
+          CrateKeyModel model = new CrateKeyModel(p, c.getId(), 0);
+          pers.store(model);
+          return model;
+        })
+        .toList()
+    );
+
+    for (CrateKeyModel key : keys) {
+      getCrate(key.getCrateId())
+        .ifPresent(crate -> keyCache.get(p).put(crate.getName().toLowerCase(), key));
+    }
+
+    return keys;
+  }
+
+  @Override
+  public Optional<CrateKeyModel> getKeys(OfflinePlayer p, String crateName) {
+    if (keyCache.containsKey(p) && keyCache.get(p).containsKey(crateName.toLowerCase()))
+      return Optional.of(keyCache.get(p).get(crateName.toLowerCase()));
+
+    CrateModel crate = getCrate(crateName).orElse(null);
+    if (crate == null)
+      return Optional.empty();
+
+    return pers.findFirst(buildKeyQuery(p, crate.getId()))
+      .map(key -> {
+        if (!keyCache.containsKey(p))
+          keyCache.put(p, new HashMap<>());
+
+        keyCache.get(p).put(crate.getName().toLowerCase(), key);
+        return key;
+      });
+  }
+
+  @Override
+  public boolean updateKeys(OfflinePlayer p, String crateName, int keys) {
+    CrateKeyModel model = getKeys(p, crateName).orElse(null);
+
+    if (model == null)
+      return false;
+
+    model.setNumberOfKeys(keys);
+    pers.store(model);
+    return true;
   }
 
   //=========================================================================//
@@ -239,6 +320,11 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
       contentGui.show(e.getPlayer(), new Tuple<>(targetCrate, false), AnimationType.SLIDE_UP);
   }
 
+  @EventHandler
+  public void onQuit(PlayerQuitEvent e) {
+    keyCache.remove(e.getPlayer());
+  }
+
   //=========================================================================//
   //                                 Utilities                               //
   //=========================================================================//
@@ -255,6 +341,17 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
   }
 
   /**
+   * Build a query to select a crate by it's id
+   * @param id ID of the target crate
+   */
+  private QueryBuilder<CrateModel> buildCrateQuery(UUID id) {
+    return new QueryBuilder<>(
+      CrateModel.class,
+      "id", EqualityOperation.EQ, id
+    );
+  }
+
+  /**
    * Build a query to select a crate by it's name
    * @param name Name of the target crate
    */
@@ -263,6 +360,23 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
       CrateModel.class,
       "name", EqualityOperation.EQ_IC, name
     );
+  }
+
+  /**
+   * Build a query to select a player's keys
+   * @param p Target player
+   * @param crateId Optional target crate ID
+   */
+  private QueryBuilder<CrateKeyModel> buildKeyQuery(OfflinePlayer p, @Nullable UUID crateId) {
+    QueryBuilder<CrateKeyModel> query = new QueryBuilder<>(
+      CrateKeyModel.class,
+      "owner__uuid", EqualityOperation.EQ, p.getUniqueId()
+    );
+
+    if (crateId != null)
+      query.and("crateId", EqualityOperation.EQ, crateId);
+
+    return query;
   }
 
   /**

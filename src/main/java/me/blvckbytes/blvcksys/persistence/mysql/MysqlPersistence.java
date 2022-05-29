@@ -1550,8 +1550,9 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
         op = EqualityOperation.EQ_IC;
 
       Object value = resolveColumnValue(column, model, replaceCache);
-      query.and(column.getName(), op, value);
-      uniqueVals.add(new Tuple<>(column.getName(), value));
+      String colname = dbNameToModelName(column.getName(), false);
+      query.and(colname, op, value);
+      uniqueVals.add(new Tuple<>(colname, value));
     }
 
     // And is not self (on updates)

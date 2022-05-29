@@ -4,6 +4,7 @@ import lombok.*;
 import me.blvckbytes.blvcksys.handlers.gui.CrateDrawLayout;
 import me.blvckbytes.blvcksys.persistence.MigrationDefault;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
+import org.bukkit.Color;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 
@@ -31,4 +32,6 @@ public class CrateModel extends APersistentModel {
   @ModelProperty(migrationDefault = MigrationDefault.NULL, isNullable = true)
   private CrateDrawLayout layout;
 
+  @ModelProperty(migrationDefault = MigrationDefault.NULL, isNullable = true)
+  private ParticleEffectColor particleEffectColor;
 }

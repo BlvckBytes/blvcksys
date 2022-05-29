@@ -4,20 +4,17 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
-import me.blvckbytes.blvcksys.handlers.gui.AnimationType;
 import me.blvckbytes.blvcksys.handlers.gui.CrateContentGui;
 import me.blvckbytes.blvcksys.handlers.gui.CrateDrawGui;
 import me.blvckbytes.blvcksys.handlers.gui.CrateDrawLayout;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.exceptions.DuplicatePropertyException;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
-import me.blvckbytes.blvcksys.persistence.models.CrateItemModel;
-import me.blvckbytes.blvcksys.persistence.models.CrateKeyModel;
-import me.blvckbytes.blvcksys.persistence.models.CrateModel;
-import me.blvckbytes.blvcksys.persistence.models.SequenceSortResult;
+import me.blvckbytes.blvcksys.persistence.models.*;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import net.minecraft.util.Tuple;
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -28,6 +25,9 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -41,6 +41,13 @@ import java.util.*;
 @AutoConstruct
 public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
 
+  // Time between the invocation of particle effect requests
+  private static final long EFFECTS_PERIOD_T = 20 * 5;
+
+  // Velocity of the rising helix animation, blocks per winding, the total height as well as the radius
+  private static final double EFFECTS_VELOCITY = .06, EFFECTS_BPW = .5, EFFECTS_HEIGHT = 1.45, EFFECTS_RAD = .7;
+
+  // Random used for drawing
   private static final Random rand = new Random();
 
   private final Map<OfflinePlayer, Map<String, CrateKeyModel>> keyCache;
@@ -55,11 +62,20 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
   private CrateContentGui contentGui;
 
   private final IPersistence pers;
+  private final JavaPlugin plugin;
+  private final IAnimationHandler animationHandler;
+
+  private BukkitTask effectTaskHandle;
 
   public CrateHandler(
-    @AutoInject IPersistence pers
+    @AutoInject IPersistence pers,
+    @AutoInject JavaPlugin plugin,
+    @AutoInject IAnimationHandler animationHandler
   ) {
     this.pers = pers;
+    this.plugin = plugin;
+    this.animationHandler = animationHandler;
+
     this.crateCache = new HashMap<>();
     this.keyCache = new HashMap<>();
     this.itemsCache = new HashMap<>();
@@ -73,7 +89,7 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
   @Override
   public boolean createCrate(Player creator, String name) {
     try {
-      CrateModel crate = new CrateModel(creator, name, null, null);
+      CrateModel crate = new CrateModel(creator, name, null, null, null);
       pers.store(crate);
       crateCache.put(name.toLowerCase(), crate);
       return true;
@@ -108,6 +124,18 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
       return false;
 
     crate.setLayout(layout);
+    pers.store(crate);
+    return true;
+  }
+
+  @Override
+  public boolean setCrateParticleEffectColor(String name, @Nullable ParticleEffectColor color) {
+    CrateModel crate = getCrate(name).orElse(null);
+
+    if (crate == null)
+      return false;
+
+    crate.setParticleEffectColor(color);
     pers.store(crate);
     return true;
   }
@@ -312,11 +340,11 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
 
     // Open the crate and start a draw
     if (e.getAction() == Action.RIGHT_CLICK_BLOCK && drawGui != null)
-      drawGui.show(e.getPlayer(), targetCrate, AnimationType.SLIDE_RIGHT);
+      drawGui.show(e.getPlayer(), targetCrate, me.blvckbytes.blvcksys.handlers.gui.AnimationType.SLIDE_RIGHT);
 
     // Show the crate contents
     else if (e.getAction() == Action.LEFT_CLICK_BLOCK && contentGui != null)
-      contentGui.show(e.getPlayer(), new Tuple<>(targetCrate, false), AnimationType.SLIDE_UP);
+      contentGui.show(e.getPlayer(), new Tuple<>(targetCrate, false), me.blvckbytes.blvcksys.handlers.gui.AnimationType.SLIDE_UP);
   }
 
   @EventHandler
@@ -406,7 +434,10 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
   }
 
   @Override
-  public void cleanup() {}
+  public void cleanup() {
+    if (effectTaskHandle != null)
+      effectTaskHandle.cancel();
+  }
 
   @Override
   public void initialize() {
@@ -414,5 +445,37 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
     pers.list(CrateModel.class).forEach(crate -> crateCache.put(crate.getName().toLowerCase(), crate));
     crateCache.keySet().forEach(this::getItems);
     crateCache.keySet().forEach(this::buildProbabilityRanges);
+
+    // Task used to play crate effects
+    effectTaskHandle = Bukkit.getScheduler().runTaskTimer(plugin, () -> {
+
+      // Loop all known crates
+      for (CrateModel crate : crateCache.values()) {
+        Location loc = crate.getLoc();
+
+        // Hasn't got a location yet
+        if (loc == null)
+          continue;
+
+        // Center in on the location's block
+        Location finalLoc = loc.clone().add(0.5, 0, 0.5);
+
+        // Start rising upwards
+        animationHandler.startAnimation(
+          finalLoc,
+          Bukkit.getOnlinePlayers(),
+          AnimationType.DOUBLE_HELIX,
+          new DoubleHelixParameter(
+            new Vector(0, EFFECTS_VELOCITY, 0), EFFECTS_BPW, EFFECTS_RAD,
+            crate.getParticleEffectColor().getColor()
+          )
+        );
+
+        // Stop rising when the desired height has been reached
+        long animDur = (long) Math.ceil(EFFECTS_HEIGHT / EFFECTS_VELOCITY);
+        Bukkit.getScheduler().runTaskLater(plugin, () -> animationHandler.stopAnimation(finalLoc, AnimationType.DOUBLE_HELIX), animDur);
+      }
+
+    }, 0L, EFFECTS_PERIOD_T);
   }
 }

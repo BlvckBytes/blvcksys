@@ -1172,6 +1172,7 @@ public enum ConfigKey {
   COMMAND_CRATE_DELETED("crate.deleted", "$0Die Crate $3{{name}} $0wurde $3gelöscht$0."),
   COMMAND_CRATE_MOVED("crate.moved", "$0Die Crate $3{{name}} $0wurde zu $3{{location}} $0bewegt."),
   COMMAND_CRATE_LAYOUT_SET("crate.layout_set", "$0Das Layout der Crate $3{{name}} $0wurde auf $3{{layout}} $0gesetzt!"),
+  COMMAND_CRATE_COLOR_SET("crate.color_set", "$0Die Effektfarbe der Crate $3{{name}} $0wurde auf $3{{color}} $0gesetzt!"),
   COMMAND_CRATE_ITEM_ADDED("crate.item_added", "$0Das $3Item $0wurde mit einer Wahrscheinlichkeit von $3{{probability}}% $0zur Crate $3{{name}} $0hinzugefügt."),
   COMMAND_CRATE_ITEM_INVALID_PROBABILITY("crate.invalid_probability", "$0Die Wahrscheinlichkeit muss größer als $40% $0und kleiner als $4100% $0sein!"),
   COMMAND_CRATE_ITEM_UPDATED_PROBABILITY("crate.updated_probability", "$0Die Wahrscheinlichkeit des Items $2{{item}} $0wurde auf $2{{probability}}% $0gesetzt."),

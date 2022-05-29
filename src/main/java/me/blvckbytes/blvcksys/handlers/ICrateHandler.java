@@ -2,10 +2,7 @@ package me.blvckbytes.blvcksys.handlers;
 
 import me.blvckbytes.blvcksys.handlers.gui.CrateDrawLayout;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
-import me.blvckbytes.blvcksys.persistence.models.CrateItemModel;
-import me.blvckbytes.blvcksys.persistence.models.CrateKeyModel;
-import me.blvckbytes.blvcksys.persistence.models.CrateModel;
-import me.blvckbytes.blvcksys.persistence.models.SequenceSortResult;
+import me.blvckbytes.blvcksys.persistence.models.*;
 import net.minecraft.util.Tuple;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
@@ -49,6 +46,14 @@ public interface ICrateHandler {
    * @return True on success, false if there was no crate with this name
    */
   boolean setCrateLayout(String name, @Nullable CrateDrawLayout layout);
+
+  /**
+   * Change a crate's particle effect color
+   * @param name Name of the crate
+   * @param color Color to use
+   * @return True on success, false if there was no crate with this name
+   */
+  boolean setCrateParticleEffectColor(String name, @Nullable ParticleEffectColor color);
 
   /**
    * Get a crate by it's name

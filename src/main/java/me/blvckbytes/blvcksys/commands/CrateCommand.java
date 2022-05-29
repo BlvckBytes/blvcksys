@@ -13,6 +13,7 @@ import me.blvckbytes.blvcksys.handlers.gui.CrateContentGui;
 import me.blvckbytes.blvcksys.handlers.gui.CrateDrawLayout;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.CrateModel;
+import me.blvckbytes.blvcksys.persistence.models.ParticleEffectColor;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.util.Tuple;
@@ -42,7 +43,8 @@ public class CrateCommand extends APlayerCommand {
     ADDITEM,
     LISTITEMS,
     SETCHEST,
-    SETLAYOUT
+    SETLAYOUT,
+    SETCOLOR
   }
 
   private final CrateContentGui crateContentGui;
@@ -92,6 +94,8 @@ public class CrateCommand extends APlayerCommand {
     if (currArg == 2) {
       if (args[1].equalsIgnoreCase(CrateAction.SETLAYOUT.name()))
         return suggestEnum(args, currArg, CrateDrawLayout.class);
+      if (args[1].equalsIgnoreCase(CrateAction.SETCOLOR.name()))
+        return suggestEnum(args, currArg, ParticleEffectColor.class);
       return Stream.of(getArgumentPlaceholder(currArg));
     }
 
@@ -151,6 +155,28 @@ public class CrateCommand extends APlayerCommand {
             .withPrefix()
             .withVariable("name", name)
             .withVariable("layout", layout.name())
+            .asScalar()
+        );
+        return;
+      }
+
+      p.sendMessage(
+        cfg.get(ConfigKey.COMMAND_CRATE_NOT_EXISTING)
+          .withPrefix()
+          .withVariable("name", name)
+          .asScalar()
+      );
+      return;
+    }
+
+    if (action == CrateAction.SETCOLOR) {
+      ParticleEffectColor color = parseEnum(ParticleEffectColor.class, args, 2, null);
+      if (crateHandler.setCrateParticleEffectColor(name, color)) {
+        p.sendMessage(
+          cfg.get(ConfigKey.COMMAND_CRATE_COLOR_SET)
+            .withPrefix()
+            .withVariable("name", name)
+            .withVariable("color", color.name())
             .asScalar()
         );
         return;

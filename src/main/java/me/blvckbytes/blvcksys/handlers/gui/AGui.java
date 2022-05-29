@@ -203,8 +203,10 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     e.setCancelled(true);
 
     // Ignore interactions while animating
-    if (inst.getAnimating().get())
+    if (inst.getAnimating().get()) {
+      inst.fastForwardAnimating();
       return;
+    }
 
     // Clicked on a used slot which has a click event bound to it
     GuiItem<T> clicked = inst.getItem(isOrigin ? e.getOriginSlot() : e.getTargetSlot()).orElse(null);

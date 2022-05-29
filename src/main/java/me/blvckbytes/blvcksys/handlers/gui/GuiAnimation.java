@@ -140,7 +140,7 @@ public class GuiAnimation {
           }
 
           for (int i = 0; i < numRows * 9; i += 9) {
-            if (mask == null || mask.contains(i))
+            if (mask == null || (mask.contains(drawCol + i) && mask.contains(readCol + i)))
               inv.setItem(drawCol + i, origin[readCol + i]);
           }
         }
@@ -173,7 +173,7 @@ public class GuiAnimation {
           }
 
           for (int i = 0; i < 9; i++) {
-            if (mask == null || mask.contains(i))
+            if (mask == null || (mask.contains(drawRow * 9 + i) && mask.contains(readRow * 9 + i)))
               inv.setItem(drawRow * 9 + i, origin[readRow * 9 + i]);
           }
         }

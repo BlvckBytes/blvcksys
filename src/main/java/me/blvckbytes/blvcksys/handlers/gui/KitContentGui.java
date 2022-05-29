@@ -39,10 +39,12 @@ public class KitContentGui extends AGui<KitModel> {
   }
 
   @Override
-  protected void closed(GuiInstance<KitModel> inst) {}
+  protected boolean closed(GuiInstance<KitModel> inst) {
+    return false;
+  }
 
   @Override
-  protected void opening(Player viewer, GuiInstance<KitModel> inst) {
+  protected boolean opening(Player viewer, GuiInstance<KitModel> inst) {
     inst.addBorder(Material.BLACK_STAINED_GLASS_PANE);
     inst.addBack(36, kitsGui, null, AnimationType.SLIDE_RIGHT);
 
@@ -72,5 +74,7 @@ public class KitContentGui extends AGui<KitModel> {
           .build()
       ), null, null);
     }
+
+    return true;
   }
 }

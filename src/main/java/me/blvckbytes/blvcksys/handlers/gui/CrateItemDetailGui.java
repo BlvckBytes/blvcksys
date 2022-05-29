@@ -51,7 +51,12 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
   }
 
   @Override
-  protected void closed(GuiInstance<Tuple<CrateModel, CrateItemModel>> inst) {
+  protected boolean closed(GuiInstance<Tuple<CrateModel, CrateItemModel>> inst) {
+    return false;
+  }
+
+  @Override
+  protected boolean opening(Player viewer, GuiInstance<Tuple<CrateModel, CrateItemModel>> inst) {
     inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
     inst.fixedItem("12,14,22", i -> new ItemStackBuilder(Material.PURPLE_STAINED_GLASS_PANE).build(), null);
 
@@ -152,8 +157,7 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
     ), i -> {
       i.getGui().getViewer().sendMessage("§cThe editor is still to be implemented!");
     });
-  }
 
-  @Override
-  protected void opening(Player viewer, GuiInstance<Tuple<CrateModel, CrateItemModel>> inst) {}
+    return true;
+  }
 }

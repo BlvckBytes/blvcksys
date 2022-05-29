@@ -8,6 +8,7 @@ import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.ICrateHandler;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.persistence.models.CrateItemModel;
+import me.blvckbytes.blvcksys.persistence.models.CrateKeyModel;
 import me.blvckbytes.blvcksys.persistence.models.CrateModel;
 import net.minecraft.util.Tuple;
 import org.bukkit.Bukkit;
@@ -35,6 +36,8 @@ public class CrateDrawGui extends AGui<CrateModel> {
   private static final int[] SPEED_TICKS = { 1,   2,  3, 4, 5, 10 },
                              SPEED_ITERS = { 30, 30, 20, 5, 4,  3 };
 
+  private final Set<Player> drawing;
+
   private final ICrateHandler crateHandler;
   private final CrateContentGui crateContentGui;
   private final IGiveCommand give;
@@ -55,25 +58,30 @@ public class CrateDrawGui extends AGui<CrateModel> {
     this.crateHandler = crateHandler;
     this.crateContentGui = crateContentGui;
     this.give = give;
+
+    this.drawing = new HashSet<>();
   }
 
   @Override
-  protected void closed(GuiInstance<CrateModel> inst) {}
+  protected boolean closed(GuiInstance<CrateModel> inst) {
+    // Prevent closing while still drawing
+    return drawing.contains(inst.getViewer());
+  }
 
   @Override
-  protected void opening(Player viewer, GuiInstance<CrateModel> inst) {
+  protected boolean opening(Player viewer, GuiInstance<CrateModel> inst) {
     CrateModel crate = inst.getArg();
 
     // Get the drawing layout from the crate or use a fallback value
     CrateDrawLayout layout = crate.getLayout();
-    System.out.println(layout);
     if (layout == null)
       layout = CrateDrawLayout.HORIZONTAL_LINE;
 
     List<CrateItemModel> itemModels = crateHandler.getItems(crate.getName()).orElse(null);
+    CrateKeyModel keys = crateHandler.getKeys(inst.getViewer(), crate.getName()).orElse(null);
 
     // Has no contents to draw from
-    if (itemModels == null || itemModels.size() == 0) {
+    if (keys == null || itemModels == null || itemModels.size() == 0) {
       viewer.closeInventory();
       viewer.sendMessage(
         cfg.get(ConfigKey.GUI_CRATE_DRAW_NO_ITEMS)
@@ -81,8 +89,33 @@ public class CrateDrawGui extends AGui<CrateModel> {
           .withVariable("name", crate.getName())
           .asScalar()
       );
-      return;
+      return false;
     }
+
+    if (
+      // Has no keys left
+      keys.getNumberOfKeys() == 0 ||
+      // Could not take a key
+      !(crateHandler.updateKeys(inst.getViewer(), crate.getName(), keys.getNumberOfKeys() - 1))
+    ) {
+      inst.getViewer().sendMessage(
+        cfg.get(ConfigKey.GUI_CRATE_DRAW_NO_KEYS)
+          .withPrefix()
+          .withVariable("name", crate.getName())
+          .asScalar()
+      );
+
+      // Push the player away from the crate
+      inst.getViewer().setVelocity(inst.getViewer().getLocation().getDirection().multiply(-.5D));
+      return false;
+    }
+
+    inst.getViewer().sendMessage(
+      cfg.get(ConfigKey.GUI_CRATE_DRAW_KEY_USED)
+        .withPrefix()
+        .withVariable("name", crate.getName())
+        .asScalar()
+    );
 
     List<Integer> animSlots = inst.getTemplate().slotExprToSlots(layout.getItemSlots());
     int relOut = animSlots.indexOf(layout.getOutputSlot());
@@ -98,7 +131,7 @@ public class CrateDrawGui extends AGui<CrateModel> {
           .withVariable("name", crate.getName())
           .asScalar()
       );
-      return;
+      return false;
     }
 
     // Resize to only show the rows required by the layout
@@ -115,7 +148,9 @@ public class CrateDrawGui extends AGui<CrateModel> {
     // Slot animation state, where totalCalls is relative to each speed, marked by currSpeed and the
     // offset indicates the offset within the item loop for all slots
     AtomicInteger totalCalls = new AtomicInteger(0), currSpeed = new AtomicInteger(0), offset = new AtomicInteger(0);
-    AtomicBoolean done = new AtomicBoolean(false);
+
+    // Starting to draw now
+    drawing.add(viewer);
 
     // Set a fixed item into each slot of the animation which updates on every tick
     for (int slot : animSlots) {
@@ -129,11 +164,11 @@ public class CrateDrawGui extends AGui<CrateModel> {
         int iterNum = calls / animSlots.size();
 
         // Advance to the next speed when the current speed's number of iterations has been reached
-        if (!done.get()) {
+        if (drawing.contains(viewer)) {
           if ((iterNum / speedTicks - 1) >= SPEED_ITERS[currSpeed.get()]) {
             // No next speed, done
             if (currSpeed.get() == SPEED_ITERS.length - 1) {
-              done.set(true);
+              drawing.remove(viewer);
 
               // Hand out the prize
               give.giveItemsOrDrop(viewer, loopData.b().getItem());
@@ -161,6 +196,8 @@ public class CrateDrawGui extends AGui<CrateModel> {
         return loopData.a().get(wrapSlot(slotIndex - slotOffset, loopData.a().size()));
       }, null, 1);
     }
+
+    return true;
   }
 
   /**

@@ -68,13 +68,13 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
   }
 
   @Override
-  protected void closed(GuiInstance<OfflinePlayer> inst) {
+  protected boolean closed(GuiInstance<OfflinePlayer> inst) {
     EnderchestInstance chestInst = cache.get(inst.getArg());
 
     // Whoops, the enderchest got lost somehow, my bad
     if (chestInst == null) {
       logger.logError(new IllegalStateException("No enderchest instance found when closing the GUI"));
-      return;
+      return false;
     }
 
     chestInst.unregisterAfterChanges(inst.getViewer());
@@ -92,10 +92,12 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
     // Don't keep offline players in cache if they're not used anymore
     if (!chestInst.isInUse() && !inst.getArg().isOnline())
       cache.remove(inst.getArg());
+
+    return false;
   }
 
   @Override
-  protected void opening(Player viewer, GuiInstance<OfflinePlayer> inst) {
+  protected boolean opening(Player viewer, GuiInstance<OfflinePlayer> inst) {
     inst.fixedItem("45,47,48,50,51,53", i -> new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build(), null);
     inst.addPagination(46, 49, 52);
 
@@ -174,6 +176,8 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
         },
         null
       );
+
+    return true;
   }
 
   /**

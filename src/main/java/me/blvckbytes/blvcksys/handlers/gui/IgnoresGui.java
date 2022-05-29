@@ -42,10 +42,12 @@ public class IgnoresGui extends AGui<Object> {
   }
 
   @Override
-  protected void closed(GuiInstance<Object> inst) {}
+  protected boolean closed(GuiInstance<Object> inst) {
+    return false;
+  }
 
   @Override
-  protected void opening(Player viewer, GuiInstance<Object> inst) {
+  protected boolean opening(Player viewer, GuiInstance<Object> inst) {
     inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
     inst.addPagination(28, 31, 34);
 
@@ -59,7 +61,7 @@ public class IgnoresGui extends AGui<Object> {
           .build()
         ), null, null
       );
-      return;
+      return true;
     }
 
     for (PlayerIgnoreModel ignore : active) {
@@ -77,5 +79,7 @@ public class IgnoresGui extends AGui<Object> {
           .build()
       ), e -> e.getGui().switchTo(e.getGui(), AnimationType.SLIDE_LEFT, ignoreDetailGui, ignore.getTarget()), null);
     }
+
+    return true;
   }
 }

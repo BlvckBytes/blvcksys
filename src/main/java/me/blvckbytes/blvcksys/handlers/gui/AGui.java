@@ -95,10 +95,12 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
 
     // Create and register a new GUI instance
     GuiInstance<T> inst = new GuiInstance<>(viewer, this, arg, textures, cfg, plugin);
-    activeInstances.get(viewer).add(inst);
 
     // Call the opening event before actually opening
-    opening(viewer, inst);
+    if (!opening(viewer, inst))
+      return;
+
+    activeInstances.get(viewer).add(inst);
 
     // Initially draw the whole gui
     inst.redraw("*");
@@ -164,15 +166,17 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
   /**
    * Called when a GUI has been closed by a player
    * @param inst Instance of the GUI closed
+   * @return Whether to prevent closing the GUI
    */
-  abstract protected void closed(GuiInstance<T> inst);
+  abstract protected boolean closed(GuiInstance<T> inst);
 
   /**
    * Called before a GUI is being shown to a player
    * @param viewer Player that requested a GUI
    * @param inst Instance of the GUI opening
+   * @return Whether to open the GUI, false cancels
    */
-  abstract protected void opening(Player viewer, GuiInstance<T> inst);
+  abstract protected boolean opening(Player viewer, GuiInstance<T> inst);
 
   //=========================================================================//
   //                                Listener                                 //
@@ -225,9 +229,14 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     if (inst == null)
       return;
 
+    // Prevent closing the inventory
+    if (closed(inst)) {
+      Bukkit.getScheduler().runTaskLater(plugin, () -> p.openInventory(e.getInventory()), 1);
+      return;
+    }
+
     // Destroy the instance
-    if (activeInstances.get(p).remove(inst))
-      closed(inst);
+    activeInstances.get(p).remove(inst);
   }
 
   @EventHandler

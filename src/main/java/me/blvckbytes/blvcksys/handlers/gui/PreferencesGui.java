@@ -40,11 +40,12 @@ public class PreferencesGui extends AGui<Object> {
   }
 
   @Override
-  protected void closed(GuiInstance<Object> inst) {
+  protected boolean closed(GuiInstance<Object> inst) {
+    return false;
   }
 
   @Override
-  protected void opening(Player viewer, GuiInstance<Object> inst) {
+  protected boolean opening(Player viewer, GuiInstance<Object> inst) {
     inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
 
     inst.fixedItem(11, i -> (
@@ -80,5 +81,7 @@ public class PreferencesGui extends AGui<Object> {
     inst.addStateToggle(20, 11, i -> !prefs.isMsgDisabled(i.getViewer()), (s, i) -> prefs.setMsgDisabled(i.getViewer(), s));
     inst.addStateToggle(22, 13, i -> !prefs.isChatHidden(i.getViewer()), (s, i) -> prefs.setChatHidden(i.getViewer(), s));
     inst.addStateToggle(24, 15, i -> obj.getSidebarVisibility(i.getViewer()), (s, i) -> obj.setSidebarVisibility(i.getViewer(), !s));
+
+    return true;
   }
 }

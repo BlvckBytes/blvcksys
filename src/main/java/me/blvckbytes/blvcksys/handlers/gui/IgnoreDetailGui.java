@@ -44,11 +44,12 @@ public class IgnoreDetailGui extends AGui<OfflinePlayer> {
   }
 
   @Override
-  protected void closed(GuiInstance<OfflinePlayer> inst) {
+  protected boolean closed(GuiInstance<OfflinePlayer> inst) {
+    return false;
   }
 
   @Override
-  protected void opening(Player viewer, GuiInstance<OfflinePlayer> inst) {
+  protected boolean opening(Player viewer, GuiInstance<OfflinePlayer> inst) {
     inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
     inst.addBack(27, ignoresGui, null, AnimationType.SLIDE_RIGHT);
 
@@ -76,5 +77,7 @@ public class IgnoreDetailGui extends AGui<OfflinePlayer> {
 
     inst.addStateToggle(21, 12, i -> ignore.getMsgIgnore(i.getViewer(), i.getArg()), (s, i) -> ignore.setMsgIgnore(i.getViewer(), i.getArg(), !s));
     inst.addStateToggle(23, 14, i -> ignore.getChatIgnore(i.getViewer(), i.getArg()), (s, i) -> ignore.setChatIgnore(i.getViewer(), i.getArg(), !s));
+
+    return true;
   }
 }

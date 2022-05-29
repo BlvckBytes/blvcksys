@@ -49,10 +49,12 @@ public class CrateContentGui extends AGui<Tuple<CrateModel, Boolean>> {
   }
 
   @Override
-  protected void closed(GuiInstance<Tuple<CrateModel, Boolean>> inst) {}
+  protected boolean closed(GuiInstance<Tuple<CrateModel, Boolean>> inst) {
+    return false;
+  }
 
   @Override
-  protected void opening(Player viewer, GuiInstance<Tuple<CrateModel, Boolean>> inst) {
+  protected boolean opening(Player viewer, GuiInstance<Tuple<CrateModel, Boolean>> inst) {
     inst.addBorder(Material.BLACK_STAINED_GLASS_PANE);
     inst.addPagination(46, 49, 52);
 
@@ -70,7 +72,7 @@ public class CrateContentGui extends AGui<Tuple<CrateModel, Boolean>> {
             .build()
         ), null, null
       );
-      return;
+      return true;
     }
 
     for (CrateItemModel content : items) {
@@ -85,6 +87,8 @@ public class CrateContentGui extends AGui<Tuple<CrateModel, Boolean>> {
         e.getGui().switchTo(e.getGui(), AnimationType.SLIDE_LEFT, detailGui, new Tuple<>(crate, content));
       }, null);
     }
+
+    return true;
   }
 
   /**

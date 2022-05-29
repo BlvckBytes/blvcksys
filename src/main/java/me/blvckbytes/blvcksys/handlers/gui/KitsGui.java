@@ -72,10 +72,12 @@ public class KitsGui extends AGui<Object> implements Listener {
   }
 
   @Override
-  protected void closed(GuiInstance<Object> inst) {}
+  protected boolean closed(GuiInstance<Object> inst) {
+    return false;
+  }
 
   @Override
-  protected void opening(Player viewer, GuiInstance<Object> inst) {
+  protected boolean opening(Player viewer, GuiInstance<Object> inst) {
     inst.addBorder(Material.BLACK_STAINED_GLASS_PANE);
     inst.addPagination(37, 40, 43);
 
@@ -124,6 +126,8 @@ public class KitsGui extends AGui<Object> implements Listener {
           e.getGui().switchTo(e.getGui(), AnimationType.SLIDE_LEFT, kitContentGui, kit);
       }, 10);
     }
+
+    return true;
   }
 
   //=========================================================================//

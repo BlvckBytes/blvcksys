@@ -42,7 +42,7 @@ import java.util.*;
 public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
 
   // Time between the invocation of particle effect requests
-  private static final long EFFECTS_PERIOD_T = 20 * 5;
+  private static final long EFFECTS_PERIOD_T = 20 * 3;
 
   // Velocity of the rising helix animation, blocks per winding, the total height as well as the radius
   private static final double EFFECTS_VELOCITY = .055, EFFECTS_BPW = .9, EFFECTS_HEIGHT = 1.2, EFFECTS_RAD = .7;

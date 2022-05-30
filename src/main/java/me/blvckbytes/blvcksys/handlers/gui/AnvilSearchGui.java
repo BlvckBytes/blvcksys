@@ -220,6 +220,8 @@ public class AnvilSearchGui extends AGui<SingleChoiceParam> implements IPacketMo
    * @return Optional instance, empty if there is none
    */
   private Optional<GuiInstance<SingleChoiceParam>> findInst(Player p) {
+    if (!getActiveInstances().containsKey(p))
+      return Optional.empty();
     return getActiveInstances().get(p).stream().findFirst();
   }
 

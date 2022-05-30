@@ -49,6 +49,7 @@ public class GuiInstance<T> {
 
   private int currPage;
   private GuiAnimation currAnimation;
+  private ItemStack fill, border;
 
   @Setter
   private Runnable beforePaging;
@@ -344,7 +345,10 @@ public class GuiInstance<T> {
       slotExpr.append(i == 0 ? "" : ",").append(i);
     }
 
-    fixedItem(slotExpr.toString(), g -> new ItemStackBuilder(mat).build(), null, null);
+    fill = new ItemStackBuilder(mat)
+      .build();
+
+    fixedItem(slotExpr.toString(), g -> fill, null, null);
   }
 
   /**
@@ -370,10 +374,10 @@ public class GuiInstance<T> {
       slotExpr.append(lastSlot);
     }
 
-    fixedItem(slotExpr.toString(), g -> (
-      new ItemStackBuilder(mat)
-        .build()
-    ), null, null);
+    border = new ItemStackBuilder(mat)
+      .build();
+
+    fixedItem(slotExpr.toString(), g -> border, null, null);
   }
 
   /**
@@ -632,6 +636,9 @@ public class GuiInstance<T> {
       plugin, animation,
       from, inv.getContents(),
       inv, mask,
+      // Use either the border (higher precedence) or the fill
+      // item stack to fill animation gaps
+      border == null ? fill : border,
       ready == null ? () -> {} : ready,
       () -> {
         // Leave animating lock

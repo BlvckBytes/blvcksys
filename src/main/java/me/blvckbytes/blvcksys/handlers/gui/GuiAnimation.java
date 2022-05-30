@@ -33,6 +33,7 @@ public class GuiAnimation {
   private final ItemStack[] fromContents, toContents;
   private final AtomicBoolean fastForwarded;
   private final List<Integer> mask;
+  private final ItemStack filler;
 
   private int currFrame;
 
@@ -44,6 +45,7 @@ public class GuiAnimation {
    * @param toContents Items to animate to
    * @param inv Inventory to animate from and to contents into
    * @param mask List of slots to animate, leave at null to animate all slots
+   * @param filler Filler item used when the inventories are unequal in size
    * @param ready Ready callback, signals that the GUI may be presented by now
    * @param done Completion callback, signals that the animation is complete
    */
@@ -54,6 +56,7 @@ public class GuiAnimation {
     ItemStack[] toContents,
     Inventory inv,
     @Nullable List<Integer> mask,
+    @Nullable ItemStack filler,
     Runnable ready,
     Runnable done
   ) {
@@ -65,6 +68,7 @@ public class GuiAnimation {
     this.toContents = toContents;
     this.inv = inv;
     this.mask = mask;
+    this.filler = filler;
 
     this.numRows = inv.getSize() / 9;
     this.numFrames = getNumFrames();
@@ -81,21 +85,13 @@ public class GuiAnimation {
     if (this.fastForwarded.get())
       return;
 
-    // Cannot transition inventories unequal in size
-    if (fromContents != null && fromContents.length != toContents.length) {
-      currFrame = numFrames;
-      ready.run();
-      done.run();
-      return;
-    }
-
     // Copy over the previous items before the first frame plays
     if (currFrame == 0) {
       // But only if there's a transition
       if (fromContents != null) {
         for (int i = 0; i < fromContents.length; i++) {
           if (mask == null || mask.contains(i))
-            inv.setItem(i, fromContents[i]);
+            setItem(i, getItem(fromContents, i));
         }
       }
 
@@ -141,7 +137,7 @@ public class GuiAnimation {
 
           for (int i = 0; i < numRows * 9; i += 9) {
             if (mask == null || (mask.contains(drawCol + i) && mask.contains(readCol + i)))
-              inv.setItem(drawCol + i, origin[readCol + i]);
+              setItem(drawCol + i, getItem(origin, readCol + i));
           }
         }
       }
@@ -174,7 +170,7 @@ public class GuiAnimation {
 
           for (int i = 0; i < 9; i++) {
             if (mask == null || (mask.contains(drawRow * 9 + i) && mask.contains(readRow * 9 + i)))
-              inv.setItem(drawRow * 9 + i, origin[readRow * 9 + i]);
+              setItem(drawRow * 9 + i, getItem(origin, readRow * 9 + i));
           }
         }
       }
@@ -219,9 +215,33 @@ public class GuiAnimation {
     // Directly copy the contents (last frame in all cases)
     for (int i = 0; i < Math.min(fromContents.length, toContents.length); i++) {
       if (mask == null || mask.contains(i))
-        inv.setItem(i, toContents[i]);
+        setItem(i, getItem(toContents, i));
     }
 
     done.run();
+  }
+
+  /**
+   * Gets an item from a content-array or returns the filler
+   * when the slot is out of range
+   * @param contents Contents to fetch from
+   * @param slot Slot to get
+   * @return Slot contents or filler
+   */
+  private ItemStack getItem(ItemStack[] contents, int slot) {
+    if (slot >= contents.length)
+      return filler;
+    return contents[slot];
+  }
+
+  /**
+   * Sets an item into the animating inventory, skips out
+   * of range slots
+   * @param slot Slot to set to
+   * @param item Item to set
+   */
+  private void setItem(int slot, ItemStack item) {
+    if (slot < inv.getSize())
+      inv.setItem(slot, item);
   }
 }

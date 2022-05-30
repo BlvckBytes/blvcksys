@@ -3,10 +3,12 @@ package me.blvckbytes.blvcksys.handlers.gui;
 import com.mojang.authlib.GameProfile;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import net.minecraft.util.Tuple;
+import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
@@ -31,6 +33,7 @@ public class ItemStackBuilder {
   private GameProfile profile;
   private ItemStack stack;
   private ItemMeta meta;
+  private Color color;
 
   /**
    * Create a new builder for a player-head
@@ -87,6 +90,15 @@ public class ItemStackBuilder {
    */
   public ItemStackBuilder withEnchantment(Enchantment enchantment, int level) {
     this.enchantments.put(enchantment, level);
+    return this;
+  }
+
+  /**
+   * Add a color to this item (only applicable to leather armor)
+   * @param color Color to add
+   */
+  public ItemStackBuilder withColor(Color color) {
+    this.color = color;
     return this;
   }
 
@@ -159,6 +171,9 @@ public class ItemStackBuilder {
         e.printStackTrace();
       }
     }
+
+    if (color != null && meta instanceof LeatherArmorMeta lam)
+      lam.setColor(color);
 
     for (Map.Entry<Enchantment, Integer> ench : enchantments.entrySet()) {
       meta.addEnchant(ench.getKey(), ench.getValue(), true);

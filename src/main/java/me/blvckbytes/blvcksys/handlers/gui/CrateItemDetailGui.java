@@ -183,11 +183,20 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
     ), i -> {
       CrateItemModel model = i.getGui().getArg().b();
 
-      // Store the edited item and re-open the detail GUI
-      itemEditorGui.show(viewer, new Triple<>(model.getItem(), edited -> {
-        model.setItem(edited);
-        crateHandler.updateItem(model);
-      }, inv -> this.show(viewer, inst.getArg(), AnimationType.SLIDE_RIGHT, inv)), AnimationType.SLIDE_LEFT);
+      i.getGui().switchTo(AnimationType.SLIDE_LEFT, itemEditorGui, new Triple<>(
+        model.getItem(),
+
+        // Store the item on edits
+        edited -> {
+          model.setItem(edited);
+          crateHandler.updateItem(model);
+        },
+
+        // Re-open the detail GUI on completion
+        editorInv -> {
+          this.show(viewer, i.getGui().getArg(), AnimationType.SLIDE_RIGHT, editorInv);
+        }
+      ));
     });
 
     return true;

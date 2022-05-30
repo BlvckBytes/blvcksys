@@ -1544,6 +1544,21 @@ public enum ConfigKey {
     "$0Erstelle eine $2neue $0Instanz",
     "$0dieses $2Attributs$0."
   ),
+  GUI_ITEMEDITOR_ATTRIBUTES_AMOUNT_PROMPT("gui.itemeditor.attributes.amount_prompt", "$0Bitte gib den gewünschten $2Betrag $0in den $2Chat $0ein."),
+  GUI_ITEMEDITOR_CHOICE_EQUIPMENT_TITLE("gui.itemeditor.choice.equipment.title", "$2Equipment"),
+  GUI_ITEMEDITOR_CHOICE_EQUIPMENT_NAME("gui.itemeditor.choice.equipment.name", "$2{{slot}}"),
+  GUI_ITEMEDITOR_CHOICE_EQUIPMENT_LORE(
+    "gui.itemeditor.choice.equipment.lore",
+    " ",
+    "$0Klicke um diesen Equipment-Slot zu wählen."
+  ),
+  GUI_ITEMEDITOR_CHOICE_OPERATION_TITLE("gui.itemeditor.choice.operation.title", "$2Operator"),
+  GUI_ITEMEDITOR_CHOICE_OPERATION_NAME("gui.itemeditor.choice.operation.name", "$2{{operation}}"),
+  GUI_ITEMEDITOR_CHOICE_OPERATION_LORE(
+    "gui.itemeditor.choice.operation.lore",
+    " ",
+    "$0Klicke um diese Operation zu wählen."
+  ),
 
   //=========================================================================//
   //                             Preferences GUI                             //

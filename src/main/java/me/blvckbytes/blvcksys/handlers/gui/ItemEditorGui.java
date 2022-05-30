@@ -742,6 +742,8 @@ public class ItemEditorGui extends AGui<ItemStack> {
 
     ////////////////////////////////////// Attributes //////////////////////////////////////
 
+    // NOTE: Prepare for indentation hell, :^)
+
     inst.fixedItem(34, i -> (
       new ItemStackBuilder(Material.COMPARATOR)
         .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_NAME))
@@ -766,6 +768,10 @@ public class ItemEditorGui extends AGui<ItemStack> {
         if (click.isShiftClick()) {
           for (Map.Entry<Attribute, AttributeModifier> entry : attrs.entries())
             meta.removeAttributeModifier(entry.getKey(), entry.getValue());
+
+          // Set and redraw the item
+          item.setItemMeta(meta);
+          inst.redraw("13");
 
           p.sendMessage(
             cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_CLEARED)
@@ -803,30 +809,116 @@ public class ItemEditorGui extends AGui<ItemStack> {
           attrs.put(attr, null);
 
         // Choose an attribute to add
-        openAttributeIndexChoice(attrs, false, inst, (target, inv) -> {
-
+        openAttributeIndexChoice(attrs, false, inst, (target, attrChoiceInv) -> {
           Attribute attr = target.a();
 
-          // FIXME: Adding a dummy attribute for now, all these parameters need to be promped in the future
-          meta.addAttributeModifier(target.a(), new AttributeModifier(
-            UUID.randomUUID(),
-            attr.name(),
-            16.0,
-            AttributeModifier.Operation.ADD_NUMBER,
-            EquipmentSlot.HAND
-          ));
-
-          item.setItemMeta(meta);
-
-          p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_ADDED)
+          // Prompt for the desired amount in the chat
+          chatUtil.registerPrompt(
+            viewer,
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_AMOUNT_PROMPT)
               .withPrefix()
-              .withVariable("attribute", formatConstant(attr.getKey().getKey()))
-              .asScalar()
+              .asScalar(),
+
+            // Amount entered
+            amountStr -> {
+
+              // Parse the amount from the string
+              double amount;
+              try {
+                amount = Double.parseDouble(amountStr);
+              } catch (NumberFormatException ex) {
+                viewer.sendMessage(
+                  cfg.get(ConfigKey.ERR_FLOATPARSE)
+                    .withPrefix()
+                    .withVariable("number", amountStr)
+                    .asScalar()
+                );
+
+                this.show(p, item, AnimationType.SLIDE_UP);
+                return;
+              }
+
+              // Create a list of all available slots
+              List<Tuple<Object, ItemStack>> slotReprs = new ArrayList<>();
+              for (EquipmentSlot slot : EquipmentSlot.values()) {
+                slotReprs.add(new Tuple<>(
+                  slot,
+                  new ItemStackBuilder(Material.CHEST)
+                    .withName(
+                      cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_EQUIPMENT_NAME)
+                        .withVariable("slot", formatConstant(slot.name()))
+                    )
+                    .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_EQUIPMENT_LORE))
+                    .build()
+                ));
+              }
+
+              // Invoke a new single choice gui for available slots
+              singleChoiceGui.show(viewer, new SingleChoiceParam(
+                cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_EQUIPMENT_TITLE).asScalar(), slotReprs,
+
+                // Slot selected
+                (slot, slotChoiceInv) -> {
+
+                  // Create a list of all available operations
+                  List<Tuple<Object, ItemStack>> opReprs = new ArrayList<>();
+                  for (AttributeModifier.Operation op : AttributeModifier.Operation.values()) {
+                    opReprs.add(new Tuple<>(
+                      op,
+                      new ItemStackBuilder(Material.REDSTONE_TORCH)
+                        .withName(
+                          cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_OPERATION_NAME)
+                            .withVariable("operation", formatConstant(op.name()))
+                        )
+                        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_OPERATION_LORE))
+                        .build()
+                    ));
+                  }
+
+                  // Invoke a new single choice gui for available operations
+                  singleChoiceGui.show(viewer, new SingleChoiceParam(
+                    cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_OPERATION_TITLE).asScalar(), opReprs,
+
+                    // Operation selected
+                    (op, opChoiceInv) -> {
+
+                      meta.addAttributeModifier(target.a(), new AttributeModifier(
+                        UUID.randomUUID(),
+                        attr.name(),
+                        amount,
+                        (AttributeModifier.Operation) op,
+                        (EquipmentSlot) slot
+                      ));
+
+                      item.setItemMeta(meta);
+
+                      p.sendMessage(
+                        cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_ADDED)
+                          .withPrefix()
+                          .withVariable("attribute", formatConstant(attr.getKey().getKey()))
+                          .asScalar()
+                      );
+
+                      this.show(p, item, AnimationType.SLIDE_RIGHT, opChoiceInv);
+                      return false;
+                    },
+
+                    closed, backButton
+                  ), AnimationType.SLIDE_LEFT, slotChoiceInv);
+
+                  return false;
+                },
+
+                closed, backButton
+              ), AnimationType.SLIDE_UP);
+
+            },
+
+            closed
           );
 
-          this.show(p, item, AnimationType.SLIDE_RIGHT, inv);
-          return false;
+          // Close the GUI when prompting for the chat message
+          return true;
         }, closed, backButton);
       }
     });

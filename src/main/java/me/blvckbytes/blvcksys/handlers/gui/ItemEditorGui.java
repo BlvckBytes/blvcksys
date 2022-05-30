@@ -8,7 +8,6 @@ import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.SymbolicHead;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
-import net.minecraft.network.chat.ChatComponentText;
 import net.minecraft.util.Tuple;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
@@ -29,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 /*
@@ -470,6 +470,189 @@ public class ItemEditorGui extends AGui<ItemStack> {
       e.getGui().close();
     });
 
+    //////////////////////////////////// Lore Lines ////////////////////////////////////
+
+    inst.fixedItem(32, i -> (
+      new ItemStackBuilder(Material.OAK_SIGN)
+        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_NAME))
+        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_LORE))
+        .build()
+    ), e -> {
+      // Insert after, insert at with RIGHT/LEFT click in a gui if there's more than one line
+
+      ClickType click = e.getManipulation().getClick();
+
+      if (click.isRightClick()) {
+        // Reset the lore
+        if (click.isShiftClick()) {
+
+          // Set the lore and redraw the display
+          meta.setLore(null);
+          item.setItemMeta(meta);
+          inst.redraw("13");
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_RESET)
+              .withPrefix()
+              .asScalar()
+          );
+
+          return;
+        }
+
+        // Remove specific line by choice
+        List<String> lines = meta.getLore();
+
+        // Has no lore yet
+        if (lines == null) {
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_NO_LORE)
+              .withPrefix()
+              .asScalar()
+          );
+          return;
+        }
+
+        // Offer a choice for which line to remove
+        openLoreIndexChoice(lines, inst, (lineId, inv) -> {
+          String content = lines.remove((int) lineId);
+          meta.setLore(lines);
+          item.setItemMeta(meta);
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_LINE_REMOVED)
+              .withPrefix()
+              .withVariable("line_number", lineId + 1)
+              .withVariable("line_content", content)
+              .asScalar()
+          );
+
+          this.show(p, item, AnimationType.SLIDE_RIGHT, inv);
+          return false;
+        }, closed, backButton);
+
+        return;
+      }
+
+      // Add a new line
+      if (click.isLeftClick()) {
+        // Prompt for the desired lore line in the chat
+        chatUtil.registerPrompt(
+          viewer,
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_PROMPT)
+            .withPrefix()
+            .asScalar(),
+
+          // Line entered
+          loreStr -> {
+            String lore = ChatColor.translateAlternateColorCodes('&', loreStr);
+
+            List<String> lines = meta.getLore() == null ? new ArrayList<>() : meta.getLore();
+
+            // There are no other lore lines yet, just add the line
+            if (lines.size() == 0) {
+              lines.add(lore);
+              meta.setLore(lines);
+              item.setItemMeta(meta);
+
+              p.sendMessage(
+                cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_LINE_ADDED)
+                  .withPrefix()
+                  .asScalar()
+              );
+
+              this.show(p, item, AnimationType.SLIDE_UP);
+              return;
+            }
+
+            // Add to the back of the list
+            if (click.isShiftClick()) {
+              lines.add(lore);
+
+              meta.setLore(lines);
+              item.setItemMeta(meta);
+
+              p.sendMessage(
+                cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_LINE_ADDED)
+                  .withPrefix()
+                  .asScalar()
+              );
+
+              this.show(p, item, AnimationType.SLIDE_UP);
+              return;
+            }
+
+            // Offer a choice for where to insert the line
+            openLoreIndexChoice(lines, inst, (lineId, inv) -> {
+              List<String> newLines = new ArrayList<>(lines);
+              newLines.add(lineId, lore);
+
+              meta.setLore(newLines);
+              item.setItemMeta(meta);
+
+              p.sendMessage(
+                cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_LINE_ADDED)
+                  .withPrefix()
+                  .asScalar()
+              );
+
+              this.show(p, item, AnimationType.SLIDE_RIGHT, inv);
+              return false;
+            }, closed, backButton);
+          },
+
+          closed
+        );
+
+        // Close the GUI when prompting for the chat message
+        e.getGui().close();
+      }
+    });
+
     return true;
-    }
   }
+
+  /**
+   * Open a new lore line index choice GUI which presents the user with
+   * an item for each line and then results in the index of the line chosen
+   * @param lines Available lore lines
+   * @param inst Gui instance to animate away from
+   * @param chosen Chosen callback
+   * @param closed Closed callback
+   * @param backButton Back button callback
+   */
+  private void openLoreIndexChoice(
+    List<String> lines,
+    GuiInstance<ItemStack> inst,
+    BiFunction<Integer, Inventory, Boolean> chosen,
+    Runnable closed,
+    Consumer<Inventory> backButton
+  ) {
+    // Create representitive items for each line
+    List<Tuple<Object, ItemStack>> representitives = new ArrayList<>();
+    for (int i = 0; i < lines.size(); i++) {
+      String line = lines.get(i);
+      representitives.add(new Tuple<>(
+        i,
+        new ItemStackBuilder(Material.PAPER)
+          .withName(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LORE_NAME)
+              .withVariable("line_number", i + 1)
+          )
+          .withLore(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LORE_LORE)
+              .withVariable("line_content", line)
+          )
+          .build()
+      ));
+    }
+
+    // Invoke a new single choice gui for available lines
+    inst.switchTo(AnimationType.SLIDE_LEFT, singleChoiceGui, new SingleChoiceParam(
+      cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LORE_TITLE).asScalar(),
+      representitives,
+      (m, inv) -> chosen.apply((int) m, inv),
+      closed, backButton
+    ));
+  }
+}

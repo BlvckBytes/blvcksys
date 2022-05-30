@@ -1489,6 +1489,31 @@ public enum ConfigKey {
   GUI_ITEMEDITOR_DISPLAYNAME_PROMPT("gui.itemeditor.displayname.prompt", "$0Bitte gib den gewünschten $2Anzeigenamen $0in den $2Chat $0ein (tippe \"null\" um diesen zurückzusetzen)."),
   GUI_ITEMEDITOR_DISPLAYNAME_SET("gui.itemeditor.displayname.set", "$0Du hast den Anzeigenamen auf &r{{name}} $0gesetzt."),
   GUI_ITEMEDITOR_DISPLAYNAME_RESET("gui.itemeditor.displayname.reset", "$0Du hast den Anzeigenamen $2zurückgesetzt$0."),
+  GUI_ITEMEDITOR_LORE_NAME("gui.itemeditor.lore.name", "$0» $2Lore $0«"),
+  GUI_ITEMEDITOR_LORE_LORE(
+    "gui.itemeditor.lore.lore",
+    " ",
+    "$0Ändere die $2Zeilen $0der $2Lore$0.",
+    " ",
+    "$0Linksklick: $2Zeile einfügen",
+    "$0Shift + Linksklick: $2Zeile anfügen",
+    "$0Rechtsklick: $2Zeile wählen und entfernen",
+    "$0Shift + Rechtsklick: $2Lore leeren"
+  ),
+  GUI_ITEMEDITOR_LORE_RESET("gui.itemeditor.lore.reset", "$0Du hast die Lore $2zurückgesetzt$0."),
+  GUI_ITEMEDITOR_LORE_LINE_REMOVED("gui.itemeditor.lore.line_removed", "$0Die Zeile $2{{line_number}} $0($2{{line_content}}$0) wurde entfernt."),
+  GUI_ITEMEDITOR_LORE_NO_LORE("gui.itemeditor.lore.no_lore", "$0Dieses Item hat noch $4keine $0Lore!"),
+  GUI_ITEMEDITOR_CHOICE_LORE_TITLE("gui.itemeditor.choice.lore.title", "$2Lore"),
+  GUI_ITEMEDITOR_CHOICE_LORE_NAME("gui.itemeditor.choice.lore.name", "$2Zeile {{line_number}}"),
+  GUI_ITEMEDITOR_CHOICE_LORE_LORE(
+    "gui.itemeditor.choice.lore.lore",
+    " ",
+    "$0Inhalt: ",
+    "{{line_content}}"
+  ),
+  GUI_ITEMEDITOR_LORE_PROMPT("gui.itemeditor.lore.prompt", "$0Bitte gib die gewünschte $2Lore-Zeile $0in den $2Chat $0ein."),
+  GUI_ITEMEDITOR_LORE_SELECT_POS("gui.itemeditor.lore.select_pos", "$0Bitte wähle die gewünschte $2Position $0der Zeile."),
+  GUI_ITEMEDITOR_LORE_LINE_ADDED("gui.itemeditor.lore.line_added", "$0Die $2Lore-Zeile $0wurde hinzugefügt."),
 
   //=========================================================================//
   //                             Preferences GUI                             //

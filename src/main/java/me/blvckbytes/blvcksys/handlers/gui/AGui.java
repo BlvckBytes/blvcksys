@@ -123,7 +123,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     GuiInstance<T> inst = new GuiInstance<>(viewer, this, arg, textures, cfg, plugin);
 
     // Call the opening event before actually opening
-    if (!opening(viewer, inst))
+    if (!opening(inst))
       return;
 
     activeInstances.get(viewer).add(inst);
@@ -198,11 +198,10 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
 
   /**
    * Called before a GUI is being shown to a player
-   * @param viewer Player that requested a GUI
    * @param inst Instance of the GUI opening
    * @return Whether to open the GUI, false cancels
    */
-  abstract protected boolean opening(Player viewer, GuiInstance<T> inst);
+  abstract protected boolean opening(GuiInstance<T> inst);
 
   //=========================================================================//
   //                                Listener                                 //
@@ -235,16 +234,9 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     }
 
     // Clicked on a used slot which has a click event bound to it
-    GuiItem<T> clicked = inst.getItem(isOrigin ? e.getOriginSlot() : e.getTargetSlot()).orElse(null);
-    if (clicked != null && clicked.onClick() != null) {
-      GuiClickEvent<T> gce = new GuiClickEvent<>(inst, e);
-      clicked.onClick().accept(gce);
-
-      // Undo cancellation if the receiver
-      // permitted the use of this slot
-      if (gce.isPermitUse())
-        e.setCancelled(false);
-    }
+    GuiItem clicked = inst.getItem(isOrigin ? e.getOriginSlot() : e.getTargetSlot()).orElse(null);
+    if (clicked != null && clicked.onClick() != null)
+      clicked.onClick().accept(e);
   }
 
   @EventHandler
@@ -269,9 +261,11 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
 
   @EventHandler
   public void onQuit(PlayerQuitEvent e) {
+    Player p = e.getPlayer();
+
     // Destroy all instances
-    if (activeInstances.containsKey(e.getPlayer()))
-      activeInstances.remove(e.getPlayer()).forEach(i -> i.getTemplate().closed(i));
+    if (activeInstances.containsKey(p))
+      activeInstances.remove(p).forEach(i -> i.getTemplate().closed(i));
   }
 
   //=========================================================================//

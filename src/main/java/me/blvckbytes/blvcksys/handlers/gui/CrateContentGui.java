@@ -12,7 +12,6 @@ import me.blvckbytes.blvcksys.persistence.models.CrateModel;
 import net.minecraft.util.Tuple;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Material;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -54,7 +53,7 @@ public class CrateContentGui extends AGui<Tuple<CrateModel, Boolean>> {
   }
 
   @Override
-  protected boolean opening(Player viewer, GuiInstance<Tuple<CrateModel, Boolean>> inst) {
+  protected boolean opening(GuiInstance<Tuple<CrateModel, Boolean>> inst) {
     inst.addBorder(Material.BLACK_STAINED_GLASS_PANE);
     inst.addPagination(46, 49, 52);
 
@@ -65,7 +64,7 @@ public class CrateContentGui extends AGui<Tuple<CrateModel, Boolean>> {
       .orElse(new ArrayList<>());
 
     if (items.size() == 0) {
-      inst.addPagedItem((i, s) -> (
+      inst.addPagedItem(s -> (
           new ItemStackBuilder(Material.BARRIER)
             .withName(cfg.get(ConfigKey.GUI_CRATE_CONTENT_NONE_NAME))
             .withLore(cfg.get(ConfigKey.GUI_CRATE_CONTENT_NONE_LORE))
@@ -80,11 +79,11 @@ public class CrateContentGui extends AGui<Tuple<CrateModel, Boolean>> {
       if (content.getItem() == null)
         continue;
 
-      inst.addPagedItem((i, s) -> appendDecoration(crate, content), e -> {
+      inst.addPagedItem(s -> appendDecoration(crate, content), e -> {
         if (!editMode)
           return;
 
-        e.getGui().switchTo(AnimationType.SLIDE_LEFT, detailGui, new Tuple<>(crate, content));
+        inst.switchTo(AnimationType.SLIDE_LEFT, detailGui, new Tuple<>(crate, content));
       }, null);
     }
 

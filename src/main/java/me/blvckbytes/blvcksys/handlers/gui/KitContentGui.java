@@ -10,7 +10,6 @@ import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.persistence.models.KitModel;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Material;
-import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -44,7 +43,7 @@ public class KitContentGui extends AGui<KitModel> {
   }
 
   @Override
-  protected boolean opening(Player viewer, GuiInstance<KitModel> inst) {
+  protected boolean opening(GuiInstance<KitModel> inst) {
     inst.addBorder(Material.BLACK_STAINED_GLASS_PANE);
     inst.addBack(36, kitsGui, null, AnimationType.SLIDE_RIGHT);
 
@@ -56,7 +55,7 @@ public class KitContentGui extends AGui<KitModel> {
       ItemMeta meta = content.getItemMeta();
       String name = meta == null ? null : meta.getDisplayName();
 
-      inst.addPagedItem((i, s) -> (
+      inst.addPagedItem(s -> (
         new ItemStackBuilder(content, content.getAmount())
           // Keep either the name from ItemMeta or set a human readable type fallback
           .withName(

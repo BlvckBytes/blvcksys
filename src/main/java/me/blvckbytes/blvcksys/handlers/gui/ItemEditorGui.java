@@ -80,7 +80,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
   }
 
   @Override
-  protected boolean opening(Player viewer, GuiInstance<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<Inventory>>> inst) {
+  protected boolean opening(GuiInstance<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<Inventory>>> inst) {
     inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
 
     ItemStack item = inst.getArg().a();
@@ -101,13 +101,13 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     // Only render the back button if a callback has been provided
     Consumer<Inventory> back = inst.getArg().c();
     if (back != null) {
-      inst.addBack(36, i -> back.accept(i.getGui().getInv()));
+      inst.addBack(36, e -> back.accept(inst.getInv()));
     }
 
     ///////////////////////////////////// Preview //////////////////////////////////////
 
-    inst.fixedItem("12,14", i -> new ItemStackBuilder(Material.PURPLE_STAINED_GLASS_PANE).build(), null);
-    inst.fixedItem(13, i -> item, null);
+    inst.fixedItem("12,14", () -> new ItemStackBuilder(Material.PURPLE_STAINED_GLASS_PANE).build(), null);
+    inst.fixedItem(13, () -> item, null);
 
     // Fire the item update callback whenever the preview slot changes
     inst.onRedrawing(13, () -> {
@@ -118,13 +118,13 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     ///////////////////////////////// Increase Amount //////////////////////////////////
 
-    inst.fixedItem(10, i -> (
+    inst.fixedItem(10, () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_UP.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_AMOUNT_INCREASE_NAME))
         .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_AMOUNT_INCREASE_LORE))
         .build()
     ), e -> {
-      ClickType click = e.getManipulation().getClick();
+      ClickType click = e.getClick();
       int amount = item.getAmount();
 
       if (click.isLeftClick()) {
@@ -155,13 +155,13 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     ///////////////////////////////// Decrease Amount //////////////////////////////////
 
-    inst.fixedItem(16, i -> (
+    inst.fixedItem(16, () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_DOWN.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_AMOUNT_DECREASE_NAME))
         .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_AMOUNT_DECREASE_LORE))
         .build()
     ), e -> {
-      ClickType click = e.getManipulation().getClick();
+      ClickType click = e.getClick();
       int amount = item.getAmount();
 
       if (click.isLeftClick()) {
@@ -197,11 +197,11 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     Runnable closed = () -> Bukkit.getScheduler().runTaskLater(plugin, () -> this.show(p, inst.getArg(), AnimationType.SLIDE_UP), 1);
 
     // Back button
-    Consumer<Inventory> backButton = inv -> this.show(viewer, inst.getArg(), AnimationType.SLIDE_RIGHT, inv);
+    Consumer<Inventory> backButton = inv -> this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, inv);
 
     ///////////////////////////////////// Material /////////////////////////////////////
 
-    inst.fixedItem(28, i -> (
+    inst.fixedItem(28, () -> (
       new ItemStackBuilder(Material.CHEST)
         .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_MATERIAL_NAME))
         .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_MATERIAL_LORE))
@@ -250,7 +250,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     /////////////////////////////////// Item Flags ///////////////////////////////////
 
-    inst.fixedItem(29, i -> (
+    inst.fixedItem(29, () -> (
       new ItemStackBuilder(Material.NAME_TAG)
         .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_FLAGS_NAME))
         .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_FLAGS_LORE))
@@ -316,7 +316,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     //////////////////////////////////// Enchantments ////////////////////////////////////
 
-    inst.fixedItem(30, i -> (
+    inst.fixedItem(30, () -> (
       new ItemStackBuilder(Material.ENCHANTED_BOOK)
         .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_ENCHANTMENTS_NAME))
         .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_ENCHANTMENTS_LORE))
@@ -396,7 +396,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
           // Prompt for the desired level in the chat
           chatUtil.registerPrompt(
-            viewer,
+            p,
             cfg.get(ConfigKey.GUI_ITEMEDITOR_ENCHANTMENT_LEVEL_PROMPT)
               .withPrefix()
               .asScalar(),
@@ -436,7 +436,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     //////////////////////////////////// Displayname ////////////////////////////////////
 
-    inst.fixedItem(31, i -> (
+    inst.fixedItem(31, () -> (
       new ItemStackBuilder(Material.PAPER)
         .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_DISPLAYNAME_NAME))
         .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_DISPLAYNAME_LORE))
@@ -445,7 +445,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
       // Prompt for the desired displayname in the chat
       chatUtil.registerPrompt(
-        viewer,
+        p,
         cfg.get(ConfigKey.GUI_ITEMEDITOR_DISPLAYNAME_PROMPT)
           .withPrefix()
           .asScalar(),
@@ -472,18 +472,18 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       );
 
       // Close the GUI when prompting for the chat message
-      e.getGui().close();
+      inst.close();
     });
 
     //////////////////////////////////// Lore Lines ////////////////////////////////////
 
-    inst.fixedItem(32, i -> (
+    inst.fixedItem(32, () -> (
       new ItemStackBuilder(Material.OAK_SIGN)
         .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_NAME))
         .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_LORE))
         .build()
     ), e -> {
-      ClickType click = e.getManipulation().getClick();
+      ClickType click = e.getClick();
 
       if (click.isRightClick()) {
         // Reset the lore
@@ -541,7 +541,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       if (click.isLeftClick()) {
         // Prompt for the desired lore line in the chat
         chatUtil.registerPrompt(
-          viewer,
+          p,
           cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_PROMPT)
             .withPrefix()
             .asScalar(),
@@ -614,13 +614,13 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         );
 
         // Close the GUI when prompting for the chat message
-        e.getGui().close();
+        inst.close();
       }
     });
 
     //////////////////////////////////// Unbreakability ////////////////////////////////////
 
-    inst.fixedItem(33, i -> {
+    inst.fixedItem(33, () -> {
       boolean isDamageable = (meta instanceof Damageable && item.getType().getMaxDurability() > 0);
       int currDur = item.getType().getMaxDurability() - ((meta instanceof Damageable d) ? d.getDamage() : -1);
       int maxDur = item.getType().getMaxDurability();
@@ -659,7 +659,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       // Decide on the step size, 16 steps should get you all the way down/up
       int stepSize = maxDur / 16;
 
-      ClickType click = e.getManipulation().getClick();
+      ClickType click = e.getClick();
 
       if (click.isLeftClick()) {
         // Set unbreakable
@@ -677,7 +677,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           item.setItemMeta(meta);
 
           // Redraw the display and the durability icon
-          inst.redraw("13," + e.getManipulation().getTargetSlot());
+          inst.redraw("13," + e.getTargetSlot());
 
           p.sendMessage(
             cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_ACTIVE)
@@ -695,7 +695,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         item.setItemMeta(meta);
 
         // Redraw the display and the durability icon
-        inst.redraw("13," + e.getManipulation().getTargetSlot());
+        inst.redraw("13," + e.getTargetSlot());
 
         p.sendMessage(
           cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_CHANGED)
@@ -723,7 +723,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           item.setItemMeta(meta);
 
           // Redraw the display and the durability icon
-          inst.redraw("13," + e.getManipulation().getTargetSlot());
+          inst.redraw("13," + e.getTargetSlot());
 
           p.sendMessage(
             cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_INACTIVE)
@@ -741,7 +741,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         item.setItemMeta(meta);
 
         // Redraw the display and the durability icon
-        inst.redraw("13," + e.getManipulation().getTargetSlot());
+        inst.redraw("13," + e.getTargetSlot());
 
         p.sendMessage(
           cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_CHANGED)
@@ -757,14 +757,14 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     // NOTE: Prepare for indentation hell, :^)
 
-    inst.fixedItem(34, i -> (
+    inst.fixedItem(34, () -> (
       new ItemStackBuilder(Material.COMPARATOR)
         .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_NAME))
         .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_LORE))
         .build()
     ), e -> {
 
-      ClickType click = e.getManipulation().getClick();
+      ClickType click = e.getClick();
 
       if (click.isRightClick()) {
         Multimap<Attribute, AttributeModifier> attrs = meta.getAttributeModifiers();
@@ -827,7 +827,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
           // Prompt for the desired amount in the chat
           chatUtil.registerPrompt(
-            viewer,
+            p,
             cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_AMOUNT_PROMPT)
               .withPrefix()
               .asScalar(),
@@ -840,7 +840,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
               try {
                 amount = Double.parseDouble(amountStr);
               } catch (NumberFormatException ex) {
-                viewer.sendMessage(
+                p.sendMessage(
                   cfg.get(ConfigKey.ERR_FLOATPARSE)
                     .withPrefix()
                     .withVariable("number", amountStr)
@@ -867,7 +867,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
               }
 
               // Invoke a new single choice gui for available slots
-              singleChoiceGui.show(viewer, new SingleChoiceParam(
+              singleChoiceGui.show(p, new SingleChoiceParam(
                 cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_EQUIPMENT_TITLE).asScalar(), slotReprs,
 
                 // Slot selected
@@ -889,7 +889,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
                   }
 
                   // Invoke a new single choice gui for available operations
-                  singleChoiceGui.show(viewer, new SingleChoiceParam(
+                  singleChoiceGui.show(p, new SingleChoiceParam(
                     cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_OPERATION_TITLE).asScalar(), opReprs,
 
                     // Operation selected
@@ -938,7 +938,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     ///////////////////////////////////// Skull Owner /////////////////////////////////////
 
-    inst.fixedItem(27, i -> (
+    inst.fixedItem(27, () -> (
       new ItemStackBuilder(Material.SKELETON_SKULL)
         .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_NAME))
         .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_LORE))
@@ -956,7 +956,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
       // Prompt for the desired head owner in the chat
       chatUtil.registerPrompt(
-        viewer,
+        p,
         cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_PROMPT)
           .withPrefix()
           .asScalar(),
@@ -1002,12 +1002,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       );
 
       // Close the GUI when prompting for the chat message
-      e.getGui().close();
+      inst.close();
     });
 
     ///////////////////////////////////// Leather Color /////////////////////////////////////
 
-    inst.fixedItem(35, i -> (
+    inst.fixedItem(35, () -> (
       new ItemStackBuilder(Material.LEATHER)
         .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_NAME))
         .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_LORE))
@@ -1023,14 +1023,14 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         return;
       }
 
-      ClickType click = e.getManipulation().getClick();
+      ClickType click = e.getClick();
 
       // Set to an RGB value
       if (click.isRightClick()) {
 
         // Prompt for the desired RGB color value in the chat
         chatUtil.registerPrompt(
-          viewer,
+          p,
           cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_PROMPT)
             .withPrefix()
             .asScalar(),
@@ -1092,7 +1092,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         );
 
         // Close the GUI when prompting for the chat message
-        e.getGui().close();
+        inst.close();
         return;
       }
 

@@ -97,15 +97,17 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
   }
 
   @Override
-  protected boolean opening(Player viewer, GuiInstance<OfflinePlayer> inst) {
-    inst.fixedItem("45,47,48,50,51,53", i -> new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build(), null);
+  protected boolean opening(GuiInstance<OfflinePlayer> inst) {
+    Player p = inst.getViewer();
+
+    inst.fixedItem("45,47,48,50,51,53", () -> new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build(), null);
     inst.addPagination(46, 49, 52);
 
     EnderchestInstance chestInst = getOrCreate(inst.getArg());
     EnderchestModel model = chestInst.getModel();
 
     // Redraw paging when changes occurred by other viewers
-    chestInst.registerAfterChanges(viewer, c -> inst.redrawPaging());
+    chestInst.registerAfterChanges(p, c -> inst.redrawPaging());
 
     // Get the maximum number of slots this player may use
     int maxSlots;
@@ -125,13 +127,13 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
     for (int j = 0; j < EnderchestModel.NUM_PAGES * EnderchestModel.PAGE_ROWS * 9; j++)
       inst.addPagedItem(
         // Dynamic supplier that's reading items directly from the enderchest
-        (i, s) -> {
-          ItemStack item = getPageItem(model, i.getCurrentPage(), s);
-          int absoluteSlot = (i.getCurrentPage() - 1) * i.getPageSize() + s;
+        s -> {
+          ItemStack item = getPageItem(model, inst.getCurrentPage(), s);
+          int absoluteSlot = (inst.getCurrentPage() - 1) * inst.getPageSize() + s;
 
           // Show locks on locked slots but don't shadow any existing items
           if (absoluteSlot >= maxSlots && item == null)
-            return buildLock(i.getCurrentPage(), s);
+            return buildLock(inst.getCurrentPage(), s);
 
           return item;
         },
@@ -139,8 +141,8 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
           // Immediately sync after a change has been made
           Bukkit.getScheduler().runTaskLater(plugin, () -> syncCurrentPage(inst, chestInst), 1);
 
-          int slot = e.getManipulation().getOriginInventory().equals(e.getGui().getInv()) ? e.getManipulation().getOriginSlot() : e.getManipulation().getTargetSlot();
-          int absoluteSlot = (e.getGui().getCurrentPage() - 1) * inst.getPageSize() + slot;
+          int slot = e.getOriginInventory().equals(inst.getInv()) ? e.getOriginSlot() : e.getTargetSlot();
+          int absoluteSlot = (inst.getCurrentPage() - 1) * inst.getPageSize() + slot;
           boolean allowedToUse = absoluteSlot < maxSlots;
 
           // Tried to remove something from a locked slot that had an item left
@@ -149,30 +151,30 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
           if (
             !allowedToUse &&
             (
-              e.getManipulation().getAction() == ManipulationAction.PICKUP ||
-              e.getManipulation().getAction() == ManipulationAction.DROP ||
+              e.getAction() == ManipulationAction.PICKUP ||
+              e.getAction() == ManipulationAction.DROP ||
               // Moved into the player's inventory
-              (e.getManipulation().getAction() == ManipulationAction.MOVE && e.getManipulation().getTargetInventory().equals(e.getManipulation().getPlayer().getInventory()))
-            ) && !isLock(e.getGui().getInv().getItem(slot))
+              (e.getAction() == ManipulationAction.MOVE && e.getTargetInventory().equals(e.getPlayer().getInventory()))
+            ) && !isLock(inst.getInv().getItem(slot))
           ) {
             allowedToUse = true;
 
             // Check if this slot is empty on the next tick, if so, put a lock there
             Bukkit.getScheduler().runTaskLater(plugin, () -> {
-              if (e.getGui().getInv().getItem(slot) == null)
-                e.getGui().getInv().setItem(slot, buildLock(e.getGui().getCurrentPage(), slot));
+              if (inst.getInv().getItem(slot) == null)
+                inst.getInv().setItem(slot, buildLock(inst.getCurrentPage(), slot));
             }, 1);
           }
 
           if (!allowedToUse) {
-            viewer.sendMessage(
+            p.sendMessage(
               cfg.get(ConfigKey.ENDERCHEST_LOCKED)
                 .withPrefix()
                 .asScalar()
             );
           }
 
-          e.setPermitUse(allowedToUse);
+          e.setCancelled(!allowedToUse);
         },
         null
       );

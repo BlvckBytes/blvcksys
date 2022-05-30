@@ -45,42 +45,44 @@ public class PreferencesGui extends AGui<Object> {
   }
 
   @Override
-  protected boolean opening(Player viewer, GuiInstance<Object> inst) {
+  protected boolean opening(GuiInstance<Object> inst) {
+    Player p = inst.getViewer();
+
     inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
 
-    inst.fixedItem(11, i -> (
+    inst.fixedItem(11, () -> (
       new ItemStackBuilder(Material.NAME_TAG)
         .withName(cfg.get(ConfigKey.GUI_PREFERENCES_MSG_NAME))
         .withLore(
           cfg.get(ConfigKey.GUI_PREFERENCES_MSG_LORE)
-            .withVariable("state", inst.statePlaceholder(!prefs.isMsgDisabled(i.getViewer())))
+            .withVariable("state", inst.statePlaceholder(!prefs.isMsgDisabled(p)))
         )
         .build()
     ), null);
 
-    inst.fixedItem(13, i -> (
+    inst.fixedItem(13, () -> (
       new ItemStackBuilder(Material.PAPER)
         .withName(cfg.get(ConfigKey.GUI_PREFERENCES_CHAT_NAME))
         .withLore(
           cfg.get(ConfigKey.GUI_PREFERENCES_CHAT_LORE)
-            .withVariable("state", !prefs.isChatHidden(i.getViewer()))
+            .withVariable("state", !prefs.isChatHidden(p))
         )
         .build()
     ), null);
 
-    inst.fixedItem(15, i -> (
+    inst.fixedItem(15, () -> (
       new ItemStackBuilder(Material.LADDER)
         .withName(cfg.get(ConfigKey.GUI_PREFERENCES_SCOREBOARD_NAME))
         .withLore(
           cfg.get(ConfigKey.GUI_PREFERENCES_SCOREBOARD_LORE)
-            .withVariable("state", obj.getSidebarVisibility(i.getViewer()))
+            .withVariable("state", obj.getSidebarVisibility(p))
         )
         .build()
     ), null);
 
-    inst.addStateToggle(20, 11, i -> !prefs.isMsgDisabled(i.getViewer()), (s, i) -> prefs.setMsgDisabled(i.getViewer(), s));
-    inst.addStateToggle(22, 13, i -> !prefs.isChatHidden(i.getViewer()), (s, i) -> prefs.setChatHidden(i.getViewer(), s));
-    inst.addStateToggle(24, 15, i -> obj.getSidebarVisibility(i.getViewer()), (s, i) -> obj.setSidebarVisibility(i.getViewer(), !s));
+    inst.addStateToggle(20, 11, () -> !prefs.isMsgDisabled(p), s -> prefs.setMsgDisabled(p, s));
+    inst.addStateToggle(22, 13, () -> !prefs.isChatHidden(p), s -> prefs.setChatHidden(p, s));
+    inst.addStateToggle(24, 15, () -> obj.getSidebarVisibility(p), s -> obj.setSidebarVisibility(p, !s));
 
     return true;
   }

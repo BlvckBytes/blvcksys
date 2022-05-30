@@ -7,13 +7,10 @@ import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.handlers.IIgnoreHandler;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
-import me.blvckbytes.blvcksys.persistence.models.PlayerIgnoreModel;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-
-import java.util.List;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -49,34 +46,36 @@ public class IgnoreDetailGui extends AGui<OfflinePlayer> {
   }
 
   @Override
-  protected boolean opening(Player viewer, GuiInstance<OfflinePlayer> inst) {
+  protected boolean opening(GuiInstance<OfflinePlayer> inst) {
+    Player p = inst.getViewer();
+
     inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
     inst.addBack(27, ignoresGui, null, AnimationType.SLIDE_RIGHT);
 
-    inst.fixedItem(12, i -> (
+    inst.fixedItem(12, () -> (
       new ItemStackBuilder(Material.NAME_TAG)
         .withName(cfg.get(ConfigKey.GUI_IGNORE_MSG_NAME))
         .withLore(
           cfg.get(ConfigKey.GUI_IGNORE_MSG_LORE)
-            .withVariable("state", inst.statePlaceholder(ignore.getMsgIgnore(i.getViewer(), i.getArg())))
-            .withVariable("target", i.getArg().getName())
+            .withVariable("state", inst.statePlaceholder(ignore.getMsgIgnore(p, inst.getArg())))
+            .withVariable("target", inst.getArg().getName())
         )
         .build()
     ), null);
 
-    inst.fixedItem(14, i -> (
+    inst.fixedItem(14, () -> (
       new ItemStackBuilder(Material.PAPER)
         .withName(cfg.get(ConfigKey.GUI_IGNORE_CHAT_NAME))
         .withLore(
           cfg.get(ConfigKey.GUI_IGNORE_CHAT_LORE)
-            .withVariable("state", inst.statePlaceholder(ignore.getChatIgnore(i.getViewer(), i.getArg())))
-            .withVariable("target", i.getArg().getName())
+            .withVariable("state", inst.statePlaceholder(ignore.getChatIgnore(p, inst.getArg())))
+            .withVariable("target", inst.getArg().getName())
         )
         .build()
     ), null);
 
-    inst.addStateToggle(21, 12, i -> ignore.getMsgIgnore(i.getViewer(), i.getArg()), (s, i) -> ignore.setMsgIgnore(i.getViewer(), i.getArg(), !s));
-    inst.addStateToggle(23, 14, i -> ignore.getChatIgnore(i.getViewer(), i.getArg()), (s, i) -> ignore.setChatIgnore(i.getViewer(), i.getArg(), !s));
+    inst.addStateToggle(21, 12, () -> ignore.getMsgIgnore(p, inst.getArg()), s -> ignore.setMsgIgnore(p, inst.getArg(), !s));
+    inst.addStateToggle(23, 14, () -> ignore.getChatIgnore(p, inst.getArg()), s -> ignore.setChatIgnore(p, inst.getArg(), !s));
 
     return true;
   }

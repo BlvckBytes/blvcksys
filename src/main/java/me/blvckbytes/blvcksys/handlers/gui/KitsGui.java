@@ -77,25 +77,27 @@ public class KitsGui extends AGui<Object> implements Listener {
   }
 
   @Override
-  protected boolean opening(Player viewer, GuiInstance<Object> inst) {
+  protected boolean opening(GuiInstance<Object> inst) {
+    Player p = inst.getViewer();
+
     inst.addBorder(Material.BLACK_STAINED_GLASS_PANE);
     inst.addPagination(37, 40, 43);
 
     List<KitModel> kits = pers.list(KitModel.class);
 
     // Create the cooldown map initially
-    if (!cooldownCaches.containsKey(viewer))
-      cooldownCaches.put(viewer, new HashMap<>());
-    Map<KitModel, Tuple<Long, Long>> cooldownCache = cooldownCaches.get(viewer);
+    if (!cooldownCaches.containsKey(p))
+      cooldownCaches.put(p, new HashMap<>());
+    Map<KitModel, Tuple<Long, Long>> cooldownCache = cooldownCaches.get(p);
 
     // Add all kits by their representative item
     for (KitModel kit : kits) {
-      inst.addPagedItem((i, s) -> {
+      inst.addPagedItem(s -> {
         // Cache this kit's cooldown, if absent
         if (!cooldownCache.containsKey(kit)) {
           cooldownCache.put(kit, new Tuple<>(
             System.currentTimeMillis(),
-            kit.getCooldownRemaining(viewer, pers)
+            kit.getCooldownRemaining(p, pers)
           ));
         }
 
@@ -115,15 +117,15 @@ public class KitsGui extends AGui<Object> implements Listener {
           )
           .build();
       }, e -> {
-        ClickType click = e.getManipulation().getClick();
+        ClickType click = e.getClick();
 
         // Left click performs a kit request
         if (click == ClickType.LEFT || click == ClickType.SHIFT_LEFT)
-          e.getGui().getViewer().performCommand("kit " + kit.getName());
+          p.performCommand("kit " + kit.getName());
 
         // Right click performs a switch to the kit content preview
         else if (click == ClickType.RIGHT || click == ClickType.SHIFT_RIGHT)
-          e.getGui().switchTo(AnimationType.SLIDE_LEFT, kitContentGui, kit);
+          inst.switchTo(AnimationType.SLIDE_LEFT, kitContentGui, kit);
       }, 10);
     }
 

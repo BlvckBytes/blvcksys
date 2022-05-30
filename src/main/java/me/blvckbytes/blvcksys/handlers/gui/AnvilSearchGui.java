@@ -74,21 +74,23 @@ public class AnvilSearchGui extends AGui<SingleChoiceParam> implements IPacketMo
 
   @Override
   protected boolean closed(GuiInstance<SingleChoiceParam> inst) {
-    // Restore the inventory contents again by updating the inv
-    inst.getViewer().updateInventory();
+    Player p = inst.getViewer();
 
-    if (!madeSelection.remove(inst.getViewer()))
+    // Restore the inventory contents again by updating the inv
+    p.updateInventory();
+
+    if (!madeSelection.remove(p))
       inst.getArg().closed().run();
 
-    currentInventory.remove(inst.getViewer());
+    currentInventory.remove(p);
     return false;
   }
 
   @Override
-  protected boolean opening(Player viewer, GuiInstance<SingleChoiceParam> inst) {
+  protected boolean opening(GuiInstance<SingleChoiceParam> inst) {
     // This item serves as a placeholder to get the typing functionality up and working, while
     // it also informes the player about the concept of filtering
-    inst.fixedItem(0, i -> (
+    inst.fixedItem(0, () -> (
       new ItemStackBuilder(Material.PURPLE_TERRACOTTA)
         .withLore(cfg.get(ConfigKey.GUI_ANVILSEARCH_ITEM_LORE))
         .build()

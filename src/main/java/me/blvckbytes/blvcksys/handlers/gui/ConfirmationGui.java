@@ -46,28 +46,29 @@ public class ConfirmationGui extends AGui<BiFunction<TriResult, Inventory, Boole
   }
 
   @Override
-  protected boolean opening(Player viewer, GuiInstance<BiFunction<TriResult, Inventory, Boolean>> inst) {
+  protected boolean opening(GuiInstance<BiFunction<TriResult, Inventory, Boolean>> inst) {
+    Player p = inst.getViewer();
 
     inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
 
-    inst.fixedItem(11, i -> (
+    inst.fixedItem(11, () -> (
       new ItemStackBuilder(Material.GREEN_TERRACOTTA)
         .withName(cfg.get(ConfigKey.GUI_CONFIRMATION_CONFIRM_NAME))
         .withLore(cfg.get(ConfigKey.GUI_CONFIRMATION_CONFIRM_LORE))
         .build()
     ), e -> {
-      madeSelection.add(inst.getViewer());
+      madeSelection.add(p);
       if (inst.getArg().apply(TriResult.SUCC, inst.getInv()))
         inst.close();
     }, null);
 
-    inst.fixedItem(15, i -> (
+    inst.fixedItem(15, () -> (
       new ItemStackBuilder(Material.RED_TERRACOTTA)
         .withName(cfg.get(ConfigKey.GUI_CONFIRMATION_CANCEL_NAME))
         .withLore(cfg.get(ConfigKey.GUI_CONFIRMATION_CANCEL_LORE))
         .build()
     ), e -> {
-      madeSelection.add(inst.getViewer());
+      madeSelection.add(p);
       if (inst.getArg().apply(TriResult.ERR, inst.getInv()))
         inst.close();
     }, null);

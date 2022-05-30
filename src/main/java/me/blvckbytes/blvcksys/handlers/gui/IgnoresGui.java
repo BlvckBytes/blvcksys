@@ -47,14 +47,16 @@ public class IgnoresGui extends AGui<Object> {
   }
 
   @Override
-  protected boolean opening(Player viewer, GuiInstance<Object> inst) {
+  protected boolean opening(GuiInstance<Object> inst) {
+    Player p = inst.getViewer();
+
     inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
     inst.addPagination(28, 31, 34);
 
-    List<PlayerIgnoreModel> active = ignore.listActiveIgnores(viewer);
+    List<PlayerIgnoreModel> active = ignore.listActiveIgnores(p);
 
     if (active.size() == 0) {
-      inst.addPagedItem((i, s) -> (
+      inst.addPagedItem(s -> (
         new ItemStackBuilder(Material.BARRIER)
           .withName(cfg.get(ConfigKey.GUI_IGNORES_NONE_NAME))
           .withLore(cfg.get(ConfigKey.GUI_IGNORES_NONE_LORE))
@@ -65,7 +67,7 @@ public class IgnoresGui extends AGui<Object> {
     }
 
     for (PlayerIgnoreModel ignore : active) {
-      inst.addPagedItem((i, s) -> (
+      inst.addPagedItem(s -> (
         new ItemStackBuilder(textures.getProfileOrDefault(ignore.getTarget().getName()))
           .withName(
             cfg.get(ConfigKey.GUI_IGNORES_PLAYER_NAME)
@@ -77,7 +79,7 @@ public class IgnoresGui extends AGui<Object> {
               .withVariable("chat_state", inst.statePlaceholder(ignore.isIgnoresChat()))
           )
           .build()
-      ), e -> e.getGui().switchTo(AnimationType.SLIDE_LEFT, ignoreDetailGui, ignore.getTarget()), null);
+      ), e -> inst.switchTo(AnimationType.SLIDE_LEFT, ignoreDetailGui, ignore.getTarget()), null);
     }
 
     return true;

@@ -4,6 +4,7 @@ import lombok.Getter;
 import lombok.Setter;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.events.InventoryManipulationEvent;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.util.SymbolicHead;
 import org.bukkit.Bukkit;
@@ -17,10 +18,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -40,10 +40,10 @@ public class GuiInstance<T> {
   private final T arg;
 
   // Items which are on fixed slots
-  private final Map<Integer, GuiItem<T>> fixedItems;
+  private final Map<Integer, GuiItem> fixedItems;
 
   // A list of pages, where each page maps a used page slot to an item
-  private final List<Map<Integer, GuiItem<T>>> pages;
+  private final List<Map<Integer, GuiItem>> pages;
 
   // Mapping slots to their redrawing listeners
   private final Map<Integer, List<Runnable>> redrawListeners;
@@ -182,8 +182,8 @@ public class GuiInstance<T> {
    * @param updatePeriod Update period in ticks, null means never
    */
   public void addPagedItem(
-    BiFunction<GuiInstance<T>, Integer, ItemStack> item,
-    @Nullable Consumer<GuiClickEvent<T>> onClick,
+    Function<Integer, ItemStack> item,
+    @Nullable Consumer<InventoryManipulationEvent> onClick,
     @Nullable Integer updatePeriod
   ) {
     // Create a new page either initially or if the last page is already fully used
@@ -191,38 +191,38 @@ public class GuiInstance<T> {
       pages.add(new HashMap<>());
 
     // Add the new item to the last page and determine it's slot
-    Map<Integer, GuiItem<T>> targetPage = pages.get(pages.size() - 1);
+    Map<Integer, GuiItem> targetPage = pages.get(pages.size() - 1);
     int slot = template.getPageSlots().get(targetPage.size());
-    targetPage.put(slot, new GuiItem<>(item, onClick, updatePeriod));
+    targetPage.put(slot, new GuiItem(item, onClick, updatePeriod));
   }
 
   /**
    * Add a fixed item, which is an item that will always have the same position,
    * no matter of the viewer's state
    * @param slot Slot to set this item to
-   * @param item An item supplier which provides the viewer's instance
+   * @param item An item supplier
    * @param onClick Action to run when this item has been clicked
    */
   protected void fixedItem(
     int slot,
-    Function<GuiInstance<T>, ItemStack> item,
-    @Nullable Consumer<GuiClickEvent<T>> onClick
+    Supplier<ItemStack> item,
+    @Nullable Consumer<InventoryManipulationEvent> onClick
   ) {
-    fixedItem(String.valueOf(slot), item, onClick, null);
+    fixedItem(slot, item, onClick, null);
   }
 
   /**
    * Add a fixed item, which is an item that will always have the same position,
    * no matter of the viewer's state
    * @param slot Slot to set this item to
-   * @param item An item supplier which provides the viewer's instance
+   * @param item An item supplier
    * @param onClick Action to run when this item has been clicked
    * @param updatePeriod Item update period in ticks, null means never
    */
   protected void fixedItem(
     int slot,
-    Function<GuiInstance<T>, ItemStack> item,
-    @Nullable Consumer<GuiClickEvent<T>> onClick,
+    Supplier<ItemStack> item,
+    @Nullable Consumer<InventoryManipulationEvent> onClick,
     Integer updatePeriod
   ) {
     fixedItem(String.valueOf(slot), item, onClick, updatePeriod);
@@ -232,31 +232,31 @@ public class GuiInstance<T> {
    * Add a fixed item, which is an item that will always have the same position,
    * no matter of the viewer's state
    * @param slotExpr Slot(s) to set this item to
-   * @param item An item supplier which provides the viewer's instance
+   * @param item An item supplier
    * @param onClick Action to run when this item has been clicked
    * @param updatePeriod Item update period in ticks, null means never
    */
   protected void fixedItem(
     String slotExpr,
-    Function<GuiInstance<T>, ItemStack> item,
-    @Nullable Consumer<GuiClickEvent<T>> onClick,
+    Supplier<ItemStack> item,
+    @Nullable Consumer<InventoryManipulationEvent> onClick,
     Integer updatePeriod
   ) {
     for (int slotNumber : template.slotExprToSlots(slotExpr))
-      fixedItems.put(slotNumber, new GuiItem<>((i, s) -> item.apply(i), onClick, updatePeriod));
+      fixedItems.put(slotNumber, new GuiItem(s -> item.get(), onClick, updatePeriod));
   }
 
   /**
    * Add a fixed item, which is an item that will always have the same position,
    * no matter of the viewer's state
    * @param slotExpr Slot(s) to set this item to
-   * @param item An item supplier which provides the viewer's instance
+   * @param item An item supplier
    * @param onClick Action to run when this item has been clicked
    */
   protected void fixedItem(
     String slotExpr,
-    Function<GuiInstance<T>, ItemStack> item,
-    @Nullable Consumer<GuiClickEvent<T>> onClick
+    Supplier<ItemStack> item,
+    @Nullable Consumer<InventoryManipulationEvent> onClick
   ) {
     fixedItem(slotExpr, item, onClick, null);
   }
@@ -269,17 +269,17 @@ public class GuiInstance<T> {
    * @param nextSlot Slot of the next button
    */
   protected void addPagination(int prevSlot, int indicatorSlot, int nextSlot) {
-    fixedItem(prevSlot, g -> (
+    fixedItem(prevSlot, () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_NAME))
         .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_LORE))
         .build()
     ), e -> {
-      e.getGui().previousPage(AnimationType.SLIDE_RIGHT);
-      e.getGui().redraw(String.valueOf(indicatorSlot));
+      previousPage(AnimationType.SLIDE_RIGHT);
+      redraw(String.valueOf(indicatorSlot));
     }, null);
 
-    fixedItem(indicatorSlot, g -> (
+    fixedItem(indicatorSlot, () -> (
       new ItemStackBuilder(Material.PAPER)
         .withName(
           cfg.get(ConfigKey.GUI_GENERICS_PAGING_INDICATOR_NAME)
@@ -295,14 +295,14 @@ public class GuiInstance<T> {
         .build()
     ), null, null);
 
-    fixedItem(nextSlot, g -> (
+    fixedItem(nextSlot, () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_RIGHT.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_NAME))
         .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_LORE))
         .build()
     ), e -> {
-      e.getGui().nextPage(AnimationType.SLIDE_LEFT);
-      e.getGui().redraw(String.valueOf(indicatorSlot));
+      nextPage(AnimationType.SLIDE_LEFT);
+      redraw(String.valueOf(indicatorSlot));
     }, null);
   }
 
@@ -313,17 +313,17 @@ public class GuiInstance<T> {
    * @param state State supplier
    * @param onClick Click event, providing the current state and the player
    */
-  protected void addStateToggle(int slot, @Nullable Integer update, Function<GuiInstance<T>, Boolean> state, BiConsumer<Boolean, GuiInstance<T>> onClick) {
-    fixedItem(slot, i -> {
-      boolean s = state.apply(i);
+  protected void addStateToggle(int slot, @Nullable Integer update, Supplier<Boolean> state, Consumer<Boolean> onClick) {
+    fixedItem(slot, () -> {
+      boolean s = state.get();
 
       return new ItemStackBuilder(s ? Material.GREEN_DYE : Material.RED_DYE)
         .withName(cfg.get(s ? ConfigKey.GUI_GENERICS_BUTTONS_DISABLE_NAME : ConfigKey.GUI_GENERICS_BUTTONS_ENABLE_NAME))
         .withLore(cfg.get(s ? ConfigKey.GUI_GENERICS_BUTTONS_DISABLE_LORE : ConfigKey.GUI_GENERICS_BUTTONS_ENABLE_LORE))
         .build();
     }, e -> {
-      onClick.accept(state.apply(e.getGui()), e.getGui());
-      e.getGui().redraw(slot + "," + (update == null ? "" : update));
+      onClick.accept(state.get());
+      redraw(slot + "," + (update == null ? "" : update));
     }, null);
   }
 
@@ -353,7 +353,7 @@ public class GuiInstance<T> {
     fill = new ItemStackBuilder(mat)
       .build();
 
-    fixedItem(slotExpr.toString(), g -> fill, null, null);
+    fixedItem(slotExpr.toString(), () -> fill, null, null);
   }
 
   /**
@@ -382,7 +382,7 @@ public class GuiInstance<T> {
     border = new ItemStackBuilder(mat)
       .build();
 
-    fixedItem(slotExpr.toString(), g -> border, null, null);
+    fixedItem(slotExpr.toString(), () -> border, null, null);
   }
 
   /**
@@ -400,8 +400,8 @@ public class GuiInstance<T> {
    * @param slot Slot of the back button
    * @param clicked Event callback
    */
-  protected<A> void addBack(int slot, Consumer<GuiClickEvent<T>> clicked) {
-    fixedItem(slot, g -> buildBackButton(), clicked);
+  protected<A> void addBack(int slot, Consumer<InventoryManipulationEvent> clicked) {
+    fixedItem(slot, this::buildBackButton, clicked);
   }
 
   /**
@@ -411,8 +411,8 @@ public class GuiInstance<T> {
    * @param param Gui parameter
    * @param animation Animation to use when navigating back
    */
-  protected<A> void addBack(int slot, AGui<A> gui, Function<GuiInstance<T>, A> param, @Nullable AnimationType animation) {
-    fixedItem(slot, g -> buildBackButton(), e -> e.getGui().switchTo(animation, gui, param == null ? null : param.apply(e.getGui())), null);
+  protected<A> void addBack(int slot, AGui<A> gui, Supplier<A> param, @Nullable AnimationType animation) {
+    fixedItem(slot, this::buildBackButton, e -> switchTo(animation, gui, param == null ? null : param.get()), null);
   }
 
   /**
@@ -431,12 +431,12 @@ public class GuiInstance<T> {
     for (int slot : template.slotExprToSlots(slotExpr)) {
 
       // Vacant slot, skip
-      GuiItem<T> target = getItem(slot).orElse(null);
+      GuiItem target = getItem(slot).orElse(null);
       if (target == null)
         continue;
 
       // Update the item by re-calling it's supplier
-      setItem(slot, target.item().apply(this, slot));
+      setItem(slot, target.item().apply(slot));
     }
   }
 
@@ -456,9 +456,9 @@ public class GuiInstance<T> {
    * @param slot Slot to search in
    * @return Optional item, empty if that slot is vacant
    */
-  public Optional<GuiItem<T>> getItem(int slot) {
+  public Optional<GuiItem> getItem(int slot) {
     // Check for fixed items
-    GuiItem<T> fixed = fixedItems.get(slot);
+    GuiItem fixed = fixedItems.get(slot);
     if (fixed != null)
       return Optional.of(fixed);
 
@@ -467,7 +467,7 @@ public class GuiInstance<T> {
       return Optional.empty();
 
     // Check for page items
-    GuiItem<T> pageItem = pages.get(currPage).get(slot);
+    GuiItem pageItem = pages.get(currPage).get(slot);
     if (pageItem != null)
       return Optional.of(pageItem);
 
@@ -584,13 +584,13 @@ public class GuiInstance<T> {
     List<Integer> pageSlots = new ArrayList<>(template.getPageSlots());
 
     // Loop all items of the current page
-    for (Map.Entry<Integer, GuiItem<T>> pageItem : pages.get(currPage).entrySet()) {
-      GuiItem<T> item = pageItem.getValue();
+    for (Map.Entry<Integer, GuiItem> pageItem : pages.get(currPage).entrySet()) {
+      GuiItem item = pageItem.getValue();
       pageSlots.remove(pageItem.getKey());
 
       // Only update on force updates or if the time is a multiple of the item's period
       if (time == null || (item.updatePeriod() != null && item.updatePeriod() > 0 && time % item.updatePeriod() == 0))
-        setItem(pageItem.getKey(), item.item().apply(this, pageItem.getKey()));
+        setItem(pageItem.getKey(), item.item().apply(pageItem.getKey()));
     }
 
     // Clear unused page slots if they're not already vacant
@@ -608,12 +608,12 @@ public class GuiInstance<T> {
    */
   public void tick(long time) {
     // Tick all fixed items
-    for (Map.Entry<Integer, GuiItem<T>> itemE : fixedItems.entrySet()) {
-      GuiItem<T> item = itemE.getValue();
+    for (Map.Entry<Integer, GuiItem> itemE : fixedItems.entrySet()) {
+      GuiItem item = itemE.getValue();
 
       // Only tick this item if it has a period which has elapsed
       if (item.updatePeriod() != null && time % item.updatePeriod() == 0)
-        setItem(itemE.getKey(), item.item().apply(this, itemE.getKey()));
+        setItem(itemE.getKey(), item.item().apply(itemE.getKey()));
     }
 
     // Tick all page items

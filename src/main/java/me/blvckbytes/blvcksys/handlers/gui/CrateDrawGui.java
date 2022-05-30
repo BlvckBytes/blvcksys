@@ -18,7 +18,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /*
@@ -69,7 +68,8 @@ public class CrateDrawGui extends AGui<CrateModel> {
   }
 
   @Override
-  protected boolean opening(Player viewer, GuiInstance<CrateModel> inst) {
+  protected boolean opening(GuiInstance<CrateModel> inst) {
+    Player p = inst.getViewer();
     CrateModel crate = inst.getArg();
 
     // Get the drawing layout from the crate or use a fallback value
@@ -78,12 +78,12 @@ public class CrateDrawGui extends AGui<CrateModel> {
       layout = CrateDrawLayout.HORIZONTAL_LINE;
 
     List<CrateItemModel> itemModels = crateHandler.getItems(crate.getName()).orElse(null);
-    CrateKeyModel keys = crateHandler.getKeys(inst.getViewer(), crate.getName()).orElse(null);
+    CrateKeyModel keys = crateHandler.getKeys(p, crate.getName()).orElse(null);
 
     // Has no contents to draw from
     if (keys == null || itemModels == null || itemModels.size() == 0) {
-      viewer.closeInventory();
-      viewer.sendMessage(
+      p.closeInventory();
+      p.sendMessage(
         cfg.get(ConfigKey.GUI_CRATE_DRAW_NO_ITEMS)
           .withPrefix()
           .withVariable("name", crate.getName())
@@ -96,9 +96,9 @@ public class CrateDrawGui extends AGui<CrateModel> {
       // Has no keys left
       keys.getNumberOfKeys() == 0 ||
       // Could not take a key
-      !(crateHandler.updateKeys(inst.getViewer(), crate.getName(), keys.getNumberOfKeys() - 1))
+      !(crateHandler.updateKeys(p, crate.getName(), keys.getNumberOfKeys() - 1))
     ) {
-      inst.getViewer().sendMessage(
+      p.sendMessage(
         cfg.get(ConfigKey.GUI_CRATE_DRAW_NO_KEYS)
           .withPrefix()
           .withVariable("name", crate.getName())
@@ -106,11 +106,11 @@ public class CrateDrawGui extends AGui<CrateModel> {
       );
 
       // Push the player away from the crate
-      inst.getViewer().setVelocity(inst.getViewer().getLocation().getDirection().multiply(-.5D));
+      p.setVelocity(p.getLocation().getDirection().multiply(-.5D));
       return false;
     }
 
-    inst.getViewer().sendMessage(
+    p.sendMessage(
       cfg.get(ConfigKey.GUI_CRATE_DRAW_KEY_USED)
         .withPrefix()
         .withVariable("name", crate.getName())
@@ -124,8 +124,8 @@ public class CrateDrawGui extends AGui<CrateModel> {
 
     // The layout specified an invalid output slot or the item could not be drawn
     if (relOut < 0 || loopData == null) {
-      viewer.closeInventory();
-      viewer.sendMessage(
+      p.closeInventory();
+      p.sendMessage(
         cfg.get(ConfigKey.GUI_CRATE_DRAW_NO_ITEMS)
           .withPrefix()
           .withVariable("name", crate.getName())
@@ -138,7 +138,7 @@ public class CrateDrawGui extends AGui<CrateModel> {
     inst.resize(layout.getRowsRequired(), false);
     inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
 
-    inst.fixedItem(layout.getMarkerSlots(), i -> (
+    inst.fixedItem(layout.getMarkerSlots(), () -> (
       new ItemStackBuilder(Material.PURPLE_STAINED_GLASS_PANE)
         .withName(cfg.get(ConfigKey.GUI_CRATE_DRAW_INDICATOR_NAME))
         .withLore(cfg.get(ConfigKey.GUI_CRATE_DRAW_INDICATOR_LORE))
@@ -150,11 +150,11 @@ public class CrateDrawGui extends AGui<CrateModel> {
     AtomicInteger totalCalls = new AtomicInteger(0), currSpeed = new AtomicInteger(0), offset = new AtomicInteger(0);
 
     // Starting to draw now
-    drawing.add(viewer);
+    drawing.add(p);
 
     // Set a fixed item into each slot of the animation which updates on every tick
     for (int slot : animSlots) {
-      inst.fixedItem(slot, i -> {
+      inst.fixedItem(slot, () -> {
         int speedTicks = SPEED_TICKS[currSpeed.get()];
         int calls = totalCalls.incrementAndGet();
         int slotIndex = animSlots.indexOf(slot);
@@ -164,16 +164,16 @@ public class CrateDrawGui extends AGui<CrateModel> {
         int iterNum = calls / animSlots.size();
 
         // Advance to the next speed when the current speed's number of iterations has been reached
-        if (drawing.contains(viewer)) {
+        if (drawing.contains(p)) {
           if ((iterNum / speedTicks - 1) >= SPEED_ITERS[currSpeed.get()]) {
             // No next speed, done
             if (currSpeed.get() == SPEED_ITERS.length - 1) {
-              drawing.remove(viewer);
+              drawing.remove(p);
 
               // Hand out the prize
-              give.giveItemsOrDrop(viewer, loopData.b().getItem());
+              give.giveItemsOrDrop(p, loopData.b().getItem());
 
-              viewer.sendMessage(
+              p.sendMessage(
                 cfg.get(ConfigKey.GUI_CRATE_DRAW_PRIZE)
                   .withPrefix()
                   .withVariable("item", crateContentGui.getItemName(loopData.b()))

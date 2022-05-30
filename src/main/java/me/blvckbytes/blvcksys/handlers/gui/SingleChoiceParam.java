@@ -1,6 +1,5 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
-import me.blvckbytes.blvcksys.util.Triple;
 import net.minecraft.util.Tuple;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;

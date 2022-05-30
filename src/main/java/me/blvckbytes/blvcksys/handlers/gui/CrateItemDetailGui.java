@@ -60,34 +60,35 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
   }
 
   @Override
-  protected boolean opening(Player viewer, GuiInstance<Tuple<CrateModel, CrateItemModel>> inst) {
-    inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
-    inst.fixedItem("12,14,22", i -> new ItemStackBuilder(Material.PURPLE_STAINED_GLASS_PANE).build(), null);
+  protected boolean opening(GuiInstance<Tuple<CrateModel, CrateItemModel>> inst) {
+    Player p = inst.getViewer();
+    CrateModel crate = inst.getArg().a();
+    CrateItemModel item = inst.getArg().b();
 
-    inst.addBack(45, crateContentGui, i -> new Tuple<>(i.getArg().a(), true), AnimationType.SLIDE_RIGHT);
+    inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
+    inst.fixedItem("12,14,22", () -> new ItemStackBuilder(Material.PURPLE_STAINED_GLASS_PANE).build(), null);
+
+    inst.addBack(45, crateContentGui, () -> new Tuple<>(inst.getArg().a(), true), AnimationType.SLIDE_RIGHT);
 
     // Selected item showcase
-    inst.fixedItem(13, i -> crateContentGui.appendDecoration(i.getArg().a(), i.getArg().b()), null);
+    inst.fixedItem(13, () -> crateContentGui.appendDecoration(inst.getArg().a(), inst.getArg().b()), null);
 
     // Probability change
-    inst.fixedItem(29, i -> (
+    inst.fixedItem(29, () -> (
       new ItemStackBuilder(Material.GOLD_INGOT)
         .withName(cfg.get(ConfigKey.GUI_CRATE_DETAIL_PROBABILITY_NAME))
         .withLore(cfg.get(ConfigKey.GUI_CRATE_DETAIL_PROBABILITY_LORE))
         .build()
-    ), i -> {
+    ), e -> {
 
       chatUtil.registerPrompt(
-        i.getGui().getViewer(),
+        p,
         cfg.get(ConfigKey.GUI_CRATE_DETAIL_PROBABILITY_PROMPT)
           .withPrefix()
           .asScalar(),
 
         // Probability entered
         probabilityStr -> {
-          CrateItemModel item = i.getGui().getArg().b();
-          Player p = i.getGui().getViewer();
-
           try {
             // Parse the probability
             float probability = Float.parseFloat(probabilityStr);
@@ -112,8 +113,8 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
                   .asScalar()
               );
             }
-          } catch (NumberFormatException e) {
-            i.getGui().getViewer().sendMessage(
+          } catch (NumberFormatException ex) {
+            p.sendMessage(
               cfg.get(ConfigKey.ERR_FLOATPARSE)
                 .withPrefix()
                 .withVariable("number", probabilityStr)
@@ -122,79 +123,77 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
             return;
           }
 
-          i.getGui().reopen(AnimationType.SLIDE_UP);
+          inst.reopen(AnimationType.SLIDE_UP);
         },
 
         // Cancelled
-        () -> i.getGui().reopen(AnimationType.SLIDE_UP)
+        () -> inst.reopen(AnimationType.SLIDE_UP)
       );
 
-      i.getGui().getViewer().closeInventory();
+      p.closeInventory();
     });
 
     // Delete button
-    inst.fixedItem(40, i -> (
+    inst.fixedItem(40, () -> (
       new ItemStackBuilder(Material.BARRIER)
         .withName(cfg.get(ConfigKey.GUI_CRATE_DETAIL_DELETE_NAME))
         .withLore(cfg.get(ConfigKey.GUI_CRATE_DETAIL_DELETE_LORE))
         .build()
     ), i -> {
       // Prompt for deletion confirmation
-      i.getGui().switchTo(AnimationType.SLIDE_LEFT, confirmationGui, (confirmed, inv) -> {
+      inst.switchTo(AnimationType.SLIDE_LEFT, confirmationGui, (confirmed, inv) -> {
 
         // Confirmed
         if (confirmed == TriResult.SUCC) {
-          boolean res = crateHandler.deleteItem(i.getGui().getArg().b());
+          boolean res = crateHandler.deleteItem(item);
 
-          i.getGui().getViewer().sendMessage(
+          p.sendMessage(
             cfg.get(res ? ConfigKey.COMMAND_CRATE_ITEM_DELETED : ConfigKey.COMMAND_CRATE_ITEM_DISAPPEARED)
               .withPrefix()
-              .withVariable("item", crateContentGui.getItemName(i.getGui().getArg().b()))
-              .withVariable("name", i.getGui().getArg().a().getName())
+              .withVariable("item", crateContentGui.getItemName(item))
+              .withVariable("name", crate.getName())
               .asScalar()
           );
 
           // Move back to the content gui
-          crateContentGui.show(i.getGui().getViewer(), new Tuple<>(i.getGui().getArg().a(), true), AnimationType.SLIDE_RIGHT, inv);
+          crateContentGui.show(p, new Tuple<>(crate, true), AnimationType.SLIDE_RIGHT, inv);
           return false;
         }
 
-        i.getGui().getViewer().sendMessage(
+        p.sendMessage(
           cfg.get(ConfigKey.GUI_CRATE_DETAIL_DELETE_CANCELLED)
             .withPrefix()
-            .withVariable("item", crateContentGui.getItemName(i.getGui().getArg().b()))
+            .withVariable("item", crateContentGui.getItemName(item))
             .asScalar()
         );
 
         // Re-open the detail GUI if the confirmation wasn't closed
         if (confirmed != TriResult.EMPTY)
-          this.show(i.getGui().getViewer(), i.getGui().getArg(), AnimationType.SLIDE_RIGHT, inv);
+          this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, inv);
 
         return false;
       });
     });
 
     // Invoke itemeditor on this item
-    inst.fixedItem(33, i -> (
+    inst.fixedItem(33, () -> (
       new ItemStackBuilder(Material.ARROW)
         .withName(cfg.get(ConfigKey.GUI_CRATE_DETAIL_EDIT_NAME))
         .withLore(cfg.get(ConfigKey.GUI_CRATE_DETAIL_EDIT_LORE))
         .build()
     ), i -> {
-      CrateItemModel model = i.getGui().getArg().b();
-
-      i.getGui().switchTo(AnimationType.SLIDE_LEFT, itemEditorGui, new Triple<>(
-        model.getItem(),
+      inst.switchTo(AnimationType.SLIDE_LEFT, itemEditorGui, new Triple<>(
+        item.getItem(),
 
         // Store the item on edits
         edited -> {
-          model.setItem(edited);
-          crateHandler.updateItem(model);
+          item.setItem(edited);
+          crateHandler.updateItem(item);
         },
 
         // Re-open the detail GUI on completion
         editorInv -> {
-          this.show(viewer, i.getGui().getArg(), AnimationType.SLIDE_RIGHT, editorInv);
+          this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, editorInv);
         }
       ));
     });

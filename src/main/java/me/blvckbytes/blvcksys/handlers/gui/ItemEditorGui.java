@@ -19,6 +19,7 @@ import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -478,8 +479,6 @@ public class ItemEditorGui extends AGui<ItemStack> {
         .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_LORE))
         .build()
     ), e -> {
-      // Insert after, insert at with RIGHT/LEFT click in a gui if there's more than one line
-
       ClickType click = e.getManipulation().getClick();
 
       if (click.isRightClick()) {
@@ -612,6 +611,141 @@ public class ItemEditorGui extends AGui<ItemStack> {
 
         // Close the GUI when prompting for the chat message
         e.getGui().close();
+      }
+    });
+
+    //////////////////////////////////// Unbreakability ////////////////////////////////////
+
+    inst.fixedItem(33, i -> {
+      boolean isDamageable = (meta instanceof Damageable && item.getType().getMaxDurability() > 0);
+      int currDur = item.getType().getMaxDurability() - ((meta instanceof Damageable d) ? d.getDamage() : -1);
+      int maxDur = item.getType().getMaxDurability();
+
+      return new ItemStackBuilder(Material.ANVIL)
+        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_NAME))
+        .withLore(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_LORE)
+            .withVariable(
+              "durability",
+              cfg.get(
+                meta.isUnbreakable() ?
+                  ConfigKey.GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE :
+                  (isDamageable ? ConfigKey.GUI_ITEMEDITOR_DURABILITY_BREAKABLE : ConfigKey.GUI_ITEMEDITOR_DURABILITY_NON_BREAKABLE)
+                )
+                .withVariable("current_durability", currDur)
+                .withVariable("max_durability", maxDur)
+                .asScalar()
+            )
+        )
+        .build();
+    }, e -> {
+
+      int maxDur = item.getType().getMaxDurability();
+
+      // This item cannot take any damage
+      if (!(meta instanceof Damageable d) || maxDur <= 0) {
+        p.sendMessage(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_NOT_BREAKABLE)
+            .withPrefix()
+            .asScalar()
+        );
+        return;
+      }
+
+      // Decide on the step size, 16 steps should get you all the way down/up
+      int stepSize = maxDur / 16;
+
+      ClickType click = e.getManipulation().getClick();
+
+      if (click.isLeftClick()) {
+        // Set unbreakable
+        if (click.isShiftClick()) {
+          if (meta.isUnbreakable()) {
+            p.sendMessage(
+              cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_NOT_INACTIVE)
+                .withPrefix()
+                .asScalar()
+            );
+            return;
+          }
+
+          meta.setUnbreakable(true);
+          item.setItemMeta(meta);
+
+          // Redraw the display and the durability icon
+          inst.redraw("13," + e.getManipulation().getTargetSlot());
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_ACTIVE)
+              .withPrefix()
+              .asScalar()
+          );
+          return;
+        }
+
+        // Increase durability
+
+        // Apply the constrained damage
+        int damage = Math.max(d.getDamage() - stepSize, 0);
+        d.setDamage(damage);
+        item.setItemMeta(meta);
+
+        // Redraw the display and the durability icon
+        inst.redraw("13," + e.getManipulation().getTargetSlot());
+
+        p.sendMessage(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_CHANGED)
+            .withPrefix()
+            .withVariable("current_durability", maxDur - damage)
+            .withVariable("max_durability", maxDur)
+            .asScalar()
+        );
+        return;
+      }
+
+      if (click.isRightClick()) {
+        // Remove unbreakability
+        if (click.isShiftClick()) {
+          if (!meta.isUnbreakable()) {
+            p.sendMessage(
+              cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_NOT_ACTIVE)
+                .withPrefix()
+                .asScalar()
+            );
+            return;
+          }
+
+          meta.setUnbreakable(false);
+          item.setItemMeta(meta);
+
+          // Redraw the display and the durability icon
+          inst.redraw("13," + e.getManipulation().getTargetSlot());
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_INACTIVE)
+              .withPrefix()
+              .asScalar()
+          );
+          return;
+        }
+
+        // Decrease durability
+
+        // Apply the constrained damage
+        int damage = Math.min(d.getDamage() + stepSize, maxDur - 1);
+        d.setDamage(damage);
+        item.setItemMeta(meta);
+
+        // Redraw the display and the durability icon
+        inst.redraw("13," + e.getManipulation().getTargetSlot());
+
+        p.sendMessage(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_CHANGED)
+            .withPrefix()
+            .withVariable("current_durability", maxDur - damage)
+            .withVariable("max_durability", maxDur)
+            .asScalar()
+        );
       }
     });
 

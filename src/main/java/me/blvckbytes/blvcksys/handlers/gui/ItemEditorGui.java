@@ -582,6 +582,12 @@ public class ItemEditorGui extends AGui<ItemStack> {
               return;
             }
 
+            p.sendMessage(
+              cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_SELECT_POS)
+                .withPrefix()
+                .asScalar()
+            );
+
             // Offer a choice for where to insert the line
             openLoreIndexChoice(lines, inst, (lineId, inv) -> {
               List<String> newLines = new ArrayList<>(lines);

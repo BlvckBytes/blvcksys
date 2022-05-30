@@ -1589,6 +1589,26 @@ public enum ConfigKey {
   ),
   GUI_ITEMEDITOR_SKULLOWNER_PROMPT("gui.itemeditor.skullowner.prompt", "$0Bitte gib den gewünschten $2Kopfbesitzer $0in den $2Chat $0ein."),
   GUI_ITEMEDITOR_SKULLOWNER_NOT_LOADABLE("gui.itemeditor.skullowner.not_loadable", "$0Der Skin von $4{{owner}} $0konnte nicht geladen werden!"),
+  GUI_ITEMEDITOR_LEATHERCOLOR_NO_LEATHER("gui.itemeditor.leathercolor.no_leather", "$0Dieses Item ist $4keine Lederrüstung$0!"),
+  GUI_ITEMEDITOR_LEATHERCOLOR_CHANGED("gui.itemeditor.leathercolor.changed", "$0Die $2Lederfarbe $0dieses Items wurde auf $2{{color}} $0geändert."),
+  GUI_ITEMEDITOR_LEATHERCOLOR_NAME("gui.itemeditor.leathercolor.name", "$0» $2Lederfarbe $0«"),
+  GUI_ITEMEDITOR_LEATHERCOLOR_LORE(
+    "gui.itemeditor.leathercolor.lore",
+    " ",
+    "$0Ändere die $2Farbe $0dieses $2Lederteils$0.",
+    " ",
+    "$0Linksklick: $2Farbwert aus Liste",
+    "$0Rechtsklick: $2RGB Farbwert"
+  ),
+  GUI_ITEMEDITOR_LEATHERCOLOR_PROMPT("gui.itemeditor.leathercolor.prompt", "$0Bitte gib den gewünschten $2Farbwert $0in den $2Chat $0ein (r g b)."),
+  GUI_ITEMEDITOR_LEATHERCOLOR_INVALID_FORMAT("gui.itemeditor.leathercolor.invalid_format", "$0Die Farbeingabe von $4{{input}} $0ist ungültig!"),
+  GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_TITLE("gui.itemeditor.choice.leathercolor.title", "$2Lederfarbe"),
+  GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_NAME("gui.itemeditor.choice.leathercolor.name", "$2{{color}}"),
+  GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_LORE(
+    "gui.itemeditor.choice.leathercolor.lore",
+    " ",
+    "$0Klicke um diese Farbe zu wählen."
+  ),
 
   //=========================================================================//
   //                             Preferences GUI                             //

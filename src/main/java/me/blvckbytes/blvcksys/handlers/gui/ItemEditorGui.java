@@ -16,6 +16,7 @@ import net.minecraft.util.Tuple;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
@@ -28,6 +29,7 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -385,17 +387,8 @@ public class ItemEditorGui extends AGui<ItemStack> {
             levelStr -> {
 
               // Parse the level from the string
-              int level;
-              try {
-                level = Integer.parseInt(levelStr);
-              } catch (NumberFormatException ex) {
-                viewer.sendMessage(
-                  cfg.get(ConfigKey.ERR_INTPARSE)
-                    .withPrefix()
-                    .withVariable("number", levelStr)
-                    .asScalar()
-                );
-
+              Integer level = tryParseInt(p, levelStr).orElse(null);
+              if (level == null) {
                 this.show(p, item, AnimationType.SLIDE_UP);
                 return;
               }
@@ -994,7 +987,177 @@ public class ItemEditorGui extends AGui<ItemStack> {
       e.getGui().close();
     });
 
+    ///////////////////////////////////// Leather Color /////////////////////////////////////
+
+    inst.fixedItem(35, i -> (
+      new ItemStackBuilder(Material.LEATHER)
+        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_NAME))
+        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_LORE))
+        .build()
+    ), e -> {
+      // Not an item which will have leather armor meta
+      if (!(meta instanceof LeatherArmorMeta armorMeta)) {
+        p.sendMessage(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_NO_LEATHER)
+            .withPrefix()
+            .asScalar()
+        );
+        return;
+      }
+
+      ClickType click = e.getManipulation().getClick();
+
+      // Set to an RGB value
+      if (click.isRightClick()) {
+
+        // Prompt for the desired RGB color value in the chat
+        chatUtil.registerPrompt(
+          viewer,
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_PROMPT)
+            .withPrefix()
+            .asScalar(),
+
+          // Color entered
+          colorStr -> {
+            String[] colorData = colorStr.split(" ");
+
+            // Parts missing or excess
+            if (colorData.length != 3) {
+              p.sendMessage(
+                cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_INVALID_FORMAT)
+                  .withPrefix()
+                  .withVariable("input", colorStr)
+                  .asScalar()
+              );
+
+              this.show(p, item, AnimationType.SLIDE_UP);
+              return;
+            }
+
+            Integer r = tryParseInt(p, colorData[0]).orElse(null);
+            Integer g = tryParseInt(p, colorData[1]).orElse(null);
+            Integer b = tryParseInt(p, colorData[2]).orElse(null);
+
+            if (
+              // Not a number
+              r == null || g == null || b == null ||
+
+              // Out of range
+              r < 0 || g < 0 || b < 0 ||
+              r > 255 || g > 255 || b > 255
+            ) {
+              p.sendMessage(
+                cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_INVALID_FORMAT)
+                  .withPrefix()
+                  .withVariable("input", colorStr)
+                  .asScalar()
+              );
+
+              this.show(p, item, AnimationType.SLIDE_UP);
+              return;
+            }
+
+            armorMeta.setColor(Color.fromRGB(r, g, b));
+            item.setItemMeta(armorMeta);
+
+            p.sendMessage(
+              cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_CHANGED)
+                .withPrefix()
+                .withVariable("color", colorStr)
+                .asScalar()
+            );
+
+            this.show(p, item, AnimationType.SLIDE_UP);
+          },
+
+          closed
+        );
+
+        // Close the GUI when prompting for the chat message
+        e.getGui().close();
+        return;
+      }
+
+      // Set to a predefined value
+      if (click.isLeftClick()) {
+
+        List<Tuple<String, Color>> colors = new ArrayList<>();
+
+        // Get all available colors from the class's list of constant fields
+        try {
+          List<Field> constants = Arrays.stream(Color.class.getDeclaredFields())
+            .filter(field -> field.getType().equals(Color.class) && Modifier.isStatic(field.getModifiers()))
+            .toList();
+
+          for (Field constant : constants)
+            colors.add(new Tuple<>(constant.getName(), (Color) constant.get(null)));
+        } catch (Exception ex) {
+          logger.logError(ex);
+        }
+
+        // Create a list of all available slots
+        List<Tuple<Object, ItemStack>> slotReprs = new ArrayList<>();
+        for (Tuple<String, Color> color : colors) {
+          slotReprs.add(new Tuple<>(
+            color,
+            new ItemStackBuilder(item.getType())
+              .withColor(color.b())
+              .withName(
+                cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_NAME)
+                  .withVariable("color", formatConstant(color.a()))
+              )
+              .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_LORE))
+              .build()
+          ));
+        }
+
+        // Invoke a new single choice gui for available colors
+        inst.switchTo(AnimationType.SLIDE_LEFT, singleChoiceGui, new SingleChoiceParam(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_TITLE).asScalar(), slotReprs,
+
+          // Color selected
+          (color, inv) -> {
+            @SuppressWarnings("unchecked")
+            Tuple<String, Color> colorData = (Tuple<String, Color>) color;
+
+            armorMeta.setColor(colorData.b());
+            item.setItemMeta(armorMeta);
+
+            p.sendMessage(
+              cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_CHANGED)
+                .withPrefix()
+                .withVariable("color", formatConstant(colorData.a()))
+                .asScalar()
+            );
+
+            this.show(p, item, AnimationType.SLIDE_RIGHT, inv);
+            return false;
+          },
+          closed, backButton
+        ));
+      }
+    });
+
     return true;
+  }
+
+      /**
+       * Tries to parse an integer from a string value and notifies the player on malformed input.
+   * @param p Target player
+   * @param input String to parse
+   * @return Optional number, empty on malformed input
+   */
+  private Optional<Integer> tryParseInt(Player p, String input) {
+    try {
+      return Optional.of(Integer.parseInt(input));
+    } catch (Exception ex) {
+      p.sendMessage(
+        cfg.get(ConfigKey.ERR_INTPARSE)
+          .withVariable("number", input)
+          .asScalar()
+      );
+      return Optional.empty();
+    }
   }
 
   /**

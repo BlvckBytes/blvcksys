@@ -11,8 +11,8 @@ import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.PlayerTextureModel;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
+import me.blvckbytes.blvcksys.util.Triple;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
-import net.minecraft.util.Tuple;
 import org.apache.commons.io.IOUtils;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,7 +73,7 @@ public class PlayerTextureHandler implements IPlayerTextureHandler {
     }
 
     // Cannot resolve this name
-    Tuple<UUID, String> result = resolveSkinTextures(name).orElse(null);
+    Triple<UUID, String, String> result = resolveSkinTextures(name).orElse(null);
     if (result == null)
       return Optional.empty();
 
@@ -84,7 +84,7 @@ public class PlayerTextureHandler implements IPlayerTextureHandler {
     ).or("uuid", EqualityOperation.EQ, result.a()));
 
     // Store result
-    PlayerTextureModel model = new PlayerTextureModel(name, result.a(), result.b());
+    PlayerTextureModel model = new PlayerTextureModel(result.c(), result.a(), result.b());
     pers.store(model);
 
     cache.put(name.toLowerCase(), model);
@@ -125,9 +125,9 @@ public class PlayerTextureHandler implements IPlayerTextureHandler {
   /**
    * Resolves the skin textures as well as the UUID from a player's name
    * @param name Name of the target player
-   * @return A tuple of the target's UUID and their skin texture property value
+   * @return A triple of the target's UUID, their skin texture property value and the exact name
    */
-  private Optional<Tuple<UUID, String>> resolveSkinTextures(String name) {
+  private Optional<Triple<UUID, String, String>> resolveSkinTextures(String name) {
     try {
       URL playerDbURL = new URL("https://playerdb.co/api/player/minecraft/" + name);
 
@@ -151,12 +151,9 @@ public class PlayerTextureHandler implements IPlayerTextureHandler {
 
       // Get the player's UUID from player-db
       JsonObject playerDb = JsonParser.parseString(body).getAsJsonObject();
-      UUID id = UUID.fromString(
-        playerDb.getAsJsonObject("data")
-          .getAsJsonObject("player")
-          .get("id")
-          .getAsString()
-      );
+      JsonObject playerObj = playerDb.getAsJsonObject("data").getAsJsonObject("player");
+      UUID id = UUID.fromString(playerObj.get("id").getAsString());
+      String nameExact = playerObj.get("username").getAsString();
 
       // Get the player's profile from mojang
       URL mojangURL = new URL("https://sessionserver.mojang.com/session/minecraft/profile/" + id);
@@ -176,7 +173,7 @@ public class PlayerTextureHandler implements IPlayerTextureHandler {
         textures = prop.get("value").getAsString();
       }
 
-      return Optional.of(new Tuple<>(id, textures));
+      return Optional.of(new Triple<>(id, textures, nameExact));
     } catch (Exception e) {
       logger.logError(e);
       return Optional.empty();

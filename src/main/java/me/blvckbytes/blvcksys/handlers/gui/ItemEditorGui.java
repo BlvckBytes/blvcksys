@@ -1,6 +1,9 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
 import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -13,9 +16,12 @@ import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -25,10 +31,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
@@ -88,7 +91,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
 
     ///////////////////////////////////// Preview //////////////////////////////////////
 
-    inst.fixedItem("12,14,22", i -> new ItemStackBuilder(Material.PURPLE_STAINED_GLASS_PANE).build(), null);
+    inst.fixedItem("12,14", i -> new ItemStackBuilder(Material.PURPLE_STAINED_GLASS_PANE).build(), null);
     inst.fixedItem(13, i -> item, null);
 
     ///////////////////////////////// Increase Amount //////////////////////////////////
@@ -193,10 +196,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
             new ItemStackBuilder(m)
               .withName(
                 cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_MATERIAL_NAME)
-                  .withVariable(
-                    "hr_type",
-                    WordUtils.capitalizeFully(m.name().replace("_", " "))
-                  )
+                  .withVariable("hr_type", formatConstant(m.name()))
               )
               .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_MATERIAL_LORE))
               .build()
@@ -218,7 +218,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
           p.sendMessage(
             cfg.get(ConfigKey.GUI_ITEMEDITOR_MATERIAL_CHANGED)
               .withPrefix()
-              .withVariable("material", mat.name())
+              .withVariable("material", formatConstant(mat.name()))
               .asScalar()
           );
           return false;
@@ -242,7 +242,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
             new ItemStackBuilder(Material.NAME_TAG)
               .withName(
                 cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_NAME)
-                  .withVariable("flag", f.name())
+                  .withVariable("flag", formatConstant(f.name()))
               )
               .withLore(
                 cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_LORE)
@@ -279,7 +279,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
           p.sendMessage(
             cfg.get(ConfigKey.GUI_ITEMEDITOR_FLAG_CHANGED)
               .withPrefix()
-              .withVariable("flag", flag.name())
+              .withVariable("flag", formatConstant(flag.name()))
               .withVariable(
                 "state",
                 cfg.get(!has ? ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_ACTIVE : ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_INACTIVE)
@@ -331,10 +331,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
                 .withEnchantment(ench, 1)
                 .withName(
                   cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_NAME)
-                    .withVariable(
-                      "enchantment",
-                      WordUtils.capitalizeFully(ench.getKey().getKey().replace("_", " "))
-                    )
+                    .withVariable("enchantment", formatConstant(ench.getKey().getKey()))
                 )
                 .withLore(
                   cfg.get(has ? ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_LORE_ACTIVE : ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_LORE_INACTIVE)
@@ -367,10 +364,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
             p.sendMessage(
               cfg.get(ConfigKey.GUI_ITEMEDITOR_ENCHANTMENT_REMOVED)
                 .withPrefix()
-                .withVariable(
-                  "enchantment",
-                  WordUtils.capitalizeFully(enchantment.getKey().getKey().replace("_", " "))
-                )
+                .withVariable("enchantment", formatConstant(enchantment.getKey().getKey()))
                 .asScalar()
             );
 
@@ -410,10 +404,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
               p.sendMessage(
                 cfg.get(ConfigKey.GUI_ITEMEDITOR_ENCHANTMENT_ADDED)
                   .withPrefix()
-                  .withVariable(
-                    "enchantment",
-                    WordUtils.capitalizeFully(enchantment.getKey().getKey().replace("_", " "))
-                  )
+                  .withVariable("enchantment", formatConstant(enchantment.getKey().getKey()))
                   .withVariable("level", level)
                   .asScalar()
               );
@@ -749,6 +740,97 @@ public class ItemEditorGui extends AGui<ItemStack> {
       }
     });
 
+    ////////////////////////////////////// Attributes //////////////////////////////////////
+
+    inst.fixedItem(34, i -> (
+      new ItemStackBuilder(Material.COMPARATOR)
+        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_NAME))
+        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_LORE))
+        .build()
+    ), e -> {
+
+      ClickType click = e.getManipulation().getClick();
+
+      if (click.isRightClick()) {
+        Multimap<Attribute, AttributeModifier> attrs = meta.getAttributeModifiers();
+        if (attrs == null) {
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_HAS_NONE)
+              .withPrefix()
+              .asScalar()
+          );
+          return;
+        }
+
+        // Remove all available attributes
+        if (click.isShiftClick()) {
+          for (Map.Entry<Attribute, AttributeModifier> entry : attrs.entries())
+            meta.removeAttributeModifier(entry.getKey(), entry.getValue());
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_CLEARED)
+              .withPrefix()
+              .asScalar()
+          );
+          return;
+        }
+
+        // Remove a specific attribute
+        openAttributeIndexChoice(attrs, true, inst, (target, inv) -> {
+
+          // Remove the chosen attribute
+          meta.removeAttributeModifier(target.a(), target.b());
+          item.setItemMeta(meta);
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_REMOVED)
+              .withPrefix()
+              .withVariable("attribute", formatConstant(target.a().getKey().getKey()))
+              .asScalar()
+          );
+
+          this.show(p, item, AnimationType.SLIDE_RIGHT, inv);
+          return false;
+        }, closed, backButton);
+
+        return;
+      }
+
+      if (click.isLeftClick()) {
+        // Create a list of attributes to choose from
+        Multimap<Attribute, AttributeModifier> attrs = ArrayListMultimap.create();
+        for (Attribute attr : Attribute.values())
+          attrs.put(attr, null);
+
+        // Choose an attribute to add
+        openAttributeIndexChoice(attrs, false, inst, (target, inv) -> {
+
+          Attribute attr = target.a();
+
+          // FIXME: Adding a dummy attribute for now, all these parameters need to be promped in the future
+          meta.addAttributeModifier(target.a(), new AttributeModifier(
+            UUID.randomUUID(),
+            attr.name(),
+            16.0,
+            AttributeModifier.Operation.ADD_NUMBER,
+            EquipmentSlot.HAND
+          ));
+
+          item.setItemMeta(meta);
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_ADDED)
+              .withPrefix()
+              .withVariable("attribute", formatConstant(attr.getKey().getKey()))
+              .asScalar()
+          );
+
+          this.show(p, item, AnimationType.SLIDE_RIGHT, inv);
+          return false;
+        }, closed, backButton);
+      }
+    });
+
     return true;
   }
 
@@ -794,5 +876,68 @@ public class ItemEditorGui extends AGui<ItemStack> {
       (m, inv) -> chosen.apply((int) m, inv),
       closed, backButton
     ));
+  }
+
+  /**
+   * Open a new attribute choice GUI which presents the user with an item for each
+   * attribute and then results in the ref of the attribute chosen
+   * @param attrs Available attributes
+   * @param areExisting Whether these attributes are already existing, or they're a
+   *                    list of all available attributes (attributemodifier is null)
+   * @param inst Gui instance to animate away from
+   * @param chosen Chosen callback
+   * @param closed Closed callback
+   * @param backButton Back button callback
+   */
+  @SuppressWarnings("unchecked")
+  private void openAttributeIndexChoice(
+    Multimap<Attribute, AttributeModifier> attrs,
+    boolean areExisting,
+    GuiInstance<ItemStack> inst,
+    BiFunction<Tuple<Attribute, AttributeModifier>, Inventory, Boolean> chosen,
+    Runnable closed,
+    Consumer<Inventory> backButton
+  ) {
+    // Create representitive items for each attribute
+    List<Tuple<Object, ItemStack>> representitives = new ArrayList<>();
+    for (Map.Entry<Attribute, AttributeModifier> entry : attrs.entries()) {
+      AttributeModifier mod = entry.getValue();
+
+      ConfigValue lore = cfg.get(
+          areExisting ?
+            ConfigKey.GUI_ITEMEDITOR_CHOICE_ATTR_EXISTING_LORE :
+            ConfigKey.GUI_ITEMEDITOR_CHOICE_ATTR_NEW_LORE
+        );
+
+      if (areExisting) {
+        lore.withVariable("name", mod.getName())
+        .withVariable("amount", mod.getAmount())
+        .withVariable("operation", formatConstant(mod.getOperation().name()))
+        .withVariable("slot", mod.getSlot() == null ? "/" : formatConstant(mod.getSlot().name()));
+      }
+
+      representitives.add(new Tuple<>(
+        new Tuple<>(entry.getKey(), entry.getValue()),
+        new ItemStackBuilder(Material.COMPARATOR)
+          .withName(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ATTR_NAME)
+              .withVariable("attribute", formatConstant(entry.getKey().getKey().getKey()))
+          )
+          .withLore(lore)
+          .build()
+      ));
+    }
+
+    // Invoke a new single choice gui for available attributes
+    inst.switchTo(AnimationType.SLIDE_LEFT, singleChoiceGui, new SingleChoiceParam(
+      cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ATTR_TITLE).asScalar(),
+      representitives,
+      (m, inv) -> chosen.apply((Tuple<Attribute, AttributeModifier>) m, inv),
+      closed, backButton
+    ));
+  }
+
+  private String formatConstant(String constant) {
+    return WordUtils.capitalizeFully(constant.replace("_", " ").replace(".", " "));
   }
 }

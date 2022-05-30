@@ -1456,9 +1456,8 @@ public enum ConfigKey {
   GUI_ITEMEDITOR_ENCHANTMENTS_LORE(
     "gui.itemeditor.enchantments.lore",
     " ",
-    "$0Füge Verzauberungen $2hinzu$0, $2entferne",
-    "$0bestehende Verzauberungen und",
-    "$0verwalte deren $2Level$0."
+    "$0Füge Verzauberungen $2hinzu $0oder",
+    "$2entferne $0bestehende Verzauberungen."
   ),
   GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_TITLE("gui.itemeditor.choice.enchantment.title", "$2Verzauberung"),
   GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_NAME("gui.itemeditor.choice.enchantment.name", "$2{{enchantment}}"),
@@ -1514,6 +1513,37 @@ public enum ConfigKey {
   GUI_ITEMEDITOR_LORE_PROMPT("gui.itemeditor.lore.prompt", "$0Bitte gib die gewünschte $2Lore-Zeile $0in den $2Chat $0ein."),
   GUI_ITEMEDITOR_LORE_SELECT_POS("gui.itemeditor.lore.select_pos", "$0Bitte wähle die gewünschte $2Position $0der Zeile."),
   GUI_ITEMEDITOR_LORE_LINE_ADDED("gui.itemeditor.lore.line_added", "$0Die $2Lore-Zeile $0wurde hinzugefügt."),
+  GUI_ITEMEDITOR_ATTRIBUTES_NAME("gui.itemeditor.attributes.name", "$0» $2Attribute $0«"),
+  GUI_ITEMEDITOR_ATTRIBUTES_LORE(
+    "gui.itemeditor.attributes.lore",
+    " ",
+    "$0Füge Attribute $2hinzu $0oder",
+    "$2entferne $0bestehende Attribute.",
+    " ",
+    "$0Linksklick: $2Attribut hinzufügen",
+    "$0Rechtsklick: $2Attribut wählen und entfernen",
+    "$0Shift + Rechtsklick: $2Attribute leeren"
+  ),
+  GUI_ITEMEDITOR_ATTRIBUTES_HAS_NONE("gui.itemeditor.attributes.has_none", "$0Dieses Item besitzt $4keine Attribute$0!"),
+  GUI_ITEMEDITOR_ATTRIBUTES_CLEARED("gui.itemeditor.attributes.cleared", "$0Alle Attribute dieses Items wurden $2entfernt$0."),
+  GUI_ITEMEDITOR_ATTRIBUTES_REMOVED("gui.itemeditor.attributes.removed", "$0Das Attribut $2{{attribute}} $0wurde von diesem Item $2entfernt$0."),
+  GUI_ITEMEDITOR_ATTRIBUTES_ADDED("gui.itemeditor.attributes.added", "$0Das Attribut $2{{attribute}} $0wurde diesem Item $2hinzugefügt$0."),
+  GUI_ITEMEDITOR_CHOICE_ATTR_TITLE("gui.itemeditor.choice.attr.title", "$2Attribute"),
+  GUI_ITEMEDITOR_CHOICE_ATTR_NAME("gui.itemeditor.choice.attr.name", "$2{{attribute}}"),
+  GUI_ITEMEDITOR_CHOICE_ATTR_EXISTING_LORE(
+    "gui.itemeditor.choice.attr.existing_lore",
+    " ",
+    "$0Name: $2{{name}}",
+    "$0Wert: $2{{amount}}",
+    "$0Operator: $2{{operation}}",
+    "$0Slot: $2{{slot}}"
+  ),
+  GUI_ITEMEDITOR_CHOICE_ATTR_NEW_LORE(
+    "gui.itemeditor.choice.attr.new_lore",
+    " ",
+    "$0Erstelle eine $2neue $0Instanz",
+    "$0dieses $2Attributs$0."
+  ),
 
   //=========================================================================//
   //                             Preferences GUI                             //

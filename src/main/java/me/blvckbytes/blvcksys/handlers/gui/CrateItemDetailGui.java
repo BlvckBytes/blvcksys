@@ -8,10 +8,10 @@ import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.handlers.ICrateHandler;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.handlers.TriResult;
-import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.CrateItemModel;
 import me.blvckbytes.blvcksys.persistence.models.CrateModel;
 import me.blvckbytes.blvcksys.util.ChatUtil;
+import me.blvckbytes.blvcksys.util.Triple;
 import net.minecraft.util.Tuple;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -28,8 +28,8 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
 
   private final ICrateHandler crateHandler;
   private final ChatUtil chatUtil;
-  private final IPersistence pers;
   private final ConfirmationGui confirmationGui;
+  private final ItemEditorGui itemEditorGui;
 
   @AutoInjectLate
   private CrateContentGui crateContentGui;
@@ -40,8 +40,8 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject ICrateHandler crateHandler,
     @AutoInject ChatUtil chatUtil,
-    @AutoInject IPersistence pers,
-    @AutoInject ConfirmationGui confirmationGui
+    @AutoInject ConfirmationGui confirmationGui,
+    @AutoInject ItemEditorGui itemEditorGui
   ) {
     super(6, "", i -> (
       cfg.get(ConfigKey.GUI_CRATE_DETAIL_NAME).
@@ -50,8 +50,8 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
 
     this.crateHandler = crateHandler;
     this.chatUtil = chatUtil;
-    this.pers = pers;
     this.confirmationGui = confirmationGui;
+    this.itemEditorGui = itemEditorGui;
   }
 
   @Override
@@ -181,7 +181,13 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
         .withLore(cfg.get(ConfigKey.GUI_CRATE_DETAIL_EDIT_LORE))
         .build()
     ), i -> {
-      i.getGui().getViewer().sendMessage("§cThe editor is still to be implemented!");
+      CrateItemModel model = i.getGui().getArg().b();
+
+      // Store the edited item and re-open the detail GUI
+      itemEditorGui.show(viewer, new Triple<>(model.getItem(), edited -> {
+        model.setItem(edited);
+        crateHandler.updateItem(model);
+      }, inv -> this.show(viewer, inst.getArg(), AnimationType.SLIDE_RIGHT, inv)), AnimationType.SLIDE_LEFT);
     });
 
     return true;

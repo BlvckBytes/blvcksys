@@ -11,6 +11,7 @@ import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.persistence.models.PlayerTextureModel;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.SymbolicHead;
+import me.blvckbytes.blvcksys.util.Triple;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.util.Tuple;
 import org.apache.commons.lang.WordUtils;
@@ -32,6 +33,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -45,9 +47,10 @@ import java.util.function.Consumer;
 
   Edit all possible properties of an itemstack while always
   having a preview available.
+  Args: Item to edit, item change callback, back button callback
 */
 @AutoConstruct
-public class ItemEditorGui extends AGui<ItemStack> {
+public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<Inventory>>> {
 
   private final SingleChoiceGui singleChoiceGui;
   private final ILogger logger;
@@ -63,7 +66,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
   ) {
     super(5, "", i -> (
       cfg.get(ConfigKey.GUI_ITEMEDITOR_TITLE)
-        .withVariable("item_type", i.getArg().getType().name())
+        .withVariable("item_type", i.getArg().a().getType().name())
     ), plugin, cfg, textures);
 
     this.singleChoiceGui = singleChoiceGui;
@@ -72,15 +75,15 @@ public class ItemEditorGui extends AGui<ItemStack> {
   }
 
   @Override
-  protected boolean closed(GuiInstance<ItemStack> inst) {
+  protected boolean closed(GuiInstance<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<Inventory>>> inst) {
     return false;
   }
 
   @Override
-  protected boolean opening(Player viewer, GuiInstance<ItemStack> inst) {
+  protected boolean opening(Player viewer, GuiInstance<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<Inventory>>> inst) {
     inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
 
-    ItemStack item = inst.getArg();
+    ItemStack item = inst.getArg().a();
     ItemMeta meta = item.getItemMeta();
     Player p = inst.getViewer();
 
@@ -93,10 +96,25 @@ public class ItemEditorGui extends AGui<ItemStack> {
       return false;
     }
 
+    /////////////////////////////////// Back Button ////////////////////////////////////
+
+    // Only render the back button if a callback has been provided
+    Consumer<Inventory> back = inst.getArg().c();
+    if (back != null) {
+      inst.addBack(36, i -> back.accept(i.getGui().getInv()));
+    }
+
     ///////////////////////////////////// Preview //////////////////////////////////////
 
     inst.fixedItem("12,14", i -> new ItemStackBuilder(Material.PURPLE_STAINED_GLASS_PANE).build(), null);
     inst.fixedItem(13, i -> item, null);
+
+    // Fire the item update callback whenever the preview slot changes
+    inst.onRedrawing(13, () -> {
+      Consumer<ItemStack> cb = inst.getArg().b();
+      if (cb != null)
+        cb.accept(item);
+    });
 
     ///////////////////////////////// Increase Amount //////////////////////////////////
 
@@ -176,10 +194,10 @@ public class ItemEditorGui extends AGui<ItemStack> {
     ////////////////////////////////////// Commons //////////////////////////////////////
 
     // Inventory closed, re-open the editor
-    Runnable closed = () -> Bukkit.getScheduler().runTaskLater(plugin, () -> this.show(p, item, AnimationType.SLIDE_UP), 1);
+    Runnable closed = () -> Bukkit.getScheduler().runTaskLater(plugin, () -> this.show(p, inst.getArg(), AnimationType.SLIDE_UP), 1);
 
     // Back button
-    Consumer<Inventory> backButton = inv -> this.show(viewer, item, AnimationType.SLIDE_RIGHT, inv);
+    Consumer<Inventory> backButton = inv -> this.show(viewer, inst.getArg(), AnimationType.SLIDE_RIGHT, inv);
 
     ///////////////////////////////////// Material /////////////////////////////////////
 
@@ -217,7 +235,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
           Material mat = (Material) m;
 
           item.setType(mat);
-          this.show(p, item, AnimationType.SLIDE_RIGHT, inv);
+          this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, inv);
 
           p.sendMessage(
             cfg.get(ConfigKey.GUI_ITEMEDITOR_MATERIAL_CHANGED)
@@ -278,7 +296,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
 
           item.setItemMeta(meta);
 
-          this.show(p, item, AnimationType.SLIDE_RIGHT, inv);
+          this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, inv);
 
           p.sendMessage(
             cfg.get(ConfigKey.GUI_ITEMEDITOR_FLAG_CHANGED)
@@ -372,7 +390,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
                 .asScalar()
             );
 
-            this.show(p, item, AnimationType.SLIDE_RIGHT, inv);
+            this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, inv);
             return false;
           }
 
@@ -389,7 +407,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
               // Parse the level from the string
               Integer level = tryParseInt(p, levelStr).orElse(null);
               if (level == null) {
-                this.show(p, item, AnimationType.SLIDE_UP);
+                this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
                 return;
               }
 
@@ -404,7 +422,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
                   .asScalar()
               );
 
-              this.show(p, item, AnimationType.SLIDE_UP);
+              this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
             },
 
             closed
@@ -447,7 +465,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
               .asScalar()
           );
 
-          this.show(p, item, AnimationType.SLIDE_UP);
+          this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
         },
 
         closed
@@ -512,7 +530,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
               .asScalar()
           );
 
-          this.show(p, item, AnimationType.SLIDE_RIGHT, inv);
+          this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, inv);
           return false;
         }, closed, backButton);
 
@@ -546,7 +564,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
                   .asScalar()
               );
 
-              this.show(p, item, AnimationType.SLIDE_UP);
+              this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
               return;
             }
 
@@ -563,7 +581,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
                   .asScalar()
               );
 
-              this.show(p, item, AnimationType.SLIDE_UP);
+              this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
               return;
             }
 
@@ -587,7 +605,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
                   .asScalar()
               );
 
-              this.show(p, item, AnimationType.SLIDE_RIGHT, inv);
+              this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, inv);
               return false;
             }, closed, backButton);
           },
@@ -790,7 +808,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
               .asScalar()
           );
 
-          this.show(p, item, AnimationType.SLIDE_RIGHT, inv);
+          this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, inv);
           return false;
         }, closed, backButton);
 
@@ -829,7 +847,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
                     .asScalar()
                 );
 
-                this.show(p, item, AnimationType.SLIDE_UP);
+                this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
                 return;
               }
 
@@ -894,7 +912,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
                           .asScalar()
                       );
 
-                      this.show(p, item, AnimationType.SLIDE_RIGHT, opChoiceInv);
+                      this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, opChoiceInv);
                       return false;
                     },
 
@@ -955,7 +973,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
                 .asScalar()
             );
 
-            this.show(p, item, AnimationType.SLIDE_UP);
+            this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
             return;
           }
 
@@ -977,7 +995,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
               .asScalar()
           );
 
-          this.show(p, item, AnimationType.SLIDE_UP);
+          this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
         },
 
         closed
@@ -1030,7 +1048,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
                   .asScalar()
               );
 
-              this.show(p, item, AnimationType.SLIDE_UP);
+              this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
               return;
             }
 
@@ -1053,7 +1071,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
                   .asScalar()
               );
 
-              this.show(p, item, AnimationType.SLIDE_UP);
+              this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
               return;
             }
 
@@ -1067,7 +1085,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
                 .asScalar()
             );
 
-            this.show(p, item, AnimationType.SLIDE_UP);
+            this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
           },
 
           closed
@@ -1130,7 +1148,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
                 .asScalar()
             );
 
-            this.show(p, item, AnimationType.SLIDE_RIGHT, inv);
+            this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, inv);
             return false;
           },
           closed, backButton
@@ -1171,7 +1189,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
    */
   private void openLoreIndexChoice(
     List<String> lines,
-    GuiInstance<ItemStack> inst,
+    GuiInstance<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<Inventory>>> inst,
     BiFunction<Integer, Inventory, Boolean> chosen,
     Runnable closed,
     Consumer<Inventory> backButton
@@ -1219,7 +1237,7 @@ public class ItemEditorGui extends AGui<ItemStack> {
   private void openAttributeIndexChoice(
     Multimap<Attribute, AttributeModifier> attrs,
     boolean areExisting,
-    GuiInstance<ItemStack> inst,
+    GuiInstance<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<Inventory>>> inst,
     BiFunction<Tuple<Attribute, AttributeModifier>, Inventory, Boolean> chosen,
     Runnable closed,
     Consumer<Inventory> backButton
@@ -1263,6 +1281,11 @@ public class ItemEditorGui extends AGui<ItemStack> {
     ));
   }
 
+  /**
+   * Formats a constant to a human readable string
+   * @param constant Constant to format
+   * @return Formatted string
+   */
   private String formatConstant(String constant) {
     return WordUtils.capitalizeFully(constant.replace("_", " ").replace(".", " "));
   }

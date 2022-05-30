@@ -9,6 +9,7 @@ import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.gui.AnimationType;
 import me.blvckbytes.blvcksys.handlers.gui.ItemEditorGui;
 import me.blvckbytes.blvcksys.util.MCReflect;
+import me.blvckbytes.blvcksys.util.Triple;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -57,6 +58,6 @@ public class ItemEditorCommand extends APlayerCommand {
       return;
     }
 
-    itemEditorGui.show(p, stack, AnimationType.SLIDE_UP);
+    itemEditorGui.show(p, new Triple<>(stack, null, null), AnimationType.SLIDE_UP);
   }
 }

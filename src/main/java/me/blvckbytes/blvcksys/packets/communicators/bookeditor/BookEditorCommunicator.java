@@ -1,19 +1,19 @@
 package me.blvckbytes.blvcksys.packets.communicators.bookeditor;
 
+import me.blvckbytes.blvcksys.di.AutoConstruct;
+import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
 import me.blvckbytes.blvcksys.packets.ModificationPriority;
 import me.blvckbytes.blvcksys.packets.PacketSource;
+import me.blvckbytes.blvcksys.packets.communicators.fakeitem.IFakeItemCommunicator;
 import me.blvckbytes.blvcksys.util.MCReflect;
-import me.blvckbytes.blvcksys.di.AutoConstruct;
-import me.blvckbytes.blvcksys.di.AutoInject;
-import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.network.NetworkManager;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.PacketPlayInBEdit;
 import net.minecraft.network.protocol.game.PacketPlayInSetCreativeSlot;
-import net.minecraft.network.protocol.game.PacketPlayOutSetSlot;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -59,6 +59,7 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
   private final MCReflect refl;
   private final JavaPlugin plugin;
   private final ILogger logger;
+  private final IFakeItemCommunicator fakeItem;
 
   // Map of a player to their bookedit request
   private final Map<Player, BookEditRequest> bookeditRequests;
@@ -67,11 +68,13 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
     @AutoInject MCReflect refl,
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
-    @AutoInject IPacketInterceptor interceptor
+    @AutoInject IPacketInterceptor interceptor,
+    @AutoInject IFakeItemCommunicator fakeItem
   ) {
     this.refl = refl;
     this.plugin = plugin;
     this.logger = logger;
+    this.fakeItem = fakeItem;
 
     this.bookeditRequests = Collections.synchronizedMap(new HashMap<>());
     interceptor.register(this, ModificationPriority.HIGH);
@@ -100,7 +103,7 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
 
     // Set the book as a fake slot item
     int slot = p.getInventory().getHeldItemSlot();
-    if (!setFakeSlot(p, book, slot))
+    if (!fakeItem.setFakeSlot(p, book, slot + 36))
       return false;
 
     // Register the request
@@ -150,7 +153,7 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
     // Re-set the slot back to the fake item after the gameloop ticked
     // as the client will now have noticed and changed it back
     Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
-      setFakeSlot(e.getPlayer(), req.fakeItem, req.fakeSlot);
+      fakeItem.setFakeSlot(e.getPlayer(), req.fakeItem, req.fakeSlot + 36);
     }, 1);
   }
 
@@ -346,40 +349,5 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
     // Just has been cancelled
     if (isCancel)
       bookEditReceived(p, null);
-  }
-
-  /**
-   * Sets a slot within the player's hotbar to an itemstack in a fake manner (only clientside change)
-   * @param p Target player
-   * @param is ItemStack to set
-   * @param hotbarSlot Hotbar slot ranging from 0 to 8
-   * @return Success state
-   */
-  private boolean setFakeSlot(Player p, ItemStack is, int hotbarSlot) {
-    // Invalid slot
-    if (hotbarSlot < 0 || hotbarSlot > 8)
-      return false;
-
-    // Create slot setting packet to move this fake book into the inventory
-    try {
-      Object poss = refl.createPacket(PacketPlayOutSetSlot.class);
-
-      // 36 is the first raw slot in the hot-bar
-      int slot = 36 + hotbarSlot;
-
-      refl.setFieldByType(poss, int.class, 0, 0); // Window ID (0=inv)
-      refl.setFieldByType(poss, int.class, 0, 1); // State ID (leave at zero for now)
-      refl.setFieldByType(poss, int.class, slot, 2); // Slot
-
-      // Convert the bukkit item stack to a craft item stack and set the corresponding field
-      Class<?> cisC = refl.getClassBKT("inventory.CraftItemStack");
-      Object cis = refl.findMethodByName(cisC, "asNMSCopy", ItemStack.class).invoke(null, is);
-      refl.setFieldByType(poss, net.minecraft.world.item.ItemStack.class, cis, 0);
-
-      return refl.sendPacket(p, poss);
-    } catch (Exception e) {
-      logger.logError(e);
-      return false;
-    }
   }
 }

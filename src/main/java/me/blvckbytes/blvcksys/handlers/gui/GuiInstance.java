@@ -44,6 +44,9 @@ public class GuiInstance<T> {
   // A list of pages, where each page maps a used page slot to an item
   private final List<Map<Integer, GuiItem<T>>> pages;
 
+  // Mapping slots to their redrawing listeners
+  private final Map<Integer, List<Runnable>> redrawListeners;
+
   private int currPage;
   private GuiAnimation currAnimation;
 
@@ -78,6 +81,7 @@ public class GuiInstance<T> {
     this.textures = textures;
 
     this.fixedItems = new HashMap<>();
+    this.redrawListeners = new HashMap<>();
     this.pages = new ArrayList<>();
     this.animating = new AtomicBoolean(false);
 
@@ -428,6 +432,17 @@ public class GuiInstance<T> {
   }
 
   /**
+   * Register a new listener for a specific slot's redraw events
+   * @param slot Target slot
+   * @param callback Event listener
+   */
+  public void onRedrawing(int slot, Runnable callback) {
+    if (!this.redrawListeners.containsKey(slot))
+      this.redrawListeners.put(slot, new ArrayList<>());
+    this.redrawListeners.get(slot).add(callback);
+  }
+
+  /**
    * Get an item by it's current slot
    * @param slot Slot to search in
    * @return Optional item, empty if that slot is vacant
@@ -635,7 +650,9 @@ public class GuiInstance<T> {
    * @param item Item to set
    */
   private void setItem(int slot, ItemStack item) {
-    if (slot < inv.getSize())
+    if (slot < inv.getSize()) {
       inv.setItem(slot, item);
+      redrawListeners.getOrDefault(slot, new ArrayList<>()).forEach(Runnable::run);
+    }
   }
 }

@@ -8,6 +8,7 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
+import me.blvckbytes.blvcksys.persistence.models.PlayerTextureModel;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.SymbolicHead;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
@@ -27,6 +28,7 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.lang.reflect.Field;
@@ -921,6 +923,75 @@ public class ItemEditorGui extends AGui<ItemStack> {
           return true;
         }, closed, backButton);
       }
+    });
+
+    ///////////////////////////////////// Skull Owner /////////////////////////////////////
+
+    inst.fixedItem(27, i -> (
+      new ItemStackBuilder(Material.SKELETON_SKULL)
+        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_NAME))
+        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_LORE))
+        .build()
+    ), e -> {
+      // Not an item which will have skull meta
+      if (!(meta instanceof SkullMeta skullMeta)) {
+        p.sendMessage(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_NO_SKULL)
+            .withPrefix()
+            .asScalar()
+        );
+        return;
+      }
+
+      // Prompt for the desired head owner in the chat
+      chatUtil.registerPrompt(
+        viewer,
+        cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_PROMPT)
+          .withPrefix()
+          .asScalar(),
+
+        // Owner entered
+        ownerStr -> {
+          // Load the corresponding textures
+          PlayerTextureModel ownerTextures = textures.getTextures(ownerStr, false).orElse(null);
+          if (ownerTextures == null) {
+            p.sendMessage(
+              cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_NOT_LOADABLE)
+                .withPrefix()
+                .withVariable("owner", ownerStr)
+                .asScalar()
+            );
+
+            this.show(p, item, AnimationType.SLIDE_UP);
+            return;
+          }
+
+          // Overwrite the GameProfile of the skull
+          try {
+            Field profileField = skullMeta.getClass().getDeclaredField("profile");
+            profileField.setAccessible(true);
+            profileField.set(skullMeta, ownerTextures.toProfile());
+          } catch (Exception ex) {
+            logger.logError(ex);
+          }
+
+          item.setItemMeta(skullMeta);
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_CHANGED)
+              .withPrefix()
+              .withVariable("owner", ownerTextures.getName())
+              .asScalar()
+          );
+
+          this.show(p, item, AnimationType.SLIDE_UP);
+        },
+
+        closed
+      );
+
+      // Close the GUI when prompting for the chat message
+      e.getGui().close();
     });
 
     return true;

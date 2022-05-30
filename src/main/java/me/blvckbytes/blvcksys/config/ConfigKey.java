@@ -1513,6 +1513,26 @@ public enum ConfigKey {
   GUI_ITEMEDITOR_LORE_PROMPT("gui.itemeditor.lore.prompt", "$0Bitte gib die gewünschte $2Lore-Zeile $0in den $2Chat $0ein."),
   GUI_ITEMEDITOR_LORE_SELECT_POS("gui.itemeditor.lore.select_pos", "$0Bitte wähle die gewünschte $2Position $0der Zeile."),
   GUI_ITEMEDITOR_LORE_LINE_ADDED("gui.itemeditor.lore.line_added", "$0Die $2Lore-Zeile $0wurde hinzugefügt."),
+  GUI_ITEMEDITOR_DURABILITY_NAME("gui.itemeditor.durability.name", "$0» $2Haltbarkeit $0«"),
+  GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE("gui.itemeditor.durability.unbreakable", "$2Unzerstörbar"),
+  GUI_ITEMEDITOR_DURABILITY_BREAKABLE("gui.itemeditor.durability.breakable", "$2{{current_durability}}$0/$2{{max_durability}}"),
+  GUI_ITEMEDITOR_DURABILITY_NON_BREAKABLE("gui.itemeditor.durability.non_breakable", "$2Nicht beschädigbar"),
+  GUI_ITEMEDITOR_DURABILITY_LORE(
+    "gui.itemeditor.durability.lore",
+    " ",
+    "$0Haltbarkeit: $2{{durability}}",
+    " ",
+    "$0Linksklick: $2Haltbarkeit erhöhen",
+    "$0Shift + Linksklick: $2Unzerstörbar setzen",
+    "$0Rechtsklick: $2Haltbarkeit verringern",
+    "$0Shift + Rechtsklick: $2Unzerstörbarkeit entfernen"
+  ),
+  GUI_ITEMEDITOR_DURABILITY_NOT_BREAKABLE("gui.itemeditor.durability.not_breakable", "$0Dieses Item ist $4nicht beschädigbar$0!"),
+  GUI_ITEMEDITOR_DURABILITY_CHANGED("gui.itemeditor.durability.changed", "$0Die Haltbarkeit dieses Items wurde auf $2{{current_durability}}$0/$2{{max_durability}} $0gesetzt."),
+  GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_ACTIVE("gui.itemeditor.durability.unbreakable_active", "$0Das Item ist nun $2Unzerstörbar$0."),
+  GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_INACTIVE("gui.itemeditor.durability.unbreakable_inactive", "$0Das Item ist nun $2nicht mehr $0unzerstörbar."),
+  GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_NOT_ACTIVE("gui.itemeditor.durability.unbreakable_not_active", "$0Das Item ist $4nicht unzerstörbar$0!"),
+  GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_NOT_INACTIVE("gui.itemeditor.durability.unbreakable_not_inactive", "$0Das Item ist $4bereits unzerstörbar$0!"),
   GUI_ITEMEDITOR_ATTRIBUTES_NAME("gui.itemeditor.attributes.name", "$0» $2Attribute $0«"),
   GUI_ITEMEDITOR_ATTRIBUTES_LORE(
     "gui.itemeditor.attributes.lore",
@@ -1559,6 +1579,16 @@ public enum ConfigKey {
     " ",
     "$0Klicke um diese Operation zu wählen."
   ),
+  GUI_ITEMEDITOR_SKULLOWNER_NO_SKULL("gui.itemeditor.skullowner.no_skull", "$0Dieses Item ist $4kein Kopf$0!"),
+  GUI_ITEMEDITOR_SKULLOWNER_CHANGED("gui.itemeditor.skullowner.changed", "$0Der $2Kopfbesitzer $0dieses Items wurde auf $2{{owner}} $0geändert."),
+  GUI_ITEMEDITOR_SKULLOWNER_NAME("gui.itemeditor.skullowner.name", "$0» $2Kopfbesitzer $0«"),
+  GUI_ITEMEDITOR_SKULLOWNER_LORE(
+    "gui.itemeditor.skullowner.lore",
+    " ",
+    "$0Ändere den $2Besitzer $0dieses Kopfes."
+  ),
+  GUI_ITEMEDITOR_SKULLOWNER_PROMPT("gui.itemeditor.skullowner.prompt", "$0Bitte gib den gewünschten $2Kopfbesitzer $0in den $2Chat $0ein."),
+  GUI_ITEMEDITOR_SKULLOWNER_NOT_LOADABLE("gui.itemeditor.skullowner.not_loadable", "$0Der Skin von $4{{owner}} $0konnte nicht geladen werden!"),
 
   //=========================================================================//
   //                             Preferences GUI                             //
@@ -1593,26 +1623,6 @@ public enum ConfigKey {
     " ",
     "$0Aktueller Zustand: {{state}}"
   ),
-  GUI_ITEMEDITOR_DURABILITY_NAME("gui.itemeditor.durability.name", "$0» $2Haltbarkeit $0«"),
-  GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE("gui.itemeditor.durability.unbreakable", "$2Unzerstörbar"),
-  GUI_ITEMEDITOR_DURABILITY_BREAKABLE("gui.itemeditor.durability.breakable", "$2{{current_durability}}$0/$2{{max_durability}}"),
-  GUI_ITEMEDITOR_DURABILITY_NON_BREAKABLE("gui.itemeditor.durability.non_breakable", "$2Nicht beschädigbar"),
-  GUI_ITEMEDITOR_DURABILITY_LORE(
-    "gui.itemeditor.durability.lore",
-    " ",
-    "$0Haltbarkeit: $2{{durability}}",
-    " ",
-    "$0Linksklick: $2Haltbarkeit erhöhen",
-    "$0Shift + Linksklick: $2Unzerstörbar setzen",
-    "$0Rechtsklick: $2Haltbarkeit verringern",
-    "$0Shift + Rechtsklick: $2Unzerstörbarkeit entfernen"
-  ),
-  GUI_ITEMEDITOR_DURABILITY_NOT_BREAKABLE("gui.itemeditor.durability.not_breakable", "$0Dieses Item ist $4nicht beschädigbar$0!"),
-  GUI_ITEMEDITOR_DURABILITY_CHANGED("gui.itemeditor.durability.changed", "$0Die Haltbarkeit dieses Items wurde auf $2{{current_durability}}$0/$2{{max_durability}} $0gesetzt."),
-  GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_ACTIVE("gui.itemeditor.durability.unbreakable_active", "$0Das Item ist nun $2Unzerstörbar$0."),
-  GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_INACTIVE("gui.itemeditor.durability.unbreakable_inactive", "$0Das Item ist nun $2nicht mehr $0unzerstörbar."),
-  GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_NOT_ACTIVE("gui.itemeditor.durability.unbreakable_not_active", "$0Das Item ist $4nicht unzerstörbar$0!"),
-  GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_NOT_INACTIVE("gui.itemeditor.durability.unbreakable_not_inactive", "$0Das Item ist $4bereits unzerstörbar$0!"),
 
   //=========================================================================//
   //                           Crate Item Detail GUI                         //

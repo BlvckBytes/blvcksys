@@ -160,6 +160,10 @@ public class AutoConstructer implements IAutoConstructer {
     for (Map.Entry<Class<?>, Constructor<?>> e : ctorMap.entrySet())
       createWithDependencies(ctorMap, e.getKey(), seen);
 
+    // Lateinit resources should never remain null at this point
+    if (!lateinits.isEmpty())
+      throw new IllegalStateException("Could not inject all lateinit resources!");
+
     // Call the init method on all resources
     for (ConstructedRef r : refs) {
       if (r.inst instanceof IAutoConstructed a)

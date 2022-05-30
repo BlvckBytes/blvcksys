@@ -283,13 +283,14 @@ public class GuiInstance<T> {
       new ItemStackBuilder(Material.PAPER)
         .withName(
           cfg.get(ConfigKey.GUI_GENERICS_PAGING_INDICATOR_NAME)
-            .withVariable("curr_page", g.getCurrentPage())
-            .withVariable("num_pages", g.getNumPages())
+            .withVariable("curr_page", getCurrentPage())
+            .withVariable("num_pages", getNumPages())
         )
         .withLore(
           cfg.get(ConfigKey.GUI_GENERICS_PAGING_INDICATOR_LORE)
-            .withVariable("num_items", g.getCurrPageNumItems())
-            .withVariable("max_items", g.getPageSize())
+            .withVariable("page_num_items", getCurrPageNumItems())
+            .withVariable("total_num_items", getTotalNumItems())
+            .withVariable("page_size", getPageSize())
         )
         .build()
     ), null, null);
@@ -549,6 +550,13 @@ public class GuiInstance<T> {
    */
   public int getPageSize() {
     return template.getPageSlots().size();
+  }
+
+  /**
+   * Get the added number of items of all pages
+   */
+  public int getTotalNumItems() {
+    return pages.stream().reduce(0, (acc, curr) -> acc + curr.size(), Integer::sum);
   }
 
   /**

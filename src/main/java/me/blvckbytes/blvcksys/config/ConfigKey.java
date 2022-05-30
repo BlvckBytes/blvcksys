@@ -1308,8 +1308,9 @@ public enum ConfigKey {
   GUI_GENERICS_PAGING_INDICATOR_LORE(
     "gui.generics.paging.indicator.lore",
     " ",
-    "$0Einträge: $2{{num_items}}",
-    "$0Max. pro Seite: $2{{max_items}}",
+    "$0Seitengröße: $2{{page_size}}",
+    "$0Ergebnisse: $2{{page_num_items}}",
+    "$0Ergebnisse gesamt: $2{{total_num_items}}",
     " ",
     "$0Zeigt aktuelle Seiteninformationen"
   ),

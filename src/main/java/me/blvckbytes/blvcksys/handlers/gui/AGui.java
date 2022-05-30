@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryCloseEvent;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -33,7 +34,9 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
   protected final IPlayerTextureHandler textures;
 
   // Mapping players to their active instances
+  @Getter
   private final Map<Player, List<GuiInstance<T>>> activeInstances;
+
   private int tickerHandle;
 
   // Inventory title supplier
@@ -42,6 +45,9 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
 
   @Getter
   private final int rows;
+
+  @Getter
+  private final InventoryType type;
 
   // Set of slots which are reserved for pages (items may differ for every session)
   @Getter
@@ -62,11 +68,31 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     IConfig cfg,
     IPlayerTextureHandler textures
   ) {
+    this(rows, pageSlotExpr, title, plugin, cfg, textures, InventoryType.CHEST);
+  }
+
+  /**
+   * Create a new GUI template base
+   * @param rows Number of rows
+   * @param pageSlotExpr Which slots to use for dynamic paging
+   * @param title Title supplier for the inventory
+   * @param plugin Plugin ref
+   */
+  protected AGui(
+    int rows,
+    String pageSlotExpr,
+    Function<GuiInstance<T>, ConfigValue> title,
+    JavaPlugin plugin,
+    IConfig cfg,
+    IPlayerTextureHandler textures,
+    InventoryType type
+  ) {
     this.rows = rows;
     this.title = title;
     this.plugin = plugin;
     this.cfg = cfg;
     this.textures = textures;
+    this.type = type;
 
     this.pageSlots = slotExprToSlots(pageSlotExpr);
     this.activeInstances = new HashMap<>();

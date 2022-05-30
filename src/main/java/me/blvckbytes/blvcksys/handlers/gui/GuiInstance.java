@@ -9,6 +9,7 @@ import me.blvckbytes.blvcksys.util.SymbolicHead;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -88,7 +89,10 @@ public class GuiInstance<T> {
 
     // In order to evaluate the title supplier, this call needs to follow
     // after the instance's property assignments
-    this.inv = Bukkit.createInventory(null, template.getRows() * 9, template.getTitle().apply(this).asScalar());
+    if (template.getType() == InventoryType.CHEST)
+      this.inv = Bukkit.createInventory(null, template.getRows() * 9, template.getTitle().apply(this).asScalar());
+    else
+      this.inv = Bukkit.createInventory(null, template.getType(), template.getTitle().apply(this).asScalar());
   }
 
   //=========================================================================//

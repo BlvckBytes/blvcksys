@@ -1395,6 +1395,12 @@ public enum ConfigKey {
   //=========================================================================//
 
   GUI_SINGLECHOICE_TITLE("gui.singlechoice.title", "$0Auswahl $2{{type}}"),
+  GUI_SINGLECHOICE_SEARCH_NAME("gui.singlechoice.search.name", "$0» $2Suche $0«"),
+  GUI_SINGLECHOICE_SEARCH_LORE(
+    "gui.singlechoice.search.lore",
+    " ",
+    "$0Startet eine $2Textsuche$0."
+  ),
 
   //=========================================================================//
   //                             ItemEditor GUI                              //
@@ -1608,6 +1614,18 @@ public enum ConfigKey {
     "gui.itemeditor.choice.leathercolor.lore",
     " ",
     "$0Klicke um diese Farbe zu wählen."
+  ),
+
+  //=========================================================================//
+  //                             AnvilSearch GUI                             //
+  //=========================================================================//
+
+  GUI_ANVILSEARCH_TITLE("gui.anvilsearch.title", "$0Suche $2{{type}}"),
+  GUI_ANVILSEARCH_ITEM_LORE(
+    "gui.anvilsearch.item.lore",
+    "$0Bitte gib deinen $2Suchbegriff",
+    "$0in den $2Amboss $0ein, während dein",
+    "$0Inventar die $2Ergebnisse $0anzeigt."
   ),
 
   //=========================================================================//

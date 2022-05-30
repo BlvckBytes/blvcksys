@@ -6,6 +6,7 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import net.minecraft.util.Tuple;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -27,10 +28,13 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
   // Players which have chosen already
   private final Set<Player> haveChosen;
 
+  private final AnvilSearchGui searchGui;
+
   public SingleChoiceGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IPlayerTextureHandler textures
+    @AutoInject IPlayerTextureHandler textures,
+    @AutoInject AnvilSearchGui searchGui
   ) {
     super(5, "10-16,19-25,28-34", i -> (
       cfg.get(ConfigKey.GUI_SINGLECHOICE_TITLE)
@@ -38,6 +42,7 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
     ), plugin, cfg, textures);
 
     this.haveChosen = new HashSet<>();
+    this.searchGui = searchGui;
   }
 
   @Override
@@ -51,6 +56,28 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
   protected boolean opening(Player viewer, GuiInstance<SingleChoiceParam> inst) {
     inst.addBorder(Material.BLACK_STAINED_GLASS_PANE);
     inst.addPagination(38, 40, 42);
+
+    inst.fixedItem(44, i -> (
+      new ItemStackBuilder(Material.NAME_TAG)
+        .withName(cfg.get(ConfigKey.GUI_SINGLECHOICE_SEARCH_NAME))
+        .withLore(cfg.get(ConfigKey.GUI_SINGLECHOICE_SEARCH_LORE))
+        .build()
+    ), e -> {
+      // Create a carbon copy of the param and re-route the close callback
+      SingleChoiceParam scp = new SingleChoiceParam(
+        inst.getArg().type(), inst.getArg().representitives(),
+        inst.getArg().selected(),
+
+        // Re-open the choice if nothing was chosen
+        () -> Bukkit.getScheduler().runTaskLater(plugin, () -> this.show(viewer, inst.getArg(), AnimationType.SLIDE_UP), 1),
+
+        inst.getArg().backButton()
+      );
+
+      // Add to chosen just to not trigger any callbacks prematurely
+      haveChosen.add(viewer);
+      searchGui.show(viewer, scp, null);
+    });
 
     if (inst.getArg().backButton() != null)
       inst.addBack(36, e -> {

@@ -1662,6 +1662,43 @@ public enum ConfigKey {
     " ",
     "$0Aktueller Zustand: {{state}}"
   ),
+  GUI_PREFERENCES_ARROW_TRAILS_NO_COLOR_AVAIL("gui.preferences.arrow_trails.no_color_avail", "$0Unterstützt $2keine $0Farbe"),
+  GUI_PREFERENCES_ARROW_TRAILS_NAME("gui.preferences.arrow_trails.name", "$0» $2Pfeil-Spur $0«"),
+  GUI_PREFERENCES_ARROW_TRAILS_LORE(
+    "gui.preferences.arrow_trails.lore",
+    " ",
+    "$0Stelle die Spur ein, die deine",
+    "$0Pfeile bei Abschuss ziehen.",
+    " ",
+    "$0Aktuelles Partikel: $2{{particle}}",
+    "$0Aktuelle Farbe: $2{{color}}"
+  ),
+  GUI_PREFERENCES_ARROW_TRAILS_RESET_NAME("gui.preferences.arrow_trails.reset.name", "$0» $2Pfeil-Spur entfernen $0«"),
+  GUI_PREFERENCES_ARROW_TRAILS_RESET_LORE(
+    "gui.preferences.arrow_trails.reset.lore",
+    " ",
+    "$0Entferne deine aktuelle Pfeilspur."
+  ),
+  GUI_PREFERENCES_ARROW_TRAILS_PARTICLE_TITLE("gui.prefrences.arrow_trails.particle.title", "$2Partikel"),
+  GUI_PREFERENCES_ARROW_TRAILS_COLOR_TITLE("gui.prefrences.arrow_trails.color.title", "$2Farbe"),
+  GUI_PREFERENCES_ARROW_TRAILS_PARTICLE_LOCKED("gui.prefrences.arrow_trails.particle.locked", "$0Du hast das Partikel $4{{particle}} $0noch nicht freigeschalten!"),
+  GUI_PREFERENCES_ARROW_TRAILS_PARTICLE_NAME("gui.prefrences.arrow_trails.particle.name", "$2{{particle}}"),
+  GUI_PREFERENCES_ARROW_TRAILS_PARTICLE_LORE_UNLOCKED(
+    "gui.prefrences.arrow_trails.particle.lore.unlocked",
+    " ",
+    "$0Dieser Effekt ist &afreigeschalten$0."
+  ),
+  GUI_PREFERENCES_ARROW_TRAILS_PARTICLE_LORE_LOCKED(
+    "gui.prefrences.arrow_trails.particle.lore.locked",
+    " ",
+    "$0Dieser Effekt ist noch &cgesperrt$0."
+  ),
+  GUI_PREFERENCES_CHOICE_COLOR_NAME("gui.preferences.choice.color.name", "$2{{color}}"),
+  GUI_PREFERENCES_CHOICE_COLOR_LORE(
+    "gui.preferences.choice.color.lore",
+    " ",
+    "$0Klicke um diese Farbe zu wählen."
+  ),
 
   //=========================================================================//
   //                           Crate Item Detail GUI                         //

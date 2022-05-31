@@ -3,7 +3,9 @@ package me.blvckbytes.blvcksys.persistence.models;
 import lombok.*;
 import me.blvckbytes.blvcksys.persistence.MigrationDefault;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
+import org.bukkit.Color;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.Particle;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -28,4 +30,10 @@ public class PreferencesModel extends APersistentModel {
 
   @ModelProperty(migrationDefault = MigrationDefault.FALSE)
   private boolean msgDisabled;
+
+  @ModelProperty(isNullable = true, migrationDefault = MigrationDefault.NULL)
+  private Particle arrowTrailParticle;
+
+  @ModelProperty(isNullable = true, migrationDefault = MigrationDefault.NULL)
+  private Color arrowTrailColor;
 }

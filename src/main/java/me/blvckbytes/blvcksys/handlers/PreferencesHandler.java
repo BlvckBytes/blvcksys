@@ -6,7 +6,11 @@ import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.PreferencesModel;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
+import net.minecraft.util.Tuple;
+import org.bukkit.Color;
+import org.bukkit.Particle;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,6 +32,8 @@ public class PreferencesHandler implements IPreferencesHandler {
   private final static boolean DEF_SCOREBOARD_HIDDEN = false;
   private final static boolean DEF_CHAT_HIDDEN = false;
   private final static boolean DEF_MSG_DISABLED = false;
+  private final static Particle DEF_ARROW_TRAIL_PARTICLE = null;
+  private final static Color DEF_ARROW_TRAIL_COLOR = null;
 
   private final IPersistence pers;
   private final Map<UUID, PreferencesModel> cache;
@@ -91,6 +97,23 @@ public class PreferencesHandler implements IPreferencesHandler {
       });
   }
 
+  @Override
+  public void setArrowTrail(Player p, @Nullable Particle particle, @Nullable Color color) {
+    getOrCreatePreferences(p)
+      .ifPresent(prefs -> {
+        prefs.setArrowTrailParticle(particle);
+        prefs.setArrowTrailColor(color);
+        pers.store(prefs);
+      });
+  }
+
+  @Override
+  public Tuple<@Nullable Particle, @Nullable Color> getArrowTrail(Player p) {
+    return getOrCreatePreferences(p)
+      .map(prefs -> new Tuple<>(prefs.getArrowTrailParticle(), prefs.getArrowTrailColor()))
+      .orElse(new Tuple<>(DEF_ARROW_TRAIL_PARTICLE, DEF_ARROW_TRAIL_COLOR));
+  }
+
   //=========================================================================//
   //                                 Utilities                               //
   //=========================================================================//
@@ -147,8 +170,11 @@ public class PreferencesHandler implements IPreferencesHandler {
       p,
       DEF_SCOREBOARD_HIDDEN,
       DEF_CHAT_HIDDEN,
-      DEF_MSG_DISABLED
+      DEF_MSG_DISABLED,
+      DEF_ARROW_TRAIL_PARTICLE,
+      DEF_ARROW_TRAIL_COLOR
     );
+
     pers.store(prefs);
   }
 }

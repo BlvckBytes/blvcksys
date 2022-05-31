@@ -1,6 +1,10 @@
 package me.blvckbytes.blvcksys.handlers;
 
+import net.minecraft.util.Tuple;
+import org.bukkit.Color;
+import org.bukkit.Particle;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -48,4 +52,18 @@ public interface IPreferencesHandler {
    * @param disabled Whether private messages should be disabled
    */
   void setMsgDisabled(Player p, boolean disabled);
+
+  /**
+   * Set the arrow trail particle effect
+   * @param p Target player
+   * @param particle Particle to be played
+   * @param color Particle color if applies, null otherwise
+   */
+  void setArrowTrail(Player p, @Nullable Particle particle, @Nullable Color color);
+
+  /**
+   * Get the currently applied arrow trail effect
+   * @param p Target player
+   */
+  Tuple<@Nullable Particle, @Nullable Color> getArrowTrail(Player p);
 }

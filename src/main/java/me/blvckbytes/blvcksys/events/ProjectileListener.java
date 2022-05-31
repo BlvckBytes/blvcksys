@@ -184,6 +184,8 @@ public class ProjectileListener implements IAutoConstructed, Listener {
           playY + movePath.getY() * i,
           playZ + movePath.getZ() * i,
           1,
+          0, 0, 0,
+          0, // No speed, keep them as focused as possible
           ea.color == null ? null : new Particle.DustOptions(ea.color, TRAIL_PIXEL_SIZE)
         );
       }

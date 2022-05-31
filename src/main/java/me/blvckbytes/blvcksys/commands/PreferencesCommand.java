@@ -32,7 +32,7 @@ public class PreferencesCommand extends APlayerCommand {
   ) {
     super(
       plugin, logger, cfg, refl,
-      "preferences",
+      "prefs,preferences",
       "Adjust your preferences",
       null
     );

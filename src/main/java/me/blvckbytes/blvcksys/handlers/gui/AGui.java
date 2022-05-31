@@ -6,6 +6,7 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.events.InventoryManipulationEvent;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
+import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -321,5 +322,14 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     }
 
     return slots;
+  }
+
+  /**
+   * Formats a constant to a human readable string
+   * @param constant Constant to format
+   * @return Formatted string
+   */
+  protected String formatConstant(String constant) {
+    return WordUtils.capitalizeFully(constant.replace("_", " ").replace(".", " "));
   }
 }

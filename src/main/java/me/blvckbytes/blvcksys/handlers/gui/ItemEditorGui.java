@@ -14,7 +14,6 @@ import me.blvckbytes.blvcksys.util.SymbolicHead;
 import me.blvckbytes.blvcksys.util.Triple;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.util.Tuple;
-import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
@@ -40,6 +39,7 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -1099,39 +1099,15 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       // Set to a predefined value
       if (click.isLeftClick()) {
 
-        List<Tuple<String, Color>> colors = new ArrayList<>();
-
-        // Get all available colors from the class's list of constant fields
-        try {
-          List<Field> constants = Arrays.stream(Color.class.getDeclaredFields())
-            .filter(field -> field.getType().equals(Color.class) && Modifier.isStatic(field.getModifiers()))
-            .toList();
-
-          for (Field constant : constants)
-            colors.add(new Tuple<>(constant.getName(), (Color) constant.get(null)));
-        } catch (Exception ex) {
-          logger.logError(ex);
-        }
-
-        // Create a list of all available slots
-        List<Tuple<Object, ItemStack>> slotReprs = new ArrayList<>();
-        for (Tuple<String, Color> color : colors) {
-          slotReprs.add(new Tuple<>(
-            color,
-            new ItemStackBuilder(item.getType())
-              .withColor(color.b())
-              .withName(
-                cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_NAME)
-                  .withVariable("color", formatConstant(color.a()))
-              )
-              .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_LORE))
-              .build()
-          ));
-        }
+        List<Tuple<Object, ItemStack>> colorReprs = generateColorReprs(
+          c -> item.getType(),
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_NAME),
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_LORE)
+        );
 
         // Invoke a new single choice gui for available colors
         inst.switchTo(AnimationType.SLIDE_LEFT, singleChoiceGui, new SingleChoiceParam(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_TITLE).asScalar(), slotReprs,
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_TITLE).asScalar(), colorReprs,
 
           // Color selected
           (color, inv) -> {
@@ -1282,11 +1258,42 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
   }
 
   /**
-   * Formats a constant to a human readable string
-   * @param constant Constant to format
-   * @return Formatted string
+   * Generate a list of color representations from bukkit's color class to be used with a choice GUI
+   * @param material Material resolver function
+   * @param name Item name value
+   * @param lore Item lore value
    */
-  private String formatConstant(String constant) {
-    return WordUtils.capitalizeFully(constant.replace("_", " ").replace(".", " "));
+  public List<Tuple<Object, ItemStack>> generateColorReprs(Function<Color, Material> material, ConfigValue name, ConfigValue lore) {
+    List<Tuple<String, Color>> colors = new ArrayList<>();
+
+    // Get all available colors from the class's list of constant fields
+    try {
+      List<Field> constants = Arrays.stream(Color.class.getDeclaredFields())
+        .filter(field -> field.getType().equals(Color.class) && Modifier.isStatic(field.getModifiers()))
+        .toList();
+
+      for (Field constant : constants)
+        colors.add(new Tuple<>(constant.getName(), (Color) constant.get(null)));
+    } catch (Exception ex) {
+      logger.logError(ex);
+    }
+
+    // Create a list of all available slots
+    List<Tuple<Object, ItemStack>> slotReprs = new ArrayList<>();
+    for (Tuple<String, Color> color : colors) {
+      slotReprs.add(new Tuple<>(
+        color,
+        new ItemStackBuilder(material.apply(color.b()))
+          .withColor(color.b())
+          .withName(
+            name
+              .withVariable("color", formatConstant(color.a()))
+          )
+          .withLore(lore)
+          .build()
+      ));
+    }
+
+    return slotReprs;
   }
 }

@@ -55,6 +55,9 @@ public class GuiInstance<T> {
   @Setter
   private Runnable beforePaging;
 
+  @Setter
+  private Consumer<Long> tickReceiver;
+
   private final JavaPlugin plugin;
 
   @Getter
@@ -607,6 +610,9 @@ public class GuiInstance<T> {
    * @param time Relative time in ticks
    */
   public void tick(long time) {
+    if (tickReceiver != null)
+      tickReceiver.accept(time);
+
     // Tick all fixed items
     for (Map.Entry<Integer, GuiItem> itemE : fixedItems.entrySet()) {
       GuiItem item = itemE.getValue();

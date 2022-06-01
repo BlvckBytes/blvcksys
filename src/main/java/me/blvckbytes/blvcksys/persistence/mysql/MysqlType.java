@@ -136,7 +136,7 @@ public enum MysqlType {
       double.class, Double.class,
       long.class, Long.class
     },
-    false,
+    true,
     new EqualityOperation[] {
       EqualityOperation.EQ,
       EqualityOperation.NEQ,

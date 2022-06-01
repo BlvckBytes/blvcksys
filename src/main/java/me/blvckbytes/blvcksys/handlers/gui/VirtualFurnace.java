@@ -4,8 +4,17 @@ import lombok.Getter;
 import lombok.Setter;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import net.minecraft.network.protocol.game.PacketPlayOutWindowData;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.FurnaceRecipe;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.Recipe;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -15,17 +24,43 @@ import org.bukkit.inventory.ItemStack;
   advances on every call to tick() and manages fueling as well as smeling. Updates
   are sent using packets to the furnace GUI at the client after every tick.
 */
-@Setter
-@Getter
 public class VirtualFurnace {
 
-  private Player holder;
+  // Mapping furnace input types to their corresponding output type
+  private static final Map<Material, Material> smeltingRecipes;
+
+  // Time in ticks that one item takes to smelt
+  // 200 is the default, according to protocol wiki
+  // This seems to match experience, as two sticks may smelt one item
+  private static final int SMELT_DURATION_T = 200;
+
+  static {
+    smeltingRecipes = new HashMap<>();
+
+    // Load all smelting recipes in the form of I->O into the local map
+    Iterator<Recipe> recipes = Bukkit.recipeIterator();
+    while (recipes.hasNext()) {
+      if (recipes.next() instanceof FurnaceRecipe fr)
+        smeltingRecipes.put(fr.getInput().getType(), fr.getResult().getType());
+    }
+  }
+
+  @Getter @Setter
   private ItemStack smelting;
+
+  @Getter @Setter
   private ItemStack smelted;
+
+  @Getter @Setter
   private ItemStack powerSource;
-  private long remainingBurningTime;
-  private long maximumBurningTime;
+
+  private final Player holder;
+  private int remainingBurningTime;
+  private int elapsedSmeltingTime;
+  private int maximumBurningTime;
   private boolean maximumBurningTimeSent;
+  private boolean maximumSmeltingTimeSent;
+  private int lastContainerId;
 
   /**
    * Create a new virtual furnace in it's default empty state for a player
@@ -33,12 +68,7 @@ public class VirtualFurnace {
    */
   public VirtualFurnace(Player holder) {
     this.holder = holder;
-    this.smelting = null;
-    this.smelted = null;
-    this.powerSource = null;
-    this.remainingBurningTime = 0;
-    this.maximumBurningTime = 0;
-    this.maximumBurningTimeSent = false;
+    this.lastContainerId = -1;
   }
 
   /**
@@ -47,39 +77,96 @@ public class VirtualFurnace {
    * @param containerId ID of the container used to display this furnace
    * @param refl MCReflect ref for sending packets
    */
-  public void tick(int containerId, MCReflect refl) {
+  public void tick(@Nullable Integer containerId, MCReflect refl) {
+    // Container ID changed, reset state that's only sent initially
+    // so it'll be re-sent on the next invocation with a new GUI
+    if (containerId == null || lastContainerId != containerId)
+      maximumSmeltingTimeSent = false;
+
+    // Synchronize window
+    if (containerId != null) {
+      this.syncWindow(containerId, refl);
+      lastContainerId = containerId;
+    }
+
     // Decrease the burning time
-    setRemainingBurningTime(Math.max(0, getRemainingBurningTime() - 1));
+    remainingBurningTime = Math.max(0, remainingBurningTime - 1);
+
+    // Nothing to smelt
+    if (smelting == null) {
+      elapsedSmeltingTime = 0;
+      return;
+    }
+
+    Material resultType = smeltingRecipes.get(smelting.getType());
+
+    // Cannot smelt this type of material
+    if (resultType == null) {
+      elapsedSmeltingTime = 0;
+      return;
+    }
+
+    ItemStack result = new ItemStack(resultType);
+
+    // Cannot stack the result with whatever's in the smelted slot
+    if (smelted != null && (!smelted.isSimilar(result) || smelted.getAmount() == smelted.getMaxStackSize())) {
+      elapsedSmeltingTime = 0;
+      return;
+    }
 
     // No more burning time available
-    if (getRemainingBurningTime() == 0) {
+    if (remainingBurningTime <= 0) {
 
       // There's a power source inserted
       ItemStack source = getPowerSource();
       if (source != null) {
 
         // Check if it is valid fuel and get it's burning time
-        FuelSource.getBurningTime(source.getType())
-          .ifPresent(burningTime -> {
+        int burningTime = FuelSource.getBurningTime(source.getType()).orElse(0L).intValue();
 
-            // Update the burning time
-            setRemainingBurningTime(burningTime);
-            setMaximumBurningTime(burningTime);
-            setMaximumBurningTimeSent(false);
+        if (burningTime > 0) {
+          // Update the burning time
+          remainingBurningTime = burningTime;
+          maximumBurningTime = burningTime;
+          maximumBurningTimeSent = false;
 
-            // Decrease the amount by one
-            int amount = source.getAmount();
-            source.setAmount(amount - 1);
+          // Decrease the source amount
+          source.setAmount(source.getAmount() - 1);
+          if (source.getAmount() == 0)
+            setPowerSource(null);
+        }
 
-            // Stack is empty, remove from model
-            if (amount == 1)
-              setPowerSource(null);
-          });
+        // Item cannot deliver any power
+        else {
+          elapsedSmeltingTime = 0;
+          return;
+        }
+      }
+
+      // Power source slot is empty
+      else {
+        elapsedSmeltingTime = 0;
+        return;
       }
     }
 
-    // Keep the local state in sync with the open window's state
-    this.syncWindow(containerId, refl);
+    // Item smelted fully
+    if (++elapsedSmeltingTime == SMELT_DURATION_T) {
+      elapsedSmeltingTime = 0;
+
+      // Decrease the smelting stack
+      smelting.setAmount(smelting.getAmount() - 1);
+      if (smelting.getAmount() == 0)
+        smelting = null;
+
+      // Intially set the smelted stack
+      if (smelted == null)
+        smelted = result;
+
+      // Increase the smelted stack
+      else
+        smelted.setAmount(smelted.getAmount() + 1);
+    }
   }
 
   /**
@@ -90,24 +177,32 @@ public class VirtualFurnace {
    */
   private void syncWindow(int containerId, MCReflect refl) {
     // Send the fuel left status
-    // 0: Fire icon (fuel left)	counting from fuel burn time down to 0 (in-game ticks)
+    // 0: Fire icon (fuel left) counting from fuel burn time down to 0 (in-game ticks)
     refl.sendPacket(
-      holder, new PacketPlayOutWindowData(containerId, 0, (int) getRemainingBurningTime())
+      holder, new PacketPlayOutWindowData(containerId, 0, remainingBurningTime)
     );
 
     // Maximum burning time hasn't yet been announced
-    // 1: Maximum fuel burn time	fuel burn time or 0 (in-game ticks)
-    if (!isMaximumBurningTimeSent()) {
-      setMaximumBurningTimeSent(true);
+    // 1: Maximum fuel burn time fuel burn time or 0 (in-game ticks)
+    if (!maximumBurningTimeSent) {
+      maximumBurningTimeSent = true;
       refl.sendPacket(
-        holder, new PacketPlayOutWindowData(containerId, 1, (int) getMaximumBurningTime())
+        holder, new PacketPlayOutWindowData(containerId, 1, maximumBurningTime)
       );
     }
 
-    /*
-      TODO: Implement
-      2: Progress arrow	counting from 0 to maximum progress (in-game ticks)
-      3: Maximum progress	always 200 on the notchian server
-     */
+    // Maximum smelting time hasn't yet been announced
+    // 3: Maximum progress always 200 on the notchian server
+    if (!maximumSmeltingTimeSent) {
+      maximumSmeltingTimeSent = true;
+      refl.sendPacket(
+        holder, new PacketPlayOutWindowData(containerId, 3, SMELT_DURATION_T)
+      );
+    }
+
+    // 2: Progress arrow counting from 0 to maximum progress (in-game ticks)
+    refl.sendPacket(
+      holder, new PacketPlayOutWindowData(containerId, 2, elapsedSmeltingTime)
+    );
   }
 }

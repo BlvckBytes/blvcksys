@@ -5,6 +5,7 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.handlers.gui.VirtualFurnace;
 import me.blvckbytes.blvcksys.handlers.gui.VirtualFurnaceGui;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
@@ -45,6 +46,7 @@ public class FurnaceCommand extends APlayerCommand {
 
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
-    virtualFurnaceGui.show(p, null, null);
+    VirtualFurnace vf = new VirtualFurnace(p);
+    virtualFurnaceGui.show(p, vf, null);
   }
 }

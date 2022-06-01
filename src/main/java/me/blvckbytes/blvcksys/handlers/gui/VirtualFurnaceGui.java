@@ -13,7 +13,7 @@ import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.plugin.java.JavaPlugin;
 
 @AutoConstruct
-public class VirtualFurnaceGui extends AGui<Object> {
+public class VirtualFurnaceGui extends AGui<VirtualFurnace> {
 
   private final MCReflect refl;
   private final WindowOpenSniffer windowSniffer;
@@ -35,38 +35,38 @@ public class VirtualFurnaceGui extends AGui<Object> {
   }
 
   @Override
-  protected boolean closed(GuiInstance<Object> inst) {
+  protected boolean closed(GuiInstance<VirtualFurnace> inst) {
     return false;
   }
 
   @Override
-  protected boolean opening(GuiInstance<Object> inst) {
+  protected boolean opening(GuiInstance<VirtualFurnace> inst) {
     Player p = inst.getViewer();
-    VirtualFurnace vf = new VirtualFurnace(p);
+    VirtualFurnace vf = inst.getArg();
+    int containerId = windowSniffer.getTopInventoryWindowId(p);
 
     inst.setTickReceiver(time -> {
-      // Keep the furnace inventory at the client up to date
-      vf.tick(windowSniffer.getTopInventoryWindowId(p), refl);
-      inst.redraw("*");
+      // TODO: Centralize the ticker in a VirtualFurnaceHandler, which'll also persist states
+      vf.tick(containerId, refl);
     });
 
     // Item to be smelted
     inst.fixedItem(0, vf::getSmelting, e -> {
       e.setCancelled(false);
       Bukkit.getScheduler().runTask(plugin, () -> vf.setSmelting(inst.getInv().getItem(0)));
-    });
+    }, 1);
 
     // Power source
     inst.fixedItem(1, vf::getPowerSource, e -> {
       e.setCancelled(false);
       Bukkit.getScheduler().runTask(plugin, () -> vf.setPowerSource(inst.getInv().getItem(1)));
-    });
+    }, 1);
 
     // Smelted output
     inst.fixedItem(2, vf::getSmelted, e -> {
       e.setCancelled(false);
       Bukkit.getScheduler().runTask(plugin, () -> vf.setSmelted(inst.getInv().getItem(2)));
-    });
+    }, 1);
 
     return true;
   }

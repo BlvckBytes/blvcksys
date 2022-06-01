@@ -5,7 +5,7 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
-import me.blvckbytes.blvcksys.handlers.gui.VirtualFurnace;
+import me.blvckbytes.blvcksys.handlers.IVirtualFurnaceHandler;
 import me.blvckbytes.blvcksys.handlers.gui.VirtualFurnaceGui;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
@@ -22,22 +22,26 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class FurnaceCommand extends APlayerCommand {
 
   private final VirtualFurnaceGui virtualFurnaceGui;
+  private final IVirtualFurnaceHandler virtualFurnaceHandler;
 
   public FurnaceCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
-    @AutoInject VirtualFurnaceGui virtualFurnaceGui
+    @AutoInject VirtualFurnaceGui virtualFurnaceGui,
+    @AutoInject IVirtualFurnaceHandler virtualFurnaceHandler
   ) {
     super(
       plugin, logger, cfg, refl,
       "furnace,fn",
       "Open a virtual furnace",
-      PlayerPermission.COMMAND_FURNACE
+      PlayerPermission.COMMAND_FURNACE,
+      new CommandArgument("<index>", "Index number of the virtual furnace")
     );
 
     this.virtualFurnaceGui = virtualFurnaceGui;
+    this.virtualFurnaceHandler = virtualFurnaceHandler;
   }
 
   //=========================================================================//
@@ -46,7 +50,7 @@ public class FurnaceCommand extends APlayerCommand {
 
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
-    VirtualFurnace vf = new VirtualFurnace(p);
-    virtualFurnaceGui.show(p, vf, null);
+    int index = parseInt(args, 0);
+    virtualFurnaceGui.show(p, virtualFurnaceHandler.accessFurnace(p, index), null);
   }
 }

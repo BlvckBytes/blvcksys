@@ -6,49 +6,39 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.packets.modifiers.WindowOpenSniffer;
-import me.blvckbytes.blvcksys.util.MCReflect;
 import org.bukkit.Bukkit;
-import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.plugin.java.JavaPlugin;
 
 @AutoConstruct
 public class VirtualFurnaceGui extends AGui<VirtualFurnace> {
 
-  private final MCReflect refl;
   private final WindowOpenSniffer windowSniffer;
 
   public VirtualFurnaceGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
     @AutoInject IPlayerTextureHandler textures,
-    @AutoInject MCReflect refl,
     @AutoInject WindowOpenSniffer windowSniffer
   ) {
     super(1, "", i -> (
       cfg.get(ConfigKey.GUI_VFURNACE_TITLE)
-        .withVariable("name", "#1")
+        .withVariable("name", "#" + i.getArg().getIndex())
     ), plugin, cfg, textures, InventoryType.FURNACE);
 
-    this.refl = refl;
     this.windowSniffer = windowSniffer;
   }
 
   @Override
   protected boolean closed(GuiInstance<VirtualFurnace> inst) {
+    // Stop rendering state
+    inst.getArg().setContainerId(null);
     return false;
   }
 
   @Override
   protected boolean opening(GuiInstance<VirtualFurnace> inst) {
-    Player p = inst.getViewer();
     VirtualFurnace vf = inst.getArg();
-    int containerId = windowSniffer.getTopInventoryWindowId(p);
-
-    inst.setTickReceiver(time -> {
-      // TODO: Centralize the ticker in a VirtualFurnaceHandler, which'll also persist states
-      vf.tick(containerId, refl);
-    });
 
     // Item to be smelted
     inst.fixedItem(0, vf::getSmelting, e -> {
@@ -69,5 +59,11 @@ public class VirtualFurnaceGui extends AGui<VirtualFurnace> {
     }, 1);
 
     return true;
+  }
+
+  @Override
+  protected void opened(GuiInstance<VirtualFurnace> inst) {
+    // Start rendering state
+    inst.getArg().setContainerId(windowSniffer.getTopInventoryWindowId(inst.getViewer()));
   }
 }

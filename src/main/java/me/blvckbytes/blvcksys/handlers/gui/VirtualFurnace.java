@@ -60,34 +60,37 @@ public class VirtualFurnace {
   private int maximumBurningTime;
   private boolean maximumBurningTimeSent;
   private boolean maximumSmeltingTimeSent;
-  private int lastContainerId;
+  private Integer containerId;
+
+  @Getter
+  private final int index;
 
   /**
    * Create a new virtual furnace in it's default empty state for a player
    * @param holder Target player that uses this furnace
    */
-  public VirtualFurnace(Player holder) {
+  public VirtualFurnace(Player holder, int index) {
     this.holder = holder;
-    this.lastContainerId = -1;
+    this.index = index;
+  }
+
+  public void setContainerId(@Nullable Integer containerId) {
+    this.containerId = containerId;
+
+    // Reset state that's only sent initially
+    if (this.containerId == null)
+      maximumSmeltingTimeSent = false;
   }
 
   /**
    * Advances the virtual furnace's state by one tick and thus handles actions
    * like using fuel, decreasing remaining fuel time and advancing the smelting process.
-   * @param containerId ID of the container used to display this furnace
    * @param refl MCReflect ref for sending packets
    */
-  public void tick(@Nullable Integer containerId, MCReflect refl) {
-    // Container ID changed, reset state that's only sent initially
-    // so it'll be re-sent on the next invocation with a new GUI
-    if (containerId == null || lastContainerId != containerId)
-      maximumSmeltingTimeSent = false;
-
+  public void tick(MCReflect refl) {
     // Synchronize window
-    if (containerId != null) {
+    if (containerId != null)
       this.syncWindow(containerId, refl);
-      lastContainerId = containerId;
-    }
 
     // Decrease the burning time
     remainingBurningTime = Math.max(0, remainingBurningTime - 1);

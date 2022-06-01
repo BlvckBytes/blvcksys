@@ -132,6 +132,8 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     // Initially draw the whole gui
     inst.redraw("*");
     inst.open(animation, animateFrom);
+
+    opened(inst);
   }
 
   /**
@@ -203,6 +205,12 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
    * @return Whether to open the GUI, false cancels
    */
   abstract protected boolean opening(GuiInstance<T> inst);
+
+  /**
+   * Called after a GUI is being shown to a player
+   * @param inst Instance of the GUI opened
+   */
+  protected void opened(GuiInstance<T> inst) {};
 
   //=========================================================================//
   //                                Listener                                 //

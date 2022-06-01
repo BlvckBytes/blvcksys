@@ -53,7 +53,7 @@ public class GuiInstance<T> {
   private ItemStack fill, border;
 
   @Setter
-  private Runnable beforePaging;
+  private final List<Runnable> beforePaging;
 
   @Setter
   private Consumer<Long> tickReceiver;
@@ -88,6 +88,7 @@ public class GuiInstance<T> {
     this.fixedItems = new HashMap<>();
     this.redrawListeners = new HashMap<>();
     this.pages = new ArrayList<>();
+    this.beforePaging = new ArrayList<>();
     this.animating = new AtomicBoolean(false);
 
     // In order to evaluate the title supplier, this call needs to follow
@@ -272,6 +273,8 @@ public class GuiInstance<T> {
    * @param nextSlot Slot of the next button
    */
   protected void addPagination(int prevSlot, int indicatorSlot, int nextSlot) {
+    beforePaging.add(() -> Bukkit.getScheduler().runTaskLater(plugin, () -> redraw(String.valueOf(indicatorSlot)), 10));
+
     fixedItem(prevSlot, () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_NAME))
@@ -488,15 +491,34 @@ public class GuiInstance<T> {
   }
 
   /**
+   * Navigate to the last page
+   */
+  public void lastPage(@Nullable AnimationType animation) {
+    if (beforePaging != null)
+      beforePaging.forEach(Runnable::run);
+
+    // Already at last page
+    if (!hasNextPage())
+      return;
+
+    ItemStack[] before = inv.getContents().clone();
+
+    // Advance to the last page and force an update
+    currPage = pages.size() - 1;
+    updatePage(null);
+    playAnimation(animation, before, template.getPageSlots(), null);
+  }
+
+  /**
    * Navigate to the next page
    * @return True on success, false if there was no next page
    */
   public boolean nextPage(@Nullable AnimationType animation) {
+    if (beforePaging != null)
+      beforePaging.forEach(Runnable::run);
+
     if (!hasNextPage())
       return false;
-
-    if (beforePaging != null)
-      beforePaging.run();
 
     ItemStack[] before = inv.getContents().clone();
 
@@ -519,11 +541,11 @@ public class GuiInstance<T> {
    * @return True on success, false if there was no previous page
    */
   public boolean previousPage(@Nullable AnimationType animation) {
+    if (beforePaging != null)
+      beforePaging.forEach(Runnable::run);
+
     if (!hasPreviousPage())
       return false;
-
-    if (beforePaging != null)
-      beforePaging.run();
 
     ItemStack[] before = inv.getContents().clone();
 

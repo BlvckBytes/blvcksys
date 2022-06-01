@@ -63,7 +63,9 @@ public class VirtualFurnaceGui extends AGui<VirtualFurnace> {
 
   @Override
   protected void opened(GuiInstance<VirtualFurnace> inst) {
-    // Start rendering state
-    inst.getArg().setContainerId(windowSniffer.getTopInventoryWindowId(inst.getViewer()));
+    Bukkit.getScheduler().runTask(plugin, () -> {
+      // Start rendering state
+      inst.getArg().setContainerId(windowSniffer.getTopInventoryWindowId(inst.getViewer()));
+    });
   }
 }

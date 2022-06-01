@@ -1,11 +1,12 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import lombok.Getter;
-import lombok.Setter;
+import me.blvckbytes.blvcksys.persistence.models.VirtualFurnaceModel;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import net.minecraft.network.protocol.game.PacketPlayOutWindowData;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.FurnaceRecipe;
 import org.bukkit.inventory.ItemStack;
@@ -45,16 +46,18 @@ public class VirtualFurnace {
     }
   }
 
-  @Getter @Setter
+  @Getter
   private ItemStack smelting;
 
-  @Getter @Setter
+  @Getter
   private ItemStack smelted;
 
-  @Getter @Setter
+  @Getter
   private ItemStack powerSource;
 
-  private final Player holder;
+  @Getter
+  private final OfflinePlayer holder;
+
   private int remainingBurningTime;
   private int elapsedSmeltingTime;
   private int maximumBurningTime;
@@ -65,13 +68,17 @@ public class VirtualFurnace {
   @Getter
   private final int index;
 
+  @Getter
+  private long lastActivity;
+
   /**
    * Create a new virtual furnace in it's default empty state for a player
    * @param holder Target player that uses this furnace
    */
-  public VirtualFurnace(Player holder, int index) {
+  public VirtualFurnace(OfflinePlayer holder, int index) {
     this.holder = holder;
     this.index = index;
+    this.lastActivity = System.currentTimeMillis();
   }
 
   public void setContainerId(@Nullable Integer containerId) {
@@ -153,6 +160,9 @@ public class VirtualFurnace {
       }
     }
 
+    // Smelting process reached, update last activity
+    lastActivity = System.currentTimeMillis();
+
     // Item smelted fully
     if (++elapsedSmeltingTime == SMELT_DURATION_T) {
       elapsedSmeltingTime = 0;
@@ -179,10 +189,15 @@ public class VirtualFurnace {
    * @param refl MCReflect ref for sending packets
    */
   private void syncWindow(int containerId, MCReflect refl) {
+    if (!holder.isOnline())
+      return;
+
+    Player p = (Player) holder;
+
     // Send the fuel left status
     // 0: Fire icon (fuel left) counting from fuel burn time down to 0 (in-game ticks)
     refl.sendPacket(
-      holder, new PacketPlayOutWindowData(containerId, 0, remainingBurningTime)
+      p, new PacketPlayOutWindowData(containerId, 0, remainingBurningTime)
     );
 
     // Maximum burning time hasn't yet been announced
@@ -190,7 +205,7 @@ public class VirtualFurnace {
     if (!maximumBurningTimeSent) {
       maximumBurningTimeSent = true;
       refl.sendPacket(
-        holder, new PacketPlayOutWindowData(containerId, 1, maximumBurningTime)
+        p, new PacketPlayOutWindowData(containerId, 1, maximumBurningTime)
       );
     }
 
@@ -199,13 +214,69 @@ public class VirtualFurnace {
     if (!maximumSmeltingTimeSent) {
       maximumSmeltingTimeSent = true;
       refl.sendPacket(
-        holder, new PacketPlayOutWindowData(containerId, 3, SMELT_DURATION_T)
+        p, new PacketPlayOutWindowData(containerId, 3, SMELT_DURATION_T)
       );
     }
 
     // 2: Progress arrow counting from 0 to maximum progress (in-game ticks)
     refl.sendPacket(
-      holder, new PacketPlayOutWindowData(containerId, 2, elapsedSmeltingTime)
+      p, new PacketPlayOutWindowData(containerId, 2, elapsedSmeltingTime)
     );
+  }
+
+  /**
+   * Take a snapshot of the current state in the form of a persistent model
+   * @param model Model to store state into
+   */
+  public void takeSnapshot(VirtualFurnaceModel model) {
+    model.setOwner(holder);
+    model.setSmelted(smelted);
+    model.setSmelting(smelting);
+    model.setPowerSource(powerSource);
+    model.setElapsedSmeltingTime(elapsedSmeltingTime);
+    model.setRemainingBurningTime(remainingBurningTime);
+  }
+
+  /**
+   * Load a virtual furnace from a past snapshot
+   * @param snapshot Snapshot to load from
+   */
+  public static VirtualFurnace loadFromSnapshot(VirtualFurnaceModel snapshot) {
+    VirtualFurnace vf = new VirtualFurnace(snapshot.getOwner(), snapshot.getIndex());
+
+    vf.smelting = snapshot.getSmelting();
+    vf.smelted = snapshot.getSmelted();
+    vf.powerSource = snapshot.getPowerSource();
+    vf.elapsedSmeltingTime = snapshot.getElapsedSmeltingTime();
+    vf.remainingBurningTime = snapshot.getRemainingBurningTime();
+
+    return vf;
+  }
+
+  /**
+   * Sets a new power source item
+   * @param powerSource Power source item
+   */
+  public void setPowerSource(ItemStack powerSource) {
+    this.lastActivity = System.currentTimeMillis();
+    this.powerSource = powerSource;
+  }
+
+  /**
+   * Sets a new item to smelt
+   * @param smelting Item to smelt
+   */
+  public void setSmelting(ItemStack smelting) {
+    this.lastActivity = System.currentTimeMillis();
+    this.smelting = smelting;
+  }
+
+  /**
+   * Sets a new item that has been smelted
+   * @param smelted Item that has been smelted
+   */
+  public void setSmelted(ItemStack smelted) {
+    this.lastActivity = System.currentTimeMillis();
+    this.smelted = smelted;
   }
 }

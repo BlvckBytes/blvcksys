@@ -78,7 +78,7 @@ public class VirtualFurnace {
   public VirtualFurnace(OfflinePlayer holder, int index) {
     this.holder = holder;
     this.index = index;
-    this.lastActivity = System.currentTimeMillis();
+    this.lastActivity = System.currentTimeMillis() - 1000;
   }
 
   public void setContainerId(@Nullable Integer containerId) {
@@ -278,5 +278,26 @@ public class VirtualFurnace {
   public void setSmelted(ItemStack smelted) {
     this.lastActivity = System.currentTimeMillis();
     this.smelted = smelted;
+  }
+
+  /**
+   * Checks whether the furnace is smelting at the moment
+   */
+  public FurnaceState getState() {
+    // Either there's something smelting right now, or try to debounce small
+    // gaps to not make any indicators flash on cycles, or the furnace is not smelting
+    if (elapsedSmeltingTime > 0 || System.currentTimeMillis() - lastActivity < 1000)
+      return FurnaceState.SMELTING;
+
+    if (smelting == null && smelted == null)
+      return FurnaceState.EMPTY;
+
+    if (smelted != null && smelted.getAmount() == smelted.getMaxStackSize())
+      return FurnaceState.FULL;
+
+    if (powerSource == null && remainingBurningTime <= 0)
+      return FurnaceState.OUT_OF_FUEL;
+
+    return FurnaceState.HAS_REMAINS;
   }
 }

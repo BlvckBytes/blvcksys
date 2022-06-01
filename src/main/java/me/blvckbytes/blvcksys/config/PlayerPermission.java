@@ -23,6 +23,7 @@ public enum PlayerPermission {
   //=========================================================================//
 
   COMMAND_FURNACE("bvs.furnace"),
+  COMMAND_FURNACE_INSTANCES("bvs.furnace.instances"),
 
   //=========================================================================//
   //                                Arrow Trails                             //

@@ -5,8 +5,8 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
-import me.blvckbytes.blvcksys.handlers.IVirtualFurnaceHandler;
-import me.blvckbytes.blvcksys.handlers.gui.VirtualFurnaceGui;
+import me.blvckbytes.blvcksys.handlers.gui.AnimationType;
+import me.blvckbytes.blvcksys.handlers.gui.FurnacesGui;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.entity.Player;
@@ -16,32 +16,28 @@ import org.bukkit.plugin.java.JavaPlugin;
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 06/01/2022
 
-  Manage virtual furnaces.
+  Manage your virtual furnaces by creating new instances or viewing existing ones.
 */
 @AutoConstruct
 public class FurnaceCommand extends APlayerCommand {
 
-  private final VirtualFurnaceGui virtualFurnaceGui;
-  private final IVirtualFurnaceHandler virtualFurnaceHandler;
+  private final FurnacesGui furnacesGui;
 
   public FurnaceCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
-    @AutoInject VirtualFurnaceGui virtualFurnaceGui,
-    @AutoInject IVirtualFurnaceHandler virtualFurnaceHandler
+    @AutoInject FurnacesGui furnacesGui
   ) {
     super(
       plugin, logger, cfg, refl,
       "furnace,fn",
-      "Open a virtual furnace",
-      PlayerPermission.COMMAND_FURNACE,
-      new CommandArgument("<index>", "Index number of the virtual furnace")
+      "Open your virtual furnace manager",
+      PlayerPermission.COMMAND_FURNACE
     );
 
-    this.virtualFurnaceGui = virtualFurnaceGui;
-    this.virtualFurnaceHandler = virtualFurnaceHandler;
+    this.furnacesGui = furnacesGui;
   }
 
   //=========================================================================//
@@ -50,7 +46,6 @@ public class FurnaceCommand extends APlayerCommand {
 
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
-    int index = parseInt(args, 0);
-    virtualFurnaceGui.show(p, virtualFurnaceHandler.accessFurnace(p, index), null);
+    furnacesGui.show(p, null, AnimationType.SLIDE_UP);
   }
 }

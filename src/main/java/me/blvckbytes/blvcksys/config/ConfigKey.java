@@ -1764,6 +1764,38 @@ public enum ConfigKey {
   ),
 
   //=========================================================================//
+  //                               Furnaces GUI                              //
+  //=========================================================================//
+
+  GUI_FURNACES("gui.furnaces.title", "$0Öfen von $2{{name}}"),
+  GUI_FURNACES_CREATE_NAME("gui.furnaces.create.name", "$0» &aNeuen Ofen anlegen $0«"),
+  GUI_FURNACES_CREATE_LORE(
+    "gui.furnaces.create.lore",
+    " ",
+    "$0Legt einen weiteren $2virtuellen Ofen",
+    "$0an, insofern du noch $2freie $0Slots besitzt.",
+    " ",
+    "$0Deine Slots: $2{{used}}$0/$2{{available}}"
+  ),
+  GUI_FURNACES_MAX_REACHED("gui.furnaces.max_reached", "$0Du hast dein Limit von $4{{available}} $0Öfen erreicht!"),
+  GUI_FURNACES_FURNACE_NAME("gui.furnaces.furnace.name", "$0» Ofen $2#{{index}} $0«"),
+  GUI_FURNACES_FURNACE_LORE(
+    "gui.furnaces.furnace.lore",
+    " ",
+    "$0Zustand: {{state}}",
+    " ",
+    "$0Schmelzendes Item: $2{{type_smelting}}",
+    "$0Wartende Items: $2{{pending_items}}",
+    "$0Fertige Items: $2{{finished_items}}",
+    "$0Brennstoff: $2{{type_fuel}} $0($2{{number_fuel}} verbleibend$0)"
+  ),
+  GUI_FURNACES_FURNACE_STATE_SMELTING("gui.furnaces.state.smelting", "&6Schmelzend"),
+  GUI_FURNACES_FURNACE_STATE_OUT_OF_FUEL("gui.furnaces.state.out_of_fuel", "&4Kein Brennstoff übrig"),
+  GUI_FURNACES_FURNACE_STATE_FULL("gui.furnaces.state.full", "&5Voll"),
+  GUI_FURNACES_FURNACE_STATE_EMPTY("gui.furnaces.state.empty", "&2Leer"),
+  GUI_FURNACES_FURNACE_STATE_HAS_REMAINS("gui.furnaces.state.has_remains", "&eBesitzt Reste"),
+
+  //=========================================================================//
   //                           Virtual Furnace GUI                           //
   //=========================================================================//
 

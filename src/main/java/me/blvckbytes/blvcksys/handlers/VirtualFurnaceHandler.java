@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.handlers;
 
+import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
@@ -21,10 +22,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -42,6 +40,9 @@ public class VirtualFurnaceHandler implements IVirtualFurnaceHandler, IAutoConst
 
   // Maximum time of inactivity in a furnace until it's persisted and unloaded in seconds
   private static final long INACTIVITY_MAX_S = 60;
+
+  // Minimum number of furnaces a player is allowed to have
+  private static final int MIN_FURNACES = 1;
 
   // Mapping players to their virtual furnaces, which each have a unique
   // sequence ID, as players may own multiple concurrent furnaces
@@ -68,8 +69,32 @@ public class VirtualFurnaceHandler implements IVirtualFurnaceHandler, IAutoConst
   //=========================================================================//
 
   @Override
-  public VirtualFurnace accessFurnace(Player p, int index) {
+  public VirtualFurnace accessFurnace(OfflinePlayer p, int index) {
     return loadOrCreateFurnace(p, index);
+  }
+
+  @Override
+  public List<VirtualFurnace> listFurnaces(OfflinePlayer p) {
+    loadAllFurnaces(p);
+    return furnaces
+      .getOrDefault(p, new HashMap<>())
+      .values()
+      .stream()
+      .map(Tuple::a)
+      .sorted(Comparator.comparingInt(VirtualFurnace::getIndex))
+      .toList();
+  }
+
+  @Override
+  public int getUsedNumberOfFurnaces(OfflinePlayer p) {
+    if (furnaces.containsKey(p))
+      return furnaces.get(p).size();
+    return pers.count(buildQuery(p));
+  }
+
+  @Override
+  public int getAvailableNumberOfFurnaces(Player p) {
+    return PlayerPermission.COMMAND_FURNACE_INSTANCES.getSuffixNumber(p, true).orElse(MIN_FURNACES);
   }
 
   @Override
@@ -88,6 +113,9 @@ public class VirtualFurnaceHandler implements IVirtualFurnaceHandler, IAutoConst
   public void initialize() {
     this.tickerHandle = Bukkit.getScheduler().runTaskTimer(plugin, this::tickFurnaces, 0L, 1L);
     this.storeHandle = Bukkit.getScheduler().runTaskTimer(plugin, this::saveFurnaces, 0L, STORE_INTERVAL_S * 20);
+
+    for (Player p : Bukkit.getOnlinePlayers())
+      loadAllFurnaces(p);
   }
 
   //=========================================================================//
@@ -187,7 +215,7 @@ public class VirtualFurnaceHandler implements IVirtualFurnaceHandler, IAutoConst
    * @param index Target index
    * @return Virtual furnace instance
    */
-  private VirtualFurnace loadOrCreateFurnace(Player p, int index) {
+  private VirtualFurnace loadOrCreateFurnace(OfflinePlayer p, int index) {
     if (!furnaces.containsKey(p))
       furnaces.put(p, new HashMap<>());
 
@@ -220,18 +248,22 @@ public class VirtualFurnaceHandler implements IVirtualFurnaceHandler, IAutoConst
    * Load all furnaces of a given player so they can start to be processed
    * @param p Target player
    */
-  private void loadAllFurnaces(Player p) {
+  private void loadAllFurnaces(OfflinePlayer p) {
     if (!furnaces.containsKey(p))
       furnaces.put(p, new HashMap<>());
 
     Map<Integer, Tuple<VirtualFurnace, VirtualFurnaceModel>> pFurnaces = furnaces.get(p);
 
-    List<VirtualFurnaceModel> models = pers.find(new QueryBuilder<>(
-      VirtualFurnaceModel.class,
-      "owner__uuid", EqualityOperation.EQ, p.getUniqueId()
-    ));
+    // All furnaces are loaded already
+    if (pFurnaces.size() == pers.count(buildQuery(p)))
+      return;
 
+    List<VirtualFurnaceModel> models = pers.find(buildQuery(p));
     for (VirtualFurnaceModel model : models) {
+      // This furnace is already loaded, don't overwrite it
+      if (pFurnaces.containsKey(model.getIndex()))
+        continue;
+
       VirtualFurnace vf = VirtualFurnace.loadFromSnapshot(model);
       pFurnaces.put(model.getIndex(), new Tuple<>(vf, model));
     }
@@ -242,11 +274,22 @@ public class VirtualFurnaceHandler implements IVirtualFurnaceHandler, IAutoConst
    * @param p Target player
    * @param index Target index
    */
-  private QueryBuilder<VirtualFurnaceModel> buildQuery(Player p, int index) {
+  private QueryBuilder<VirtualFurnaceModel> buildQuery(OfflinePlayer p, int index) {
     return new QueryBuilder<>(
       VirtualFurnaceModel.class,
       "owner__uuid", EqualityOperation.EQ, p.getUniqueId()
     )
       .and("index", EqualityOperation.EQ, index);
+  }
+
+  /**
+   * Builds the selecting query for all virtual furnaces of a player
+   * @param p Target player
+   */
+  private QueryBuilder<VirtualFurnaceModel> buildQuery(OfflinePlayer p) {
+    return new QueryBuilder<>(
+      VirtualFurnaceModel.class,
+      "owner__uuid", EqualityOperation.EQ, p.getUniqueId()
+    );
   }
 }

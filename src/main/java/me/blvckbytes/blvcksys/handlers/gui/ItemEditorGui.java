@@ -422,7 +422,10 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
               this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
             },
 
-            closed
+            closed,
+
+            // Back
+            null
           );
 
           // Close the GUI when prompting for the chat message
@@ -465,7 +468,10 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
         },
 
-        closed
+        closed,
+
+        // Back
+        null
       );
 
       // Close the GUI when prompting for the chat message
@@ -605,7 +611,10 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             }, closed, backButton);
           },
 
-          closed
+          closed,
+
+          // Back
+          null
         );
 
         // Close the GUI when prompting for the chat message
@@ -810,120 +819,63 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       }
 
       if (click.isLeftClick()) {
-        // Create a list of attributes to choose from
-        Multimap<Attribute, AttributeModifier> attrs = ArrayListMultimap.create();
-        for (Attribute attr : Attribute.values())
-          attrs.put(attr, null);
 
-        // Choose an attribute to add
-        openAttributeIndexChoice(attrs, false, inst, (target, attrChoiceInv) -> {
-          Attribute attr = target.a();
+        new UserInputChain(inst, values -> {
+          @SuppressWarnings("unchecked")
+          Tuple<Attribute, AttributeModifier> attr = (Tuple<Attribute, AttributeModifier>) values.get("attribute");
+          double amount = (double) values.get("amount");
+          EquipmentSlot slot = (EquipmentSlot) values.get("slot");
+          AttributeModifier.Operation op = (AttributeModifier.Operation) values.get("operation");
 
-          // Prompt for the desired amount in the chat
-          chatUtil.registerPrompt(
-            p,
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_AMOUNT_PROMPT)
-              .withPrefix()
-              .asScalar(),
+          meta.addAttributeModifier(attr.a(), new AttributeModifier(
+            UUID.randomUUID(),
+            attr.a().name(),
+            amount, op, slot
+          ));
 
-            // Amount entered
-            amountStr -> {
+          item.setItemMeta(meta);
 
-              // Parse the amount from the string
-              double amount;
-              try {
-                amount = Double.parseDouble(amountStr);
-              } catch (NumberFormatException ex) {
-                p.sendMessage(
-                  cfg.get(ConfigKey.ERR_FLOATPARSE)
-                    .withPrefix()
-                    .withVariable("number", amountStr)
-                    .asScalar()
-                );
-
-                this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
-                return;
-              }
-
-              // Create a list of all available slots
-              List<Tuple<Object, ItemStack>> slotReprs = new ArrayList<>();
-              for (EquipmentSlot slot : EquipmentSlot.values()) {
-                slotReprs.add(new Tuple<>(
-                  slot,
-                  new ItemStackBuilder(Material.CHEST)
-                    .withName(
-                      cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_EQUIPMENT_NAME)
-                        .withVariable("slot", formatConstant(slot.name()))
-                    )
-                    .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_EQUIPMENT_LORE))
-                    .build()
-                ));
-              }
-
-              // Invoke a new single choice gui for available slots
-              singleChoiceGui.show(p, new SingleChoiceParam(
-                cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_EQUIPMENT_TITLE).asScalar(), slotReprs,
-
-                // Slot selected
-                (slot, slotChoiceInst) -> {
-
-                  // Create a list of all available operations
-                  List<Tuple<Object, ItemStack>> opReprs = new ArrayList<>();
-                  for (AttributeModifier.Operation op : AttributeModifier.Operation.values()) {
-                    opReprs.add(new Tuple<>(
-                      op,
-                      new ItemStackBuilder(Material.REDSTONE_TORCH)
-                        .withName(
-                          cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_OPERATION_NAME)
-                            .withVariable("operation", formatConstant(op.name()))
-                        )
-                        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_OPERATION_LORE))
-                        .build()
-                    ));
-                  }
-
-                  // Invoke a new single choice gui for available operations
-                  slotChoiceInst.switchTo(AnimationType.SLIDE_LEFT, singleChoiceGui, new SingleChoiceParam(
-                    cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_OPERATION_TITLE).asScalar(), opReprs,
-
-                    // Operation selected
-                    (op, opSelInst) -> {
-
-                      meta.addAttributeModifier(target.a(), new AttributeModifier(
-                        UUID.randomUUID(),
-                        attr.name(),
-                        amount,
-                        (AttributeModifier.Operation) op,
-                        (EquipmentSlot) slot
-                      ));
-
-                      item.setItemMeta(meta);
-
-                      p.sendMessage(
-                        cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_ADDED)
-                          .withPrefix()
-                          .withVariable("attribute", formatConstant(attr.getKey().getKey()))
-                          .asScalar()
-                      );
-
-                      opSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
-                    },
-
-                    opSelInst -> closed.run(), opSelInst -> backButton.accept(opSelInst.getInv())
-                  ));
-                },
-
-                slotChoiceInst -> closed.run(), slotChoiceInst -> backButton.accept(slotChoiceInst.getInv())
-              ), AnimationType.SLIDE_UP);
-
-            },
-
-            closed
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_ADDED)
+            .withPrefix()
+            .withVariable("attribute", formatConstant(attr.a().name()))
+            .asScalar()
           );
+        }, singleChoiceGui, chatUtil)
+          .withChoice(
+            "attribute",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ATTR_TITLE),
+            () -> (
+              buildAttributeRepresentitives(
+                // Create a "fake" multimap which contains an entry for every attribute with a null modifier
+                Arrays.stream(Attribute.values())
+                  .collect(ArrayListMultimap::create, (m, v) -> m.put(v, null), ArrayListMultimap::putAll),
+                false
+              )
+            )
+          )
+          .withPrompt(
+            "amount",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_AMOUNT_PROMPT).withPrefix(),
+            Double::parseDouble,
+            inp -> (
+              cfg.get(ConfigKey.ERR_FLOATPARSE)
+                .withPrefix()
+                .withVariable("number", inp)
+            )
+          )
+          .withChoice(
+            "slot",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_EQUIPMENT_TITLE),
+            this::buildSlotRepresentitives
+          )
+          .withChoice(
+            "operation",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_OPERATION_TITLE),
+            this::buildOperationRepresentitives
+          )
+          .start();
 
-          // Close the GUI when prompting for the chat message
-          p.closeInventory();
-        }, closed, backButton);
       }
     });
 
@@ -989,7 +941,10 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
         },
 
-        closed
+        closed,
+
+        // Back
+        null
       );
 
       // Close the GUI when prompting for the chat message
@@ -1079,7 +1034,10 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
           },
 
-          closed
+          closed,
+
+          // Back
+          null
         );
 
         // Close the GUI when prompting for the chat message
@@ -1189,6 +1147,88 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
   }
 
   /**
+   * Build a list of representitives for all available
+   * {@link org.bukkit.attribute.AttributeModifier.Operation} enum entries
+   */
+  private List<Tuple<Object, ItemStack>> buildOperationRepresentitives() {
+    // Create a list of all available operations
+    List<Tuple<Object, ItemStack>> opReprs = new ArrayList<>();
+    for (AttributeModifier.Operation op : AttributeModifier.Operation.values()) {
+      opReprs.add(new Tuple<>(
+        op,
+        new ItemStackBuilder(Material.REDSTONE_TORCH)
+          .withName(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_OPERATION_NAME)
+              .withVariable("operation", formatConstant(op.name()))
+          )
+          .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_OPERATION_LORE))
+          .build()
+      ));
+    }
+    return opReprs;
+  }
+
+  /**
+   * Build a list of representitives for all available {@link EquipmentSlot} enum entries
+   */
+  private List<Tuple<Object, ItemStack>> buildSlotRepresentitives() {
+    // Create a list of all available slots
+    List<Tuple<Object, ItemStack>> slotReprs = new ArrayList<>();
+    for (EquipmentSlot slot : EquipmentSlot.values()) {
+      slotReprs.add(new Tuple<>(
+        slot,
+        new ItemStackBuilder(Material.CHEST)
+          .withName(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_EQUIPMENT_NAME)
+              .withVariable("slot", formatConstant(slot.name()))
+          )
+          .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_EQUIPMENT_LORE))
+          .build()
+      ));
+    }
+    return slotReprs;
+  }
+
+  /**
+   * Build a list of representitives for all attributes contained in the multimap
+   * @param attrs Attributes to display
+   * @param areExisting Whether there are modifiers existing, if false, modifiers are ignored
+   */
+  private List<Tuple<Object, ItemStack>> buildAttributeRepresentitives(Multimap<Attribute, AttributeModifier> attrs, boolean areExisting) {
+    // Create representitive items for each attribute
+    List<Tuple<Object, ItemStack>> representitives = new ArrayList<>();
+    for (Map.Entry<Attribute, AttributeModifier> entry : attrs.entries()) {
+      AttributeModifier mod = entry.getValue();
+
+      ConfigValue lore = cfg.get(
+        areExisting ?
+          ConfigKey.GUI_ITEMEDITOR_CHOICE_ATTR_EXISTING_LORE :
+          ConfigKey.GUI_ITEMEDITOR_CHOICE_ATTR_NEW_LORE
+      );
+
+      if (areExisting) {
+        lore.withVariable("name", mod.getName())
+          .withVariable("amount", mod.getAmount())
+          .withVariable("operation", formatConstant(mod.getOperation().name()))
+          .withVariable("slot", mod.getSlot() == null ? "/" : formatConstant(mod.getSlot().name()));
+      }
+
+      representitives.add(new Tuple<>(
+        new Tuple<>(entry.getKey(), entry.getValue()),
+        new ItemStackBuilder(Material.COMPARATOR)
+          .withName(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ATTR_NAME)
+              .withVariable("attribute", formatConstant(entry.getKey().getKey().getKey()))
+          )
+          .withLore(lore)
+          .build()
+      ));
+    }
+
+    return representitives;
+  }
+
+  /**
    * Open a new attribute choice GUI which presents the user with an item for each
    * attribute and then results in the ref of the attribute chosen
    * @param attrs Available attributes
@@ -1208,40 +1248,10 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     Runnable closed,
     Consumer<Inventory> backButton
   ) {
-    // Create representitive items for each attribute
-    List<Tuple<Object, ItemStack>> representitives = new ArrayList<>();
-    for (Map.Entry<Attribute, AttributeModifier> entry : attrs.entries()) {
-      AttributeModifier mod = entry.getValue();
-
-      ConfigValue lore = cfg.get(
-          areExisting ?
-            ConfigKey.GUI_ITEMEDITOR_CHOICE_ATTR_EXISTING_LORE :
-            ConfigKey.GUI_ITEMEDITOR_CHOICE_ATTR_NEW_LORE
-        );
-
-      if (areExisting) {
-        lore.withVariable("name", mod.getName())
-        .withVariable("amount", mod.getAmount())
-        .withVariable("operation", formatConstant(mod.getOperation().name()))
-        .withVariable("slot", mod.getSlot() == null ? "/" : formatConstant(mod.getSlot().name()));
-      }
-
-      representitives.add(new Tuple<>(
-        new Tuple<>(entry.getKey(), entry.getValue()),
-        new ItemStackBuilder(Material.COMPARATOR)
-          .withName(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ATTR_NAME)
-              .withVariable("attribute", formatConstant(entry.getKey().getKey().getKey()))
-          )
-          .withLore(lore)
-          .build()
-      ));
-    }
-
     // Invoke a new single choice gui for available attributes
     inst.switchTo(AnimationType.SLIDE_LEFT, singleChoiceGui, new SingleChoiceParam(
       cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ATTR_TITLE).asScalar(),
-      representitives,
+      buildAttributeRepresentitives(attrs, areExisting),
       (m, attrSelInst) -> chosen.accept((Tuple<Attribute, AttributeModifier>) m, attrSelInst),
       attrSelInst -> closed.run(), attrSelInst -> backButton.accept(attrSelInst.getInv())
     ));

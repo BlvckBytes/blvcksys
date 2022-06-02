@@ -286,7 +286,7 @@ public class VirtualFurnace {
   public FurnaceState getState() {
     // Either there's something smelting right now, or try to debounce small
     // gaps to not make any indicators flash on cycles, or the furnace is not smelting
-    if (elapsedSmeltingTime > 0 || System.currentTimeMillis() - lastActivity < 1000)
+    if (elapsedSmeltingTime > 0 || System.currentTimeMillis() - lastActivity < 100)
       return FurnaceState.SMELTING;
 
     if (smelting == null && smelted == null)

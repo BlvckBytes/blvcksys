@@ -59,21 +59,23 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
     inst.addBorder(Material.BLACK_STAINED_GLASS_PANE);
     inst.addPagination(38, 40, 42);
 
+    // Reopens this instance on the next tick when called
+    Runnable reopen = () -> Bukkit.getScheduler().runTask(plugin, () -> inst.reopen(AnimationType.SLIDE_UP));
+
+    // Search button
     inst.fixedItem(44, () -> (
       new ItemStackBuilder(Material.NAME_TAG)
         .withName(cfg.get(ConfigKey.GUI_SINGLECHOICE_SEARCH_NAME))
         .withLore(cfg.get(ConfigKey.GUI_SINGLECHOICE_SEARCH_LORE))
         .build()
     ), e -> {
-      // Create a carbon copy of the param and re-route the close callback
+      // Create a carbon copy of the param and re-route callbacks
       SingleChoiceParam scp = new SingleChoiceParam(
         inst.getArg().type(), inst.getArg().representitives(),
         inst.getArg().selected(),
 
-        // Re-open the choice if nothing was chosen
-        (i) -> Bukkit.getScheduler().runTaskLater(plugin, () -> this.show(p, inst.getArg(), AnimationType.SLIDE_UP), 1),
-
-        inst.getArg().backButton()
+        // Re-open the choice if nothing was chosen or back was clicked
+        (i) -> reopen.run(), (i) -> reopen.run()
       );
 
       // Add to chosen just to not trigger any callbacks prematurely

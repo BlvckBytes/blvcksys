@@ -96,6 +96,14 @@ public class AnvilSearchGui extends AGui<SingleChoiceParam> implements IPacketMo
         .build()
     ), null);
 
+    // Back button
+    if (inst.getArg().backButton() != null) {
+      inst.addBack(1, e -> {
+        madeSelection.add(inst.getViewer());
+        inst.getArg().backButton().accept(inst);
+      });
+    }
+
     return true;
   }
 

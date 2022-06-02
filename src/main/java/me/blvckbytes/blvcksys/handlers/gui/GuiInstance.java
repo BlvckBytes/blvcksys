@@ -130,7 +130,8 @@ public class GuiInstance<T> {
    */
   public<A> void reopen(AnimationType animation, @Nullable GuiInstance<A> previous) {
     Bukkit.getScheduler().runTask(plugin, () -> {
-      getTemplate().show(getViewer(), getArg(), animation, previous == null ? null : previous.getInv());
+      redraw("*");
+      open(animation, previous == null ? null : previous.getInv());
     });
   }
 
@@ -171,7 +172,11 @@ public class GuiInstance<T> {
    */
   public void open(@Nullable AnimationType animation, @Nullable Inventory animateFrom) {
     // Play the given animation
-    if (!playAnimation(animation, animateFrom == null ? null : animateFrom.getContents(), null, () -> viewer.openInventory(inv)))
+    if (
+      // Not a chest, not supported
+      (animateFrom != null && animateFrom.getType() != InventoryType.CHEST) ||
+      !playAnimation(animation, animateFrom == null ? null : animateFrom.getContents(), null, () -> viewer.openInventory(inv))
+    )
       viewer.openInventory(inv);
   }
 

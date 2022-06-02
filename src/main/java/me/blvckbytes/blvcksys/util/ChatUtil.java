@@ -69,20 +69,30 @@ public class ChatUtil implements Listener {
    * @param p Target player
    * @param prompt Prompt message, cancel button is appended with a space
    * @param input Input callback
-   * @param cancelled Cancellation callback
+   * @param cancelled Cancel button callback
+   * @param back Back button callback
    */
-  public void registerPrompt(Player p, String prompt, Consumer<String> input, @Nullable Runnable cancelled) {
-    ChatButtons buttons = new ChatButtons(prompt + " ", true, plugin, cfg, null)
-      .addButton(cfg.get(ConfigKey.CHATBUTTONS_CANCEL), () -> {
+  public void registerPrompt(Player p, String prompt, Consumer<String> input, @Nullable Runnable cancelled, @Nullable Runnable back) {
+    ChatButtons buttons = new ChatButtons(prompt + " ", true, plugin, cfg, null);
+
+    if (cancelled != null) {
+      buttons.addButton(cfg.get(ConfigKey.CHATBUTTONS_CANCEL), () -> {
         p.sendMessage(
           cfg.get(ConfigKey.CHATBUTTONS_PROMPT_CANCELLED)
             .withPrefix()
             .asScalar()
         );
 
-        if (cancelled != null)
-          Bukkit.getScheduler().runTask(plugin, cancelled);
+        Bukkit.getScheduler().runTask(plugin, cancelled);
       });
+    }
+
+    if (back != null) {
+      buttons.addButton(cfg.get(ConfigKey.CHATBUTTONS_BACK), () -> {
+        Bukkit.getScheduler().runTask(plugin, back);
+      });
+    }
+
     prompts.put(p, new Tuple<>(input, buttons));
     sendButtons(p, buttons);
   }

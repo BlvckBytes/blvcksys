@@ -41,6 +41,7 @@ public enum ConfigKey {
   CHATBUTTONS_NO("chatbuttons.no", "$1[&cNein$1]"),
   CHATBUTTONS_EDIT("chatbuttons.edit", "$1[&6Bearbeiten$1]"),
   CHATBUTTONS_CANCEL("chatbuttons.cancel", "$1[&cAbbrechen$1]"),
+  CHATBUTTONS_BACK("chatbuttons.back", "$1[&bZurück$1]"),
 
   //=========================================================================//
   //                                   AFK                                   //

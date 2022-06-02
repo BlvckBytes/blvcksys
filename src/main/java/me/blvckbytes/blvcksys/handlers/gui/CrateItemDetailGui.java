@@ -127,7 +127,10 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
         },
 
         // Cancelled
-        () -> inst.reopen(AnimationType.SLIDE_UP)
+        () -> inst.reopen(AnimationType.SLIDE_UP),
+
+        // Back
+        null
       );
 
       p.closeInventory();

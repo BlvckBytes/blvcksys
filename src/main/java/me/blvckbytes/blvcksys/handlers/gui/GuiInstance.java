@@ -187,11 +187,11 @@ public class GuiInstance<T> {
   }
 
   /**
-   * Closes this inventory
+   * Closes this inventory on the next tick
    */
   public void close() {
     if (viewer.getOpenInventory().getTopInventory().equals(inv))
-      viewer.closeInventory();
+      Bukkit.getScheduler().runTask(plugin, viewer::closeInventory);
   }
 
   /**

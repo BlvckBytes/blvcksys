@@ -425,7 +425,11 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         List<String> lines = meta.getLore() == null ? new ArrayList<>() : meta.getLore();
 
         new UserInputChain(inst, values -> {
-          String line = (String) values.get("line");
+          String line = ChatColor.translateAlternateColorCodes('&', (String) values.get("line"));
+
+          // Translate null to an empty line
+          if (line.equals("null"))
+            line = " ";
 
           // Insert after index
           if (values.containsKey("index")) {

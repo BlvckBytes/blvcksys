@@ -1520,7 +1520,7 @@ public enum ConfigKey {
     "$0Inhalt: ",
     "{{line_content}}"
   ),
-  GUI_ITEMEDITOR_LORE_PROMPT("gui.itemeditor.lore.prompt", "$0Bitte gib die gewünschte $2Lore-Zeile $0in den $2Chat $0ein."),
+  GUI_ITEMEDITOR_LORE_PROMPT("gui.itemeditor.lore.prompt", "$0Bitte gib die gewünschte $2Lore-Zeile $0in den $2Chat $0ein (tippe \"null\" um eine leere Zeile einzufügen)."),
   GUI_ITEMEDITOR_LORE_SELECT_POS("gui.itemeditor.lore.select_pos", "$0Bitte wähle die gewünschte $2Position $0der Zeile."),
   GUI_ITEMEDITOR_LORE_LINE_ADDED("gui.itemeditor.lore.line_added", "$0Die $2Lore-Zeile $0wurde hinzugefügt."),
   GUI_ITEMEDITOR_DURABILITY_NAME("gui.itemeditor.durability.name", "$0» $2Haltbarkeit $0«"),

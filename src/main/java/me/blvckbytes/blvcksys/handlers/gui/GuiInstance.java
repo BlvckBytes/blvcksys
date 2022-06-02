@@ -124,11 +124,23 @@ public class GuiInstance<T> {
 
   /**
    * Reopens another instance from the template with the
+   * exact same viewer and argument and animates using a previous inventory
+   * @param animation Animation to play when opening
+   * @param previous Previous inventory
+   */
+  public<A> void reopen(AnimationType animation, @Nullable GuiInstance<A> previous) {
+    Bukkit.getScheduler().runTask(plugin, () -> {
+      getTemplate().show(getViewer(), getArg(), animation, previous == null ? null : previous.getInv());
+    });
+  }
+
+  /**
+   * Reopens another instance from the template with the
    * exact same viewer and argument
    * @param animation Animation to play when opening
    */
   public void reopen(AnimationType animation) {
-    getTemplate().show(getViewer(), getArg(), animation, null);
+    reopen(animation, null);
   }
 
   //////////////////////////////// Inventory //////////////////////////////////

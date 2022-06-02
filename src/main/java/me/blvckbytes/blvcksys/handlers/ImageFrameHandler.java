@@ -100,7 +100,7 @@ public class ImageFrameHandler implements IImageFrameHandler, IAutoConstructed, 
       return null;
 
     // Search for item frame entities that are near the target block
-    return w.getNearbyEntities(loc, 1, 1, 1)
+    return w.getNearbyEntities(loc, 2, 1, 2)
       .stream()
       .filter(e -> e instanceof ItemFrame)
       .map(e -> (ItemFrame) e)
@@ -149,7 +149,9 @@ public class ImageFrameHandler implements IImageFrameHandler, IAutoConstructed, 
 
     // Destroy the group with this name
     if (ret) {
-      groups.remove(name.toLowerCase()).destroy();
+      ItemFrameGroup grp = groups.remove(name.toLowerCase());
+      if (grp != null)
+        grp.destroy();
       cache.remove(name.toLowerCase());
     }
 

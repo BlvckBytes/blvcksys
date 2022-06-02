@@ -14,7 +14,6 @@ import me.blvckbytes.blvcksys.util.SymbolicHead;
 import me.blvckbytes.blvcksys.util.Triple;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.util.Tuple;
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
 import org.bukkit.Material;
@@ -37,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -191,14 +189,6 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       );
     });
 
-    ////////////////////////////////////// Commons //////////////////////////////////////
-
-    // Inventory closed, re-open the editor
-    Runnable closed = () -> Bukkit.getScheduler().runTaskLater(plugin, () -> this.show(p, inst.getArg(), AnimationType.SLIDE_UP), 1);
-
-    // Back button
-    Consumer<Inventory> backButton = inv -> this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, inv);
-
     ///////////////////////////////////// Material /////////////////////////////////////
 
     inst.fixedItem(28, () -> (
@@ -207,44 +197,24 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_MATERIAL_LORE))
         .build()
     ), e -> {
-      // Representitive items for each material
-      List<Tuple<Object, ItemStack>> representitives = Arrays.stream(Material.values())
-        .filter(m -> !(
-          m.isAir() ||
-          m.isLegacy()
-        ))
-        .map(m -> (
-          new Tuple<>((Object) m, (
-            new ItemStackBuilder(m)
-              .withName(
-                cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_MATERIAL_NAME)
-                  .withVariable("hr_type", formatConstant(m.name()))
-              )
-              .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_MATERIAL_LORE))
-              .build()
-          ))
+      new UserInputChain(inst, values -> {
+        Material mat = (Material) values.get("material");
+        item.setType(mat);
+
+        p.sendMessage(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_MATERIAL_CHANGED)
+            .withPrefix()
+            .withVariable("material", formatConstant(mat.name()))
+            .asScalar()
+        );
+      }, singleChoiceGui, chatUtil)
+        .withChoice(
+          "material",
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_MATERIAL_TITLE),
+          this::buildMaterialRepresentitives,
+          null
         )
-      ).toList();
-
-      // Invoke a new single choice gui for available materials
-      inst.switchTo(AnimationType.SLIDE_LEFT, singleChoiceGui, new SingleChoiceParam(
-        cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_MATERIAL_TITLE).asScalar(), representitives,
-
-        // Material selected
-        (m, matSelInst) -> {
-          Material mat = (Material) m;
-
-          item.setType(mat);
-          matSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
-
-          p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_MATERIAL_CHANGED)
-              .withPrefix()
-              .withVariable("material", formatConstant(mat.name()))
-              .asScalar()
-          );
-        }, matSelInst -> closed.run(), matSelInst -> backButton.accept(matSelInst.getInv())
-      ));
+        .start();
     });
 
     /////////////////////////////////// Item Flags ///////////////////////////////////
@@ -255,61 +225,37 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_FLAGS_LORE))
         .build()
     ), e -> {
-      // Representitive items for each flag
-      List<Tuple<Object, ItemStack>> representitives = Arrays.stream(ItemFlag.values())
-        .map(f -> {
-          boolean has = meta.hasItemFlag(f);
-          return new Tuple<>((Object) f, (
-            new ItemStackBuilder(Material.NAME_TAG)
-              .withName(
-                cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_NAME)
-                  .withVariable("flag", formatConstant(f.name()))
-              )
-              .withLore(
-                cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_LORE)
-                  .withVariable(
-                    "state",
-                    cfg.get(has ? ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_ACTIVE : ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_INACTIVE)
-                      .asScalar()
-                  )
-              )
-              .build()
-          ));
-        }
-      ).toList();
+      new UserInputChain(inst, values -> {
+        ItemFlag flag = (ItemFlag) values.get("flag");
 
-      // Invoke a new single choice gui for available flags
-      inst.switchTo(AnimationType.SLIDE_LEFT, singleChoiceGui, new SingleChoiceParam(
-        cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_TITLE).asScalar(), representitives,
+        // Toggle the flag
+        boolean has = meta.hasItemFlag(flag);
+        if (has)
+          meta.removeItemFlags(flag);
+        else
+          meta.addItemFlags(flag);
 
-        // Flag selected
-        (f, flagSelInst) -> {
-          ItemFlag flag = (ItemFlag) f;
+        item.setItemMeta(meta);
 
-          // Toggle the flag
-          boolean has = meta.hasItemFlag(flag);
-          if (has)
-            meta.removeItemFlags(flag);
-          else
-            meta.addItemFlags(flag);
-
-          item.setItemMeta(meta);
-
-          flagSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
-
-          p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_FLAG_CHANGED)
-              .withPrefix()
-              .withVariable("flag", formatConstant(flag.name()))
-              .withVariable(
-                "state",
-                cfg.get(!has ? ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_ACTIVE : ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_INACTIVE)
-                  .asScalar()
-              )
-              .asScalar()
-          );
-        }, flagSelInst -> closed.run(), matSelInst -> backButton.accept(matSelInst.getInv())
-      ));
+        p.sendMessage(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_FLAG_CHANGED)
+            .withPrefix()
+            .withVariable("flag", formatConstant(flag.name()))
+            .withVariable(
+              "state",
+              cfg.get(!has ? ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_ACTIVE : ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_INACTIVE)
+                .asScalar()
+            )
+            .asScalar()
+        );
+      }, singleChoiceGui, chatUtil)
+        .withChoice(
+          "flag",
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_TITLE),
+          () -> buildItemFlagRepresentitives(meta::hasItemFlag),
+          null
+        )
+        .start();
     });
 
     //////////////////////////////////// Enchantments ////////////////////////////////////
@@ -320,118 +266,57 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_ENCHANTMENTS_LORE))
         .build()
     ), e -> {
+      new UserInputChain(inst, values -> {
+        Enchantment enchantment = (Enchantment) values.get("enchantment");
+        boolean has = meta.hasEnchant(enchantment);
 
-      List<Enchantment> enchantments = new ArrayList<>();
+        // Undo the enchantment
+        if (has) {
+          meta.removeEnchant(enchantment);
+          item.setItemMeta(meta);
 
-      // Get all available enchantments from the abstract enchantment class's list of constant fields
-      try {
-        List<Field> constants = Arrays.stream(Enchantment.class.getDeclaredFields())
-          .filter(field -> field.getType().equals(Enchantment.class) && Modifier.isStatic(field.getModifiers()))
-          .toList();
-
-        for (Field constant : constants)
-          enchantments.add((Enchantment) constant.get(null));
-      } catch (Exception ex) {
-        logger.logError(ex);
-      }
-
-      // Representitive items for each enchantment
-      List<Tuple<Object, ItemStack>> representitives = enchantments.stream()
-        // Sort by relevance
-        .sorted(Comparator.comparing(ench -> ench.canEnchantItem(item), Comparator.reverseOrder()))
-        .map(ench -> {
-            boolean has = meta.hasEnchant(ench);
-            int level = -1;
-
-            if (has)
-              level = meta.getEnchantLevel(ench);
-
-            return new Tuple<>((Object) ench, (
-              new ItemStackBuilder(has ? Material.ENCHANTED_BOOK : Material.BOOK)
-                .withEnchantment(ench, 1)
-                .withName(
-                  cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_NAME)
-                    .withVariable("enchantment", formatConstant(ench.getKey().getKey()))
-                )
-                .withLore(
-                  cfg.get(has ? ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_LORE_ACTIVE : ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_LORE_INACTIVE)
-                    .withVariable(
-                      "state",
-                      cfg.get(has ? ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_ACTIVE : ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_INACTIVE)
-                        .asScalar()
-                    )
-                    .withVariable("level", level)
-                )
-                .build()
-            ));
-          }
-        ).toList();
-
-      // Invoke a new single choice gui for available enchantments
-      inst.switchTo(AnimationType.SLIDE_LEFT, singleChoiceGui, new SingleChoiceParam(
-        cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_TITLE).asScalar(), representitives,
-
-        // Enchantment selected
-        (ench, enchSelInst) -> {
-          Enchantment enchantment = (Enchantment) ench;
-          boolean has = meta.hasEnchant(enchantment);
-
-          // Undo the enchantment
-          if (has) {
-            meta.removeEnchant(enchantment);
-            item.setItemMeta(meta);
-
-            p.sendMessage(
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_ENCHANTMENT_REMOVED)
-                .withPrefix()
-                .withVariable("enchantment", formatConstant(enchantment.getKey().getKey()))
-                .asScalar()
-            );
-
-            enchSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
-          }
-
-          // Prompt for the desired level in the chat
-          chatUtil.registerPrompt(
-            p,
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_ENCHANTMENT_LEVEL_PROMPT)
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_ENCHANTMENT_REMOVED)
               .withPrefix()
-              .asScalar(),
-
-            // Level entered
-            levelStr -> {
-
-              // Parse the level from the string
-              Integer level = tryParseInt(p, levelStr).orElse(null);
-              if (level == null) {
-                this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
-                return;
-              }
-
-              meta.addEnchant(enchantment, level, true);
-              item.setItemMeta(meta);
-
-              p.sendMessage(
-                cfg.get(ConfigKey.GUI_ITEMEDITOR_ENCHANTMENT_ADDED)
-                  .withPrefix()
-                  .withVariable("enchantment", formatConstant(enchantment.getKey().getKey()))
-                  .withVariable("level", level)
-                  .asScalar()
-              );
-
-              this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
-            },
-
-            closed,
-
-            // Back
-            null
+              .withVariable("enchantment", formatConstant(enchantment.getKey().getKey()))
+              .asScalar()
           );
+          return;
+        }
 
-          // Close the GUI when prompting for the chat message
-          p.closeInventory();
-        }, enchSelInst -> closed.run(), enchSelInst -> backButton.accept(enchSelInst.getInv())
-      ));
+        // Add the enchantment
+        int level = (int) values.get("level");
+        meta.addEnchant(enchantment, level, true);
+        item.setItemMeta(meta);
+
+        p.sendMessage(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_ENCHANTMENT_ADDED)
+            .withPrefix()
+            .withVariable("enchantment", formatConstant(enchantment.getKey().getKey()))
+            .withVariable("level", level)
+            .asScalar()
+        );
+      }, singleChoiceGui, chatUtil)
+        .withChoice(
+          "enchantment",
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_TITLE),
+          () -> buildEnchantmentRepresentitives(
+            ench -> ench.canEnchantItem(item),
+            meta::hasEnchant,
+            meta::getEnchantLevel
+          ),
+          null
+        )
+        .withPrompt(
+          "level",
+          values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_ENCHANTMENT_LEVEL_PROMPT)
+            .withVariable("enchantment", formatConstant(((Enchantment) values.get("enchantment")).getKey().getKey()))
+            .withPrefix(),
+          Integer::parseInt,
+          input -> cfg.get(ConfigKey.ERR_INTPARSE).withVariable("number", input),
+          values -> meta.hasEnchant((Enchantment) values.get("enchantment"))
+        )
+        .start();
     });
 
     //////////////////////////////////// Displayname ////////////////////////////////////
@@ -442,40 +327,29 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_DISPLAYNAME_LORE))
         .build()
     ), e -> {
+      new UserInputChain(inst, values -> {
+        String name = (String) values.get("name");
 
-      // Prompt for the desired displayname in the chat
-      chatUtil.registerPrompt(
-        p,
-        cfg.get(ConfigKey.GUI_ITEMEDITOR_DISPLAYNAME_PROMPT)
-          .withPrefix()
-          .asScalar(),
+        boolean reset = name.equalsIgnoreCase("null");
+        name = ChatColor.translateAlternateColorCodes('&', name);
 
-        // Name entered
-        nameStr -> {
-          boolean reset = nameStr.equalsIgnoreCase("null");
-          nameStr = ChatColor.translateAlternateColorCodes('&', nameStr);
+        meta.setDisplayName(reset ? null : name);
+        item.setItemMeta(meta);
 
-          meta.setDisplayName(reset ? null : nameStr);
-          item.setItemMeta(meta);
-
-          p.sendMessage(
-            cfg.get(reset ? ConfigKey.GUI_ITEMEDITOR_DISPLAYNAME_RESET : ConfigKey.GUI_ITEMEDITOR_DISPLAYNAME_SET)
-              .withPrefix()
-              .withVariable("name", nameStr)
-              .asScalar()
-          );
-
-          this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
-        },
-
-        closed,
-
-        // Back
-        null
-      );
-
-      // Close the GUI when prompting for the chat message
-      inst.close();
+        p.sendMessage(
+          cfg.get(reset ? ConfigKey.GUI_ITEMEDITOR_DISPLAYNAME_RESET : ConfigKey.GUI_ITEMEDITOR_DISPLAYNAME_SET)
+            .withPrefix()
+            .withVariable("name", name)
+            .asScalar()
+        );
+      }, singleChoiceGui, chatUtil)
+        .withPrompt(
+          "name",
+          values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_DISPLAYNAME_PROMPT)
+            .withPrefix(),
+          s -> s, null, null
+        )
+        .start();
     });
 
     //////////////////////////////////// Lore Lines ////////////////////////////////////
@@ -519,106 +393,75 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           return;
         }
 
-        // Offer a choice for which line to remove
-        openLoreIndexChoice(lines, inst, (lineId, lineSelInst) -> {
-          String content = lines.remove((int) lineId);
+        new UserInputChain(inst, values -> {
+          int index = (int) values.get("index");
+
+          String content = lines.remove(index);
           meta.setLore(lines);
           item.setItemMeta(meta);
 
           p.sendMessage(
             cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_LINE_REMOVED)
               .withPrefix()
-              .withVariable("line_number", lineId + 1)
+              .withVariable("line_number", index + 1)
               .withVariable("line_content", content)
               .asScalar()
           );
-
-          lineSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
-        }, closed, backButton);
+        }, singleChoiceGui, chatUtil)
+          .withChoice(
+            "index",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LORE_TITLE),
+            () -> buildLoreRepresentitives(lines),
+            null
+          )
+          .start();
 
         return;
       }
 
       // Add a new line
       if (click.isLeftClick()) {
-        // Prompt for the desired lore line in the chat
-        chatUtil.registerPrompt(
-          p,
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_PROMPT)
-            .withPrefix()
-            .asScalar(),
 
-          // Line entered
-          loreStr -> {
-            String lore = ChatColor.translateAlternateColorCodes('&', loreStr);
+        List<String> lines = meta.getLore() == null ? new ArrayList<>() : meta.getLore();
 
-            List<String> lines = meta.getLore() == null ? new ArrayList<>() : meta.getLore();
+        new UserInputChain(inst, values -> {
+          String line = (String) values.get("line");
 
-            // There are no other lore lines yet, just add the line
-            if (lines.size() == 0) {
-              lines.add(lore);
-              meta.setLore(lines);
-              item.setItemMeta(meta);
+          // Insert after index
+          if (values.containsKey("index")) {
+            int index = (int) values.get("index");
+            lines.add(index, line);
+          }
 
-              p.sendMessage(
-                cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_LINE_ADDED)
-                  .withPrefix()
-                  .asScalar()
-              );
+          // Push back
+          else
+            lines.add(line);
 
-              this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
-              return;
-            }
+          meta.setLore(lines);
+          item.setItemMeta(meta);
 
-            // Add to the back of the list
-            if (click.isShiftClick()) {
-              lines.add(lore);
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_LINE_ADDED)
+              .withPrefix()
+              .asScalar()
+          );
+        }, singleChoiceGui, chatUtil)
+          .withPrompt(
+            "line",
+            values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_PROMPT)
+              .withPrefix(),
+            s -> s, null, null
+          )
+          .withChoice(
+            "index",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LORE_TITLE),
+            () -> buildLoreRepresentitives(lines),
+            // Shift means push back, no index required
+            // Also, if there are no lines yet, just push back too
+            values -> click.isShiftClick() || lines.size() == 0
+          )
+          .start();
 
-              meta.setLore(lines);
-              item.setItemMeta(meta);
-
-              p.sendMessage(
-                cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_LINE_ADDED)
-                  .withPrefix()
-                  .asScalar()
-              );
-
-              this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
-              return;
-            }
-
-            p.sendMessage(
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_SELECT_POS)
-                .withPrefix()
-                .asScalar()
-            );
-
-            // Offer a choice for where to insert the line
-            openLoreIndexChoice(lines, inst, (lineId, lineSelInst) -> {
-              List<String> newLines = new ArrayList<>(lines);
-              newLines.add(lineId, lore);
-
-              meta.setLore(newLines);
-              item.setItemMeta(meta);
-
-              p.sendMessage(
-                cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_LINE_ADDED)
-                  .withPrefix()
-                  .asScalar()
-              );
-
-              lineSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
-            }, closed, backButton);
-          },
-
-          closed,
-
-          // Back
-          null
-        );
-
-        // Close the GUI when prompting for the chat message
-        inst.close();
       }
     });
 
@@ -759,8 +602,6 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     ////////////////////////////////////// Attributes //////////////////////////////////////
 
-    // NOTE: Prepare for indentation hell, :^)
-
     inst.fixedItem(34, () -> (
       new ItemStackBuilder(Material.COMPARATOR)
         .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_NAME))
@@ -798,22 +639,28 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           return;
         }
 
-        // Remove a specific attribute
-        openAttributeIndexChoice(attrs, true, inst, (target, attrSelInst) -> {
+        new UserInputChain(inst, values -> {
+          @SuppressWarnings("unchecked")
+          Tuple<Attribute, AttributeModifier> attr = (Tuple<Attribute, AttributeModifier>) values.get("attribute");
 
           // Remove the chosen attribute
-          meta.removeAttributeModifier(target.a(), target.b());
+          meta.removeAttributeModifier(attr.a(), attr.b());
           item.setItemMeta(meta);
 
           p.sendMessage(
             cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_REMOVED)
               .withPrefix()
-              .withVariable("attribute", formatConstant(target.a().getKey().getKey()))
+              .withVariable("attribute", formatConstant(attr.a().getKey().getKey()))
               .asScalar()
           );
-
-          attrSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
-        }, closed, backButton);
+        }, singleChoiceGui, chatUtil)
+          .withChoice(
+            "attribute",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ATTR_TITLE),
+            () -> buildAttributeRepresentitives(attrs, true),
+            null
+          )
+          .start();
 
         return;
       }
@@ -852,27 +699,31 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
                   .collect(ArrayListMultimap::create, (m, v) -> m.put(v, null), ArrayListMultimap::putAll),
                 false
               )
-            )
+            ),
+            null
           )
           .withPrompt(
             "amount",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_AMOUNT_PROMPT).withPrefix(),
+            values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_AMOUNT_PROMPT).withPrefix(),
             Double::parseDouble,
             inp -> (
               cfg.get(ConfigKey.ERR_FLOATPARSE)
                 .withPrefix()
                 .withVariable("number", inp)
-            )
+            ),
+            null
           )
           .withChoice(
             "slot",
             cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_EQUIPMENT_TITLE),
-            this::buildSlotRepresentitives
+            this::buildSlotRepresentitives,
+            null
           )
           .withChoice(
             "operation",
             cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_OPERATION_TITLE),
-            this::buildOperationRepresentitives
+            this::buildOperationRepresentitives,
+            null
           )
           .start();
 
@@ -897,58 +748,47 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         return;
       }
 
-      // Prompt for the desired head owner in the chat
-      chatUtil.registerPrompt(
-        p,
-        cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_PROMPT)
-          .withPrefix()
-          .asScalar(),
+      new UserInputChain(inst, values -> {
+        String owner = (String) values.get("owner");
 
-        // Owner entered
-        ownerStr -> {
-          // Load the corresponding textures
-          PlayerTextureModel ownerTextures = textures.getTextures(ownerStr, false).orElse(null);
-          if (ownerTextures == null) {
-            p.sendMessage(
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_NOT_LOADABLE)
-                .withPrefix()
-                .withVariable("owner", ownerStr)
-                .asScalar()
-            );
-
-            this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
-            return;
-          }
-
-          // Overwrite the GameProfile of the skull
-          try {
-            Field profileField = skullMeta.getClass().getDeclaredField("profile");
-            profileField.setAccessible(true);
-            profileField.set(skullMeta, ownerTextures.toProfile());
-          } catch (Exception ex) {
-            logger.logError(ex);
-          }
-
-          item.setItemMeta(skullMeta);
-
+        // Load the corresponding textures
+        PlayerTextureModel ownerTextures = textures.getTextures(owner, false).orElse(null);
+        if (ownerTextures == null) {
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_CHANGED)
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_NOT_LOADABLE)
               .withPrefix()
-              .withVariable("owner", ownerTextures.getName())
+              .withVariable("owner", owner)
               .asScalar()
           );
 
-          this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
-        },
+          return;
+        }
 
-        closed,
+        // Overwrite the GameProfile of the skull
+        try {
+          Field profileField = skullMeta.getClass().getDeclaredField("profile");
+          profileField.setAccessible(true);
+          profileField.set(skullMeta, ownerTextures.toProfile());
+        } catch (Exception ex) {
+          logger.logError(ex);
+        }
 
-        // Back
-        null
-      );
+        item.setItemMeta(skullMeta);
 
-      // Close the GUI when prompting for the chat message
-      inst.close();
+        p.sendMessage(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_CHANGED)
+            .withPrefix()
+            .withVariable("owner", ownerTextures.getName())
+            .asScalar()
+        );
+      }, singleChoiceGui, chatUtil)
+        .withPrompt(
+          "owner",
+          values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_PROMPT)
+            .withPrefix(),
+          s -> s, null, null
+        )
+        .start();
     });
 
     ///////////////////////////////////// Leather Color /////////////////////////////////////
@@ -974,154 +814,90 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       // Set to an RGB value
       if (click.isRightClick()) {
 
-        // Prompt for the desired RGB color value in the chat
-        chatUtil.registerPrompt(
-          p,
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_PROMPT)
-            .withPrefix()
-            .asScalar(),
+        new UserInputChain(inst, values -> {
+          @SuppressWarnings("unchecked")
+          Tuple<Color, String> color = (Tuple<Color, String>) values.get("color");
+          armorMeta.setColor((color.a()) );
+          item.setItemMeta(armorMeta);
 
-          // Color entered
-          colorStr -> {
-            String[] colorData = colorStr.split(" ");
-
-            // Parts missing or excess
-            if (colorData.length != 3) {
-              p.sendMessage(
-                cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_INVALID_FORMAT)
-                  .withPrefix()
-                  .withVariable("input", colorStr)
-                  .asScalar()
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_CHANGED)
+              .withPrefix()
+              .withVariable("color", color.b())
+              .asScalar()
+          );
+        }, singleChoiceGui, chatUtil)
+          .withPrompt(
+            "color",
+            values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_PROMPT)
+              .withPrefix(),
+            s -> {
+              String[] data = s.split(" ");
+              return new Tuple<>(
+                Color.fromRGB(
+                  Integer.parseInt(data[0]),
+                  Integer.parseInt(data[1]),
+                  Integer.parseInt(data[2])
+                ),
+                s
               );
-
-              this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
-              return;
-            }
-
-            Integer r = tryParseInt(p, colorData[0]).orElse(null);
-            Integer g = tryParseInt(p, colorData[1]).orElse(null);
-            Integer b = tryParseInt(p, colorData[2]).orElse(null);
-
-            if (
-              // Not a number
-              r == null || g == null || b == null ||
-
-              // Out of range
-              r < 0 || g < 0 || b < 0 ||
-              r > 255 || g > 255 || b > 255
-            ) {
-              p.sendMessage(
-                cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_INVALID_FORMAT)
-                  .withPrefix()
-                  .withVariable("input", colorStr)
-                  .asScalar()
-              );
-
-              this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
-              return;
-            }
-
-            armorMeta.setColor(Color.fromRGB(r, g, b));
-            item.setItemMeta(armorMeta);
-
-            p.sendMessage(
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_CHANGED)
+            },
+            input -> (
+              cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_INVALID_FORMAT)
                 .withPrefix()
-                .withVariable("color", colorStr)
-                .asScalar()
-            );
+                .withVariable("input", input)
+            ),
+            null
+          )
+          .start();
 
-            this.show(p, inst.getArg(), AnimationType.SLIDE_UP);
-          },
-
-          closed,
-
-          // Back
-          null
-        );
-
-        // Close the GUI when prompting for the chat message
-        inst.close();
         return;
       }
 
       // Set to a predefined value
       if (click.isLeftClick()) {
 
-        List<Tuple<Object, ItemStack>> colorReprs = generateColorReprs(
-          c -> item.getType(),
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_NAME),
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_LORE)
-        );
+        new UserInputChain(inst, values -> {
+          @SuppressWarnings("unchecked")
+          Tuple<String, Color> colorData = (Tuple<String, Color>) values.get("color");
 
-        // Invoke a new single choice gui for available colors
-        inst.switchTo(AnimationType.SLIDE_LEFT, singleChoiceGui, new SingleChoiceParam(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_TITLE).asScalar(), colorReprs,
+          armorMeta.setColor(colorData.b());
+          item.setItemMeta(armorMeta);
 
-          // Color selected
-          (color, colorSelInst) -> {
-            @SuppressWarnings("unchecked")
-            Tuple<String, Color> colorData = (Tuple<String, Color>) color;
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_CHANGED)
+              .withPrefix()
+              .withVariable("color", formatConstant(colorData.a()))
+              .asScalar()
+          );
+        }, singleChoiceGui, chatUtil)
+          .withChoice(
+            "color",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_TITLE),
+            () -> generateColorReprs(
+              c -> item.getType(),
+              cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_NAME),
+              cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_LORE)
+            ),
+            null
+          )
+          .start();
 
-            armorMeta.setColor(colorData.b());
-            item.setItemMeta(armorMeta);
-
-            p.sendMessage(
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_CHANGED)
-                .withPrefix()
-                .withVariable("color", formatConstant(colorData.a()))
-                .asScalar()
-            );
-
-            colorSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
-          },
-          colorSelInst -> closed.run(), colorSelInst -> backButton.accept(colorSelInst.getInv())
-        ));
       }
     });
 
     return true;
   }
 
-      /**
-       * Tries to parse an integer from a string value and notifies the player on malformed input.
-   * @param p Target player
-   * @param input String to parse
-   * @return Optional number, empty on malformed input
-   */
-  private Optional<Integer> tryParseInt(Player p, String input) {
-    try {
-      return Optional.of(Integer.parseInt(input));
-    } catch (Exception ex) {
-      p.sendMessage(
-        cfg.get(ConfigKey.ERR_INTPARSE)
-          .withVariable("number", input)
-          .asScalar()
-      );
-      return Optional.empty();
-    }
-  }
-
   /**
-   * Open a new lore line index choice GUI which presents the user with
-   * an item for each line and then results in the index of the line chosen
-   * @param lines Available lore lines
-   * @param inst Gui instance to animate away from
-   * @param chosen Chosen callback
-   * @param closed Closed callback
-   * @param backButton Back button callback
+   * Build a list of representitives for all available lines within the list
+   * @param lore List of lore lines
    */
-  private void openLoreIndexChoice(
-    List<String> lines,
-    GuiInstance<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<Inventory>>> inst,
-    BiConsumer<Integer, GuiInstance<SingleChoiceParam>> chosen,
-    Runnable closed,
-    Consumer<Inventory> backButton
-  ) {
+  private List<Tuple<Object, ItemStack>> buildLoreRepresentitives(List<String> lore) {
     // Create representitive items for each line
     List<Tuple<Object, ItemStack>> representitives = new ArrayList<>();
-    for (int i = 0; i < lines.size(); i++) {
-      String line = lines.get(i);
+    for (int i = 0; i < lore.size(); i++) {
+      String line = lore.get(i);
       representitives.add(new Tuple<>(
         i,
         new ItemStackBuilder(Material.PAPER)
@@ -1136,14 +912,63 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .build()
       ));
     }
+    return representitives;
+  }
 
-    // Invoke a new single choice gui for available lines
-    inst.switchTo(AnimationType.SLIDE_LEFT, singleChoiceGui, new SingleChoiceParam(
-      cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LORE_TITLE).asScalar(),
-      representitives,
-      (m, lineSelInst) -> chosen.accept((int) m, lineSelInst),
-      lineSelInst -> closed.run(), lineSelInst -> backButton.accept(lineSelInst.getInv())
-    ));
+  /**
+   * Build a list of representitives for all available materials
+   * @param isActive Function used to determine whether a flag is marked as active
+   */
+  private List<Tuple<Object, ItemStack>> buildItemFlagRepresentitives(Function<ItemFlag, Boolean> isActive) {
+    // Representitive items for each flag
+    return Arrays.stream(ItemFlag.values())
+      .map(f -> (
+          new Tuple<>((Object) f, (
+            new ItemStackBuilder(Material.NAME_TAG)
+              .withName(
+                cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_NAME)
+                  .withVariable("flag", formatConstant(f.name()))
+              )
+              .withLore(
+                cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_LORE)
+                  .withVariable(
+                    "state",
+                    cfg.get(
+                      isActive.apply(f) ?
+                        ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_ACTIVE :
+                        ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_INACTIVE
+                      )
+                      .asScalar()
+                  )
+              )
+              .build()
+          ))
+        )
+      ).toList();
+  }
+
+  /**
+   * Build a list of representitives for all available materials
+   */
+  private List<Tuple<Object, ItemStack>> buildMaterialRepresentitives() {
+    // Representitive items for each material
+    return Arrays.stream(Material.values())
+      .filter(m -> !(
+        m.isAir() ||
+          m.isLegacy()
+      ))
+      .map(m -> (
+          new Tuple<>((Object) m, (
+            new ItemStackBuilder(m)
+              .withName(
+                cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_MATERIAL_NAME)
+                  .withVariable("hr_type", formatConstant(m.name()))
+              )
+              .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_MATERIAL_LORE))
+              .build()
+          ))
+        )
+      ).toList();
   }
 
   /**
@@ -1190,6 +1015,187 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
   }
 
   /**
+   * Maps enchantments to representitive icon materials
+   * @param ench Enchantment to map
+   * @return Icon material to display
+   */
+  private Material enchantmentToMaterial(Enchantment ench) {
+    if (ench == Enchantment.PROTECTION_ENVIRONMENTAL)
+      return Material.DIAMOND_CHESTPLATE;
+
+    if (ench == Enchantment.PROTECTION_FIRE)
+      return Material.GOLDEN_LEGGINGS;
+
+    if (ench == Enchantment.PROTECTION_EXPLOSIONS)
+      return Material.TNT;
+
+    if (ench == Enchantment.PROTECTION_FALL)
+      return Material.FEATHER;
+
+    if (ench == Enchantment.PROTECTION_PROJECTILE)
+      return Material.ARROW;
+
+    if (ench == Enchantment.BINDING_CURSE)
+      return Material.CHAIN;
+
+    if (ench == Enchantment.OXYGEN)
+      return Material.GLASS_BOTTLE;
+
+    if (ench == Enchantment.WATER_WORKER)
+      return Material.WATER_BUCKET;
+
+    if (ench == Enchantment.THORNS)
+      return Material.POPPY;
+
+    if (ench == Enchantment.DEPTH_STRIDER)
+      return Material.DIAMOND_BOOTS;
+
+    if (ench == Enchantment.FROST_WALKER)
+      return Material.PACKED_ICE;
+
+    if (ench == Enchantment.DAMAGE_ALL)
+      return Material.DIAMOND_SWORD;
+
+    if (ench == Enchantment.DAMAGE_UNDEAD)
+      return Material.ZOMBIE_HEAD;
+
+    if (ench == Enchantment.DAMAGE_ARTHROPODS)
+      return Material.WOODEN_SWORD;
+
+    if (ench == Enchantment.FIRE_ASPECT)
+      return Material.FLINT_AND_STEEL;
+
+    if (ench == Enchantment.KNOCKBACK)
+      return Material.STICK;
+
+    if (ench == Enchantment.LOOT_BONUS_MOBS)
+      return Material.GUNPOWDER;
+
+    if (ench == Enchantment.LOOT_BONUS_BLOCKS)
+      return Material.DIAMOND;
+
+    if (ench == Enchantment.SWEEPING_EDGE)
+      return Material.LEAD;
+
+    if (ench == Enchantment.DIG_SPEED)
+      return Material.IRON_PICKAXE;
+
+    if (ench == Enchantment.SILK_TOUCH)
+      return Material.YELLOW_STAINED_GLASS;
+
+    if (ench == Enchantment.DURABILITY)
+      return Material.ANVIL;
+
+    if (ench == Enchantment.ARROW_DAMAGE)
+      return Material.BOW;
+
+    if (ench == Enchantment.ARROW_FIRE)
+      return Material.CANDLE;
+
+    if (ench == Enchantment.ARROW_INFINITE)
+      return Material.ARROW;
+
+    if (ench == Enchantment.ARROW_KNOCKBACK)
+      return Material.STICK;
+
+    if (ench == Enchantment.LURE)
+      return Material.FISHING_ROD;
+
+    if (ench == Enchantment.LUCK)
+      return Material.PUFFERFISH;
+
+    if (ench == Enchantment.LOYALTY)
+      return Material.TRIDENT;
+
+    if (ench == Enchantment.IMPALING)
+      return Material.TIPPED_ARROW;
+
+    if (ench == Enchantment.RIPTIDE)
+      return Material.ENDER_PEARL;
+
+    if (ench == Enchantment.MULTISHOT)
+      return Material.FIREWORK_ROCKET;
+
+    if (ench == Enchantment.CHANNELING)
+      return Material.IRON_BARS;
+
+    if (ench == Enchantment.QUICK_CHARGE)
+      return Material.CROSSBOW;
+
+    if (ench == Enchantment.PIERCING)
+      return Material.IRON_BLOCK;
+
+    if (ench == Enchantment.MENDING)
+      return Material.EXPERIENCE_BOTTLE;
+
+    if (ench == Enchantment.VANISHING_CURSE)
+      return Material.BUCKET;
+
+    if (ench == Enchantment.SOUL_SPEED)
+      return Material.SOUL_SAND;
+
+    return Material.BOOK;
+  }
+
+  /**
+   * Build a list of representitives for all available {@link Enchantment} constants
+   * @param isNative Function used to check whether this enchantment is native to the target item
+   * @param isActive Function used to check whether this enchantment is active on the target item
+   * @param activeLevel Function used to get the currently active level of this enchantment on the target item
+   */
+  private List<Tuple<Object, ItemStack>> buildEnchantmentRepresentitives(
+    Function<Enchantment, Boolean> isNative,
+    Function<Enchantment, Boolean> isActive,
+    Function<Enchantment, Integer> activeLevel
+  ) {
+    List<Enchantment> enchantments = new ArrayList<>();
+
+    // Get all available enchantments from the abstract enchantment class's list of constant fields
+    try {
+      List<Field> constants = Arrays.stream(Enchantment.class.getDeclaredFields())
+        .filter(field -> field.getType().equals(Enchantment.class) && Modifier.isStatic(field.getModifiers()))
+        .toList();
+
+      for (Field constant : constants)
+        enchantments.add((Enchantment) constant.get(null));
+    } catch (Exception ex) {
+      logger.logError(ex);
+    }
+
+    // Representitive items for each enchantment
+    return enchantments.stream()
+      // Sort by relevance
+      .sorted(Comparator.comparing(isNative, Comparator.reverseOrder()))
+      .map(ench -> {
+          boolean has = isActive.apply(ench);
+          int level = -1;
+
+          if (has)
+            level = activeLevel.apply(ench);
+
+          return new Tuple<>((Object) ench, (
+            new ItemStackBuilder(has ? Material.ENCHANTED_BOOK : enchantmentToMaterial(ench))
+              .withEnchantment(ench, 1)
+              .withName(
+                cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_NAME)
+                  .withVariable("enchantment", formatConstant(ench.getKey().getKey()))
+              )
+              .withLore(
+                cfg.get(has ? ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_LORE_ACTIVE : ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_LORE_INACTIVE)
+                  .withVariable(
+                    "state",
+                    cfg.get(has ? ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_ACTIVE : ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_INACTIVE)
+                      .asScalar()
+                  )
+                  .withVariable("level", level)
+              )
+              .build()
+          ));
+        }
+      ).toList();
+  }
+
+  /**
    * Build a list of representitives for all attributes contained in the multimap
    * @param attrs Attributes to display
    * @param areExisting Whether there are modifiers existing, if false, modifiers are ignored
@@ -1226,35 +1232,6 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     }
 
     return representitives;
-  }
-
-  /**
-   * Open a new attribute choice GUI which presents the user with an item for each
-   * attribute and then results in the ref of the attribute chosen
-   * @param attrs Available attributes
-   * @param areExisting Whether these attributes are already existing, or they're a
-   *                    list of all available attributes (attributemodifier is null)
-   * @param inst Gui instance to animate away from
-   * @param chosen Chosen callback
-   * @param closed Closed callback
-   * @param backButton Back button callback
-   */
-  @SuppressWarnings("unchecked")
-  private void openAttributeIndexChoice(
-    Multimap<Attribute, AttributeModifier> attrs,
-    boolean areExisting,
-    GuiInstance<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<Inventory>>> inst,
-    BiConsumer<Tuple<Attribute, AttributeModifier>, GuiInstance<SingleChoiceParam>> chosen,
-    Runnable closed,
-    Consumer<Inventory> backButton
-  ) {
-    // Invoke a new single choice gui for available attributes
-    inst.switchTo(AnimationType.SLIDE_LEFT, singleChoiceGui, new SingleChoiceParam(
-      cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ATTR_TITLE).asScalar(),
-      buildAttributeRepresentitives(attrs, areExisting),
-      (m, attrSelInst) -> chosen.accept((Tuple<Attribute, AttributeModifier>) m, attrSelInst),
-      attrSelInst -> closed.run(), attrSelInst -> backButton.accept(attrSelInst.getInv())
-    ));
   }
 
   /**

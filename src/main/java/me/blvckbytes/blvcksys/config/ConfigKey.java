@@ -1476,17 +1476,19 @@ public enum ConfigKey {
     " ",
     "$0Aktueller Zustand: {{state}}",
     "$0Angewandter Level: $2{{level}}",
+    " ",
     "$0Klicke um die Verzauberung zu &centfernen$0."
   ),
   GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_LORE_INACTIVE(
     "gui.itemeditor.choice.enchantments.lore.inactive",
     " ",
     "$0Aktueller Zustand: {{state}}",
+    " ",
     "$0Klicke um die Verzauberung &ahinzuzufügen$0."
   ),
   GUI_ITEMEDITOR_ENCHANTMENT_ADDED("gui.itemeditor.enchantment.changed", "$0Du hast die Verzauberung $2{{enchantment}} $0auf Level $2{{level}} $0hinzugefügt."),
   GUI_ITEMEDITOR_ENCHANTMENT_REMOVED("gui.itemeditor.enchantment.removed", "$0Du hast die Verzauberung $2{{enchantment}} $0entfernt."),
-  GUI_ITEMEDITOR_ENCHANTMENT_LEVEL_PROMPT("gui.itemeditor.enchantment.level_prompt", "$0Bitte gib das gewünschte $2Verzauberungslevel $0in den $2Chat $0ein."),
+  GUI_ITEMEDITOR_ENCHANTMENT_LEVEL_PROMPT("gui.itemeditor.enchantment.level_prompt", "$0Bitte gib das gewünschte $2Verzauberungslevel $0für die Verzauberung $2{{enchantment}} $0in den $2Chat $0ein."),
   GUI_ITEMEDITOR_DISPLAYNAME_NAME("gui.itemeditor.displayname.name", "$0» $2Anzeigename $0«"),
   GUI_ITEMEDITOR_DISPLAYNAME_LORE(
     "gui.itemeditor.displayname.lore",

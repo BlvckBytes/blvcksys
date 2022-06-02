@@ -73,14 +73,27 @@ public class UserInputChain {
    * @param prompt Displayed chat prompt value
    * @param transformer Chat prompt transformer (parsing, for example)
    * @param errorMessage Error message to display when the transformer failed
+   * @param skip Optional skip predicate
    */
-  public UserInputChain withPrompt(String field, ConfigValue prompt, UnsafeFunction<String, Object> transformer, @Nullable Function<String, ConfigValue> errorMessage) {
+  public UserInputChain withPrompt(
+    String field,
+    Function<Map<String, Object>, ConfigValue> prompt,
+    UnsafeFunction<String, Object> transformer,
+    @Nullable Function<String, ConfigValue> errorMessage,
+    @Nullable Function<Map<String, Object>, Boolean> skip
+  ) {
     stages.add(isBack -> {
+
+      if (skip != null && skip.apply(values)) {
+        nextStage();
+        return;
+      }
+
       lastWasGui = false;
 
       chatUtil.registerPrompt(
         main.getViewer(),
-        prompt.asScalar(),
+        prompt.apply(values).asScalar(),
 
         // Answer entered
         input -> {
@@ -121,14 +134,15 @@ public class UserInputChain {
         },
 
         // Back
-        () -> {
+        currStage > 1 ? () -> {
           if (isCancelled) return;
           previousStage();
-        }
+        } : null
       );
 
       // Close the current inventory to be able to type into the chat
-      main.getViewer().closeInventory();
+      if (lastScreen != null)
+        lastScreen.close();
     });
 
     return this;
@@ -139,9 +153,21 @@ public class UserInputChain {
    * @param field Name of the field
    * @param type Type of choice (part of the screen title)
    * @param representitives List of representitive items and their values
+   * @param skip Optional skip predicate
    */
-  public UserInputChain withChoice(String field, ConfigValue type, Supplier<List<Tuple<Object, ItemStack>>> representitives) {
+  public UserInputChain withChoice(
+    String field,
+    ConfigValue type,
+    Supplier<List<Tuple<Object, ItemStack>>> representitives,
+    @Nullable Function<Map<String, Object>, Boolean> skip
+  ) {
     stages.add(isBack -> {
+
+      if (skip != null && skip.apply(values)) {
+        nextStage();
+        return;
+      }
+
       SingleChoiceParam param = new SingleChoiceParam(
         type.asScalar(), representitives.get(),
 
@@ -169,6 +195,7 @@ public class UserInputChain {
         selectionInst -> {
           if (isCancelled) return;
           lastScreen = selectionInst;
+          lastWasGui = true;
           previousStage();
         }
       );
@@ -225,7 +252,7 @@ public class UserInputChain {
         completion.accept(values);
 
         // Go back to the main screen
-        main.reopen(AnimationType.SLIDE_RIGHT, lastWasGui ? lastScreen : null);
+        main.reopen(lastWasGui ? AnimationType.SLIDE_RIGHT : AnimationType.SLIDE_UP, lastWasGui ? lastScreen : null);
       }
 
       return;

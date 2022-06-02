@@ -1,21 +1,17 @@
 package me.blvckbytes.blvcksys.events;
 
 import me.blvckbytes.blvcksys.di.AutoConstruct;
+import me.blvckbytes.blvcksys.handlers.gui.FuelSource;
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.inventory.ClickType;
-import org.bukkit.event.inventory.InventoryAction;
-import org.bukkit.event.inventory.InventoryClickEvent;
-import org.bukkit.event.inventory.InventoryDragEvent;
-import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.ItemStack;
+import org.bukkit.event.inventory.*;
+import org.bukkit.inventory.*;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.Set;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
+import java.util.*;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -26,6 +22,21 @@ import java.util.stream.IntStream;
 */
 @AutoConstruct
 public class InventoryListener implements Listener {
+
+  // List of smeltable items
+  private static final List<Material> smeltable;
+
+  static {
+    smeltable = new ArrayList<>();
+
+    Iterator<Recipe> iter = Bukkit.recipeIterator();
+    while (iter.hasNext()) {
+      Recipe recipe = iter.next();
+
+      if (recipe instanceof FurnaceRecipe fr)
+        smeltable.add(fr.getInput().getType());
+    }
+  }
 
   @EventHandler
   public void onClick(InventoryClickEvent e) {
@@ -79,79 +90,34 @@ public class InventoryListener implements Listener {
     if (e.getAction() == InventoryAction.MOVE_TO_OTHER_INVENTORY) {
       Inventory top = e.getView().getTopInventory();
 
-      // Fallback: Moved down into own inventory
       Inventory from;
       Inventory to;
-      int targetSlot;
 
       // Move up into foreign inventory
       if (!top.equals(e.getClickedInventory())) {
-        ItemStack moved = p.getInventory().getItem(e.getSlot());
-
         from = p.getInventory();
         to = top;
-
-        int invSlot = -1;
-        for (int slot : generateInventorySlots(to.getSize(), false)) {
-          ItemStack curr = to.getItem(slot);
-
-          if (
-            // First empty slot encountered, use that for now
-            (invSlot < 0 && curr == null) || (
-              // Target inv slot is similar to the moved item
-              curr != null && curr.isSimilar(moved) &&
-                // And there's enough space left to stack something onto it
-                (curr.getMaxStackSize() - curr.getAmount()) > 0)
-          )
-            invSlot = slot;
-        }
-
-        targetSlot = invSlot;
       }
 
       // Moved down into own inventory
       else {
-        ItemStack moved = top.getItem(e.getSlot());
-
         from = top;
         to = p.getInventory();
-
-        int invSlot = -1;
-
-        for (int slot : generateInventorySlots(to.getSize(), true)) {
-          ItemStack curr = to.getItem(slot);
-
-          if (
-            // Target inv slot is similar to the moved item
-            curr != null && curr.isSimilar(moved) &&
-              // And there's enough space left to stack something onto it
-              (curr.getMaxStackSize() - curr.getAmount()) > 0
-          ) {
-            invSlot = slot;
-            break;
-          }
-        }
-
-        targetSlot = invSlot;
       }
 
-      // No matching stacks found, try to find the first empty to-inv slot
-      if (targetSlot < 0) {
-
-        for (int slot : generateInventorySlots(to.getSize(), true)) {
-          if (to.getItem(slot) == null) {
-            targetSlot = slot;
-            break;
-          }
-        }
-      }
-
-      // No more space to move into
-      if (targetSlot < 0)
+      ItemStack item = from.getItem(e.getSlot());
+      if (item == null)
         return;
 
-      if (checkCancellation(from, to, p, ManipulationAction.MOVE, e.getSlot(), targetSlot, e.getClick()))
+      Set<Integer> targetSlots = determineMoveSlots(item, to);
+
+      // No more space to move into
+      if (targetSlots.size() == 0)
+        return;
+
+      if (targetSlots.stream().anyMatch(slot -> checkCancellation(from, to, p, ManipulationAction.MOVE, e.getSlot(), slot, e.getClick())))
         e.setCancelled(true);
+
       return;
     }
 
@@ -163,19 +129,30 @@ public class InventoryListener implements Listener {
         e.getAction() == InventoryAction.PICKUP_SOME ||
         e.getAction() == InventoryAction.COLLECT_TO_CURSOR
     ) {
-      // The clicked slot will always be within the set
-      Set<Integer> sourceSlots = new HashSet<>();
-      sourceSlots.add(e.getSlot());
+      Inventory inv = e.getClickedInventory();
+      Inventory top = e.getView().getTopInventory();
+
+      Set<Integer> slotsOwn = new HashSet<>(), slotsTop = new HashSet<>();
+
+      // Clicked within the top inventory, add that slot
+      if (inv.equals(top))
+        slotsTop.add(e.getSlot());
+
+      // Must be the own inventory
+      else
+        slotsOwn.add(e.getSlot());
 
       // Collected all similar items to the cursor
       if (e.getAction() == InventoryAction.COLLECT_TO_CURSOR && e.getCursor() != null) {
-        Inventory inv = e.getClickedInventory();
         ItemStack cursor = e.getCursor();
         int remaining = cursor.getMaxStackSize() - cursor.getAmount();
 
         // While there's still space on the cursor stack, search for further items and their slots
-        for (int slot : generateInventorySlots(inv.getSize(), inv.equals(p.getInventory()))) {
-          ItemStack curr = inv.getItem(slot);
+        // If there's a top inventory, that is always being preferred, and only if there's space after
+        // exhausting that top inventory, the bottom (own) inventory is considered
+
+        for (int slot : makeMoveSlotPattern(cursor, top, false, false)) {
+          ItemStack curr = top.getItem(slot);
 
           if (remaining <= 0)
             break;
@@ -183,12 +160,28 @@ public class InventoryListener implements Listener {
           if (curr == null || !curr.isSimilar(cursor))
             continue;
 
-          sourceSlots.add(slot);
+          slotsTop.add(slot);
+          remaining -= curr.getAmount();
+        }
+
+        for (int slot : makeMoveSlotPattern(cursor, p.getInventory(), false, false)) {
+          ItemStack curr = p.getInventory().getItem(slot);
+
+          if (remaining <= 0)
+            break;
+
+          if (curr == null || !curr.isSimilar(cursor))
+            continue;
+
+          slotsOwn.add(slot);
           remaining -= curr.getAmount();
         }
       }
 
-      if (sourceSlots.stream().anyMatch(slot -> checkCancellation(e.getClickedInventory(), p, ManipulationAction.PICKUP, slot, e.getClick())))
+      if (slotsTop.stream().anyMatch(slot -> checkCancellation(top, p, ManipulationAction.PICKUP, slot, e.getClick())))
+        e.setCancelled(true);
+
+      if (slotsOwn.stream().anyMatch(slot -> checkCancellation(p.getInventory(), p, ManipulationAction.PICKUP, slot, e.getClick())))
         e.setCancelled(true);
 
       return;
@@ -277,26 +270,113 @@ public class InventoryListener implements Listener {
   }
 
   /**
-   * Generate a set of slots to iterate over in order to check for slots in
-   * an inventory when figuring out where moved items will end up. For inventories
-   * on top, rows are iterated in natural direction, while the player's inventory
-   * requires iterating in reversed rows to mimic the real game mechanics.
-   *
-   * @param size         Size of the inventory
-   * @param reversedRows Whether to reverse individual rows
-   * @return Set of slots to iterate over when searching
+   * Tries to create the slot pattern minecraft uses when movingitems around
+   * efficiently, either through shift or through collecting items, etc.
+   * @param item Item which is involved and can be used to exclude slots which cannot hold it
+   * @param to Target inventory
+   * @return List of slots in the correct order for further processing
    */
-  private Set<Integer> generateInventorySlots(int size, boolean reversedRows) {
-    if (!reversedRows)
-      return IntStream.range(0, size).boxed().collect(Collectors.toSet());
+  private List<Integer> makeMoveSlotPattern(@Nullable ItemStack item, Inventory to, boolean rowReverse, boolean colReverse) {
+    List<Integer> slots = new ArrayList<>();
+    int rows = to.getSize() / 9;
 
-    Set<Integer> slots = new HashSet<>();
-
-    for (int row = 0; row < size / 9; row++) {
-      int first = row * 9, last = first + 8;
-      for (int slot = last; slot >= first; slot--)
-        slots.add(slot);
+    /*
+      The player inventory is handled in row-reverse and has been shifted up
+      by a row (while wrapping) so the first row ends up in the hot-bar
+      8-0,35-27,26-18,17-9
+    */
+    if (to instanceof PlayerInventory) {
+      for (int row = rowReverse ? rows - 1 : 0; rowReverse && row >= 0 || !rowReverse && row < rows; row += rowReverse ? -1 : 1) {
+        for (int slot = colReverse ? row * 9 + 9 - 1 : row * 9; colReverse && slot >= row * 9 || !colReverse && slot < row * 9 + 9; slot += colReverse ? -1 : 1) {
+          slots.add((slot + 9) % (9 * 4));
+        }
+      }
     }
+
+    /*
+      Chest inventories are just looped top down, left to right, in natural order
+      0-8,9-17,18-26,27-35
+    */
+    else if (to.getType() == InventoryType.CHEST) {
+      for (int row = 0; row < rows; row++) {
+        for (int slot = row * 9; slot < row * 9 + 9; slot++) {
+          slots.add(slot);
+        }
+      }
+    }
+
+    /*
+      Furnaces basically only accept items to smelt or fuel, so there's
+      only one possible slot for moves, depending on the material
+      0: smelting, 1: power, 2: smelted
+    */
+    else if (to.getType() == InventoryType.FURNACE) {
+      // No item provided, both slots are a possibility
+      if (item == null) {
+        slots.add(0);
+        slots.add(1);
+      }
+
+      // Is smeltable and can only go into 0
+      else if (smeltable.contains(item.getType()))
+        slots.add(0);
+
+      // Is a fuel source and can only go into 1
+      else if (FuelSource.getBurningTime(item.getType()).isPresent())
+        slots.add(1);
+    }
+
+    // Not specifically defined above, just take the slots in the order
+    // they appear, which may not always be the case but is sure better
+    // than not responding at all
+    else {
+      for (int i = 0; i < to.getSize(); i++)
+        slots.add(i);
+    }
+
+    return slots;
+  }
+
+  /**
+   * Determines the slots into which an item has been moved into after shift
+   * click moving it into another inventory
+   * @param item The item which will been moved
+   * @param to The inventory it will be moved into
+   * @return Set of slots that are affected
+   */
+  private Set<Integer> determineMoveSlots(ItemStack item, Inventory to) {
+    Set<Integer> slots = new HashSet<>();
+    int firstEmpty = -1;
+    int remaining = item.getAmount();
+
+    for (int slot : makeMoveSlotPattern(item, to, true, true)) {
+      ItemStack content = to.getItem(slot);
+
+      // Save the index of the first empty slot
+      if (firstEmpty < 0 && content == null)
+        firstEmpty = slot;
+
+      if (remaining <= 0)
+        continue;
+
+      // Empty slot, wouldn't put it here, unless it's the first occurrence (already stored)
+      if (content == null)
+        continue;
+
+      int contentFree = content.getMaxStackSize() - content.getAmount();
+
+      // Cannot stack with this item
+      if (!content.isSimilar(item) || contentFree == 0)
+        continue;
+
+      // Put as many items on this stack as possible
+      remaining -= contentFree;
+      slots.add(slot);
+    }
+
+    // No stackable items found, use the first empty slot if it's available
+    if (slots.size() == 0 && firstEmpty >= 0)
+      slots.add(firstEmpty);
 
     return slots;
   }

@@ -67,6 +67,8 @@ public class PreferencesGui extends AGui<Object> {
 
     inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
 
+    // Msg disable
+    inst.addStateToggle(19, 10, () -> !prefs.isMsgDisabled(p), s -> prefs.setMsgDisabled(p, s));
     inst.fixedItem(10, () -> (
       new ItemStackBuilder(Material.NAME_TAG)
         .withName(cfg.get(ConfigKey.GUI_PREFERENCES_MSG_NAME))
@@ -77,6 +79,8 @@ public class PreferencesGui extends AGui<Object> {
         .build()
     ), null);
 
+    // Chat disable
+    inst.addStateToggle(21, 12, () -> !prefs.isChatHidden(p), s -> prefs.setChatHidden(p, s));
     inst.fixedItem(12, () -> (
       new ItemStackBuilder(Material.PAPER)
         .withName(cfg.get(ConfigKey.GUI_PREFERENCES_CHAT_NAME))
@@ -87,6 +91,8 @@ public class PreferencesGui extends AGui<Object> {
         .build()
     ), null);
 
+    // Scoreboard hide
+    inst.addStateToggle(23, 14, () -> obj.getSidebarVisibility(p), s -> obj.setSidebarVisibility(p, !s));
     inst.fixedItem(14, () -> (
       new ItemStackBuilder(Material.LADDER)
         .withName(cfg.get(ConfigKey.GUI_PREFERENCES_SCOREBOARD_NAME))
@@ -97,6 +103,7 @@ public class PreferencesGui extends AGui<Object> {
         .build()
     ), null);
 
+    // Arrow trails
     inst.fixedItem(16, () -> {
       Tuple<@Nullable Particle, @Nullable Color> currTrail = prefs.getArrowTrail(p);
       Particle particle = currTrail.a();
@@ -117,60 +124,55 @@ public class PreferencesGui extends AGui<Object> {
         )
         .build();
     }, e -> {
-      // Invoke a new single choice gui for available particles
-      inst.switchTo(AnimationType.SLIDE_LEFT, singleChoiceGui, new SingleChoiceParam(
-        cfg.get(ConfigKey.GUI_PREFERENCES_ARROW_TRAILS_PARTICLE_TITLE).asScalar(), generateParticleReprs(p),
-        (part, partSelInst) -> {
-          Particle particle = (Particle) part;
 
-          // Hasn't yet unlocked this particle effect
-          if (!hasUnlockedParticle(p, particle)) {
-            p.sendMessage(
-              cfg.get(ConfigKey.GUI_PREFERENCES_ARROW_TRAILS_PARTICLE_LOCKED)
-                .withPrefix()
-                .withVariable("particle", formatConstant(particle.name()))
-                .asScalar()
-            );
+      new UserInputChain(inst, values -> {
+        Particle particle = (Particle) values.get("particle");
 
-            partSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
-          }
+        // Hasn't yet unlocked this particle effect
+        if (!hasUnlockedParticle(p, particle)) {
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_PREFERENCES_ARROW_TRAILS_PARTICLE_LOCKED)
+              .withPrefix()
+              .withVariable("particle", formatConstant(particle.name()))
+              .asScalar()
+          );
+          return;
+        }
 
-          // This particle needs dust options (a color)
-          if (particle.getDataType() == Particle.DustOptions.class) {
-            List<Tuple<Object, ItemStack>> colorReprs = itemEditorGui.generateColorReprs(
-              this::colorToMaterial,
-              cfg.get(ConfigKey.GUI_PREFERENCES_CHOICE_COLOR_NAME),
-              cfg.get(ConfigKey.GUI_PREFERENCES_CHOICE_COLOR_LORE)
-            );
-
-            // Invoke a new single choice gui for available colors
-            partSelInst.switchTo(AnimationType.SLIDE_LEFT, singleChoiceGui, new SingleChoiceParam(
-              cfg.get(ConfigKey.GUI_PREFERENCES_ARROW_TRAILS_COLOR_TITLE).asScalar(), colorReprs,
-              (col, colSelInst) -> {
-                @SuppressWarnings("unchecked")
-                Tuple<String, Color> color = (Tuple<String, Color>)  col;
-
-                prefs.setArrowTrail(p, particle, color.b());
-                colSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
-              },
-              (i) -> {}, colorSelInst -> colorSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg()))
-            );
-
-            return;
-          }
-
-          // No color required
+        // Doesn't require any color
+        if (particle.getDataType() != Particle.DustOptions.class) {
           prefs.setArrowTrail(p, particle, null);
-          partSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
-        },
-        (partSelInst) -> {}, partSelInst -> partSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg())
-      ));
+          return;
+        }
+
+        @SuppressWarnings("unchecked")
+        Tuple<String, Color> color = (Tuple<String, Color>) values.get("color");
+        prefs.setArrowTrail(p, particle, color.b());
+      }, singleChoiceGui, null)
+        .withChoice(
+          "particle",
+          cfg.get(ConfigKey.GUI_PREFERENCES_ARROW_TRAILS_PARTICLE_TITLE),
+          () -> generateParticleReprs(p),
+          null
+        )
+        .withChoice(
+          "color",
+          cfg.get(ConfigKey.GUI_PREFERENCES_ARROW_TRAILS_COLOR_TITLE),
+          () -> itemEditorGui.generateColorReprs(
+            this::colorToMaterial,
+            cfg.get(ConfigKey.GUI_PREFERENCES_CHOICE_COLOR_NAME),
+            cfg.get(ConfigKey.GUI_PREFERENCES_CHOICE_COLOR_LORE)
+          ),
+          values -> {
+            // Skip whenever either the particle doesn't support color or the player hasn't yet unlocked this effect
+            Particle particle = (Particle) values.get("particle");
+            return particle.getDataType() != Particle.DustOptions.class || !hasUnlockedParticle(p, particle);
+          }
+        )
+        .start();
     });
 
-    inst.addStateToggle(19, 10, () -> !prefs.isMsgDisabled(p), s -> prefs.setMsgDisabled(p, s));
-    inst.addStateToggle(21, 12, () -> !prefs.isChatHidden(p), s -> prefs.setChatHidden(p, s));
-    inst.addStateToggle(23, 14, () -> obj.getSidebarVisibility(p), s -> obj.setSidebarVisibility(p, !s));
-
+    // Arrow trails clear
     inst.fixedItem(25, () -> {
       boolean hasTrails = prefs.getArrowTrail(p).a() != null;
 

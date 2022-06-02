@@ -129,6 +129,12 @@ public class GuiInstance<T> {
    * @param previous Previous inventory
    */
   public<A> void reopen(AnimationType animation, @Nullable GuiInstance<A> previous) {
+    if (!template.getActiveInstances().containsKey(viewer))
+      template.getActiveInstances().put(viewer, new ArrayList<>());
+
+    // Re-register this instance which was unregistered when closed
+    template.getActiveInstances().get(viewer).add(this);
+
     Bukkit.getScheduler().runTask(plugin, () -> {
       redraw("*");
       open(animation, previous == null ? null : previous.getInv());

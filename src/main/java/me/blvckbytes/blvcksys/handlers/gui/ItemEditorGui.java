@@ -37,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -243,7 +244,6 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
               .withVariable("material", formatConstant(mat.name()))
               .asScalar()
           );
-          return false;
         }, closed, backButton
       ));
     });
@@ -309,7 +309,6 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
               )
               .asScalar()
           );
-          return false;
         }, closed, backButton
       ));
     });
@@ -391,7 +390,6 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             );
 
             this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, inv);
-            return false;
           }
 
           // Prompt for the desired level in the chat
@@ -429,7 +427,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           );
 
           // Close the GUI when prompting for the chat message
-          return true;
+          p.closeInventory();
         }, closed, backButton
       ));
     });
@@ -809,7 +807,6 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           );
 
           this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, inv);
-          return false;
         }, closed, backButton);
 
         return;
@@ -913,13 +910,10 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
                       );
 
                       this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, opChoiceInv);
-                      return false;
                     },
 
                     closed, backButton
                   ), AnimationType.SLIDE_LEFT, slotChoiceInv);
-
-                  return false;
                 },
 
                 closed, backButton
@@ -931,7 +925,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           );
 
           // Close the GUI when prompting for the chat message
-          return true;
+          p.closeInventory();
         }, closed, backButton);
       }
     });
@@ -1125,7 +1119,6 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             );
 
             this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, inv);
-            return false;
           },
           closed, backButton
         ));
@@ -1214,7 +1207,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     Multimap<Attribute, AttributeModifier> attrs,
     boolean areExisting,
     GuiInstance<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<Inventory>>> inst,
-    BiFunction<Tuple<Attribute, AttributeModifier>, Inventory, Boolean> chosen,
+    BiConsumer<Tuple<Attribute, AttributeModifier>, Inventory> chosen,
     Runnable closed,
     Consumer<Inventory> backButton
   ) {
@@ -1252,7 +1245,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     inst.switchTo(AnimationType.SLIDE_LEFT, singleChoiceGui, new SingleChoiceParam(
       cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ATTR_TITLE).asScalar(),
       representitives,
-      (m, inv) -> chosen.apply((Tuple<Attribute, AttributeModifier>) m, inv),
+      (m, inv) -> chosen.accept((Tuple<Attribute, AttributeModifier>) m, inv),
       closed, backButton
     ));
   }

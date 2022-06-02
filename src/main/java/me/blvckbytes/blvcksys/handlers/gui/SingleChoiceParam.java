@@ -6,7 +6,7 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.function.BiFunction;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 /*
@@ -23,7 +23,7 @@ public record SingleChoiceParam(
   List<Tuple<Object, ItemStack>> representitives,
 
   // Selection callback, returns whether to close the GUI
-  BiFunction<Object, Inventory, Boolean> selected,
+  BiConsumer<Object, Inventory> selected,
 
   // Inventory close callback
   Runnable closed,

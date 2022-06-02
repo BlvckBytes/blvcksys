@@ -133,7 +133,6 @@ public class PreferencesGui extends AGui<Object> {
             );
 
             this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, partInv);
-            return false;
           }
 
           // This particle needs dust options (a color)
@@ -153,18 +152,14 @@ public class PreferencesGui extends AGui<Object> {
 
                 prefs.setArrowTrail(p, particle, color.b());
                 this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, colInv);
-                return false;
               },
               () -> {}, backInv -> this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, backInv)
             ), AnimationType.SLIDE_LEFT, partInv);
-
-            return false;
           }
 
           // No color required
           prefs.setArrowTrail(p, particle, null);
           this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, partInv);
-          return false;
         },
         () -> {}, inv -> this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, inv)
       ));

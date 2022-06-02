@@ -190,8 +190,7 @@ public class AnvilSearchGui extends AGui<SingleChoiceParam> implements IPacketMo
 
     // Call the selection callback
     madeSelection.add(p);
-    if (inst.getArg().selected().apply(selection, inst.getInv()))
-      p.closeInventory();
+    inst.getArg().selected().accept(selection, inst.getInv());
   }
 
   //=========================================================================//

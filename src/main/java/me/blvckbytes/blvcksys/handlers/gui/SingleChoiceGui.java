@@ -81,19 +81,19 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
       searchGui.show(p, scp, null);
     });
 
-    if (inst.getArg().backButton() != null)
+    if (inst.getArg().backButton() != null) {
       inst.addBack(36, e -> {
         haveChosen.add(p);
         inst.getArg().backButton().accept(inst.getInv());
       });
+    }
 
     for (Tuple<Object, ItemStack> choice : inst.getArg().representitives()) {
       inst.addPagedItem(
         s -> choice.b(),
         e -> {
           haveChosen.add(p);
-          if (inst.getArg().selected().apply(choice.a(), inst.getInv()))
-            inst.close();
+          inst.getArg().selected().accept(choice.a(), inst.getInv());
         },
         null
       );

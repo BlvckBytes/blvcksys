@@ -48,7 +48,7 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
   @Override
   protected boolean closed(GuiInstance<SingleChoiceParam> inst) {
     if (!haveChosen.remove(inst.getViewer()))
-      inst.getArg().closed().run();
+      inst.getArg().closed().accept(inst);
     return false;
   }
 
@@ -71,7 +71,7 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
         inst.getArg().selected(),
 
         // Re-open the choice if nothing was chosen
-        () -> Bukkit.getScheduler().runTaskLater(plugin, () -> this.show(p, inst.getArg(), AnimationType.SLIDE_UP), 1),
+        (i) -> Bukkit.getScheduler().runTaskLater(plugin, () -> this.show(p, inst.getArg(), AnimationType.SLIDE_UP), 1),
 
         inst.getArg().backButton()
       );
@@ -84,7 +84,7 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
     if (inst.getArg().backButton() != null) {
       inst.addBack(36, e -> {
         haveChosen.add(p);
-        inst.getArg().backButton().accept(inst.getInv());
+        inst.getArg().backButton().accept(inst);
       });
     }
 
@@ -93,7 +93,7 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
         s -> choice.b(),
         e -> {
           haveChosen.add(p);
-          inst.getArg().selected().accept(choice.a(), inst.getInv());
+          inst.getArg().selected().accept(choice.a(), inst);
         },
         null
       );

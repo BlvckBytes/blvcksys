@@ -80,7 +80,7 @@ public class AnvilSearchGui extends AGui<SingleChoiceParam> implements IPacketMo
     p.updateInventory();
 
     if (!madeSelection.remove(p))
-      inst.getArg().closed().run();
+      inst.getArg().closed().accept(inst);
 
     currentInventory.remove(p);
     return false;
@@ -190,7 +190,7 @@ public class AnvilSearchGui extends AGui<SingleChoiceParam> implements IPacketMo
 
     // Call the selection callback
     madeSelection.add(p);
-    inst.getArg().selected().accept(selection, inst.getInv());
+    inst.getArg().selected().accept(selection, inst);
   }
 
   //=========================================================================//

@@ -120,7 +120,7 @@ public class PreferencesGui extends AGui<Object> {
       // Invoke a new single choice gui for available particles
       inst.switchTo(AnimationType.SLIDE_LEFT, singleChoiceGui, new SingleChoiceParam(
         cfg.get(ConfigKey.GUI_PREFERENCES_ARROW_TRAILS_PARTICLE_TITLE).asScalar(), generateParticleReprs(p),
-        (part, partInv) -> {
+        (part, partSelInst) -> {
           Particle particle = (Particle) part;
 
           // Hasn't yet unlocked this particle effect
@@ -132,7 +132,7 @@ public class PreferencesGui extends AGui<Object> {
                 .asScalar()
             );
 
-            this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, partInv);
+            partSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
           }
 
           // This particle needs dust options (a color)
@@ -144,24 +144,26 @@ public class PreferencesGui extends AGui<Object> {
             );
 
             // Invoke a new single choice gui for available colors
-            singleChoiceGui.show(p, new SingleChoiceParam(
+            partSelInst.switchTo(AnimationType.SLIDE_LEFT, singleChoiceGui, new SingleChoiceParam(
               cfg.get(ConfigKey.GUI_PREFERENCES_ARROW_TRAILS_COLOR_TITLE).asScalar(), colorReprs,
-              (col, colInv) -> {
+              (col, colSelInst) -> {
                 @SuppressWarnings("unchecked")
                 Tuple<String, Color> color = (Tuple<String, Color>)  col;
 
                 prefs.setArrowTrail(p, particle, color.b());
-                this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, colInv);
+                colSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
               },
-              () -> {}, backInv -> this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, backInv)
-            ), AnimationType.SLIDE_LEFT, partInv);
+              (i) -> {}, colorSelInst -> colorSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg()))
+            );
+
+            return;
           }
 
           // No color required
           prefs.setArrowTrail(p, particle, null);
-          this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, partInv);
+          partSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
         },
-        () -> {}, inv -> this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, inv)
+        (partSelInst) -> {}, partSelInst -> partSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg())
       ));
     });
 

@@ -38,7 +38,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -232,11 +231,11 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_MATERIAL_TITLE).asScalar(), representitives,
 
         // Material selected
-        (m, inv) -> {
+        (m, matSelInst) -> {
           Material mat = (Material) m;
 
           item.setType(mat);
-          this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, inv);
+          matSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
 
           p.sendMessage(
             cfg.get(ConfigKey.GUI_ITEMEDITOR_MATERIAL_CHANGED)
@@ -244,7 +243,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
               .withVariable("material", formatConstant(mat.name()))
               .asScalar()
           );
-        }, closed, backButton
+        }, matSelInst -> closed.run(), matSelInst -> backButton.accept(matSelInst.getInv())
       ));
     });
 
@@ -284,7 +283,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_TITLE).asScalar(), representitives,
 
         // Flag selected
-        (f, inv) -> {
+        (f, flagSelInst) -> {
           ItemFlag flag = (ItemFlag) f;
 
           // Toggle the flag
@@ -296,7 +295,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
           item.setItemMeta(meta);
 
-          this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, inv);
+          flagSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
 
           p.sendMessage(
             cfg.get(ConfigKey.GUI_ITEMEDITOR_FLAG_CHANGED)
@@ -309,7 +308,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
               )
               .asScalar()
           );
-        }, closed, backButton
+        }, flagSelInst -> closed.run(), matSelInst -> backButton.accept(matSelInst.getInv())
       ));
     });
 
@@ -373,7 +372,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_TITLE).asScalar(), representitives,
 
         // Enchantment selected
-        (ench, inv) -> {
+        (ench, enchSelInst) -> {
           Enchantment enchantment = (Enchantment) ench;
           boolean has = meta.hasEnchant(enchantment);
 
@@ -389,7 +388,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
                 .asScalar()
             );
 
-            this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, inv);
+            enchSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
           }
 
           // Prompt for the desired level in the chat
@@ -428,7 +427,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
           // Close the GUI when prompting for the chat message
           p.closeInventory();
-        }, closed, backButton
+        }, enchSelInst -> closed.run(), enchSelInst -> backButton.accept(enchSelInst.getInv())
       ));
     });
 
@@ -515,7 +514,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         }
 
         // Offer a choice for which line to remove
-        openLoreIndexChoice(lines, inst, (lineId, inv) -> {
+        openLoreIndexChoice(lines, inst, (lineId, lineSelInst) -> {
           String content = lines.remove((int) lineId);
           meta.setLore(lines);
           item.setItemMeta(meta);
@@ -528,8 +527,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
               .asScalar()
           );
 
-          this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, inv);
-          return false;
+          lineSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
         }, closed, backButton);
 
         return;
@@ -590,7 +588,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             );
 
             // Offer a choice for where to insert the line
-            openLoreIndexChoice(lines, inst, (lineId, inv) -> {
+            openLoreIndexChoice(lines, inst, (lineId, lineSelInst) -> {
               List<String> newLines = new ArrayList<>(lines);
               newLines.add(lineId, lore);
 
@@ -603,8 +601,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
                   .asScalar()
               );
 
-              this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, inv);
-              return false;
+              lineSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
             }, closed, backButton);
           },
 
@@ -793,7 +790,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         }
 
         // Remove a specific attribute
-        openAttributeIndexChoice(attrs, true, inst, (target, inv) -> {
+        openAttributeIndexChoice(attrs, true, inst, (target, attrSelInst) -> {
 
           // Remove the chosen attribute
           meta.removeAttributeModifier(target.a(), target.b());
@@ -806,7 +803,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
               .asScalar()
           );
 
-          this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, inv);
+          attrSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
         }, closed, backButton);
 
         return;
@@ -868,7 +865,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
                 cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_EQUIPMENT_TITLE).asScalar(), slotReprs,
 
                 // Slot selected
-                (slot, slotChoiceInv) -> {
+                (slot, slotChoiceInst) -> {
 
                   // Create a list of all available operations
                   List<Tuple<Object, ItemStack>> opReprs = new ArrayList<>();
@@ -886,11 +883,11 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
                   }
 
                   // Invoke a new single choice gui for available operations
-                  singleChoiceGui.show(p, new SingleChoiceParam(
+                  slotChoiceInst.switchTo(AnimationType.SLIDE_LEFT, singleChoiceGui, new SingleChoiceParam(
                     cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_OPERATION_TITLE).asScalar(), opReprs,
 
                     // Operation selected
-                    (op, opChoiceInv) -> {
+                    (op, opSelInst) -> {
 
                       meta.addAttributeModifier(target.a(), new AttributeModifier(
                         UUID.randomUUID(),
@@ -909,14 +906,14 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
                           .asScalar()
                       );
 
-                      this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, opChoiceInv);
+                      opSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
                     },
 
-                    closed, backButton
-                  ), AnimationType.SLIDE_LEFT, slotChoiceInv);
+                    opSelInst -> closed.run(), opSelInst -> backButton.accept(opSelInst.getInv())
+                  ));
                 },
 
-                closed, backButton
+                slotChoiceInst -> closed.run(), slotChoiceInst -> backButton.accept(slotChoiceInst.getInv())
               ), AnimationType.SLIDE_UP);
 
             },
@@ -1104,7 +1101,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_TITLE).asScalar(), colorReprs,
 
           // Color selected
-          (color, inv) -> {
+          (color, colorSelInst) -> {
             @SuppressWarnings("unchecked")
             Tuple<String, Color> colorData = (Tuple<String, Color>) color;
 
@@ -1118,9 +1115,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
                 .asScalar()
             );
 
-            this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, inv);
+            colorSelInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
           },
-          closed, backButton
+          colorSelInst -> closed.run(), colorSelInst -> backButton.accept(colorSelInst.getInv())
         ));
       }
     });
@@ -1159,7 +1156,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
   private void openLoreIndexChoice(
     List<String> lines,
     GuiInstance<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<Inventory>>> inst,
-    BiFunction<Integer, Inventory, Boolean> chosen,
+    BiConsumer<Integer, GuiInstance<SingleChoiceParam>> chosen,
     Runnable closed,
     Consumer<Inventory> backButton
   ) {
@@ -1186,8 +1183,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     inst.switchTo(AnimationType.SLIDE_LEFT, singleChoiceGui, new SingleChoiceParam(
       cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LORE_TITLE).asScalar(),
       representitives,
-      (m, inv) -> chosen.apply((int) m, inv),
-      closed, backButton
+      (m, lineSelInst) -> chosen.accept((int) m, lineSelInst),
+      lineSelInst -> closed.run(), lineSelInst -> backButton.accept(lineSelInst.getInv())
     ));
   }
 
@@ -1207,7 +1204,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     Multimap<Attribute, AttributeModifier> attrs,
     boolean areExisting,
     GuiInstance<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<Inventory>>> inst,
-    BiConsumer<Tuple<Attribute, AttributeModifier>, Inventory> chosen,
+    BiConsumer<Tuple<Attribute, AttributeModifier>, GuiInstance<SingleChoiceParam>> chosen,
     Runnable closed,
     Consumer<Inventory> backButton
   ) {
@@ -1245,8 +1242,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     inst.switchTo(AnimationType.SLIDE_LEFT, singleChoiceGui, new SingleChoiceParam(
       cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ATTR_TITLE).asScalar(),
       representitives,
-      (m, inv) -> chosen.accept((Tuple<Attribute, AttributeModifier>) m, inv),
-      closed, backButton
+      (m, attrSelInst) -> chosen.accept((Tuple<Attribute, AttributeModifier>) m, attrSelInst),
+      attrSelInst -> closed.run(), attrSelInst -> backButton.accept(attrSelInst.getInv())
     ));
   }
 

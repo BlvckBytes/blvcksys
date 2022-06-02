@@ -1,7 +1,6 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import net.minecraft.util.Tuple;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,12 +21,12 @@ public record SingleChoiceParam(
   // List of choices, objects represented by itemstacks
   List<Tuple<Object, ItemStack>> representitives,
 
-  // Selection callback, returns whether to close the GUI
-  BiConsumer<Object, Inventory> selected,
+  // Selection callback, provides the bound object and the GUI ref
+  BiConsumer<Object, GuiInstance<SingleChoiceParam>> selected,
 
-  // Inventory close callback
-  Runnable closed,
+  // Inventory close callback, providing a ref to the closed GUI
+  Consumer<GuiInstance<SingleChoiceParam>> closed,
 
-  // Back button
-  @Nullable Consumer<Inventory> backButton
+  // Back button, providing a ref to the GUI about to navigate away from
+  @Nullable Consumer<GuiInstance<SingleChoiceParam>> backButton
 ) {}

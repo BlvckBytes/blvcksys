@@ -15,8 +15,13 @@ public enum LiveVariable {
 
   // Player specific
   PLAYER_NAME("{player_name}", Long.MAX_VALUE),
-  PLAYER_EXPERIENCE("{player_experience}", 20 * 5),
+  PLAYER_EXPERIENCE("{player_experience}", 20 * 3),
   WORLD_NAME("{world_name}", Long.MAX_VALUE),
+  PLAYER_KILLS("{player_kills}", 20 * 3),
+  PLAYER_DEATHS("{player_deaths}", 20 * 3),
+  PLAYER_KD("{player_kd}", 20 * 3),
+  PLAYER_MONEY("{player_money}", 20 * 3),
+  PLAYER_PLAYTIME("{player_playtime}", 20 * 10),
 
   // Date and time
   CURRENT_TIME("{current_time}", 20),

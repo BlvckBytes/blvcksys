@@ -4,7 +4,9 @@ import com.mojang.authlib.GameProfile;
 import me.blvckbytes.blvcksys.persistence.models.PlayerTextureModel;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -13,6 +15,23 @@ import java.util.Optional;
   Public interfaces which the player texture handler provides to other consumers.
  */
 public interface IPlayerTextureHandler {
+
+  /**
+   * Search existing textures by their owner's name
+   * @param name Name to search for
+   * @param limit Maximum number of entries to fetch
+   * @return List of matching entries
+   */
+  List<PlayerTextureModel> searchByName(String name, int limit);
+
+  /**
+   * Store a custom texture binding
+   * @param name Custom name
+   * @param uuid UUID matching the texture's owner
+   * @param textures Textures to store
+   * @return True on success, false if that name/uuid combination was already stored
+   */
+  boolean storeCustom(String name, UUID uuid, String textures);
 
   /**
    * Get the texture information of a given player by their name

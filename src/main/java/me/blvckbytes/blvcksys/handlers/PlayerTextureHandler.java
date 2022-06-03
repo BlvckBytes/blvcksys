@@ -7,24 +7,26 @@ import com.google.gson.JsonParser;
 import com.mojang.authlib.GameProfile;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
+import me.blvckbytes.blvcksys.persistence.exceptions.DuplicatePropertyException;
 import me.blvckbytes.blvcksys.persistence.models.PlayerTextureModel;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import me.blvckbytes.blvcksys.util.Triple;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.apache.commons.io.IOUtils;
+import org.bukkit.Bukkit;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /*
@@ -34,20 +36,27 @@ import java.util.stream.Collectors;
   Stores a player's UUID and skin textures, resolved by their name.
 */
 @AutoConstruct
-public class PlayerTextureHandler implements IPlayerTextureHandler {
+public class PlayerTextureHandler implements IPlayerTextureHandler, IAutoConstructed {
+
+  // Path of the local head database file to get most of the pre-defined heads
+  // from, relative to the resources folder
+  private static final String DATABASE_FILE = "head_database.csv";
 
   private final IPersistence pers;
   private final ILogger logger;
+  private final JavaPlugin plugin;
 
   // Mapping names to textures
   private final Map<String, PlayerTextureModel> cache;
 
   public PlayerTextureHandler(
     @AutoInject IPersistence pers,
-    @AutoInject ILogger logger
+    @AutoInject ILogger logger,
+    @AutoInject JavaPlugin plugin
   ) {
     this.pers = pers;
     this.logger = logger;
+    this.plugin = plugin;
 
     this.cache = new HashMap<>();
   }
@@ -55,6 +64,27 @@ public class PlayerTextureHandler implements IPlayerTextureHandler {
   //=========================================================================//
   //                                   API                                   //
   //=========================================================================//
+
+  @Override
+  public List<PlayerTextureModel> searchByName(String name, int limit) {
+    return pers.find(
+      new QueryBuilder<>(
+        PlayerTextureModel.class,
+        "name", EqualityOperation.CONT_IC, name.trim()
+      )
+        .limit(limit)
+    );
+  }
+
+  @Override
+  public boolean storeCustom(String name, UUID uuid, String textures) {
+    try {
+      pers.store(new PlayerTextureModel(name, uuid, textures));
+      return true;
+    } catch (DuplicatePropertyException e) {
+      return false;
+    }
+  }
 
   @Override
   public Optional<PlayerTextureModel> getTextures(String name, boolean forceUpdate) {
@@ -104,9 +134,103 @@ public class PlayerTextureHandler implements IPlayerTextureHandler {
     return new GameProfile(UUID.randomUUID(), name);
   }
 
+  @Override
+  public void cleanup() {}
+
+  @Override
+  public void initialize() {
+    Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+      Map<String, String> heads = loadDatabaseFile();
+
+      // Check if there are already more heads loaded, then skip this madness
+      int numExisting = pers.count(PlayerTextureModel.class);
+      if (numExisting >= heads.size())
+        return;
+
+      // Load head by head into DB
+      for (Map.Entry<String, String> entry : heads.entrySet()) {
+        boolean succ = storeCustom(entry.getKey(), UUID.randomUUID(), entry.getValue());
+
+        if (succ)
+          logger.logInfo("Loaded head \"" + entry.getKey() + "\" from file into database.");
+        else
+          logger.logDebug("Head \"" + entry.getKey() + "\" from file already loaded.");
+      }
+    });
+  }
+
   //=========================================================================//
   //                                Utilities                                //
   //=========================================================================//
+
+  /**
+   * Loads the local head database file into memory while using a hashmap
+   * to overwrite duplicate keys, as I'm not that interested in most head
+   * variations anyways.
+   */
+  private Map<String, String> loadDatabaseFile() {
+    Map<String, String> entries = new HashMap<>();
+
+    try {
+      InputStream is = getClass().getClassLoader().getResourceAsStream(DATABASE_FILE);
+
+      if (is == null)
+        return entries;
+
+      InputStreamReader isr = new InputStreamReader(is, StandardCharsets.UTF_8);
+      BufferedReader br = new BufferedReader(isr);
+
+      while (br.ready()) {
+        // Layout: category;incrementing id;representitive name;textures url part;? (always zero);more category information
+        String[] data = br.readLine().split(";");
+
+        // Malformed data
+        if (data.length != 6)
+          continue;
+
+        String name = data[2];
+        StringBuilder nameBuf = new StringBuilder();
+        for (int i = 0; i < name.length(); i++) {
+          char c = name.charAt(i);
+
+          // Skip unwanted symbols
+          if (c == '.' || c == '"' || c == ' ' || c == ')')
+            continue;
+
+          // Transform chars after opening brackets uppercase
+          if (c == '(') {
+            // Last char reached, stop
+            if (i == name.length() - 1)
+              break;
+
+            // Advance to the next char
+            c = name.charAt(++i);
+
+            // Transform to upper-case
+            if (c >= 'a' && c <= 'z')
+              c -= 32;
+          }
+
+          nameBuf.append(c);
+        }
+
+        String texture = data[3];
+
+        // Format and encode json value
+        String json = "{\"textures\":{\"SKIN\":{\"url\":\"http://textures.minecraft.net/texture/%s\"}}}".formatted(texture);
+        String encodedJson = Base64.getEncoder().encodeToString(json.getBytes());
+
+        entries.put(nameBuf.toString(), encodedJson);
+      }
+
+      br.close();
+      isr.close();
+    } catch (Exception e) {
+      logger.logError(e);
+    }
+
+    return entries;
+  }
 
   /**
    * Find a player's skin textures entry, always take the most recent result,

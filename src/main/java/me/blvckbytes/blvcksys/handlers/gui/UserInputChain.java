@@ -169,7 +169,7 @@ public class UserInputChain {
       }
 
       SingleChoiceParam param = new SingleChoiceParam(
-        type.asScalar(), representitives.get(),
+        type.asScalar(), representitives.get(), null,
 
         // Has chosen
         (selection, selectionInst) -> {

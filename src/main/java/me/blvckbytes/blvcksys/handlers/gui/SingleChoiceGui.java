@@ -72,7 +72,7 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
       // Create a carbon copy of the param and re-route callbacks
       SingleChoiceParam scp = new SingleChoiceParam(
         inst.getArg().type(), inst.getArg().representitives(),
-        inst.getArg().selected(),
+        inst.getArg().customFilter(), inst.getArg().selected(),
 
         // Re-open the choice if nothing was chosen or back was clicked
         (i) -> reopen.run(), (i) -> reopen.run()

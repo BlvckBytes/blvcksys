@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -79,7 +80,7 @@ public class AnvilSearchGui extends AGui<SingleChoiceParam> implements IPacketMo
     // Restore the inventory contents again by updating the inv
     p.updateInventory();
 
-    if (!madeSelection.remove(p))
+    if (!madeSelection.remove(p) && inst.getArg().closed() != null)
       inst.getArg().closed().accept(inst);
 
     currentInventory.remove(p);
@@ -92,6 +93,7 @@ public class AnvilSearchGui extends AGui<SingleChoiceParam> implements IPacketMo
     // it also informes the player about the concept of filtering
     inst.fixedItem(0, () -> (
       new ItemStackBuilder(Material.PURPLE_TERRACOTTA)
+        .withName(ConfigValue.immediate(" "))
         .withLore(cfg.get(ConfigKey.GUI_ANVILSEARCH_ITEM_LORE))
         .build()
     ), null);
@@ -241,6 +243,9 @@ public class AnvilSearchGui extends AGui<SingleChoiceParam> implements IPacketMo
    * @return Filtered list to display
    */
   private List<Tuple<Object, ItemStack>> filterRepresentitives(GuiInstance<SingleChoiceParam> inst, String search) {
+    if (inst.getArg().customFilter() != null)
+      return inst.getArg().customFilter().apply(search);
+
    return inst.getArg().representitives().stream()
     .filter(t -> {
       ItemMeta meta = t.b().getItemMeta();

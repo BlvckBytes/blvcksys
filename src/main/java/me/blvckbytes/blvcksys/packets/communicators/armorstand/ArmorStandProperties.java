@@ -41,8 +41,8 @@ public class ArmorStandProperties {
   // Armor of the armor stand
   private @Nullable ItemStack helmet, chestplate, leggings, boots;
 
-  // Item in the armor stand's hand
-  private @Nullable ItemStack hand;
+  // Item in the armor stand's hands
+  private @Nullable ItemStack hand, offHand;
 
   // Poses of all body parts
   private @Nullable EulerAngle headPose, bodyPose, leftArmPose, rightArmPose, leftLegPose, rightLegPose;
@@ -55,8 +55,5 @@ public class ArmorStandProperties {
     this.name = text;
     this.nameVisible = true;
     this.shifted = true;
-    this.arms = false;
-    this.small = false;
-    this.visible = false;
   }
 }

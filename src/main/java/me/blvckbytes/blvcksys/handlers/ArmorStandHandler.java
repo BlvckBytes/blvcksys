@@ -194,6 +194,7 @@ public class ArmorStandHandler implements IArmorStandHandler, IAutoConstructed {
       model.getLeggings(),
       model.getBoots(),
       model.getHand(),
+      model.getOffHand(),
       model.getHeadPose(),
       model.getBodyPose(),
       model.getLeftArmPose(),

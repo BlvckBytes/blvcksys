@@ -50,7 +50,7 @@ public class ArmorStandModel extends APersistentModel {
   private ItemStack helmet, chestplate, leggings, boots;
 
   @ModelProperty(isNullable = true)
-  private ItemStack hand;
+  private ItemStack hand, offHand;
 
   @ModelProperty(isNullable = true)
   private EulerAngle headPose, bodyPose, leftArmPose, rightArmPose, leftLegPose, rightLegPose;
@@ -59,7 +59,7 @@ public class ArmorStandModel extends APersistentModel {
     return new ArmorStandModel(
       creator, name, loc,
       null, true, false, false, false, false,
-      null, null, null, null, null,
+      null, null, null, null, null, null,
       null, null, null, null, null, null
     );
   }

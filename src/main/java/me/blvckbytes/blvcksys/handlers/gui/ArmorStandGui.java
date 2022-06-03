@@ -21,7 +21,6 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
-import org.bukkit.util.EulerAngle;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -38,14 +37,17 @@ import java.util.Map;
 @AutoConstruct
 public class ArmorStandGui extends AGui<ArmorStandModel> {
 
+  // Scaling factor used for movement delta before applying it to the angle
+  private static final float MOVEMENT_SCALING = .5F;
+
   @AllArgsConstructor
   private static class MoveRequest {
-    MoveablePart part;
-    ArmorStandModel model;
-    ArmorStandProperties props;
-    boolean enabled;
-    @Nullable BukkitTask enableTimeout;
-    @Nullable Location prevLoc;
+    MoveablePart part;                    // Part which is being moved
+    ArmorStandModel model;                // Target armor stand
+    ArmorStandProperties props;           // Properties under modification
+    boolean enabled;                      // Whether movement is enabled
+    @Nullable BukkitTask enableTimeout;   // Movement enable timeout task
+    @Nullable Location prevLoc;           // Previous movement location
   }
 
   // Players mapped to their current mouse button state
@@ -88,6 +90,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
       return false;
     }
 
+    // Just to test out head rotation
     props.setHelmet(new ItemStack(Material.SKELETON_SKULL));
     standHandler.setProperties(model.getName(), props, false);
 
@@ -111,16 +114,16 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
 
     // Calculate movement delta and update the previous location
     Location nextLoc = p.getLocation().clone();
-    double dYaw = req.prevLoc.getYaw() - nextLoc.getYaw(), dPitch = req.prevLoc.getPitch() - nextLoc.getPitch();
+    double dYaw = normalizeAngle(nextLoc.getYaw()) - normalizeAngle(req.prevLoc.getYaw());
+    double dPitch = normalizeAngle(nextLoc.getPitch() * 2) - normalizeAngle(req.prevLoc.getPitch() * 2);
     req.prevLoc = nextLoc;
 
-    // TODO: Apply the delta properly to the euler angle
+    // Scale movement
+    dYaw *= MOVEMENT_SCALING;
+    dPitch *= MOVEMENT_SCALING;
 
     // Add the movement delta to the euler angle
-    EulerAngle curr = req.part.get(req.props);
-//    curr = curr.add(curr.getX() + Math.toRadians(dPitch), curr.getY() + Math.toRadians(dYaw), 0);
-    curr = new EulerAngle(Math.toRadians(nextLoc.getPitch()), Math.toRadians(nextLoc.getYaw()), 0);
-    req.part.set(req.props, curr);
+    req.part.set(req.props, req.part.get(req.props).add(Math.toRadians(dPitch), Math.toRadians(dYaw), 0));
 
     // Set the properties without persisting yet
     standHandler.setProperties(req.model.getName(), req.props, false);
@@ -154,5 +157,20 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
       req.enabled = false;
       req.enableTimeout = null;
     }, 5L);
+  }
+
+  /**
+   * Normalize any angle in degrees to be within the range [0;360]
+   * @param angle Input angle
+   * @return Normalized output angle
+   */
+  private float normalizeAngle(float angle) {
+    while (angle < 0)
+      angle += 360;
+
+    while (angle > 360)
+      angle -= 360;
+
+    return angle;
   }
 }

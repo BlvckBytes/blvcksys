@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
@@ -100,7 +101,12 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
   protected boolean opening(GuiInstance<OfflinePlayer> inst) {
     Player p = inst.getViewer();
 
-    inst.fixedItem("45,47,48,50,51,53", () -> new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build(), null);
+    inst.fixedItem("45,47,48,50,51,53", () -> (
+      new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE)
+        .withName(ConfigValue.immediate(" "))
+        .build()
+    ), null);
+    
     inst.addPagination(46, 49, 52);
 
     EnderchestInstance chestInst = getOrCreate(inst.getArg());

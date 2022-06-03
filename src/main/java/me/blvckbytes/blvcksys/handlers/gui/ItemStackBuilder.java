@@ -145,13 +145,13 @@ public class ItemStackBuilder {
     if (meta == null)
       return stack;
 
-    meta.setDisplayName(
-      displayName == null ?
-        " " :
+    if (displayName != null) {
+      meta.setDisplayName(
         displayName
           .withVariables(variables)
           .asScalar()
-    );
+      );
+    }
 
     meta.setLore(
       lore == null ?

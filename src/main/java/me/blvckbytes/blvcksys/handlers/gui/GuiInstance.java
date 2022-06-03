@@ -3,6 +3,7 @@ package me.blvckbytes.blvcksys.handlers.gui;
 import lombok.Getter;
 import lombok.Setter;
 import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.events.InventoryManipulationEvent;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
@@ -380,6 +381,7 @@ public class GuiInstance<T> {
     }
 
     fill = new ItemStackBuilder(mat)
+      .withName(ConfigValue.immediate(" "))
       .build();
 
     fixedItem(slotExpr.toString(), () -> fill, null, null);
@@ -409,6 +411,7 @@ public class GuiInstance<T> {
     }
 
     border = new ItemStackBuilder(mat)
+      .withName(ConfigValue.immediate(" "))
       .build();
 
     fixedItem(slotExpr.toString(), () -> border, null, null);

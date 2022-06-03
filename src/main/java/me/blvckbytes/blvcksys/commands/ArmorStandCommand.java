@@ -7,10 +7,13 @@ import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IArmorStandHandler;
+import me.blvckbytes.blvcksys.handlers.gui.AnimationType;
+import me.blvckbytes.blvcksys.handlers.gui.ArmorStandGui;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.ArmorStandModel;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import net.minecraft.util.Tuple;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -30,10 +33,12 @@ public class ArmorStandCommand extends APlayerCommand {
     CREATE,
     DELETE,
     MOVEHERE,
+    CUSTOMIZE
   }
 
   private final IArmorStandHandler stands;
   private final IPersistence pers;
+  private final ArmorStandGui armorStandGui;
 
   public ArmorStandCommand(
     @AutoInject JavaPlugin plugin,
@@ -41,7 +46,8 @@ public class ArmorStandCommand extends APlayerCommand {
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
     @AutoInject IArmorStandHandler stands,
-    @AutoInject IPersistence pers
+    @AutoInject IPersistence pers,
+    @AutoInject ArmorStandGui armorStandGui
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -54,6 +60,7 @@ public class ArmorStandCommand extends APlayerCommand {
 
     this.stands = stands;
     this.pers = pers;
+    this.armorStandGui = armorStandGui;
   }
 
   //=========================================================================//
@@ -137,6 +144,22 @@ public class ArmorStandCommand extends APlayerCommand {
           .asScalar()
       );
       return;
+    }
+
+    if (action == ArmorStandAction.CUSTOMIZE) {
+      ArmorStandModel target = stands.getByName(name).orElse(null);
+
+      if (target == null) {
+        p.sendMessage(
+          cfg.get(ConfigKey.ARMOR_STAND_NOT_FOUND)
+            .withPrefix()
+            .withVariable("name", name)
+            .asScalar()
+        );
+        return;
+      }
+
+      armorStandGui.show(p, target, AnimationType.SLIDE_UP);
     }
   }
 }

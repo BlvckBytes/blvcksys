@@ -140,7 +140,7 @@ public class ArmorStandCommunicator implements IArmorStandCommunicator {
       if (prev == null)
         throw new IllegalStateException("Unknown armor stand with id=" + handle.getEntityId());
 
-      Location prevShifted = shiftLocation(prev);
+      Location prevShifted = isShifted ? shiftLocation(prev) : prev;
 
       // Calculate the delta per axis and encode it into the required representation
       PacketPlayOutEntity.PacketPlayOutRelEntityMove moveP = new PacketPlayOutEntity.PacketPlayOutRelEntityMove(

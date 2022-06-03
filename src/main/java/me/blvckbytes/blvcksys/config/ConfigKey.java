@@ -175,6 +175,16 @@ public enum ConfigKey {
   ),
 
   //=========================================================================//
+  //                           ARMOR STAND Command                           //
+  //=========================================================================//
+
+  ARMOR_STAND_EXISTS("armor_stand.exists", "$0Es existiert bereits ein Armor Stand namens $4{{name}}$0!"),
+  ARMOR_STAND_NOT_FOUND("armor_stand.not_found", "$0Es existiert kein Armor Stand namens $4{{name}}$0!"),
+  ARMOR_STAND_DELETED("armor_stand.deleted", "$0Der Armor Stand $3{{name}} $0wurde gelöscht."),
+  ARMOR_STAND_CREATED("armor_stand.created", "$0Der Armor Stand $3{{name}} $0wurde erstellt."),
+  ARMOR_STAND_MOVED("armor_stand.moved", "$0Der Armor Stand $3{{name}} $0wurde zu dir bewegt."),
+
+  //=========================================================================//
   //                                NPC Command                              //
   //=========================================================================//
 

@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.packets.communicators.armorstand;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
 import org.jetbrains.annotations.Nullable;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.Nullable;
 */
 @Getter
 @Setter
+@AllArgsConstructor
 public class ArmorStandProperties {
   // Whether the name is visible
   private boolean nameVisible;

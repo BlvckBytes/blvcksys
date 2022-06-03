@@ -1,7 +1,8 @@
 package me.blvckbytes.blvcksys.handlers;
 
 import lombok.Getter;
-import me.blvckbytes.blvcksys.packets.communicators.hologram.IHologramCommunicator;
+import me.blvckbytes.blvcksys.packets.communicators.armorstand.ArmorStandProperties;
+import me.blvckbytes.blvcksys.packets.communicators.armorstand.IArmorStandCommunicator;
 import net.minecraft.util.Tuple;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -67,7 +68,7 @@ public class MultilineHologram extends ATemplateHandler {
 
   private List<Tuple<Long, List<Object>>> lineTemplates;
 
-  private final IHologramCommunicator holoComm;
+  private final IArmorStandCommunicator holoComm;
   private final JavaPlugin plugin;
 
   public MultilineHologram(
@@ -75,7 +76,7 @@ public class MultilineHologram extends ATemplateHandler {
     Location loc,
     List<String> lines,
     @Nullable List<Player> recipients,
-    IHologramCommunicator holoComm,
+    IArmorStandCommunicator holoComm,
     ILiveVariableSupplier varSupp,
     JavaPlugin plugin
   ) {
@@ -249,7 +250,7 @@ public class MultilineHologram extends ATemplateHandler {
         if (remainingTicks == VELOCITY_MAX_SECS * 20 || collidedWith != null)
           holoComm.sendVelocity(pe.getKey(), e, vel);
 
-        holoComm.moveLine(pe.getKey(), e, tail);
+        holoComm.moveLine(pe.getKey(), e, tail, true);
         tail.add(0, INTER_LINE_SPACING, 0);
       }
     }
@@ -300,7 +301,7 @@ public class MultilineHologram extends ATemplateHandler {
 
     for (Player t : entities.keySet()) {
       for (Entity ent : entities.get(t)) {
-        holoComm.deleteLine(t, ent);
+        holoComm.delete(t, ent);
         entityIds.remove(Integer.valueOf(ent.getEntityId()));
       }
     }
@@ -343,7 +344,9 @@ public class MultilineHologram extends ATemplateHandler {
 
       // Update this line
       Entity ent = pEnts.get(i);
-      holoComm.updateLine(p, ent, evaluateLineTemplate(p, lineTemplate.b()));
+
+      ArmorStandProperties props = new ArmorStandProperties(evaluateLineTemplate(p, lineTemplate.b()));
+      holoComm.update(p, ent, props);
     }
   }
 
@@ -358,7 +361,10 @@ public class MultilineHologram extends ATemplateHandler {
     // Make lines grow downwards from the head
     Location head = loc.clone();
     for (Tuple<Long, List<Object>> lineTemplate : lineTemplates) {
-      Entity ent = holoComm.createLine(p, head, evaluateLineTemplate(p, lineTemplate.b()));
+
+      ArmorStandProperties props = new ArmorStandProperties(evaluateLineTemplate(p, lineTemplate.b()));
+
+      Entity ent = holoComm.create(p, head, props);
 
       ents.add(ent);
       entityIds.add(ent.getEntityId());
@@ -382,7 +388,7 @@ public class MultilineHologram extends ATemplateHandler {
 
     // Destroy all lines
     for (Entity ent : ents) {
-      holoComm.deleteLine(p, ent);
+      holoComm.delete(p, ent);
       entityIds.remove(Integer.valueOf(ent.getEntityId()));
     }
   }
@@ -401,7 +407,7 @@ public class MultilineHologram extends ATemplateHandler {
     // Make lines grow downwards from the head
     Location head = loc.clone();
     for (Entity ent : ents) {
-      holoComm.teleportLine(p, ent, head);
+      holoComm.teleport(p, ent, head, true);
       head.add(0, -INTER_LINE_SPACING, 0);
     }
   }

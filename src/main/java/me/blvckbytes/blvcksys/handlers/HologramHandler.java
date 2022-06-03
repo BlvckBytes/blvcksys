@@ -7,7 +7,7 @@ import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
 import me.blvckbytes.blvcksys.packets.ModificationPriority;
 import me.blvckbytes.blvcksys.packets.PacketSource;
-import me.blvckbytes.blvcksys.packets.communicators.hologram.IHologramCommunicator;
+import me.blvckbytes.blvcksys.packets.communicators.armorstand.IArmorStandCommunicator;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.HologramLineModel;
@@ -63,7 +63,7 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed, IPac
 
   private final IPersistence pers;
   private final JavaPlugin plugin;
-  private final IHologramCommunicator holoComm;
+  private final IArmorStandCommunicator holoComm;
   private final ILiveVariableSupplier varSupp;
   private final ILogger logger;
   private final MCReflect refl;
@@ -72,7 +72,7 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed, IPac
   public HologramHandler(
     @AutoInject IPersistence pers,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IHologramCommunicator holoComm,
+    @AutoInject IArmorStandCommunicator holoComm,
     @AutoInject ILiveVariableSupplier varSupp,
     @AutoInject IPacketInterceptor interceptor,
     @AutoInject ILogger logger,

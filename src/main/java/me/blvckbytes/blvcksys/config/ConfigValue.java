@@ -265,7 +265,6 @@ public class ConfigValue {
       // This avoids illegal group reference exceptions
       input = t.a().matcher(input).replaceAll(t.b().replace("$", "\\$")).replace("\\$", "$");
     }
-
     return input;
   }
 
@@ -286,6 +285,6 @@ public class ConfigValue {
    * @param value Immediate value
    */
   public static ConfigValue immediate(String value) {
-    return new ConfigValue("", value, "");
+    return new ConfigValue(value, "", "");
   }
 }

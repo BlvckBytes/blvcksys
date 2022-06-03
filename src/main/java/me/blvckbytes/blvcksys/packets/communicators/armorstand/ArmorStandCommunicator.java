@@ -1,11 +1,13 @@
 package me.blvckbytes.blvcksys.packets.communicators.armorstand;
 
+import com.mojang.datafixers.util.Pair;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.network.syncher.DataWatcher;
+import net.minecraft.world.entity.EnumItemSlot;
 import net.minecraft.world.entity.decoration.EntityArmorStand;
 import net.minecraft.world.phys.Vec3D;
 import org.bukkit.Location;
@@ -16,8 +18,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -88,6 +89,9 @@ public class ArmorStandCommunicator implements IArmorStandCommunicator {
       // Send out another metadata update
       PacketPlayOutEntityMetadata metaP = new PacketPlayOutEntityMetadata(handle.getEntityId(), watcher, true);
       refl.sendPacket(p, metaP);
+
+      // Send updates for all equipment slots
+      sendEquipment(p, handle, properties);
     } catch (Exception e) {
       logger.logError(e);
     }
@@ -175,6 +179,53 @@ public class ArmorStandCommunicator implements IArmorStandCommunicator {
   }
 
   /**
+   * Sends an equipment update packet for all itemstacks
+   * @param p Target player
+   * @param handle Entity handle
+   * @param props Property wrapper containing all items
+   */
+  private void sendEquipment(Player p, Entity handle, ArmorStandProperties props) throws Exception {
+    List<Pair<EnumItemSlot, net.minecraft.world.item.ItemStack>> equipment = new ArrayList<>();
+
+    getSlotByName("mainhand").ifPresent(slot -> equipment.add(new Pair<>(slot, nmsStack(props.getHand()))));
+    getSlotByName("head").ifPresent(slot -> equipment.add(new Pair<>(slot, nmsStack(props.getHelmet()))));
+    getSlotByName("chest").ifPresent(slot -> equipment.add(new Pair<>(slot, nmsStack(props.getChestplate()))));
+    getSlotByName("legs").ifPresent(slot -> equipment.add(new Pair<>(slot, nmsStack(props.getLeggings()))));
+    getSlotByName("feet").ifPresent(slot -> equipment.add(new Pair<>(slot, nmsStack(props.getBoots()))));
+
+    refl.sendPacket(p, new PacketPlayOutEntityEquipment(handle.getEntityId(), equipment));
+  }
+
+  /**
+   * Get a slot by it's representing name within the enum
+   * @param name Name of the target slot
+   */
+  private Optional<EnumItemSlot> getSlotByName(String name) throws Exception {
+    for (EnumItemSlot slot : EnumItemSlot.values()) {
+      if (refl.getFieldByType(slot, String.class, 0).equalsIgnoreCase(name))
+        return Optional.of(slot);
+    }
+    return Optional.empty();
+  }
+
+  /**
+   * Convert a bukkit item stack to it's NMS equivalent
+   * @param item Bukkit item stack
+   * @return NMS equivalent
+   */
+  private net.minecraft.world.item.ItemStack nmsStack(ItemStack item) {
+    try {
+      return (net.minecraft.world.item.ItemStack) refl.findMethodByName(
+        refl.getClassBKT("inventory.CraftItemStack"),
+        "asNMSCopy", ItemStack.class
+      ).invoke(null, item);
+    } catch (Exception e) {
+      logger.logError(e);
+      return null;
+    }
+  }
+
+  /**
    * Applies all armor stand properties to a given entity handle
    * @param handle Handle to apply to
    * @param props Properties to apply
@@ -189,14 +240,8 @@ public class ArmorStandCommunicator implements IArmorStandCommunicator {
     refl.invokeMethodByName(handle, "setSmall", new Class[] { boolean.class }, props.isSmall());
     refl.invokeMethodByName(handle, "setBasePlate", new Class[] { boolean.class }, props.isBaseplate());
 
-    refl.invokeMethodByName(handle, "setHelmet", new Class[] { ItemStack.class }, props.getHelmet());
-    refl.invokeMethodByName(handle, "setChestplate", new Class[] { ItemStack.class }, props.getChestplate());
-    refl.invokeMethodByName(handle, "setLeggings", new Class[] { ItemStack.class }, props.getLeggings());
-    refl.invokeMethodByName(handle, "setBoots", new Class[] { ItemStack.class }, props.getBoots());
-    refl.invokeMethodByName(handle, "setItemInHand", new Class[] { ItemStack.class }, props.getHand());
-
     if (props.getHeadPose() != null)
-      refl.invokeMethodByName(handle, "setHeadPose", new Class[] { EulerAngle.class }, props.getHeadPose());
+      refl.invokeMethodByName(handle, "setHeadPose", new Class[]{ EulerAngle.class }, props.getHeadPose());
 
     if (props.getBodyPose() != null)
       refl.invokeMethodByName(handle, "setBodyPose", new Class[] { EulerAngle.class }, props.getBodyPose());

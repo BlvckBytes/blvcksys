@@ -49,9 +49,10 @@ public interface IArmorStandHandler {
    * Sets an armor stands properties
    * @param name Name of the target armor stand
    * @param properties Properties to set
+   * @param store Whether to store the properties, use false for intermediate values while configuring
    * @return True on success, false if there was no armor stand with this name
    */
-  boolean setProperties(String name, ArmorStandProperties properties);
+  boolean setProperties(String name, ArmorStandProperties properties, boolean store);
 
   /**
    * Get an armor stand by it's name

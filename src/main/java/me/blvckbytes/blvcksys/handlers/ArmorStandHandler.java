@@ -108,16 +108,17 @@ public class ArmorStandHandler implements IArmorStandHandler, IAutoConstructed {
   }
 
   @Override
-  public boolean setProperties(String name, ArmorStandProperties properties) {
+  public boolean setProperties(String name, ArmorStandProperties properties, boolean store) {
     ArmorStandModel target = getByName(name).orElse(null);
 
     if (target == null)
       return false;
 
     cache.get(target).setProps(properties);
-
     updateModelProperties(target, properties);
-    pers.store(target);
+
+    if (store)
+      pers.store(target);
 
     return true;
   }

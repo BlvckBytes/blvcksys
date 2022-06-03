@@ -1745,6 +1745,7 @@ public enum ConfigKey {
   //=========================================================================//
 
   GUI_AS_CUSTOMIZE_NAME("gui.as_customize.name", "$0AS $2{{name}}"),
+  GUI_AS_CUSTOMIZE_NO_PROPS("gui.as_customize.no_props", "$0Die Eigenschaften vom Armor Stand $4{{name}} $0konnten $4nicht $0geladen werden!"),
 
   //=========================================================================//
   //                                Crate Draw GUI                           //

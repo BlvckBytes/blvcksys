@@ -1,20 +1,28 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
+import lombok.AllArgsConstructor;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.handlers.IArmorStandHandler;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
+import me.blvckbytes.blvcksys.handlers.MoveablePart;
+import me.blvckbytes.blvcksys.packets.communicators.armorstand.ArmorStandProperties;
 import me.blvckbytes.blvcksys.persistence.models.ArmorStandModel;
-import net.minecraft.util.Tuple;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
+import org.bukkit.util.EulerAngle;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -30,13 +38,25 @@ import java.util.Map;
 @AutoConstruct
 public class ArmorStandGui extends AGui<ArmorStandModel> {
 
+  @AllArgsConstructor
+  private static class MoveRequest {
+    MoveablePart part;
+    ArmorStandModel model;
+    ArmorStandProperties props;
+    boolean enabled;
+    @Nullable BukkitTask enableTimeout;
+    @Nullable Location prevLoc;
+  }
+
   // Players mapped to their current mouse button state
-  private final Map<Player, Tuple<Boolean, BukkitTask>> moving;
+  private final Map<Player, MoveRequest> moving;
+  private final IArmorStandHandler standHandler;
 
   public ArmorStandGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IPlayerTextureHandler textures
+    @AutoInject IPlayerTextureHandler textures,
+    @AutoInject IArmorStandHandler standHandler
   ) {
     super(5, "", i -> (
       cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_NAME).
@@ -44,6 +64,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
     ), plugin, cfg, textures);
 
     this.moving = new HashMap<>();
+    this.standHandler = standHandler;
   }
 
   @Override
@@ -53,8 +74,25 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
 
   @Override
   protected boolean opening(GuiInstance<ArmorStandModel> inst) {
+    Player p = inst.getViewer();
+    ArmorStandModel model = inst.getArg();
+    ArmorStandProperties props = standHandler.getProperties(model.getName()).orElse(null);
+
+    if (props == null) {
+      p.sendMessage(
+        cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_NO_PROPS)
+          .withPrefix()
+          .withVariable("name", model.getName())
+          .asScalar()
+      );
+      return false;
+    }
+
+    props.setHelmet(new ItemStack(Material.SKELETON_SKULL));
+    standHandler.setProperties(model.getName(), props, false);
+
     // TODO: Remove again when the user's done
-    moving.put(inst.getViewer(), new Tuple<>(false, null));
+    moving.put(p, new MoveRequest(MoveablePart.HEAD, model, props, false, null, null));
     return true;
   }
 
@@ -67,11 +105,25 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
     Player p = e.getPlayer();
 
     // Not in a customization session or not pressing the mouse button
-    Tuple<Boolean, BukkitTask> enabled = moving.get(p);
-    if (enabled == null || !enabled.a())
+    MoveRequest req = moving.get(p);
+    if (req == null || !req.enabled || req.prevLoc == null)
       return;
 
-    // TODO: Manipulate armor stand rotations by the delta of this move
+    // Calculate movement delta and update the previous location
+    Location nextLoc = p.getLocation().clone();
+    double dYaw = req.prevLoc.getYaw() - nextLoc.getYaw(), dPitch = req.prevLoc.getPitch() - nextLoc.getPitch();
+    req.prevLoc = nextLoc;
+
+    // TODO: Apply the delta properly to the euler angle
+
+    // Add the movement delta to the euler angle
+    EulerAngle curr = req.part.get(req.props);
+//    curr = curr.add(curr.getX() + Math.toRadians(dPitch), curr.getY() + Math.toRadians(dYaw), 0);
+    curr = new EulerAngle(Math.toRadians(nextLoc.getPitch()), Math.toRadians(nextLoc.getYaw()), 0);
+    req.part.set(req.props, curr);
+
+    // Set the properties without persisting yet
+    standHandler.setProperties(req.model.getName(), req.props, false);
   }
 
   @EventHandler
@@ -82,20 +134,25 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
       return;
 
     // Not in a customization session
-    Tuple<Boolean, BukkitTask> enabled = moving.get(p);
-    if (enabled == null)
+    MoveRequest req = moving.get(p);
+    if (req == null)
       return;
 
+    e.setCancelled(true);
+
     // Cancel previous timeouts
-    if (enabled.b() != null)
-      enabled.b().cancel();
+    if (req.enableTimeout != null)
+      req.enableTimeout.cancel();
+
+    // Set the previous location on enabled delta
+    if (!req.enabled)
+      req.prevLoc = p.getLocation().clone();
 
     // Create a timeout for disabling move when the button is released again
-    BukkitTask timeoutHandle = Bukkit.getScheduler().runTaskLater(plugin, () -> {
-      if (moving.containsKey(p))
-        moving.put(p, new Tuple<>(false, null));
+    req.enabled = true;
+    req.enableTimeout = Bukkit.getScheduler().runTaskLater(plugin, () -> {
+      req.enabled = false;
+      req.enableTimeout = null;
     }, 5L);
-
-    moving.put(p, new Tuple<>(true, timeoutHandle));
   }
 }

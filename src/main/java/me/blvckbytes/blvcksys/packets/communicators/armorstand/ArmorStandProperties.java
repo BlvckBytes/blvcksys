@@ -3,6 +3,8 @@ package me.blvckbytes.blvcksys.packets.communicators.armorstand;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.EulerAngle;
 import org.jetbrains.annotations.Nullable;
 
 /*
@@ -24,8 +26,26 @@ public class ArmorStandProperties {
   // Whether the location should be shifted up to the name internally
   private boolean shifted;
 
+  // Whether the armor stand has arms
+  private boolean arms;
+
+  // Whether the armor stand is small
+  private boolean small;
+
+  // Whether the armor stand has a base plate
+  private boolean baseplate;
+
   // Displayname of the armor stand
   private @Nullable String name;
+
+  // Armor of the armor stand
+  private @Nullable ItemStack helmet, chestplate, leggings, boots;
+
+  // Item in the armor stand's hand
+  private @Nullable ItemStack hand;
+
+  // Poses of all body parts
+  private @Nullable EulerAngle headPose, bodyPose, leftArmPose, rightArmPose, leftLegPose, rightLegPose;
 
   /**
    * Create a new hologram armor stand by it's displayed text
@@ -35,6 +55,8 @@ public class ArmorStandProperties {
     this.name = text;
     this.nameVisible = true;
     this.shifted = true;
+    this.arms = false;
+    this.small = false;
     this.visible = false;
   }
 }

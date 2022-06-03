@@ -12,6 +12,8 @@ import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
 
 import java.util.HashMap;
@@ -52,10 +54,8 @@ public class ArmorStandCommunicator implements IArmorStandCommunicator {
       );
 
       Object ent = refl.invokeMethodByName(eas, "getBukkitEntity", new Class[] {});
-      refl.invokeMethodByName(ent, "setCustomNameVisible", new Class[] { boolean.class }, properties.isNameVisible());
-      refl.invokeMethodByName(ent, "setCustomName", new Class[] { String.class }, properties.getName());
-      refl.invokeMethodByName(ent, "setGravity", new Class[] { boolean.class }, false);
-      refl.invokeMethodByName(ent, "setVisible", new Class[] { boolean.class }, properties.isVisible());
+      applyProperties((Entity) ent, properties);
+
       int entityId = (int) refl.invokeMethodByName(ent, "getEntityId", new Class[] {});
       DataWatcher watcher = refl.getFieldByType(eas, DataWatcher.class, 0);
 
@@ -80,9 +80,7 @@ public class ArmorStandCommunicator implements IArmorStandCommunicator {
   @Override
   public void update(Player p, Entity handle, ArmorStandProperties properties) {
     try {
-      refl.invokeMethodByName(handle, "setCustomNameVisible", new Class[] { boolean.class }, properties.isNameVisible());
-      refl.invokeMethodByName(handle, "setCustomName", new Class[] { String.class }, properties.getName());
-      refl.invokeMethodByName(handle, "setVisible", new Class[] { boolean.class }, properties.isVisible());
+      applyProperties(handle, properties);
 
       Object ent = refl.invokeMethodByName(handle, "getHandle", new Class[] {});
       DataWatcher watcher = refl.getFieldByType(ent, DataWatcher.class, 0);
@@ -174,5 +172,45 @@ public class ArmorStandCommunicator implements IArmorStandCommunicator {
   private Location shiftLocation(Location loc) {
     // Subtract the length between the armor stand's bottom plate and it's name (round about)
     return loc.clone().add(0, -2.2, 0);
+  }
+
+  /**
+   * Applies all armor stand properties to a given entity handle
+   * @param handle Handle to apply to
+   * @param props Properties to apply
+   */
+  private void applyProperties(Entity handle, ArmorStandProperties props) throws Exception {
+    refl.invokeMethodByName(handle, "setCustomNameVisible", new Class[] { boolean.class }, props.isNameVisible());
+    refl.invokeMethodByName(handle, "setCustomName", new Class[] { String.class }, props.getName());
+    refl.invokeMethodByName(handle, "setGravity", new Class[] { boolean.class }, false);
+    refl.invokeMethodByName(handle, "setVisible", new Class[] { boolean.class }, props.isVisible());
+
+    refl.invokeMethodByName(handle, "setArms", new Class[] { boolean.class }, props.isArms());
+    refl.invokeMethodByName(handle, "setSmall", new Class[] { boolean.class }, props.isSmall());
+    refl.invokeMethodByName(handle, "setBasePlate", new Class[] { boolean.class }, props.isBaseplate());
+
+    refl.invokeMethodByName(handle, "setHelmet", new Class[] { ItemStack.class }, props.getHelmet());
+    refl.invokeMethodByName(handle, "setChestplate", new Class[] { ItemStack.class }, props.getChestplate());
+    refl.invokeMethodByName(handle, "setLeggings", new Class[] { ItemStack.class }, props.getLeggings());
+    refl.invokeMethodByName(handle, "setBoots", new Class[] { ItemStack.class }, props.getBoots());
+    refl.invokeMethodByName(handle, "setItemInHand", new Class[] { ItemStack.class }, props.getHand());
+
+    if (props.getHeadPose() != null)
+      refl.invokeMethodByName(handle, "setHeadPose", new Class[] { EulerAngle.class }, props.getHeadPose());
+
+    if (props.getBodyPose() != null)
+      refl.invokeMethodByName(handle, "setBodyPose", new Class[] { EulerAngle.class }, props.getBodyPose());
+
+    if (props.getLeftArmPose() != null)
+      refl.invokeMethodByName(handle, "setLeftArmPose", new Class[] { EulerAngle.class }, props.getLeftArmPose());
+
+    if (props.getRightArmPose() != null)
+      refl.invokeMethodByName(handle, "setRightArmPose", new Class[] { EulerAngle.class }, props.getRightArmPose());
+
+    if (props.getLeftLegPose() != null)
+      refl.invokeMethodByName(handle, "setLeftLegPose", new Class[] { EulerAngle.class }, props.getLeftLegPose());
+
+    if (props.getRightLegPose() != null)
+      refl.invokeMethodByName(handle, "setRightLegPose", new Class[] { EulerAngle.class }, props.getRightLegPose());
   }
 }

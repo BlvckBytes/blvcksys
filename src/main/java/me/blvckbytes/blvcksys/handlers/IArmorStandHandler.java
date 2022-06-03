@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.handlers;
 
+import me.blvckbytes.blvcksys.packets.communicators.armorstand.ArmorStandProperties;
 import me.blvckbytes.blvcksys.persistence.models.ArmorStandModel;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
@@ -36,6 +37,21 @@ public interface IArmorStandHandler {
    * @return True on success, false if there was no armor stand with this name
    */
   boolean move(String name, Location loc);
+
+  /**
+   * Gets an armor stand's properties
+   * @param name Name of the target armor stand
+   * @return Stand's properties, empty if there was no armor stand with this name
+   */
+  Optional<ArmorStandProperties> getProperties(String name);
+
+  /**
+   * Sets an armor stands properties
+   * @param name Name of the target armor stand
+   * @param properties Properties to set
+   * @return True on success, false if there was no armor stand with this name
+   */
+  boolean setProperties(String name, ArmorStandProperties properties);
 
   /**
    * Get an armor stand by it's name

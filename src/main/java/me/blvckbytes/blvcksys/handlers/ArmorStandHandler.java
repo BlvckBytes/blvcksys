@@ -56,7 +56,7 @@ public class ArmorStandHandler implements IArmorStandHandler, IAutoConstructed {
   @Override
   public Optional<ArmorStandModel> create(OfflinePlayer creator, String name, Location loc) {
     try {
-      ArmorStandModel as = new ArmorStandModel(creator, name, loc);
+      ArmorStandModel as = ArmorStandModel.createDefault(creator, name, loc);
       pers.store(as);
       cache.put(as, fakeFromModel(as));
       return Optional.of(as);
@@ -94,6 +94,30 @@ public class ArmorStandHandler implements IArmorStandHandler, IAutoConstructed {
 
     FakeArmorStand fas = cache.get(target);
     fas.setLoc(loc);
+
+    return true;
+  }
+
+  @Override
+  public Optional<ArmorStandProperties> getProperties(String name) {
+    return cache.keySet().stream()
+      .filter(as -> as.getName().equalsIgnoreCase(name))
+      .map(cache::get)
+      .map(FakeArmorStand::getProps)
+      .findFirst();
+  }
+
+  @Override
+  public boolean setProperties(String name, ArmorStandProperties properties) {
+    ArmorStandModel target = getByName(name).orElse(null);
+
+    if (target == null)
+      return false;
+
+    cache.get(target).setProps(properties);
+
+    updateModelProperties(target, properties);
+    pers.store(target);
 
     return true;
   }
@@ -157,8 +181,51 @@ public class ArmorStandHandler implements IArmorStandHandler, IAutoConstructed {
    */
   private FakeArmorStand fakeFromModel(ArmorStandModel model) {
     ArmorStandProperties props = new ArmorStandProperties(
-      false, true, false, null
+      false,
+      true,
+      false,
+      model.isArms(),
+      model.isSmall(),
+      model.isBasePlate(),
+      model.getDisplayName(),
+      model.getHelmet(),
+      model.getChestplate(),
+      model.getLeggings(),
+      model.getBoots(),
+      model.getHand(),
+      model.getHeadPose(),
+      model.getBodyPose(),
+      model.getLeftArmPose(),
+      model.getRightArmPose(),
+      model.getLeftLegPose(),
+      model.getRightLegPose()
     );
+
     return new FakeArmorStand(armorComm, props, model.getLoc());
+  }
+
+  /**
+   * Updates all model properties from an armor stand properties wrapper
+   * @param model Target model
+   * @param props Properties to set
+   */
+  private void updateModelProperties(ArmorStandModel model, ArmorStandProperties props) {
+    model.setNameVisible(props.isNameVisible());
+    model.setVisible(props.isVisible());
+    model.setArms(props.isArms());
+    model.setSmall(props.isSmall());
+    model.setBasePlate(props.isBaseplate());
+    model.setDisplayName(props.getName());
+    model.setHelmet(props.getHelmet());
+    model.setChestplate(props.getChestplate());
+    model.setLeggings(props.getLeggings());
+    model.setBoots(props.getBoots());
+    model.setHand(props.getHand());
+    model.setHeadPose(props.getHeadPose());
+    model.setBodyPose(props.getBodyPose());
+    model.setLeftArmPose(props.getLeftArmPose());
+    model.setRightArmPose(props.getRightArmPose());
+    model.setLeftLegPose(props.getLeftLegPose());
+    model.setRightLegPose(props.getRightLegPose());
   }
 }

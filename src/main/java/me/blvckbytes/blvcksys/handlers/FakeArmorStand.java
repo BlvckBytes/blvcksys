@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.handlers;
 
+import lombok.Getter;
 import me.blvckbytes.blvcksys.packets.communicators.armorstand.ArmorStandProperties;
 import me.blvckbytes.blvcksys.packets.communicators.armorstand.IArmorStandCommunicator;
 import org.bukkit.Bukkit;
@@ -18,6 +19,7 @@ import java.util.*;
   knows this stand and sends destroy signals on destroy to only
   those clients.
  */
+@Getter
 public class FakeArmorStand {
 
   // Specify the max. squared distance between the armor stand and any
@@ -49,6 +51,16 @@ public class FakeArmorStand {
     this.loc = loc;
     for (Map.Entry<Player, Entity> active : actives.entrySet())
       comm.moveLine(active.getKey(), active.getValue(), this.loc, false);
+  }
+
+  /**
+   * Changes the properties of this armor stand
+   * @param props New properties
+   */
+  public void setProps(ArmorStandProperties props) {
+    this.props = props;
+    for (Map.Entry<Player, Entity> active : actives.entrySet())
+      comm.update(active.getKey(), active.getValue(), props);
   }
 
   /**

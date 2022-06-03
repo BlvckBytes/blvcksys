@@ -164,6 +164,29 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
   }
 
   @Override
+  public <T extends APersistentModel> int count(Class<T> type) throws PersistenceException {
+    try {
+      PreparedStatement ps = buildQuery(type, null, false, true, false);
+      ResultSet rs = ps.executeQuery();
+
+      if (!rs.next())
+        return 0;
+
+      int res = rs.getInt("count");
+
+      rs.close();
+      ps.close();
+
+      return res;
+    } catch (PersistenceException e) {
+      throw e;
+    } catch (Exception e) {
+      logger.logError(e);
+      throw new PersistenceException("An internal error occurred");
+    }
+  }
+
+  @Override
   public <T extends APersistentModel> Optional<T> findFirst(QueryBuilder<T> query) throws PersistenceException {
     try {
       PreparedStatement ps = buildQuery(query.getModel(), query, true, false, false);

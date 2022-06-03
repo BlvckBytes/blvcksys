@@ -62,6 +62,12 @@ public interface IPersistence {
   <T extends APersistentModel> int count(QueryBuilder<T> query) throws PersistenceException;
 
   /**
+   * Count all models of a specific type
+   * @param type Type of model to count
+   */
+  <T extends APersistentModel> int count(Class<T> type) throws PersistenceException;
+
+  /**
    * Find the first model that matches the specified query
    * @param query Query to execute
    * @return First model, empty if there were no matches

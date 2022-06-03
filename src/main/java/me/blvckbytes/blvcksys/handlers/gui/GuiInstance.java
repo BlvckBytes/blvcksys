@@ -130,7 +130,7 @@ public class GuiInstance<T> {
    */
   public<A> void reopen(AnimationType animation, @Nullable GuiInstance<A> previous) {
     if (!template.getActiveInstances().containsKey(viewer))
-      template.getActiveInstances().put(viewer, new ArrayList<>());
+      template.getActiveInstances().put(viewer, new HashSet<>());
 
     // Re-register this instance which was unregistered when closed
     template.getActiveInstances().get(viewer).add(this);

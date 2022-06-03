@@ -36,7 +36,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
 
   // Mapping players to their active instances
   @Getter
-  private final Map<Player, List<GuiInstance<T>>> activeInstances;
+  private final Map<Player, Set<GuiInstance<T>>> activeInstances;
 
   private int tickerHandle;
 
@@ -118,7 +118,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     @Nullable Inventory animateFrom
   ) {
     if (!activeInstances.containsKey(viewer))
-      activeInstances.put(viewer, new ArrayList<>());
+      activeInstances.put(viewer, new HashSet<>());
 
     // Create and register a new GUI instance
     GuiInstance<T> inst = new GuiInstance<>(viewer, this, arg, textures, cfg, plugin);
@@ -152,7 +152,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
       Bukkit.getScheduler().cancelTask(tickerHandle);
 
     // Destroy all instances of all players
-    for (List<GuiInstance<T>> instances : activeInstances.values()) {
+    for (Set<GuiInstance<T>> instances : activeInstances.values()) {
       for (Iterator<GuiInstance<T>> instI = instances.iterator(); instI.hasNext();) {
         GuiInstance<T> inst = instI.next();
         inst.getViewer().closeInventory();
@@ -172,14 +172,11 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
       public void run() {
 
         // Tick all instances of all players
-        for (List<GuiInstance<T>> instances : activeInstances.values()) {
-          for (int i = instances.size() - 1; i >= 0; i--) {
-            GuiInstance<T> instance = instances.get(i);
+        for (Set<GuiInstance<T>> instances : activeInstances.values()) {
+          for (GuiInstance<T> instance : instances) {
             // Don't tick animating GUIs
-            if (instance.getAnimating().get())
-              continue;
-
-            instance.tick(time);
+            if (!instance.getAnimating().get())
+              instance.tick(time);
           }
         }
 

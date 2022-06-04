@@ -250,7 +250,7 @@ public class MultilineHologram extends ATemplateHandler {
         if (remainingTicks == VELOCITY_MAX_SECS * 20 || collidedWith != null)
           holoComm.sendVelocity(pe.getKey(), e, vel);
 
-        holoComm.move(pe.getKey(), e, tail, true);
+        holoComm.teleport(pe.getKey(), e, tail, true);
         tail.add(0, INTER_LINE_SPACING, 0);
       }
     }

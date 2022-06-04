@@ -303,10 +303,19 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
     if (req == null || !req.enabled || req.prevLoc == null)
       return;
 
+    /*
+      -90 -> 0 -> 90 (OK)
+      0 -> -180 -> 180 -> 0 (n. OK), |a| => 0 -> 180 -> 0 (OK)
+
+      Since I calculate deltas between moves, I want yaw and pitch to
+      not have any jumps like the one from -180 to 180, because that would drive
+      the delta to a non-matching, high amount.
+     */
+
     // Calculate movement delta and update the previous location
     Location nextLoc = p.getLocation().clone();
-    double dYaw = normalizeAngle(nextLoc.getYaw()) - normalizeAngle(req.prevLoc.getYaw());
-    double dPitch = normalizeAngle(nextLoc.getPitch() * 2) - normalizeAngle(req.prevLoc.getPitch() * 2);
+    double dYaw = Math.abs(nextLoc.getYaw()) - Math.abs(req.prevLoc.getYaw());
+    double dPitch = nextLoc.getPitch() - req.prevLoc.getPitch();
     req.prevLoc = nextLoc;
 
     // Scale movement
@@ -353,21 +362,6 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
   @EventHandler
   public void onQuit(PlayerQuitEvent e) {
     moving.remove(e.getPlayer());
-  }
-
-  /**
-   * Normalize any angle in degrees to be within the range [0;360]
-   * @param angle Input angle
-   * @return Normalized output angle
-   */
-  private float normalizeAngle(float angle) {
-    while (angle < 0)
-      angle += 360;
-
-    while (angle > 360)
-      angle -= 360;
-
-    return angle;
   }
 
   //=========================================================================//

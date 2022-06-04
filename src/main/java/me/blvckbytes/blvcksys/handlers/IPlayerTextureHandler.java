@@ -27,11 +27,10 @@ public interface IPlayerTextureHandler {
   /**
    * Store a custom texture binding
    * @param name Custom name
-   * @param uuid UUID matching the texture's owner
    * @param textures Textures to store
    * @return True on success, false if that name/uuid combination was already stored
    */
-  boolean storeCustom(String name, UUID uuid, String textures);
+  boolean storeCustom(String name, String textures);
 
   /**
    * Get the texture information of a given player by their name

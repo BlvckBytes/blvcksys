@@ -47,7 +47,7 @@ public class PlayerTextureHandler implements IPlayerTextureHandler, IAutoConstru
   private final JavaPlugin plugin;
 
   // Mapping names to textures
-  private final Map<String, PlayerTextureModel> cache;
+  private final Map<String, List<PlayerTextureModel>> cache;
 
   public PlayerTextureHandler(
     @AutoInject IPersistence pers,
@@ -77,9 +77,9 @@ public class PlayerTextureHandler implements IPlayerTextureHandler, IAutoConstru
   }
 
   @Override
-  public boolean storeCustom(String name, UUID uuid, String textures) {
+  public boolean storeCustom(String name, String textures) {
     try {
-      pers.store(new PlayerTextureModel(name, uuid, textures));
+      pers.store(new PlayerTextureModel(name, UUID.randomUUID(), true, textures));
       return true;
     } catch (DuplicatePropertyException e) {
       return false;
@@ -88,37 +88,43 @@ public class PlayerTextureHandler implements IPlayerTextureHandler, IAutoConstru
 
   @Override
   public Optional<PlayerTextureModel> getTextures(String name, boolean forceUpdate) {
-    // Try to resolve from cache
-    if (cache.containsKey(name.toLowerCase()))
-      return Optional.of(cache.get(name.toLowerCase()));
+    return cache.getOrDefault(name.toLowerCase(), new ArrayList<>())
+      .stream()
+      .filter(e -> e.getName().equalsIgnoreCase(name))
+      .min((a, b) -> Boolean.compare(a.isRandomUuid(), b.isRandomUuid()))
+      .or(() -> {
+        // Try to resolve from db
+        if (!forceUpdate) {
+          Optional<PlayerTextureModel> res = pers.findFirst(buildQuery(name));
 
-    // Try to resolve from db
-    if (!forceUpdate) {
-      Optional<PlayerTextureModel> res = pers.findFirst(buildQuery(name));
+          if (res.isPresent()) {
+            if (!cache.containsKey(name.toLowerCase()))
+              cache.put(name.toLowerCase(), new ArrayList<>());
+            cache.get(name.toLowerCase()).add(res.get());
+            return res;
+          }
+        }
 
-      if (res.isPresent()) {
-        cache.put(name.toLowerCase(), res.get());
-        return res;
-      }
-    }
+        // Cannot resolve this name
+        Triple<UUID, String, String> result = resolveSkinTextures(name).orElse(null);
+        if (result == null)
+          return Optional.empty();
 
-    // Cannot resolve this name
-    Triple<UUID, String, String> result = resolveSkinTextures(name).orElse(null);
-    if (result == null)
-      return Optional.empty();
+        // Delete any exact results that may exist
+        pers.delete(new QueryBuilder<>(
+          PlayerTextureModel.class,
+          "name", EqualityOperation.EQ_IC, name
+        ).or("uuid", EqualityOperation.EQ, result.a()));
 
-    // Delete any exact results that may exist
-    pers.delete(new QueryBuilder<>(
-      PlayerTextureModel.class,
-      "name", EqualityOperation.EQ_IC, name
-    ).or("uuid", EqualityOperation.EQ, result.a()));
+        // Store result
+        PlayerTextureModel model = new PlayerTextureModel(result.c(), result.a(), false, result.b());
+        pers.store(model);
 
-    // Store result
-    PlayerTextureModel model = new PlayerTextureModel(result.c(), result.a(), result.b());
-    pers.store(model);
-
-    cache.put(name.toLowerCase(), model);
-    return Optional.of(model);
+        if (!cache.containsKey(name.toLowerCase()))
+          cache.put(name.toLowerCase(), new ArrayList<>());
+        cache.get(name.toLowerCase()).add(model);
+        return Optional.of(model);
+      });
   }
 
   @Override
@@ -149,7 +155,7 @@ public class PlayerTextureHandler implements IPlayerTextureHandler, IAutoConstru
 
       // Load head by head into DB
       for (Map.Entry<String, String> entry : heads.entrySet()) {
-        boolean succ = storeCustom(entry.getKey(), UUID.randomUUID(), entry.getValue());
+        boolean succ = storeCustom(entry.getKey(), entry.getValue());
 
         if (succ)
           logger.logInfo("Loaded head \"" + entry.getKey() + "\" from file into database.");
@@ -234,7 +240,7 @@ public class PlayerTextureHandler implements IPlayerTextureHandler, IAutoConstru
 
   /**
    * Find a player's skin textures entry, always take the most recent result,
-   * if there are multiple
+   * if there are multiple, preferring non-random UUID entries
    * @param name Name of the target player
    */
   private QueryBuilder<PlayerTextureModel> buildQuery(String name) {
@@ -242,6 +248,7 @@ public class PlayerTextureHandler implements IPlayerTextureHandler, IAutoConstru
       PlayerTextureModel.class,
       "name", EqualityOperation.EQ_IC, name
     )
+      .orderBy("randomUuid", true)
       .orderBy("createdAt", false)
       .orderBy("updatedAt", false);
   }

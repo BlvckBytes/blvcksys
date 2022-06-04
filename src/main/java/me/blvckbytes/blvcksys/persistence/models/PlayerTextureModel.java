@@ -26,6 +26,9 @@ public class PlayerTextureModel extends APersistentModel {
   UUID uuid;
 
   @ModelProperty
+  private boolean randomUuid;
+
+  @ModelProperty
   String textures;
 
   /**

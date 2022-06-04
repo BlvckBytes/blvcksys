@@ -78,7 +78,7 @@ public class AnvilSearchGui extends AGui<SingleChoiceParam> implements IPacketMo
     Player p = inst.getViewer();
 
     // Restore the inventory contents again by updating the inv
-    p.updateInventory();
+    Bukkit.getScheduler().runTask(plugin, p::updateInventory);
 
     if (!madeSelection.remove(p) && inst.getArg().closed() != null)
       inst.getArg().closed().accept(inst);

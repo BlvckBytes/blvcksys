@@ -50,7 +50,7 @@ public class FakeArmorStand {
   public void setLoc(Location loc) {
     this.loc = loc;
     for (Map.Entry<Player, Entity> active : actives.entrySet())
-      comm.moveLine(active.getKey(), active.getValue(), this.loc, false);
+      comm.move(active.getKey(), active.getValue(), this.loc, false);
   }
 
   /**

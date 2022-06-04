@@ -53,7 +53,7 @@ public interface IArmorStandCommunicator {
    * @param loc Location to move to
    * @param isShifted Whether the armor stand location is shifted
    */
-  void moveLine(Player p, Entity handle, Location loc, boolean isShifted);
+  void move(Player p, Entity handle, Location loc, boolean isShifted);
 
   /**
    * Sends information about the armor stand's current velocity to the client. This is kind

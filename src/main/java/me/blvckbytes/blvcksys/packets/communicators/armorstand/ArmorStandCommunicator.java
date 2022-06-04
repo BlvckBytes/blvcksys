@@ -137,7 +137,7 @@ public class ArmorStandCommunicator implements IArmorStandCommunicator {
   }
 
   @Override
-  public void moveLine(Player p, Entity handle, Location loc, boolean isShifted) {
+  public void move(Player p, Entity handle, Location loc, boolean isShifted) {
     try {
       Location toShifted = isShifted ? shiftLocation(loc) : loc;
 
@@ -149,11 +149,13 @@ public class ArmorStandCommunicator implements IArmorStandCommunicator {
       Location prevShifted = isShifted ? shiftLocation(prev) : prev;
 
       // Calculate the delta per axis and encode it into the required representation
-      PacketPlayOutEntity.PacketPlayOutRelEntityMove moveP = new PacketPlayOutEntity.PacketPlayOutRelEntityMove(
+      PacketPlayOutEntity.PacketPlayOutRelEntityMoveLook moveP = new PacketPlayOutEntity.PacketPlayOutRelEntityMoveLook(
         handle.getEntityId(),
         (short) ((toShifted.getX() * 32 - prevShifted.getX() * 32) * 128),
         (short) ((toShifted.getY() * 32 - prevShifted.getY() * 32) * 128),
         (short) ((toShifted.getZ() * 32 - prevShifted.getZ() * 32) * 128),
+        (byte) (toShifted.getYaw() * 256.0F / 360.0F),
+        (byte) (toShifted.getPitch() * 256.0F / 360.0F),
         handle.isOnGround()
       );
 

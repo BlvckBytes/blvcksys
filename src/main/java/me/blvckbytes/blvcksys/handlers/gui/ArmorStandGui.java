@@ -2,16 +2,21 @@ package me.blvckbytes.blvcksys.handlers.gui;
 
 import lombok.AllArgsConstructor;
 import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.handlers.EquipmentSlot;
 import me.blvckbytes.blvcksys.handlers.IArmorStandHandler;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.handlers.MoveablePart;
 import me.blvckbytes.blvcksys.packets.communicators.armorstand.ArmorStandProperties;
 import me.blvckbytes.blvcksys.persistence.models.ArmorStandModel;
+import me.blvckbytes.blvcksys.util.ChatButtons;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.SymbolicHead;
+import me.blvckbytes.blvcksys.util.Triple;
+import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
@@ -22,12 +27,15 @@ import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.function.Consumer;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -56,6 +64,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
   // Players mapped to their current mouse button state
   private final Map<Player, MoveRequest> moving;
   private final IArmorStandHandler standHandler;
+  private final ItemEditorGui itemEditorGui;
   private final ChatUtil chatUtil;
 
   public ArmorStandGui(
@@ -63,6 +72,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
     @AutoInject JavaPlugin plugin,
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject IArmorStandHandler standHandler,
+    @AutoInject ItemEditorGui itemEditorGui,
     @AutoInject ChatUtil chatUtil
   ) {
     super(6, "", i -> (
@@ -73,6 +83,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
     this.moving = new HashMap<>();
     this.standHandler = standHandler;
     this.chatUtil = chatUtil;
+    this.itemEditorGui = itemEditorGui;
   }
 
   @Override
@@ -108,21 +119,21 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
     ), null);
 
     inst.fixedItem(11, () -> (
-      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.LETTER_C.getOwner()))
+      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.LETTER_B.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_CHESTPLATE_NAME))
         .withLore(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_CHESTPLATE_LORE))
         .build()
     ), null);
 
     inst.fixedItem(12, () -> (
-      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.LETTER_L.getOwner()))
+      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.LETTER_H.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_LEGGINGS_NAME))
         .withLore(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_LEGGINGS_LORE))
         .build()
     ), null);
 
     inst.fixedItem(13, () -> (
-      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.LETTER_B.getOwner()))
+      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.LETTER_S.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_BOOTS_NAME))
         .withLore(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_BOOTS_LORE))
         .build()
@@ -144,139 +155,21 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
 
     /////////////////////////////////// Equipment Slots ////////////////////////////////////
 
-    inst.fixedItem(19, () -> (
-      props.getHelmet() == null ?
-        new ItemStackBuilder(Material.BARRIER)
-          .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_EMPTY_EQUIP_NAME))
-          .withLore(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_EMPTY_EQUIP_LORE))
-          .build()
-        : props.getHelmet()
-    ), e -> {
-
-    });
-
-    inst.fixedItem(20, () -> (
-      props.getChestplate() == null ?
-        new ItemStackBuilder(Material.BARRIER)
-          .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_EMPTY_EQUIP_NAME))
-          .withLore(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_EMPTY_EQUIP_LORE))
-          .build()
-        : props.getChestplate()
-    ), e -> {
-
-    });
-
-    inst.fixedItem(21, () -> (
-      props.getLeggings() == null ?
-        new ItemStackBuilder(Material.BARRIER)
-          .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_EMPTY_EQUIP_NAME))
-          .withLore(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_EMPTY_EQUIP_LORE))
-          .build()
-        : props.getLeggings()
-    ), e -> {
-
-    });
-
-    inst.fixedItem(22, () -> (
-      props.getBoots() == null ?
-        new ItemStackBuilder(Material.BARRIER)
-          .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_EMPTY_EQUIP_NAME))
-          .withLore(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_EMPTY_EQUIP_LORE))
-          .build()
-        : props.getBoots()
-    ), e -> {
-
-    });
-
-    inst.fixedItem(23, () -> (
-      props.getOffHand() == null ?
-        new ItemStackBuilder(Material.BARRIER)
-          .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_EMPTY_EQUIP_NAME))
-          .withLore(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_EMPTY_EQUIP_LORE))
-          .build()
-        : props.getOffHand()
-    ), e -> {
-
-    });
-
-    inst.fixedItem(24, () -> (
-      props.getHand() == null ?
-        new ItemStackBuilder(Material.BARRIER)
-          .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_EMPTY_EQUIP_NAME))
-          .withLore(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_EMPTY_EQUIP_LORE))
-          .build()
-        : props.getHand()
-    ), e -> {
-
-    });
+    equipmentSlotTemplate(inst, 19, EquipmentSlot.HELMET, props);
+    equipmentSlotTemplate(inst, 20, EquipmentSlot.CHESTPLATE, props);
+    equipmentSlotTemplate(inst, 21, EquipmentSlot.LEGGINGS, props);
+    equipmentSlotTemplate(inst, 22, EquipmentSlot.BOOTS, props);
+    equipmentSlotTemplate(inst, 23, EquipmentSlot.OFF_HAND, props);
+    equipmentSlotTemplate(inst, 24, EquipmentSlot.MAIN_HAND, props);
 
     /////////////////////////////////// Body Poses ////////////////////////////////////
 
-    inst.fixedItem(28, () -> (
-      new ItemStackBuilder(Material.GOLDEN_AXE)
-        .hideAttributes()
-        .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_ALTER_POSE_NAME))
-        .withLore(
-          cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_ALTER_POSE_LORE)
-            .withVariable("bodypart", formatConstant(MoveablePart.HEAD.name()))
-        )
-        .build()
-    ), e -> initializePoseCustomize(inst, props, MoveablePart.HEAD));
-
-    inst.fixedItem(29, () -> (
-      new ItemStackBuilder(Material.GOLDEN_AXE)
-        .hideAttributes()
-        .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_ALTER_POSE_NAME))
-        .withLore(
-          cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_ALTER_POSE_LORE)
-            .withVariable("bodypart", formatConstant(MoveablePart.BODY.name()))
-        )
-        .build()
-    ), e -> initializePoseCustomize(inst, props, MoveablePart.BODY));
-
-    inst.fixedItem(30, () -> (
-      new ItemStackBuilder(Material.GOLDEN_AXE)
-        .hideAttributes()
-        .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_ALTER_POSE_NAME))
-        .withLore(
-          cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_ALTER_POSE_LORE)
-            .withVariable("bodypart", formatConstant(MoveablePart.LEFT_LEG.name()))
-        )
-        .build()
-    ), e -> initializePoseCustomize(inst, props, MoveablePart.LEFT_LEG));
-
-    inst.fixedItem(31, () -> (
-      new ItemStackBuilder(Material.GOLDEN_AXE)
-        .hideAttributes()
-        .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_ALTER_POSE_NAME))
-        .withLore(
-          cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_ALTER_POSE_LORE)
-            .withVariable("bodypart", formatConstant(MoveablePart.RIGHT_LEG.name()))
-        )
-        .build()
-    ), e -> initializePoseCustomize(inst, props, MoveablePart.RIGHT_LEG));
-
-    inst.fixedItem(32, () -> (
-      new ItemStackBuilder(Material.GOLDEN_AXE)
-        .hideAttributes()
-        .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_ALTER_POSE_NAME))
-        .withLore(
-          cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_ALTER_POSE_LORE)
-            .withVariable("bodypart", formatConstant(MoveablePart.LEFT_ARM.name()))
-        )
-        .build()
-    ), e -> initializePoseCustomize(inst, props, MoveablePart.LEFT_ARM));
-
-    inst.fixedItem(33, () -> (
-      new ItemStackBuilder(Material.GOLDEN_AXE)
-        .hideAttributes()
-        .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_ALTER_POSE_NAME))
-        .withLore(
-          cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_ALTER_POSE_LORE)
-            .withVariable("bodypart", formatConstant(MoveablePart.RIGHT_ARM.name()))
-        )
-        .build()
-    ), e -> initializePoseCustomize(inst, props, MoveablePart.RIGHT_ARM));
+    poseSlotTemplate(inst, 28, MoveablePart.HEAD, props);
+    poseSlotTemplate(inst, 29, MoveablePart.BODY, props);
+    poseSlotTemplate(inst, 30, MoveablePart.LEFT_LEG, props);
+    poseSlotTemplate(inst, 31, MoveablePart.RIGHT_LEG, props);
+    poseSlotTemplate(inst, 32, MoveablePart.LEFT_ARM, props);
+    poseSlotTemplate(inst, 33, MoveablePart.RIGHT_ARM, props);
 
     /////////////////////////////////// Boolean Flags ////////////////////////////////////
 
@@ -482,6 +375,46 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
   //=========================================================================//
 
   /**
+   * Prompt for an itemstack by telling the user to hold it in their hand while submitting the prompt
+   * @param inst GUI instance
+   * @param submitted Submitted item
+   */
+  private void promptForItem(GuiInstance<ArmorStandModel> inst, EquipmentSlot slot, Consumer<ItemStack> submitted) {
+    // Close the gui and start a new chat prompt to end or cancel the session
+    inst.close();
+
+    promptForDone(
+      inst,
+      cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_EQUIPMENT_PROMPT)
+        .withVariable("slot", formatConstant(slot.name()))
+        .withPrefix(),
+      () -> {
+        ItemStack item = inst.getViewer().getInventory().getItemInMainHand();
+
+        // Has to have something in their hand
+        if (item.getType() == Material.AIR) {
+          inst.getViewer().sendMessage(
+            cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_EQUIPMENT_NONE)
+              .withPrefix()
+              .asScalar()
+          );
+
+          return;
+        }
+
+        submitted.accept(item);
+
+        inst.getViewer().sendMessage(
+          cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_EQUIPMENT_CHANGED)
+            .withPrefix()
+            .withVariable("slot", formatConstant(slot.name()))
+            .asScalar()
+        );
+      }, null
+    );
+  }
+
+  /**
    * Initializes the process of customizing a body part pose using mouse movement
    * @param inst GUI instance
    * @param props Current properties ref
@@ -493,15 +426,14 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
     // Close the gui and start a new chat prompt to end or cancel the session
     inst.close();
 
-    chatUtil.registerPrompt(
-      inst.getViewer(),
+    promptForDone(
+      inst,
       cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_POSE_PROMPT)
         .withPrefix()
-        .withVariable("bodypart", formatConstant(part.name()))
-        .asScalar(),
+        .withVariable("bodypart", formatConstant(part.name())),
 
-      // Input finishes the session and saves
-      input -> {
+      // Done, save the updates
+      () -> {
         // Copy over the value from the clone
         part.set(props, part.get(alterable));
         standHandler.setProperties(inst.getArg().getName(), props, true);
@@ -513,21 +445,130 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
             .asScalar()
         );
 
-        inst.reopen(AnimationType.SLIDE_UP);
         moving.remove(inst.getViewer());
       },
 
-      // Cancel reopens the GUI without saving and restores the old state
+      // Cancel, restore the old state
       () -> {
-        standHandler.setProperties(inst.getArg().getName(), props, true);
-        inst.reopen(AnimationType.SLIDE_UP);
+        standHandler.setProperties(inst.getArg().getName(), props, false);
         moving.remove(inst.getViewer());
-      },
-
-      // No back button
-      null
+      }
     );
 
     moving.put(inst.getViewer(), new MoveRequest(part, inst.getArg(), alterable, false, null, null));
+  }
+
+  /**
+   * Get an item's name by either it's item meta or by transforming
+   * the material type to a human readable string
+   * @param item Item to get the name for
+   * @return Name to display
+   */
+  public ConfigValue getItemName(ItemStack item) {
+    ItemMeta meta = item.getItemMeta();
+    String metaName = meta == null ? null : meta.getDisplayName();
+
+    return (metaName != null && !metaName.isBlank()) ? ConfigValue.immediate(metaName) :
+      cfg.get(ConfigKey.GUI_CRATE_CONTENT_CONTENT_NAME)
+        .withVariable(
+          "hr_type",
+          WordUtils.capitalizeFully(item.getType().name().replace("_", " "))
+        );
+  }
+
+  /**
+   * Item button template for an equipment slot manipulator
+   * @param inst GUI instance
+   * @param invSlot Slot within the GUI
+   * @param slot Slot of the armorstand to manipulate
+   * @param props Current properties value
+   */
+  private void equipmentSlotTemplate(GuiInstance<ArmorStandModel> inst, int invSlot, EquipmentSlot slot, ArmorStandProperties props) {
+    inst.fixedItem(invSlot, () -> (
+      slot.get(props) == null ?
+        new ItemStackBuilder(Material.BARRIER)
+          .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_EMPTY_EQUIP_NAME))
+          .withLore(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_EMPTY_EQUIP_LORE))
+          .build() :
+        new ItemStackBuilder(slot.get(props), slot.get(props).getAmount())
+          .withName(
+            cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_USED_EQUIP_NAME)
+              .withVariable("name", getItemName(slot.get(props)))
+          )
+          .withLore(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_USED_EQUIP_LORE))
+          .build()
+    ), e -> {
+      if (slot.get(props) == null) {
+        promptForItem(inst, slot, item -> {
+          slot.set(props, item);
+          standHandler.setProperties(inst.getArg().getName(), props, true);
+        });
+        return;
+      }
+
+      if (e.getClick().isRightClick()) {
+        slot.set(props, null);
+        standHandler.setProperties(inst.getArg().getName(), props, true);
+        inst.redraw(String.valueOf(invSlot));
+        return;
+      }
+
+      if (e.getClick().isLeftClick()) {
+        inst.switchTo(AnimationType.SLIDE_LEFT, itemEditorGui, new Triple<>(
+          slot.get(props),
+          stack -> {
+            slot.set(props, stack);
+            standHandler.setProperties(inst.getArg().getName(), props, true);
+            inst.redraw(String.valueOf(invSlot));
+          },
+          editorInst -> inst.reopen(AnimationType.SLIDE_RIGHT, editorInst)
+        ));
+      }
+    });
+  }
+
+  /**
+   * Pose button template for a pose manipulator
+   * @param inst GUI instance
+   * @param invSlot Slot within the GUI
+   * @param part Bodypart to manipulate
+   * @param props Current properties value
+   */
+  private void poseSlotTemplate(GuiInstance<ArmorStandModel> inst, int invSlot, MoveablePart part, ArmorStandProperties props) {
+    inst.fixedItem(invSlot, () -> (
+      new ItemStackBuilder(Material.GOLDEN_AXE)
+        .hideAttributes()
+        .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_ALTER_POSE_NAME))
+        .withLore(
+          cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_ALTER_POSE_LORE)
+            .withVariable("bodypart", formatConstant(part.name()))
+        )
+        .build()
+    ), e -> initializePoseCustomize(inst, props, part));
+  }
+
+  /**
+   * Creates a new cancel/done prompt within the chat
+   * @param inst GUI instance
+   * @param prefix Text to prefix to the prompt buttons
+   * @param done Called when done has been pressed
+   * @param cancel Called when cancel has been pressed
+   */
+  private void promptForDone(GuiInstance<ArmorStandModel> inst, ConfigValue prefix, Runnable done, @Nullable Runnable cancel) {
+    chatUtil.sendButtons(
+      inst.getViewer(),
+      new ChatButtons(prefix.asScalar(), true, plugin, cfg, null)
+        .addButton(cfg.get(ConfigKey.CHATBUTTONS_DONE), () -> {
+          done.run();
+          inst.reopen(AnimationType.SLIDE_UP);
+        })
+
+        // Re-open the GUI on cancellation
+        .addButton(cfg.get(ConfigKey.CHATBUTTONS_CANCEL), () -> {
+          if (cancel != null)
+            cancel.run();
+          inst.reopen(AnimationType.SLIDE_UP);
+        })
+    );
   }
 }

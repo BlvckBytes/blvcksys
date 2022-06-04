@@ -42,6 +42,7 @@ public enum ConfigKey {
   CHATBUTTONS_EDIT("chatbuttons.edit", "$1[&6Bearbeiten$1]"),
   CHATBUTTONS_CANCEL("chatbuttons.cancel", "$1[&cAbbrechen$1]"),
   CHATBUTTONS_BACK("chatbuttons.back", "$1[&bZurück$1]"),
+  CHATBUTTONS_DONE("chatbuttons.done", "$1[&aFertig$1]"),
 
   //=========================================================================//
   //                                   AFK                                   //
@@ -1806,8 +1807,16 @@ public enum ConfigKey {
     " ",
     "$0Dieser Slot besitzt noch $4kein Item$0.",
     " ",
-    "$0Rechtsklick: $2Wähle Item aus Inventar",
-    "$0Linksklick: $2Öffne ItemEditor"
+    "$0Klicke, um ein Item $2einzufügen$0."
+  ),
+  GUI_AS_CUSTOMIZE_USED_EQUIP_NAME("gui.as_customize.used_equip.name", "$0» $2{{name}}"),
+  GUI_AS_CUSTOMIZE_USED_EQUIP_LORE(
+    "gui.as_customize.used_equip.lore",
+    " ",
+    "$0Dieser Slot ist bereits $2belegt$0.",
+    " ",
+    "$0Rechtsklick: $2entfernen",
+    "$0Linksklick: $2ItemEditor starten"
   ),
   GUI_AS_CUSTOMIZE_ALTER_POSE_NAME("gui.as_customize.alter_pose.name", "$0» $2Pose ändern $0«"),
   GUI_AS_CUSTOMIZE_ALTER_POSE_LORE(
@@ -1874,8 +1883,11 @@ public enum ConfigKey {
     " ",
     "$0Aktueller Name: $2{{name}}"
   ),
-  GUI_AS_CUSTOMIZE_POSE_PROMPT("gui.as_customize.pose.prompt", "$0Bewege deine $2Maus$0, während du $2Rechtsklick $0mit einem $2beliebigen Item $0in der Hand gedrückt hältst, um das Körperteil $2{{bodypart}} $0zu bewegen. Nach Abschluss der Änderungen, gib eine $2beliebige Nachricht $0in den $2Chat $0ein."),
+  GUI_AS_CUSTOMIZE_POSE_PROMPT("gui.as_customize.pose.prompt", "$0Bewege deine $2Maus$0, während du $2Rechtsklick $0mit einem $2beliebigen Item $0in der Hand gedrückt hältst, um das Körperteil $2{{bodypart}} $0zu bewegen. Nach Abschluss der Änderungen, klicke den $2Fertig$0-Button: "),
   GUI_AS_CUSTOMIZE_POSE_CHANGED("gui.as_customize.pose.changed", "$0Die neue $2Pose $0vom Körperteil $2{{bodypart}} $0wurde gespeichert."),
+  GUI_AS_CUSTOMIZE_EQUIPMENT_PROMPT("gui.as_customize.equipment.prompt", "$0Nimm das $2neue Item $0für den Slot $2{{slot}} $0in deine Hand und klicke den $2Fertig$0-Button: "),
+  GUI_AS_CUSTOMIZE_EQUIPMENT_CHANGED("gui.as_customize.equipment.changed", "$0Das $2neue Item $0wurde im Slot $2{{slot}} $0gespeichert."),
+  GUI_AS_CUSTOMIZE_EQUIPMENT_NONE("gui.as_customize.equipment.none", "$0Du hast $4kein Item $0in der Hand gehalten!"),
 
   //=========================================================================//
   //                                Crate Draw GUI                           //

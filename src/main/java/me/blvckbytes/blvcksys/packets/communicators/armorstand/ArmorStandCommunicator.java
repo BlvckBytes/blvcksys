@@ -71,6 +71,9 @@ public class ArmorStandCommunicator implements IArmorStandCommunicator {
       Entity ret = eas.getBukkitEntity();
       lastLocations.put(ret, loc.clone());
 
+      // Send updates for all equipment slots
+      sendEquipment(p, (Entity) ent, properties);
+
       // Return a handle to the bukkit entity
       return ret;
     } catch (Exception e) {
@@ -188,7 +191,7 @@ public class ArmorStandCommunicator implements IArmorStandCommunicator {
   private void sendEquipment(Player p, Entity handle, ArmorStandProperties props) throws Exception {
     List<Pair<EnumItemSlot, net.minecraft.world.item.ItemStack>> equipment = new ArrayList<>();
 
-    getSlotByName("offhand").ifPresent(slot -> equipment.add(new Pair<>(slot, nmsStack(props.getHand()))));
+    getSlotByName("offhand").ifPresent(slot -> equipment.add(new Pair<>(slot, nmsStack(props.getOffHand()))));
     getSlotByName("mainhand").ifPresent(slot -> equipment.add(new Pair<>(slot, nmsStack(props.getHand()))));
     getSlotByName("head").ifPresent(slot -> equipment.add(new Pair<>(slot, nmsStack(props.getHelmet()))));
     getSlotByName("chest").ifPresent(slot -> equipment.add(new Pair<>(slot, nmsStack(props.getChestplate()))));

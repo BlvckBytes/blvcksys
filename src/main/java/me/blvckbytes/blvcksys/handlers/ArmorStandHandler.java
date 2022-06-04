@@ -223,6 +223,7 @@ public class ArmorStandHandler implements IArmorStandHandler, IAutoConstructed {
     model.setLeggings(props.getLeggings());
     model.setBoots(props.getBoots());
     model.setHand(props.getHand());
+    model.setOffHand(props.getOffHand());
     model.setHeadPose(props.getHeadPose());
     model.setBodyPose(props.getBodyPose());
     model.setLeftArmPose(props.getLeftArmPose());

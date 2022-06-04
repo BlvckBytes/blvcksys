@@ -48,7 +48,7 @@ import java.util.function.Function;
   Args: Item to edit, item change callback, back button callback
 */
 @AutoConstruct
-public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<Inventory>>> {
+public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<GuiInstance<?>>>> {
 
   private final SingleChoiceGui singleChoiceGui;
   private final ILogger logger;
@@ -73,12 +73,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
   }
 
   @Override
-  protected boolean closed(GuiInstance<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<Inventory>>> inst) {
+  protected boolean closed(GuiInstance<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<GuiInstance<?>>>> inst) {
     return false;
   }
 
   @Override
-  protected boolean opening(GuiInstance<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<Inventory>>> inst) {
+  protected boolean opening(GuiInstance<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<GuiInstance<?>>>> inst) {
     inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
 
     ItemStack item = inst.getArg().a();
@@ -97,9 +97,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     /////////////////////////////////// Back Button ////////////////////////////////////
 
     // Only render the back button if a callback has been provided
-    Consumer<Inventory> back = inst.getArg().c();
+    Consumer<GuiInstance<?>> back = inst.getArg().c();
     if (back != null) {
-      inst.addBack(36, e -> back.accept(inst.getInv()));
+      inst.addBack(36, e -> back.accept(inst));
     }
 
     ///////////////////////////////////// Preview //////////////////////////////////////

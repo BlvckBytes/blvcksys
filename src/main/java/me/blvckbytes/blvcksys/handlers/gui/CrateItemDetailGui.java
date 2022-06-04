@@ -196,7 +196,7 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
 
         // Re-open the detail GUI on completion
         editorInv -> {
-          this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, editorInv);
+          editorInv.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
         }
       ));
     });

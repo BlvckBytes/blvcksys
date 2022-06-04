@@ -21,6 +21,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.Nullable;
@@ -38,26 +39,6 @@ import java.util.Map;
 */
 @AutoConstruct
 public class ArmorStandGui extends AGui<ArmorStandModel> {
-
-  /*
-    What I want to do:
-
-    Rotate body-parts while holding the right mouse button until I type something in the chat, for:
-    - head
-    - body
-    - leg l, leg r
-    - arm l, arm r
-
-    Change helmet
-    Change chestplate
-    Change leggings
-    Change boots
-    Change main hand
-    Change off hand (is this possible?)
-
-    And for all items, either set an item from the inventory
-    or use the item editor to edit an existing item
-   */
 
   // Scaling factor used for movement delta before applying it to the angle
   private static final float MOVEMENT_SCALING = .5F;
@@ -240,7 +221,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
             .withVariable("bodypart", formatConstant(MoveablePart.HEAD.name()))
         )
         .build()
-    ), e -> initializePoseCustomize(inst, MoveablePart.HEAD));
+    ), e -> initializePoseCustomize(inst, props, MoveablePart.HEAD));
 
     inst.fixedItem(29, () -> (
       new ItemStackBuilder(Material.GOLDEN_AXE)
@@ -251,7 +232,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
             .withVariable("bodypart", formatConstant(MoveablePart.BODY.name()))
         )
         .build()
-    ), e -> initializePoseCustomize(inst, MoveablePart.BODY));
+    ), e -> initializePoseCustomize(inst, props, MoveablePart.BODY));
 
     inst.fixedItem(30, () -> (
       new ItemStackBuilder(Material.GOLDEN_AXE)
@@ -262,7 +243,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
             .withVariable("bodypart", formatConstant(MoveablePart.LEFT_LEG.name()))
         )
         .build()
-    ), e -> initializePoseCustomize(inst, MoveablePart.LEFT_LEG));
+    ), e -> initializePoseCustomize(inst, props, MoveablePart.LEFT_LEG));
 
     inst.fixedItem(31, () -> (
       new ItemStackBuilder(Material.GOLDEN_AXE)
@@ -273,7 +254,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
             .withVariable("bodypart", formatConstant(MoveablePart.RIGHT_LEG.name()))
         )
         .build()
-    ), e -> initializePoseCustomize(inst, MoveablePart.RIGHT_LEG));
+    ), e -> initializePoseCustomize(inst, props, MoveablePart.RIGHT_LEG));
 
     inst.fixedItem(32, () -> (
       new ItemStackBuilder(Material.GOLDEN_AXE)
@@ -284,7 +265,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
             .withVariable("bodypart", formatConstant(MoveablePart.LEFT_ARM.name()))
         )
         .build()
-    ), e -> initializePoseCustomize(inst, MoveablePart.LEFT_ARM));
+    ), e -> initializePoseCustomize(inst, props, MoveablePart.LEFT_ARM));
 
     inst.fixedItem(33, () -> (
       new ItemStackBuilder(Material.GOLDEN_AXE)
@@ -295,7 +276,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
             .withVariable("bodypart", formatConstant(MoveablePart.RIGHT_ARM.name()))
         )
         .build()
-    ), e -> initializePoseCustomize(inst, MoveablePart.RIGHT_ARM));
+    ), e -> initializePoseCustomize(inst, props, MoveablePart.RIGHT_ARM));
 
     /////////////////////////////////// Boolean Flags ////////////////////////////////////
 
@@ -476,6 +457,11 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
     }, 5L);
   }
 
+  @EventHandler
+  public void onQuit(PlayerQuitEvent e) {
+    moving.remove(e.getPlayer());
+  }
+
   /**
    * Normalize any angle in degrees to be within the range [0;360]
    * @param angle Input angle
@@ -495,7 +481,53 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
   //                                Utilities                                //
   //=========================================================================//
 
-  private void initializePoseCustomize(GuiInstance<ArmorStandModel> inst, MoveablePart part) {
-//    moving.put(p, new MoveRequest(part, model, props, false, null, null));
+  /**
+   * Initializes the process of customizing a body part pose using mouse movement
+   * @param inst GUI instance
+   * @param props Current properties ref
+   * @param part Body part to move
+   */
+  private void initializePoseCustomize(GuiInstance<ArmorStandModel> inst, ArmorStandProperties props, MoveablePart part) {
+    ArmorStandProperties alterable = props.clone();
+
+    // Close the gui and start a new chat prompt to end or cancel the session
+    inst.close();
+
+    chatUtil.registerPrompt(
+      inst.getViewer(),
+      cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_POSE_PROMPT)
+        .withPrefix()
+        .withVariable("bodypart", formatConstant(part.name()))
+        .asScalar(),
+
+      // Input finishes the session and saves
+      input -> {
+        // Copy over the value from the clone
+        part.set(props, part.get(alterable));
+        standHandler.setProperties(inst.getArg().getName(), props, true);
+
+        inst.getViewer().sendMessage(
+          cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_POSE_CHANGED)
+            .withPrefix()
+            .withVariable("bodypart", formatConstant(part.name()))
+            .asScalar()
+        );
+
+        inst.reopen(AnimationType.SLIDE_UP);
+        moving.remove(inst.getViewer());
+      },
+
+      // Cancel reopens the GUI without saving and restores the old state
+      () -> {
+        standHandler.setProperties(inst.getArg().getName(), props, true);
+        inst.reopen(AnimationType.SLIDE_UP);
+        moving.remove(inst.getViewer());
+      },
+
+      // No back button
+      null
+    );
+
+    moving.put(inst.getViewer(), new MoveRequest(part, inst.getArg(), alterable, false, null, null));
   }
 }

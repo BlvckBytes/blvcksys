@@ -17,6 +17,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.EulerAngle;
 import org.bukkit.util.Vector;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -241,22 +242,21 @@ public class ArmorStandCommunicator implements IArmorStandCommunicator {
     refl.invokeMethodByName(handle, "setSmall", new Class[] { boolean.class }, props.isSmall());
     refl.invokeMethodByName(handle, "setBasePlate", new Class[] { boolean.class }, props.isBaseplate());
 
-    if (props.getHeadPose() != null)
-      refl.invokeMethodByName(handle, "setHeadPose", new Class[]{ EulerAngle.class }, props.getHeadPose());
+    refl.invokeMethodByName(handle, "setHeadPose", new Class[]{ EulerAngle.class }, angleFallback(props.getHeadPose()));
+    refl.invokeMethodByName(handle, "setBodyPose", new Class[] { EulerAngle.class }, angleFallback(props.getBodyPose()));
+    refl.invokeMethodByName(handle, "setLeftArmPose", new Class[] { EulerAngle.class }, angleFallback(props.getLeftArmPose()));
+    refl.invokeMethodByName(handle, "setRightArmPose", new Class[] { EulerAngle.class }, angleFallback(props.getRightArmPose()));
+    refl.invokeMethodByName(handle, "setLeftLegPose", new Class[] { EulerAngle.class }, angleFallback(props.getLeftLegPose()));
+    refl.invokeMethodByName(handle, "setRightLegPose", new Class[] { EulerAngle.class }, angleFallback(props.getRightLegPose()));
+  }
 
-    if (props.getBodyPose() != null)
-      refl.invokeMethodByName(handle, "setBodyPose", new Class[] { EulerAngle.class }, props.getBodyPose());
-
-    if (props.getLeftArmPose() != null)
-      refl.invokeMethodByName(handle, "setLeftArmPose", new Class[] { EulerAngle.class }, props.getLeftArmPose());
-
-    if (props.getRightArmPose() != null)
-      refl.invokeMethodByName(handle, "setRightArmPose", new Class[] { EulerAngle.class }, props.getRightArmPose());
-
-    if (props.getLeftLegPose() != null)
-      refl.invokeMethodByName(handle, "setLeftLegPose", new Class[] { EulerAngle.class }, props.getLeftLegPose());
-
-    if (props.getRightLegPose() != null)
-      refl.invokeMethodByName(handle, "setRightLegPose", new Class[] { EulerAngle.class }, props.getRightLegPose());
+  /**
+   * Provides a fallback of zero degrees for all axies if the given angle is null
+   * @param angle Angle to provide a fallback for
+   */
+  private EulerAngle angleFallback(@Nullable EulerAngle angle) {
+    if (angle != null)
+      return angle;
+    return new EulerAngle(0, 0, 0);
   }
 }

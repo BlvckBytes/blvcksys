@@ -1874,6 +1874,8 @@ public enum ConfigKey {
     " ",
     "$0Aktueller Name: $2{{name}}"
   ),
+  GUI_AS_CUSTOMIZE_POSE_PROMPT("gui.as_customize.pose.prompt", "$0Bewege deine $2Maus$0, während du $2Rechtsklick $0mit einem $2beliebigen Item $0in der Hand gedrückt hältst, um das Körperteil $2{{bodypart}} $0zu bewegen. Nach Abschluss der Änderungen, gib eine $2beliebige Nachricht $0in den $2Chat $0ein."),
+  GUI_AS_CUSTOMIZE_POSE_CHANGED("gui.as_customize.pose.changed", "$0Die neue $2Pose $0vom Körperteil $2{{bodypart}} $0wurde gespeichert."),
 
   //=========================================================================//
   //                                Crate Draw GUI                           //

@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.EulerAngle;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /*
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 @Getter
 @Setter
 @AllArgsConstructor
-public class ArmorStandProperties {
+public class ArmorStandProperties implements Cloneable {
   // Whether the name is visible
   private boolean nameVisible;
 
@@ -55,5 +56,14 @@ public class ArmorStandProperties {
     this.name = text;
     this.nameVisible = true;
     this.shifted = true;
+  }
+
+  @NotNull
+  public ArmorStandProperties clone() {
+    try {
+      return (ArmorStandProperties) super.clone();
+    } catch (CloneNotSupportedException var2) {
+      throw new Error(var2);
+    }
   }
 }

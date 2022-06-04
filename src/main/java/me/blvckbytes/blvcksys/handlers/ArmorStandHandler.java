@@ -182,8 +182,8 @@ public class ArmorStandHandler implements IArmorStandHandler, IAutoConstructed {
    */
   private FakeArmorStand fakeFromModel(ArmorStandModel model) {
     ArmorStandProperties props = new ArmorStandProperties(
-      false,
-      true,
+      model.isNameVisible(),
+      model.isVisible(),
       false,
       model.isArms(),
       model.isSmall(),

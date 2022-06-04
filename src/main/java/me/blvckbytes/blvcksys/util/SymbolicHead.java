@@ -16,7 +16,13 @@ public enum SymbolicHead {
   ARROW_LEFT("MHF_ArrowLeft"),
   ARROW_RIGHT("MHF_ArrowRight"),
   ARROW_UP("MHF_ArrowUp"),
-  ARROW_DOWN("MHF_ArrowDown");
+  ARROW_DOWN("MHF_ArrowDown"),
+  LETTER_H("OakWoodH"),
+  LETTER_C("OakWoodC"),
+  LETTER_L("OakWoodL"),
+  LETTER_B("OakWoodB"),
+  LETTER_R("OakWoodR")
+  ;
 
   private final String owner;
 

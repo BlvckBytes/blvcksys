@@ -5,7 +5,9 @@ import me.blvckbytes.blvcksys.config.ConfigValue;
 import net.minecraft.util.Tuple;
 import org.bukkit.Color;
 import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
@@ -14,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -25,6 +28,7 @@ import java.util.regex.Pattern;
 */
 public class ItemStackBuilder {
 
+  private final List<ItemFlag> flags;
   private final Map<Enchantment, Integer> enchantments;
   private final Material mat;
   private final int amount;
@@ -44,6 +48,7 @@ public class ItemStackBuilder {
     this.amount = 1;
     this.profile = profile;
     this.enchantments = new HashMap<>();
+    this.flags = new ArrayList<>();
   }
 
   /**
@@ -60,6 +65,7 @@ public class ItemStackBuilder {
       this.meta = stack.getItemMeta();
     }
 
+    this.flags = new ArrayList<>();
     this.enchantments = new HashMap<>();
     this.amount = amount;
   }
@@ -71,6 +77,7 @@ public class ItemStackBuilder {
    */
   public ItemStackBuilder(Material mat, int amount) {
     this.enchantments = new HashMap<>();
+    this.flags = new ArrayList<>();
     this.mat = mat;
     this.amount = amount;
   }
@@ -90,6 +97,14 @@ public class ItemStackBuilder {
    */
   public ItemStackBuilder withEnchantment(Enchantment enchantment, int level) {
     this.enchantments.put(enchantment, level);
+    return this;
+  }
+
+  /**
+   * Hides all attributes on this item
+   */
+  public ItemStackBuilder hideAttributes() {
+    this.flags.add(ItemFlag.HIDE_ATTRIBUTES);
     return this;
   }
 
@@ -171,6 +186,9 @@ public class ItemStackBuilder {
         e.printStackTrace();
       }
     }
+
+    for (ItemFlag flag : this.flags)
+      meta.addItemFlags(flag);
 
     if (color != null && meta instanceof LeatherArmorMeta lam)
       lam.setColor(color);

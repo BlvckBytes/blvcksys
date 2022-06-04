@@ -1758,6 +1758,122 @@ public enum ConfigKey {
 
   GUI_AS_CUSTOMIZE_NAME("gui.as_customize.name", "$0AS $2{{name}}"),
   GUI_AS_CUSTOMIZE_NO_PROPS("gui.as_customize.no_props", "$0Die Eigenschaften vom Armor Stand $4{{name}} $0konnten $4nicht $0geladen werden!"),
+  GUI_AS_CUSTOMIZE_HELMET_NAME("gui.as_customize.helmet.name", "$0» $2Helm $0«"),
+  GUI_AS_CUSTOMIZE_HELMET_LORE(
+    "gui.as_customize.helmet.lore",
+    " ",
+    "$0Diese Spalte bezieht sich",
+    "$0auf den $2Helm$0/$2Kopf."
+  ),
+  GUI_AS_CUSTOMIZE_CHESTPLATE_NAME("gui.as_customize.chestplate.name", "$0» $2Brustpanzer $0«"),
+  GUI_AS_CUSTOMIZE_CHESTPLATE_LORE(
+    "gui.as_customize.chestplate.lore",
+    " ",
+    "$0Diese Spalte bezieht sich",
+    "$0auf den $2Brustpanzer$0/$2Körper."
+  ),
+  GUI_AS_CUSTOMIZE_LEGGINGS_NAME("gui.as_customize.leggings.name", "$0» $2Hose $0«"),
+  GUI_AS_CUSTOMIZE_LEGGINGS_LORE(
+    "gui.as_customize.leggings.lore",
+    " ",
+    "$0Diese Spalte bezieht sich",
+    "$0auf die $2Hose$0/$2Beine$0."
+  ),
+  GUI_AS_CUSTOMIZE_BOOTS_NAME("gui.as_customize.boots.name", "$0» $2Schuhe $0«"),
+  GUI_AS_CUSTOMIZE_BOOTS_LORE(
+    "gui.as_customize.boots.lore",
+    " ",
+    "$0Diese Spalte bezieht sich",
+    "$0auf die $2Schuhe$0/$2Beine."
+  ),
+  GUI_AS_CUSTOMIZE_LEFT_ARM_NAME("gui.as_customize.left_arm.name", "$0» $2Linker Arm $0«"),
+  GUI_AS_CUSTOMIZE_LEFT_ARM_LORE(
+    "gui.as_customize.left_arm.lore",
+    " ",
+    "$0Diese Spalte bezieht sich",
+    "$0auf den $2linken Arm$0."
+  ),
+  GUI_AS_CUSTOMIZE_RIGHT_ARM_NAME("gui.as_customize.right_arm.name", "$0» $2Rechter Arm $0«"),
+  GUI_AS_CUSTOMIZE_RIGHT_ARM_LORE(
+    "gui.as_customize.right_arm.lore",
+    " ",
+    "$0Diese Spalte bezieht sich",
+    "$0auf den $2rechten Arm$0."
+  ),
+  GUI_AS_CUSTOMIZE_EMPTY_EQUIP_NAME("gui.as_customize.empty_equip.name", "$0» $4Leerer Slot $0«"),
+  GUI_AS_CUSTOMIZE_EMPTY_EQUIP_LORE(
+    "gui.as_customize.empty_equip.lore",
+    " ",
+    "$0Dieser Slot besitzt noch $4kein Item$0.",
+    " ",
+    "$0Rechtsklick: $2Wähle Item aus Inventar",
+    "$0Linksklick: $2Öffne ItemEditor"
+  ),
+  GUI_AS_CUSTOMIZE_ALTER_POSE_NAME("gui.as_customize.alter_pose.name", "$0» $2Pose ändern $0«"),
+  GUI_AS_CUSTOMIZE_ALTER_POSE_LORE(
+    "gui.as_customize.alter_pose.lore",
+    " ",
+    "$0Klicke, um die Pose vom Körperteil",
+    "$2{{bodypart}} $0zu ändern."
+  ),
+  GUI_AS_CUSTOMIZE_STATE_YES("gui.as_customize.state.yes", "&aja"),
+  GUI_AS_CUSTOMIZE_STATE_NO("gui.as_customize.state.no", "&cnein"),
+  GUI_AS_CUSTOMIZE_VISIBILITY_NAME("gui.as_customize.visibility.name", "$0» $2Sichtbarkeit $0«"),
+  GUI_AS_CUSTOMIZE_VISIBILITY_LORE(
+    "gui.as_customize.visibility.lore",
+    " ",
+    "$0Gibt an, ob dieser Armor Stand",
+    "$2sichtbar $0ist.",
+    " ",
+    "$0Aktueller Zustand: $2{{state}}"
+  ),
+  GUI_AS_CUSTOMIZE_NAME_VISIBILITY_NAME("gui.as_customize.name_visibility.name", "$0» $2Namenssichtbarkeit $0«"),
+  GUI_AS_CUSTOMIZE_NAME_VISIBILITY_LORE(
+    "gui.as_customize.name_visibility.lore",
+    " ",
+    "$0Gibt an, ob der Name dieses Armor",
+    "$0Stands $2sichtbar $0ist.",
+    " ",
+    "$0Aktueller Zustand: $2{{state}}"
+  ),
+  GUI_AS_CUSTOMIZE_ARMS_NAME("gui.as_customize.arms.name", "$0» $2Arme $0«"),
+  GUI_AS_CUSTOMIZE_ARMS_LORE(
+    "gui.as_customize.arms.lore",
+    " ",
+    "$0Gibt an, ob dieser Armor Stand",
+    "$2Arme $0besitzt.",
+    " ",
+    "$0Aktueller Zustand: $2{{state}}"
+  ),
+  GUI_AS_CUSTOMIZE_SMALL_NAME("gui.as_customize.small.name", "$0» $2Klein $0«"),
+  GUI_AS_CUSTOMIZE_SMALL_LORE(
+    "gui.as_customize.small.lore",
+    " ",
+    "$0Gibt an, ob dieser Armor Stand",
+    "$2klein $0erscheint.",
+    " ",
+    "$0Aktueller Zustand: $2{{state}}"
+  ),
+  GUI_AS_CUSTOMIZE_BASEPLATE_NAME("gui.as_customize.baseplate.name", "$0» $2Standfuß $0«"),
+  GUI_AS_CUSTOMIZE_BASEPLATE_LORE(
+    "gui.as_customize.baseplate.lore",
+    " ",
+    "$0Gibt an, ob dieser Armor Stand",
+    "$0einen $2Standfuß $0besitzt.",
+    " ",
+    "$0Aktueller Zustand: $2{{state}}"
+  ),
+  GUI_AS_CUSTOMIZE_DISPLAYNAME_PROMPT("gui.as_customize.displayname.prompt", "$0Bitte gib den $2Anzeigenamen $0in den $2Chat $0ein:"),
+  GUI_AS_CUSTOMIZE_DISPLAYNAME_CHANGED("gui.as_customize.displayname.changed", "$0Der Anzeigename wurde $2übernommen$0."),
+  GUI_AS_CUSTOMIZE_DISPLAYNAME_NAME("gui.as_customize.displayname.name", "$0» $2Anzeigename $0«"),
+  GUI_AS_CUSTOMIZE_DISPLAYNAME_LORE(
+    "gui.as_customize.displayname.lore",
+    " ",
+    "$0Stellt den $2Namen $0über",
+    "$0dem Kopf ein.",
+    " ",
+    "$0Aktueller Name: $2{{name}}"
+  ),
 
   //=========================================================================//
   //                                Crate Draw GUI                           //

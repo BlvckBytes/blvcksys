@@ -5,10 +5,7 @@ import me.blvckbytes.blvcksys.persistence.models.APersistentModel;
 import net.minecraft.util.Tuple;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -55,7 +52,7 @@ public class QueryBuilder<T extends APersistentModel> {
    */
   public QueryBuilder(Class<T> model, @Nullable FieldQueryGroup group) {
     this.additionals = new ArrayList<>();
-    this.sorting = new HashMap<>();
+    this.sorting = new LinkedHashMap<>();
     this.model = model;
     this.root = group;
   }

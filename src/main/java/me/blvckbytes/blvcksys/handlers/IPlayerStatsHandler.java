@@ -5,6 +5,7 @@ import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 
 import java.util.Date;
+import java.util.List;
 import java.util.function.Consumer;
 
 /*
@@ -14,6 +15,13 @@ import java.util.function.Consumer;
   Public interfaces which the player-stats handler provides to other consumers.
 */
 public interface IPlayerStatsHandler {
+
+  /**
+   * Get the top five ranked players for any given statistic
+   * @param statistic Statistic to rank by
+   * @return List of top five players, or less, if less players played before
+   */
+  List<PlayerStatsModel> getTop5Ranked(PlayerStatistic statistic);
 
   /**
    * Register an interest in statistic updates for a specific category

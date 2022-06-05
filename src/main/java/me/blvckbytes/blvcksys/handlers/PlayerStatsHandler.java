@@ -40,8 +40,11 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
   // There can be multiple update interests per statistic
   private final Map<PlayerStatistic, List<Consumer<OfflinePlayer>>> updateInterests;
 
-  // Each player has their stats, combined with a "delta-occurred" flag
+  // Each player is being mapped to their stats model
   private final Map<OfflinePlayer, PlayerStatsModel> cache;
+
+  // Set of statistics for which the top ranks have already been loaded into cache
+  private final Set<PlayerStatistic> cachedTopRanks;
 
   private final IPersistence pers;
   private final JavaPlugin plugin;
@@ -63,11 +66,49 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
 
     this.updateInterests = new HashMap<>();
     this.cache = new HashMap<>();
+    this.cachedTopRanks = new HashSet<>();
   }
 
   //=========================================================================//
   //                                   API                                   //
   //=========================================================================//
+
+  @Override
+  public List<PlayerStatsModel> getTop5Ranked(PlayerStatistic statistic) {
+
+    // This statistic's top players have already been loaded into cache,
+    // there is no point fetching from DB again, as there will be no
+    // better players available in the data-set
+    if (cachedTopRanks.contains(statistic)) {
+      return cache.values().stream()
+        .sorted((a, b) -> (
+          switch (statistic) {
+            case KILLS -> b.getKills() - a.getKills();
+            case DEATHS -> b.getDeaths() - a.getDeaths();
+            case MONEY -> b.getMoney() - a.getMoney();
+            case PLAYTIME -> -Long.compare(a.getPlaytimeSeconds(), b.getPlaytimeSeconds());
+          }
+        ))
+        .limit(5)
+        .toList();
+    }
+
+    QueryBuilder<PlayerStatsModel> query = new QueryBuilder<>(PlayerStatsModel.class).limit(5);
+
+    switch (statistic) {
+      case KILLS -> query.orderBy("kills", false);
+      case DEATHS -> query.orderBy("deaths", false);
+      case MONEY -> query.orderBy("money", false);
+      case PLAYTIME -> query.orderBy("playtimeSeconds", false);
+    }
+
+    // Fetch the statistic's top players from DB and cache the result
+    List<PlayerStatsModel> top5 = pers.find(query);
+    top5.forEach(top -> cache.put(top.getOwner(), top));
+    cachedTopRanks.add(statistic);
+
+    return top5;
+  }
 
   @Override
   public PlayerStatsModel getStats(OfflinePlayer p) {

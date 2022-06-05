@@ -1211,17 +1211,17 @@ public class MysqlPersistence implements IPersistence, IAutoConstructed {
 
     if (query != null) {
 
-      stmt.append(" WHERE ");
+      // Only append a where clause if there are field queries present
+      if (query.getRoot() != null) {
 
-      if (query.getRoot() == null)
-        throw new PersistenceException("Cannot perform an empty query");
+        stmt.append(" WHERE ");
+        stmt.append(stringifyFieldQueryGroup(query.getRoot(), table, params));
 
-      stmt.append(stringifyFieldQueryGroup(query.getRoot(), table, params));
-
-      // Append all additional query groups with their connection leading them
-      for (Tuple<QueryConnection, FieldQueryGroup> additional : query.getAdditionals()) {
-        stmt.append(" ").append(additional.a()).append(" ");
-        stmt.append(stringifyFieldQueryGroup(additional.b(), table, params));
+        // Append all additional query groups with their connection leading them
+        for (Tuple<QueryConnection, FieldQueryGroup> additional : query.getAdditionals()) {
+          stmt.append(" ").append(additional.a()).append(" ");
+          stmt.append(stringifyFieldQueryGroup(additional.b(), table, params));
+        }
       }
 
       // Only append limit/offset and ordering when reading

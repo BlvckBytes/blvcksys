@@ -107,6 +107,18 @@ public enum ConfigKey {
   SERVER_SETTINGS_SET("server_settings.set", "$0Neuer Wert der Einstellung $2{{setting}}$0: \"$2{{value}}$0\"."),
 
   //=========================================================================//
+  //                                Top5 Command                             //
+  //=========================================================================//
+
+  TOP5_HEADER(
+    "top5.header",
+    "$0Top 5 Spieler der Statistik $2{{statistic}}$0:",
+    "$1| $3# $1| $3Spieler $1| $3Wert $1|"
+  ),
+  TOP5_ENTRY_PLAYER("top5.entry.player", "$1| $0{{place}} $1| $0{{player}} $1| $0{{value}} $1|"),
+  TOP5_ENTRY_EMPTY("top5.entry.empty", "$1| $0{{place}} $1| $4Unbelegt $1| $4/ $1|"),
+
+  //=========================================================================//
   //                             ItemEditor COMMAND                          //
   //=========================================================================//
 

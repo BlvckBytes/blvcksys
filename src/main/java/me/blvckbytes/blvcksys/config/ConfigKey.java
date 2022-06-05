@@ -745,6 +745,14 @@ public enum ConfigKey {
   KILL_RECEIVER("kill.receiver", "$0Du wurdest von $2{{issuer}} $0per $2Befehl $0getötet!"),
 
   //=========================================================================//
+  //                                 TPC Command                              //
+  //=========================================================================//
+
+  TPC_SELF("tpc.self", "$0Du hast dich zu $2{{location}} $0teleportiert!"),
+  TPC_OTHER_SENDER("tpc.other.sender", "$0Du hast $2{{player}} $0zu $2{{location}} $0teleportiert!"),
+  TPC_OTHER_RECEIVER("tpc.other.receiver", "$0Du wurdest von $2{{issuer}} $0zu $2{{location}} $0teleportiert!"),
+
+  //=========================================================================//
   //                                 TP Command                              //
   //=========================================================================//
 

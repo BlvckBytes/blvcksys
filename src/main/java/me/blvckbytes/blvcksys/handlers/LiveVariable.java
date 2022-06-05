@@ -27,6 +27,18 @@ public enum LiveVariable {
   CURRENT_TIME("{current_time}", 20),
   CURRENT_DATE("{current_date}", 20 * 10),
   CURRENT_DAY("{current_day}", 20 * 10),
+
+  // Globals
+  TOP_KILLS_VALUE_1("{top_kills_value_1}", 20 * 3),
+  TOP_KILLS_VALUE_2("{top_kills_value_2}", 20 * 3),
+  TOP_KILLS_VALUE_3("{top_kills_value_3}", 20 * 3),
+  TOP_KILLS_VALUE_4("{top_kills_value_4}", 20 * 3),
+  TOP_KILLS_VALUE_5("{top_kills_value_5}", 20 * 3),
+  TOP_KILLS_PLAYER_1("{top_kills_player_1}", 20 * 3),
+  TOP_KILLS_PLAYER_2("{top_kills_player_2}", 20 * 3),
+  TOP_KILLS_PLAYER_3("{top_kills_player_3}", 20 * 3),
+  TOP_KILLS_PLAYER_4("{top_kills_player_4}", 20 * 3),
+  TOP_KILLS_PLAYER_5("{top_kills_player_5}", 20 * 3),
   ;
 
   private final String placeholder;

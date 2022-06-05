@@ -116,7 +116,7 @@ public enum ConfigKey {
     "$1| $3# $1| $3Spieler $1| $3Wert $1|"
   ),
   TOP5_ENTRY_PLAYER("top5.entry.player", "$1| $0{{place}} $1| $0{{player}} $1| $0{{value}} $1|"),
-  TOP5_ENTRY_EMPTY("top5.entry.empty", "$1| $0{{place}} $1| $4Unbelegt $1| $4/ $1|"),
+  TOP5_NAME_EMPTY("top5.name.empty", "$4Unbelegt"),
 
   //=========================================================================//
   //                             ItemEditor COMMAND                          //

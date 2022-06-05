@@ -101,9 +101,11 @@ public class Top5Command extends APlayerCommand {
     // Fill up remaining lines
     for (; i < 5; i++) {
       table.addLine(
-        cfg.get(ConfigKey.TOP5_ENTRY_EMPTY)
+        cfg.get(ConfigKey.TOP5_ENTRY_PLAYER)
           .withPrefix()
           .withVariable("place", i + 1)
+          .withVariable("player", cfg.get(ConfigKey.TOP5_NAME_EMPTY).asScalar())
+          .withVariable("value", "/")
           .asScalar()
       );
     }

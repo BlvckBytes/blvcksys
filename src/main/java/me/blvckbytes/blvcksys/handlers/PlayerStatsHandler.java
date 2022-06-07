@@ -21,6 +21,8 @@ import org.bukkit.scheduler.BukkitTask;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -43,8 +45,8 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
   // Each player is being mapped to their stats model
   private final Map<OfflinePlayer, PlayerStatsModel> cache;
 
-  // Set of statistics for which the top ranks have already been loaded into cache
-  private final Set<PlayerStatistic> cachedTopRanks;
+  // Each statistic is being mapped to a list of top players in that statistic
+  private final Map<PlayerStatistic, List<PlayerStatsModel>> topCache;
 
   private final IPersistence pers;
   private final JavaPlugin plugin;
@@ -65,8 +67,8 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
     this.combatlog = combatlog;
 
     this.updateInterests = new HashMap<>();
+    this.topCache = new HashMap<>();
     this.cache = new HashMap<>();
-    this.cachedTopRanks = new HashSet<>();
   }
 
   //=========================================================================//
@@ -75,12 +77,23 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
 
   @Override
   public List<PlayerStatsModel> getTop5Ranked(PlayerStatistic statistic) {
-
     // This statistic's top players have already been loaded into cache,
     // there is no point fetching from DB again, as there will be no
     // better players available in the data-set
-    if (cachedTopRanks.contains(statistic)) {
-      return cache.values().stream()
+    List<PlayerStatsModel> topStats = topCache.get(statistic);
+    if (topStats != null) {
+
+      // Remove all currently cached stats from the top stats list, to refresh them, but
+      // keep the non-available, initially fetched, highest stats
+      cache.values().forEach(cPs -> {
+        topStats.removeIf(tPs -> tPs.getOwner().getUniqueId().equals(cPs.getOwner().getUniqueId()));
+      });
+
+      // Decide on new top 5 players from the cache as well as the top cache combined
+      List<PlayerStatsModel> newTopStats = Stream.concat(
+        cache.values().stream(),
+        topStats.stream()
+      )
         .sorted((a, b) -> (
           switch (statistic) {
             case KILLS -> b.getKills() - a.getKills();
@@ -90,7 +103,11 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
           }
         ))
         .limit(5)
-        .toList();
+        .collect(Collectors.toList());
+
+      // Update and return the new top cache
+      topCache.put(statistic, newTopStats);
+      return newTopStats;
     }
 
     QueryBuilder<PlayerStatsModel> query = new QueryBuilder<>(PlayerStatsModel.class).limit(5);
@@ -105,7 +122,7 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
     // Fetch the statistic's top players from DB and cache the result
     List<PlayerStatsModel> top5 = pers.find(query);
     top5.forEach(top -> cache.put(top.getOwner(), top));
-    cachedTopRanks.add(statistic);
+    topCache.put(statistic, top5);
 
     return top5;
   }

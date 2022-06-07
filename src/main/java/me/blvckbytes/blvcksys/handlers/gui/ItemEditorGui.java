@@ -954,7 +954,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
   /**
    * Build a list of representitives for all available materials
    */
-  private List<Tuple<Object, ItemStack>> buildMaterialRepresentitives() {
+  public List<Tuple<Object, ItemStack>> buildMaterialRepresentitives() {
     // Representitive items for each material
     return Arrays.stream(Material.values())
       .filter(m -> !(

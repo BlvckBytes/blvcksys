@@ -144,7 +144,7 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
         .build()
     ), i -> {
       // Prompt for deletion confirmation
-      inst.switchTo(AnimationType.SLIDE_LEFT, confirmationGui, (confirmed, inv) -> {
+      inst.switchTo(AnimationType.SLIDE_LEFT, confirmationGui, (confirmed, confirmationInst) -> {
 
         // Confirmed
         if (confirmed == TriResult.SUCC) {
@@ -159,8 +159,7 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
           );
 
           // Move back to the content gui
-          crateContentGui.show(p, new Tuple<>(crate, true), AnimationType.SLIDE_RIGHT, inv);
-          return false;
+          confirmationInst.switchTo(AnimationType.SLIDE_RIGHT, crateContentGui, new Tuple<>(crate, true));
         }
 
         p.sendMessage(
@@ -172,9 +171,7 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
 
         // Re-open the detail GUI if the confirmation wasn't closed
         if (confirmed != TriResult.EMPTY)
-          this.show(p, inst.getArg(), AnimationType.SLIDE_RIGHT, inv);
-
-        return false;
+          confirmationInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
       });
     });
 

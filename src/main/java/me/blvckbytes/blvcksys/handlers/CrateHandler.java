@@ -326,11 +326,12 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
 
     // Prompt the user for confirmation before opening the crate
     if (e.getAction() == Action.RIGHT_CLICK_BLOCK && drawGui != null) {
-      confirmationGui.show(p, (confirmed, inv) -> {
+      confirmationGui.show(p, (confirmed, confirmationInst) -> {
+
         // Open the crate and start a draw on confirmation
         if (confirmed == TriResult.SUCC) {
-          drawGui.show(p, targetCrate, me.blvckbytes.blvcksys.handlers.gui.AnimationType.SLIDE_RIGHT, inv);
-          return false;
+          confirmationInst.switchTo(me.blvckbytes.blvcksys.handlers.gui.AnimationType.SLIDE_RIGHT, drawGui, targetCrate);
+          return;
         }
 
         p.sendMessage(
@@ -340,7 +341,7 @@ public class CrateHandler implements ICrateHandler, Listener, IAutoConstructed {
             .asScalar()
         );
 
-        return true;
+        confirmationInst.close();
       }, me.blvckbytes.blvcksys.handlers.gui.AnimationType.SLIDE_UP);
     }
 

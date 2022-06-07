@@ -3,6 +3,7 @@ package me.blvckbytes.blvcksys.persistence.models;
 import lombok.*;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 
 /*
@@ -26,4 +27,11 @@ public class HomeModel extends APersistentModel {
 
   @ModelProperty
   private Location loc;
+
+  @ModelProperty
+  private Material icon;
+
+  public static HomeModel createDefault(OfflinePlayer creator, String name, Location loc) {
+    return new HomeModel(creator, name, loc, Material.GRASS_BLOCK);
+  }
 }

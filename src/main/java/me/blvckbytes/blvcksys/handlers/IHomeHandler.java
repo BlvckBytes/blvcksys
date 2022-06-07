@@ -3,6 +3,7 @@ package me.blvckbytes.blvcksys.handlers;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.HomeModel;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 
 import java.util.List;
@@ -33,6 +34,15 @@ public interface IHomeHandler {
    * @return True on success, false if no home with this name existed
    */
   boolean updateLocation(OfflinePlayer creator, String name, Location loc) throws PersistenceException;
+
+  /**
+   * Update an existing home by it's name and set a new icon
+   * @param creator creator of this home
+   * @param name Name of the home
+   * @param icon New icon of this home
+   * @return True on success, false if no home with this name existed
+   */
+  boolean updateIcon(OfflinePlayer creator, String name, Material icon) throws PersistenceException;
 
   /**
    * Delete an existing home by it's name

@@ -100,6 +100,13 @@ public enum ConfigKey {
   DEATH_MESSAGES_BLOCK_EXPLOSION("death_messages.block_explosion", "$2{{player}} $0wurde in die Luft $2gesprengt$0!"),
 
   //=========================================================================//
+  //                             Killstreak Messages                         //
+  //=========================================================================//
+
+  KILLSTREAK_ADVANCED("killstreak.advanced", "$0Der Spieler $2{{player}} $0hat einen $2Killstreak $0von $2{{curr_killstreak}} $0erreicht!"),
+  KILLSTREAK_RESET("killstreak.reset", "$0Der Spieler $2{{player}} $0hat den $2Killstreak $0von $2{{curr_killstreak}} $0verloren!"),
+
+  //=========================================================================//
   //                           Server Settings COMMAND                       //
   //=========================================================================//
 
@@ -270,7 +277,7 @@ public enum ConfigKey {
     "$2&l▎ &rKills: $2{{kills}}",
     "$2&l▎ &rDeaths: $2{{deaths}}",
     "$2&l▎ &rK/D: $2{{kd}}",
-    "$2&l▎ &rKillstreak: $2{{curr_killstreak}} $0({{prev_killstreak}})",
+    "$2&l▎ &rKillstreak: $2{{curr_killstreak}} $0({{highest_killstreak}})",
     " "
   ),
 

@@ -501,8 +501,8 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
       .withVariable("deaths", s.getDeaths())
       .withVariable("money", s.getMoney())
       .withVariable("kd", stats.calculateKD(t))
-      .withVariable("curr_killstreak", 0)
-      .withVariable("prev_killstreak", 0)
+      .withVariable("curr_killstreak", s.getCurrentKillstreak())
+      .withVariable("highest_killstreak", s.getHighestKillstreak())
       .withVariable("playtime", time.formatDuration(s.getPlaytimeSeconds(), true))
       .asList();
 

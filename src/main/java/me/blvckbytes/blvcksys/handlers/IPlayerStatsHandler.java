@@ -2,7 +2,6 @@ package me.blvckbytes.blvcksys.handlers;
 
 import me.blvckbytes.blvcksys.persistence.models.PlayerStatsModel;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.entity.Player;
 
 import java.util.Date;
 import java.util.List;

@@ -25,6 +25,12 @@ public class PlayerStatsModel extends APersistentModel {
   @ModelProperty
   private int kills;
 
+  @ModelProperty(migrationDefault = MigrationDefault.ZERO)
+  private int currentKillstreak;
+
+  @ModelProperty(migrationDefault = MigrationDefault.ZERO)
+  private int highestKillstreak;
+
   @ModelProperty
   private int deaths;
 
@@ -53,6 +59,6 @@ public class PlayerStatsModel extends APersistentModel {
   }
 
   public static PlayerStatsModel createDefault(OfflinePlayer owner) {
-    return new PlayerStatsModel(owner, 0, 0, 0, 0, null);
+    return new PlayerStatsModel(owner, 0, 0, 0, 0, 0, 0, null);
   }
 }

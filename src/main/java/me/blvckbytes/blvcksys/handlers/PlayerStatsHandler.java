@@ -1,9 +1,12 @@
 package me.blvckbytes.blvcksys.handlers;
 
+import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.events.IAfkListener;
+import me.blvckbytes.blvcksys.events.IChatListener;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.PlayerStatsModel;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
@@ -39,6 +42,9 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
   // Time in ticks between ticks of the play time task
   private static final long TICKER_PERIOD_S = 30;
 
+  // Amount of kills between killstreak broadcasts
+  private static final int KILLSTREAK_BROADCAST = 10;
+
   // There can be multiple update interests per statistic
   private final Map<PlayerStatistic, List<Consumer<OfflinePlayer>>> updateInterests;
 
@@ -52,6 +58,8 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
   private final JavaPlugin plugin;
   private final IAfkListener afk;
   private final ICombatLogHandler combatlog;
+  private final IChatListener chatListener;
+  private final IConfig cfg;
 
   private BukkitTask tickerHandle;
 
@@ -59,12 +67,16 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
     @AutoInject IPersistence pers,
     @AutoInject JavaPlugin plugin,
     @AutoInject IAfkListener afk,
-    @AutoInject ICombatLogHandler combatlog
+    @AutoInject ICombatLogHandler combatlog,
+    @AutoInject IChatListener chatListener,
+    @AutoInject IConfig cfg
   ) {
     this.pers = pers;
     this.plugin = plugin;
     this.afk = afk;
     this.combatlog = combatlog;
+    this.chatListener = chatListener;
+    this.cfg = cfg;
 
     this.updateInterests = new HashMap<>();
     this.topCache = new HashMap<>();
@@ -100,6 +112,8 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
             case DEATHS -> b.getDeaths() - a.getDeaths();
             case MONEY -> b.getMoney() - a.getMoney();
             case PLAYTIME -> -Long.compare(a.getPlaytimeSeconds(), b.getPlaytimeSeconds());
+            case CURRENT_KILLSTREAK -> b.getCurrentKillstreak() - a.getCurrentKillstreak();
+            case HIGHEST_KILLSTREAK -> b.getHighestKillstreak() - a.getHighestKillstreak();
           }
         ))
         .limit(5)
@@ -117,6 +131,8 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
       case DEATHS -> query.orderBy("deaths", false);
       case MONEY -> query.orderBy("money", false);
       case PLAYTIME -> query.orderBy("playtimeSeconds", false);
+      case CURRENT_KILLSTREAK -> query.orderBy("currentKillstreak", false);
+      case HIGHEST_KILLSTREAK -> query.orderBy("highestKillstreak", false);
     }
 
     // Fetch the statistic's top players from DB and cache the result
@@ -229,9 +245,35 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
   private void incrementDeaths(Player p) {
     PlayerStatsModel stats = getStats(p);
     stats.setDeaths(stats.getDeaths() + 1);
-    pers.store(stats);
 
-    callInterest(PlayerStatistic.KILLS, p);
+    // Had an active killstreak
+    if (stats.getCurrentKillstreak() > 0) {
+
+      // Was higher than the highest value, update highest
+      if (stats.getCurrentKillstreak() > stats.getHighestKillstreak()) {
+        stats.setHighestKillstreak(stats.getCurrentKillstreak());
+        callInterest(PlayerStatistic.HIGHEST_KILLSTREAK, p);
+      }
+
+      // Has at least once been announced
+      if (stats.getCurrentKillstreak() >= KILLSTREAK_BROADCAST) {
+        chatListener.broadcastMessage(
+          Bukkit.getOnlinePlayers(),
+          cfg.get(ConfigKey.KILLSTREAK_RESET)
+            .withPrefix()
+            .withVariable("player", p.getName())
+            .withVariable("curr_killstreak", stats.getCurrentKillstreak())
+            .asScalar()
+        );
+      }
+
+      // Reset killstreak back to zero
+      stats.setCurrentKillstreak(0);
+      callInterest(PlayerStatistic.CURRENT_KILLSTREAK, p);
+    }
+
+    pers.store(stats);
+    callInterest(PlayerStatistic.DEATHS, p);
   }
 
   /**
@@ -241,9 +283,25 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
   private void incrementKills(Player p) {
     PlayerStatsModel stats = getStats(p);
     stats.setKills(stats.getKills() + 1);
-    pers.store(stats);
 
-    callInterest(PlayerStatistic.DEATHS, p);
+    // Advance the current killstreak counter
+    stats.setCurrentKillstreak(stats.getCurrentKillstreak() + 1);
+    callInterest(PlayerStatistic.CURRENT_KILLSTREAK, p);
+
+    // Has reached a multiple of the killstreak broadcast threshold
+    if (stats.getCurrentKillstreak() != 0 && stats.getCurrentKillstreak() % KILLSTREAK_BROADCAST == 0) {
+      chatListener.broadcastMessage(
+        Bukkit.getOnlinePlayers(),
+        cfg.get(ConfigKey.KILLSTREAK_ADVANCED)
+          .withPrefix()
+          .withVariable("player", p.getName())
+          .withVariable("curr_killstreak", stats.getCurrentKillstreak())
+          .asScalar()
+      );
+    }
+
+    pers.store(stats);
+    callInterest(PlayerStatistic.KILLS, p);
   }
 
   /**

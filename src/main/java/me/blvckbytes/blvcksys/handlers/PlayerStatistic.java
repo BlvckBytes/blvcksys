@@ -8,6 +8,8 @@ package me.blvckbytes.blvcksys.handlers;
 */
 public enum PlayerStatistic {
   KILLS,
+  CURRENT_KILLSTREAK,
+  HIGHEST_KILLSTREAK,
   DEATHS,
   MONEY,
   PLAYTIME

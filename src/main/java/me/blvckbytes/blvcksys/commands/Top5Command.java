@@ -93,6 +93,8 @@ public class Top5Command extends APlayerCommand {
             case DEATHS -> stats.getDeaths();
             case MONEY -> stats.getMoney();
             case PLAYTIME -> timeUtil.formatDuration(stats.getPlaytimeSeconds());
+            case CURRENT_KILLSTREAK -> stats.getCurrentKillstreak();
+            case HIGHEST_KILLSTREAK -> stats.getHighestKillstreak();
           })
           .asScalar()
       );

@@ -256,7 +256,7 @@ public class HologramHandler implements IHologramHandler, IAutoConstructed, IPac
   }
 
   @Override
-  public MultilineHologram createTemporary(Location loc, @Nullable List<Player> recipients, List<String> lines) {
+  public MultilineHologram createTemporary(Location loc, @Nullable Collection<? extends Player> recipients, List<String> lines) {
     // Generate a new random name for this temporary hologram
     String name = UUID.randomUUID().toString();
 

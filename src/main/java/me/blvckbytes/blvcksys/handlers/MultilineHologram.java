@@ -14,10 +14,7 @@ import org.bukkit.util.Consumer;
 import org.bukkit.util.Vector;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -56,7 +53,7 @@ public class MultilineHologram extends ATemplateHandler {
   // given recipient that receives updates here
   private static final double RECIPIENT_MAX_DIST_SQ = Math.pow(30, 2);
 
-  private final List<Player> recipients;
+  private final Collection<? extends Player> recipients;
   private final List<Integer> entityIds;
   private final Map<Player, List<Entity>> entities;
   private final String name;
@@ -75,7 +72,7 @@ public class MultilineHologram extends ATemplateHandler {
     String name,
     Location loc,
     List<String> lines,
-    @Nullable List<Player> recipients,
+    @Nullable Collection<? extends Player> recipients,
     IArmorStandCommunicator holoComm,
     ILiveVariableSupplier varSupp,
     JavaPlugin plugin

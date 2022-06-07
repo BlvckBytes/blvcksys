@@ -183,7 +183,7 @@ public class DeathListener implements Listener, IDeathListener {
     Location loc = victim.getLocation().clone();
 
     MultilineHologram holo = holos.createTemporary(
-      loc, List.of(killer),
+      loc, Bukkit.getOnlinePlayers(),
       cfg.get(ConfigKey.KILL_INDICATORS)
         .withVariable("victim", victim.getName())
         .withVariable("killer", killer.getName())

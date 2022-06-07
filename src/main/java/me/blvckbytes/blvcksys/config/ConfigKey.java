@@ -1266,17 +1266,6 @@ public enum ConfigKey {
   //                              HOMES Command                              //
   //=========================================================================//
 
-  HOMES_LIST_PREFIX_SELF("homes.list.prefix.self", "$0Deine Homes ($3{{count}}$0): "),
-  HOMES_LIST_PREFIX_OTHERS("homes.list.prefix.others", "$3{{target}}'s $0Homes ($3{{count}}$0): "),
-  HOMES_LIST_NO_ITEMS("homes.list.no_items", "$4Keine Homes verfügbar"),
-  HOMES_LIST_ITEM_FORMAT("homes.list.item_format", "$3{{name}}$1"),
-  HOMES_LIST_HOVER(
-    "homes.list.hover",
-    "$0Erstellt am: $3{{created_at}}",
-    "$0Zuletzt geändert: $3{{updated_at}}",
-    "$0Welt: $3{{world}}",
-    "$0Position: $3{{location}}"
-  ),
   HOMES_NOT_FOUND("homes.not_found", "$0Es existiert kein Home mit dem Namen $4{{name}}$0!"),
   HOMES_TELEPORTED_SELF("homes.teleported.self", "$0Du hast dich zum Home $3{{name}} $0teleportiert!"),
   HOMES_TELEPORTED_OTHERS("homes.teleported.others", "$0Du hast dich zum Home $3{{name}} $0von $3{{owner}} $0teleportiert!"),
@@ -1944,6 +1933,40 @@ public enum ConfigKey {
     "$0Dieses Item ist mit einer Wahrscheinlichkeit",
     "$0von $2{{probability}}% $0in der Crate $2{{name}} $0vorzufinden."
   ),
+
+  //=========================================================================//
+  //                                 Homes GUI                               //
+  //=========================================================================//
+
+  GUI_HOMES("gui.homes.title", "$0Homes von $2{{name}}"),
+  GUI_HOMES_NONE_NAME("gui.homes.none.name", "$0» &cKeine Homes"),
+  GUI_HOMES_NONE_LORE_SELF(
+    "gui.homes.none.lore.self",
+    " ",
+    "$0Du hast aktuell &ckeine $0Homes gesetzt."
+  ),
+  GUI_HOMES_NONE_LORE_OTHERS(
+    "gui.homes.none.lore.others",
+    " ",
+    "&c{{name}} $0hat aktuell",
+    "&ckeine $0Homes gesetzt."
+  ),
+  GUI_HOMES_HOME_NAME("gui.homes.home.name", "$0» $2{{name}}"),
+  GUI_HOMES_HOME_LORE(
+    "gui.homes.home.lore",
+    " ",
+    "$0Erstellt am: $3{{created_at}}",
+    "$0Zuletzt geändert: $3{{updated_at}}",
+    "$0Welt: $3{{world}}",
+    "$0Position: $3{{location}}",
+    " ",
+    "$0Linksklick: $2Teleportieren",
+    "$0Rechtsklick: $2Icon wählen",
+    "$0Shift + Linksklick: $2Erneut setzen",
+    "$0Shift + Rechtsklick: $2Löschen"
+  ),
+  GUI_HOMES_ICON_CHANGED("gui.homes.icon_changed", "$0Du hast das Icon $2{{material}} $0gewählt."),
+  GUI_HOMES_CHOICE_ICON_TITLE("gui.homes.choice.icon.title", "$2Icon"),
 
   //=========================================================================//
   //                               Furnaces GUI                              //

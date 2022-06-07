@@ -260,21 +260,17 @@ public enum ConfigKey {
   //                                  Sidebar                                //
   //=========================================================================//
 
-  SIDEBAR_TITLE("sidebar.title", "$3&lBlvckBytes.DEV"),
+  SIDEBAR_TITLE("sidebar.title", "$3&lBlvckBytesDev"),
   SIDEBAR_LINES(
     "sidebar.lines",
     " ",
-    "Spieler:",
-    "$2{{num_online}}$0/$2{{num_slots}}",
-    " ",
-    "Onlinezeit:",
-    "$2{{playtime}}",
-    " ",
-    "Münzen:",
-    "$2{{money}}",
-    " ",
-    "Kills/Deaths:",
-    "$2{{kills}} $1| $2{{deaths}} $1| $2{{kd}}KD",
+    "$2&l▎ &rSpieler: $2{{num_online}}&r/$2{{num_slots}}",
+    "$2&l▎ &rMünzen: $2{{money}}",
+    "$2&l▎ &rSpielzeit: $2{{playtime}}",
+    "$2&l▎ &rKills: $2{{kills}}",
+    "$2&l▎ &rDeaths: $2{{deaths}}",
+    "$2&l▎ &rK/D: $2{{kd}}",
+    "$2&l▎ &rKillstreak: $2{{curr_killstreak}} $0({{prev_killstreak}})",
     " "
   ),
 

@@ -103,7 +103,7 @@ public enum ConfigKey {
   //                             Killstreak Messages                         //
   //=========================================================================//
 
-  KILLSTREAK_ADVANCED("killstreak.advanced", "$0Der Spieler $2{{player}} $0hat einen $2Killstreak $0von $2{{curr_killstreak}} $0erreicht!"),
+  KILLSTREAK_ADVANCED("killstreak.advanced", "$0Der Spieler $2{{player}} $0hat einen $2Killstreak $0von $2{{curr_killstreak}} $0erreicht (&6+{{killstreak_money}} Coins$0)!"),
   KILLSTREAK_RESET("killstreak.reset", "$0Der Spieler $2{{player}} $0hat den $2Killstreak $0von $2{{curr_killstreak}} $0verloren!"),
 
   //=========================================================================//

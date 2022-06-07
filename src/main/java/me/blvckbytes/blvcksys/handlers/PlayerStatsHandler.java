@@ -45,6 +45,9 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
   // Amount of kills between killstreak broadcasts
   private static final int KILLSTREAK_BROADCAST = 10;
 
+  // Money to receive when reaching another killstreak broadcast
+  private static final int KILLSTREAK_MONEY = 100;
+
   // There can be multiple update interests per statistic
   private final Map<PlayerStatistic, List<Consumer<OfflinePlayer>>> updateInterests;
 
@@ -296,8 +299,12 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
           .withPrefix()
           .withVariable("player", p.getName())
           .withVariable("curr_killstreak", stats.getCurrentKillstreak())
+          .withVariable("killstreak_money", KILLSTREAK_MONEY)
           .asScalar()
       );
+
+      // Hand out the killstreak money
+      stats.setMoney(stats.getMoney() + KILLSTREAK_MONEY);
     }
 
     pers.store(stats);

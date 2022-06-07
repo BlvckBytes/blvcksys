@@ -37,11 +37,11 @@ public interface IPlayerStatsHandler {
   double calculateKD(OfflinePlayer p);
 
   /**
-   * Set the amount of money a player owns
+   * Add to the amount of money a player owns
    * @param p Target player
    * @param amount Amount of money
    */
-  void setMoney(OfflinePlayer p, int amount);
+  void addMoney(OfflinePlayer p, int amount);
 
   /**
    * Set the last login stamp of a player

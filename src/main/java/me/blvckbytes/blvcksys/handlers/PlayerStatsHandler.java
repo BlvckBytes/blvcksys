@@ -175,9 +175,9 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
   ///////////////////////////////// MONEY ////////////////////////////////////
 
   @Override
-  public void setMoney(OfflinePlayer p, int amount) {
+  public void addMoney(OfflinePlayer p, int amount) {
     PlayerStatsModel stats = getStats(p);
-    stats.setMoney(amount);
+    stats.setMoney(stats.getMoney() + amount);
     pers.store(stats);
 
     callInterest(PlayerStatistic.MONEY, p);

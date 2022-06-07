@@ -35,7 +35,10 @@ import java.util.List;
 public class DeathListener implements Listener, IDeathListener {
 
   // Delay in ticks after death till the automatic respawn
-  private final static long RESPAWN_DELAY_T = 15;
+  private static final long RESPAWN_DELAY_T = 15;
+
+  // Money to receive when killing another player
+  private static final int KILL_MONEY = 10;
 
   // Time in ticks to display the upwards floating kill indicator for
   private static final long KILL_INDICATOR_DUR_T = 33;
@@ -54,6 +57,7 @@ public class DeathListener implements Listener, IDeathListener {
   private final IChatListener chat;
   private final ICombatLogHandler combatlog;
   private final IAnimationHandler anim;
+  private final IPlayerStatsHandler playerStatsHandler;
 
   public DeathListener(
     @AutoInject JavaPlugin plugin,
@@ -62,7 +66,8 @@ public class DeathListener implements Listener, IDeathListener {
     @AutoInject IConfig cfg,
     @AutoInject IChatListener chat,
     @AutoInject ICombatLogHandler combatlog,
-    @AutoInject IAnimationHandler anim
+    @AutoInject IAnimationHandler anim,
+    @AutoInject IPlayerStatsHandler playerStatsHandler
   ) {
     this.plugin = plugin;
     this.spawn = spawn;
@@ -71,6 +76,7 @@ public class DeathListener implements Listener, IDeathListener {
     this.chat = chat;
     this.anim = anim;
     this.combatlog = combatlog;
+    this.playerStatsHandler = playerStatsHandler;
   }
 
   //=========================================================================//
@@ -187,7 +193,7 @@ public class DeathListener implements Listener, IDeathListener {
       cfg.get(ConfigKey.KILL_INDICATORS)
         .withVariable("victim", victim.getName())
         .withVariable("killer", killer.getName())
-        .withVariable("coins", 10)
+        .withVariable("coins", KILL_MONEY)
         .asList()
     );
 
@@ -203,5 +209,8 @@ public class DeathListener implements Listener, IDeathListener {
       anim.stopAnimation(loc, AnimationType.DOUBLE_HELIX);
       holos.destroyTemporary(holo);
     }, KILL_INDICATOR_DUR_T);
+
+    // Hand out the kill money
+    playerStatsHandler.addMoney(killer, KILL_MONEY);
   }
 }

@@ -118,7 +118,7 @@ public class MoneyCommand extends APlayerCommand {
     String deltaStr = (delta >= 0 ? "+" : "") + delta;
 
     // Apply the change
-    stats.setMoney(target, after);
+    stats.addMoney(target, delta);
 
     // Notify the issuer
     p.sendMessage(

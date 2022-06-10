@@ -270,6 +270,7 @@ public class AHCreateGui extends AGui<Object> {
             .withVariable("item", state.item == null ? "/" : state.item.getType())
             .withVariable("duration", formatDuration(state))
             .withVariable("start_bid", state.startBid)
+            .withVariable("category", state.item == null ? "/" : AuctionCategory.fromItem(state.item).getName(cfg))
         )
         .build();
     }, e -> {
@@ -277,8 +278,6 @@ public class AHCreateGui extends AGui<Object> {
       AHCreateState state = getState(inst);
       if (!state.isValid())
         return;
-
-      p.sendMessage("Would now create an auction: (" + state.item.getType() + ", " + timeUtil.formatDurationHHCMM(state.durationSeconds) + ", " + state.startBid + " Coins)");
 
       // Reset the item, which is now in an auction
       state.item = null;

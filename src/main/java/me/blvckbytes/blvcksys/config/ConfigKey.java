@@ -2086,6 +2086,7 @@ public enum ConfigKey {
     "$0Startgebot: $2{{start_bid}} Coins",
     "$0Item: $2{{item}}",
     "$0Dauer: $2{{duration}}",
+    "$0Kategorie: $2{{category}}",
     " ",
     "$0Klicke, um die Auktion zu erstellen."
   ),

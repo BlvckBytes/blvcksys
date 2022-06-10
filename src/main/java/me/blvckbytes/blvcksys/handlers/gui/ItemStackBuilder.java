@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -124,6 +125,17 @@ public class ItemStackBuilder {
   }
 
   /**
+   * Set a display name conditionally
+   * @param name Name to set
+   * @param condition Boolean which has to evaluate to true in order to apply the name
+   */
+  public ItemStackBuilder withName(ConfigValue name, Supplier<Boolean> condition) {
+    if (condition.get())
+      this.displayName = name;
+    return this;
+  }
+
+  /**
    * Set a lore (lines of text when hovering)
    * @param lore Lines to set
    */
@@ -165,13 +177,11 @@ public class ItemStackBuilder {
       );
     }
 
-    meta.setLore(
-      lore == null ?
-        new ArrayList<>() :
-        lore
-          .withVariables(variables)
-          .asList()
-    );
+    // Extend the lore
+    List<String> existingLore = meta.getLore() == null ? new ArrayList<>() : meta.getLore();
+    if (lore != null)
+      existingLore.addAll(lore.withVariables(variables).asList());
+    meta.setLore(existingLore);
 
     // Is a player-head where textures should be applied
     if (mat == Material.PLAYER_HEAD && profile != null) {

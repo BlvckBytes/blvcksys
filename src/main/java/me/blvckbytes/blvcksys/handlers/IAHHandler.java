@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -93,7 +94,11 @@ public interface IAHHandler {
    * @param searchQuery Query to use to search in names and lores as well as materials
    * @return List of results, tuple of auctions to their current bids (nullable for no bids)
    */
-  List<Tuple<AHAuctionModel, Integer>> listAuctions(AuctionCategory category, AuctionSort sort, @Nullable String searchQuery);
+  List<Tuple<AHAuctionModel, Supplier<@Nullable AHBidModel>>> listAuctions(
+    AuctionCategory category,
+    AuctionSort sort,
+    @Nullable String searchQuery
+  );
 
   /**
    * List all bids of an auction

@@ -2033,10 +2033,10 @@ public enum ConfigKey {
   GUI_AH_AUCTION_LORE(
     "gui.ah.auction.lore",
     " ",
-    "$0&m----------------------------",
+    "$0&m----------------------",
     "$0Verkäufer: $2{{seller}}",
-    "$0Startgebot: $2{{start_bid}} Coins",
-    "$0Aktuelles Gebot: $2{{current_bid}} Coins",
+    "$0Startgebot: $2{{start_bid}}",
+    "$0Aktuelles Gebot: $2{{current_bid}} $0({{current_bidder}})",
     "$0Endet in: $2{{duration}}"
   ),
 

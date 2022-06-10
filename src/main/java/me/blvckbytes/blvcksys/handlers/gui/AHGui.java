@@ -8,12 +8,14 @@ import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IAHHandler;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.persistence.models.AHAuctionModel;
+import me.blvckbytes.blvcksys.persistence.models.AHBidModel;
 import me.blvckbytes.blvcksys.persistence.models.AHStateModel;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.TimeUtil;
 import net.minecraft.util.Tuple;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemStack;
@@ -111,8 +113,9 @@ public class AHGui extends AGui<Object> {
       return ahHandler.listAuctions(state.getCategory(), state.getSort(), state.getSearch())
         .stream().map(t -> (
           new GuiItem(
-            s -> (
-              new ItemStackBuilder(t.a().getItem(), t.a().getItem().getAmount())
+            s -> {
+              AHBidModel currBid = t.b().get();
+              return new ItemStackBuilder(t.a().getItem(), t.a().getItem().getAmount())
                 .withName(
                   cfg.get(ConfigKey.GUI_AH_AUCTION_NAME)
                     .withVariable(
@@ -124,12 +127,13 @@ public class AHGui extends AGui<Object> {
                 .withLore(
                   cfg.get(ConfigKey.GUI_AH_AUCTION_LORE)
                     .withVariable("seller", t.a().getCreator().getName())
-                    .withVariable("start_bid", t.a().getStartBid())
-                    .withVariable("current_bid", t.b() == null ? "/" : t.b())
+                    .withVariable("start_bid", (t.a().getStartBid()) + " Coins")
+                    .withVariable("current_bid", (currBid == null ? "/" : currBid.getAmount() + " Coins"))
+                    .withVariable("current_bidder", currBid == null ? "/" : currBid.getCreator().getName())
                     .withVariable("duration", getRemainingDuration(t.a()))
                 )
-                .build()
-            ),
+                .build();
+            },
             e -> {},
             10 // Redraw every 1s/2 to guarantee proper countdowns
           )

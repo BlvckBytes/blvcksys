@@ -1,12 +1,13 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
-import lombok.NonNull;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.handlers.IAHHandler;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
+import me.blvckbytes.blvcksys.persistence.models.AHStateModel;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -15,8 +16,6 @@ import org.bukkit.event.inventory.ClickType;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.function.Consumer;
 
 /*
@@ -29,8 +28,7 @@ import java.util.function.Consumer;
 @AutoConstruct
 public class AHGui extends AGui<Object> {
 
-  // TODO: Persist this state
-  private final Map<Player, AHGuiState> states;
+  private final IAHHandler ahHandler;
   private final SingleChoiceGui singleChoiceGui;
   private final ChatUtil chatUtil;
 
@@ -39,13 +37,14 @@ public class AHGui extends AGui<Object> {
     @AutoInject JavaPlugin plugin,
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject SingleChoiceGui singleChoiceGui,
-    @AutoInject ChatUtil chatUtil
+    @AutoInject ChatUtil chatUtil,
+    @AutoInject IAHHandler ahHandler
   ) {
     super(6, "2-8,11-17,20-26,29-35,38-44", i -> (
       cfg.get(ConfigKey.GUI_AH)
     ), plugin, cfg, textures);
 
-    this.states = new HashMap<>();
+    this.ahHandler = ahHandler;
     this.singleChoiceGui = singleChoiceGui;
     this.chatUtil = chatUtil;
   }
@@ -116,10 +115,10 @@ public class AHGui extends AGui<Object> {
   private void itemFreeTextSearch(GuiInstance<Object> inst, int slot) {
     inst.fixedItem(slot, () -> {
       StringBuilder search = new StringBuilder();
-      AHGuiState state = getState(inst);
+      AHStateModel state = ahHandler.getState(inst.getViewer());
 
       // No search string defined
-      if (state.search == null)
+      if (state.getSearch() == null)
         search.append("/");
 
       // Wrap the search string
@@ -127,7 +126,7 @@ public class AHGui extends AGui<Object> {
         int chPerLine = 35, remChPerLine = chPerLine;
         boolean isFirstLine = true;
 
-        for (String word : state.search.split(" ")) {
+        for (String word : state.getSearch().split(" ")) {
           int wlen = word.length();
 
           if ((isFirstLine && wlen > remChPerLine / 2) || wlen > remChPerLine) {
@@ -146,7 +145,7 @@ public class AHGui extends AGui<Object> {
         .withName(cfg.get(ConfigKey.GUI_AH_SEARCH_NAME))
         .withLore(
           cfg.get(
-            state.search == null ?
+            state.getSearch() == null ?
               ConfigKey.GUI_AH_SEARCH_LORE_INACTIVE :
               ConfigKey.GUI_AH_SEARCH_LORE_ACTIVE
             )
@@ -154,18 +153,20 @@ public class AHGui extends AGui<Object> {
         )
         .build();
     }, e -> {
-      AHGuiState state = getState(inst);
+      AHStateModel state = ahHandler.getState(inst.getViewer());
 
       // Reset an existing search string
-      if (state.search != null) {
-        state.search = null;
+      if (state.getSearch() != null) {
+        state.setSearch(null);
+        ahHandler.storeState(state);
         inst.redraw("*");
         return;
       }
 
       // Prompt for a new search string
       promptSearch(inst, search -> {
-        state.search = search;
+        state.setSearch(search);
+        ahHandler.storeState(state);
         inst.redraw("*");
       });
     });
@@ -180,7 +181,7 @@ public class AHGui extends AGui<Object> {
   private void itemSortTypeCycler(GuiInstance<Object> inst, int slot) {
     inst.fixedItem(slot, () -> {
       StringBuilder selectionLines = new StringBuilder();
-      AHGuiState state = getState(inst);
+      AHStateModel state = ahHandler.getState(inst.getViewer());
 
       // Iterate all available sort types
       AuctionSort[] sorts = AuctionSort.values();
@@ -189,7 +190,7 @@ public class AHGui extends AGui<Object> {
           // Append either an active or an inactive line,
           // based on the current selection
           cfg.get(
-            state.sort.equals(sorts[i]) ?
+            state.getSort().equals(sorts[i]) ?
               ConfigKey.GUI_AH_SORT_FORMAT_ACTIVE :
               ConfigKey.GUI_AH_SORT_FORMAT_INACTIVE
             )
@@ -211,8 +212,8 @@ public class AHGui extends AGui<Object> {
         )
         .build();
     }, e -> {
-      AHGuiState state = getState(inst);
-      AuctionSort curr = state.sort;
+      AHStateModel state = ahHandler.getState(inst.getViewer());
+      AuctionSort curr = state.getSort();
       AuctionSort[] sorts = AuctionSort.values();
 
       // Select the sort by it's index, corresponding to the key pressed
@@ -224,7 +225,8 @@ public class AHGui extends AGui<Object> {
       else
         index = (Arrays.binarySearch(sorts, curr) + 1) % sorts.length;
 
-      state.sort = sorts[index];
+      state.setSort(sorts[index]);
+      ahHandler.storeState(state);
       inst.redraw("*");
     });
   }
@@ -245,36 +247,21 @@ public class AHGui extends AGui<Object> {
         .hideAttributes()
         .build()
     ), e -> {
-      getState(inst).cat = category;
+      AHStateModel state = ahHandler.getState(inst.getViewer());
+      state.setCategory(category);
+      ahHandler.storeState(state);
       inst.redraw("*");
     });
 
     // Category status indicator next to the icon
     inst.fixedItem(slot + 1, () -> (
       new ItemStackBuilder(
-        getState(inst).cat == category ?
+        ahHandler.getState(inst.getViewer()).getCategory() == category ?
           Material.PURPLE_STAINED_GLASS_PANE :
           Material.BLACK_STAINED_GLASS_PANE
         )
         .withName(ConfigValue.immediate(" "))
         .build()
     ), null);
-  }
-
-  /**
-   * Get the GUI state bound to a GUI's viewer
-   * @param inst GUI ref
-   * @return Mutable GUI state
-   */
-  @NonNull
-  private AHGuiState getState(GuiInstance<Object> inst) {
-    Player p = inst.getViewer();
-
-    if (states.containsKey(p))
-      return states.get(p);
-
-    AHGuiState state = AHGuiState.makeDefault();
-    states.put(p, state);
-    return state;
   }
 }

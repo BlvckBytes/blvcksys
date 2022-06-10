@@ -5,6 +5,7 @@ import me.blvckbytes.blvcksys.handlers.gui.AuctionSort;
 import me.blvckbytes.blvcksys.persistence.models.AHAuctionModel;
 import me.blvckbytes.blvcksys.persistence.models.AHBidModel;
 import me.blvckbytes.blvcksys.persistence.models.AHStateModel;
+import net.minecraft.util.Tuple;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -90,9 +91,9 @@ public interface IAHHandler {
    * @param category Category to browse in
    * @param sort Direction to sort the results
    * @param searchQuery Query to use to search in names and lores as well as materials
-   * @return List of results
+   * @return List of results, tuple of auctions to their current bids (nullable for no bids)
    */
-  List<AHAuctionModel> listAuctions(AuctionCategory category, AuctionSort sort, @Nullable String searchQuery);
+  List<Tuple<AHAuctionModel, Integer>> listAuctions(AuctionCategory category, AuctionSort sort, @Nullable String searchQuery);
 
   /**
    * List all bids of an auction

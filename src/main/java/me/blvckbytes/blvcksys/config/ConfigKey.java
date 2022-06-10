@@ -2029,6 +2029,16 @@ public enum ConfigKey {
     "$0Verwalte deine Auktionen sowie",
     "$0platzierte Gebote."
   ),
+  GUI_AH_AUCTION_NAME("gui.ah.auction.name", "$2{{name}}"),
+  GUI_AH_AUCTION_LORE(
+    "gui.ah.auction.lore",
+    " ",
+    "$0&m----------------------------",
+    "$0Verkäufer: $2{{seller}}",
+    "$0Startgebot: $2{{start_bid}} Coins",
+    "$0Aktuelles Gebot: $2{{current_bid}} Coins",
+    "$0Endet in: $2{{duration}}"
+  ),
 
   //=========================================================================//
   //                               AH Create GUI                             //

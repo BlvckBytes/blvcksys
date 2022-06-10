@@ -7,15 +7,21 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IAHHandler;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
+import me.blvckbytes.blvcksys.persistence.models.AHAuctionModel;
 import me.blvckbytes.blvcksys.persistence.models.AHStateModel;
 import me.blvckbytes.blvcksys.util.ChatUtil;
+import me.blvckbytes.blvcksys.util.TimeUtil;
+import net.minecraft.util.Tuple;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
+import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Arrays;
+import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -33,6 +39,7 @@ public class AHGui extends AGui<Object> {
   private final SingleChoiceGui singleChoiceGui;
   private final ChatUtil chatUtil;
   private final AHProfileGui ahProfileGui;
+  private final TimeUtil timeUtil;
 
   public AHGui(
     @AutoInject IConfig cfg,
@@ -41,7 +48,8 @@ public class AHGui extends AGui<Object> {
     @AutoInject SingleChoiceGui singleChoiceGui,
     @AutoInject ChatUtil chatUtil,
     @AutoInject IAHHandler ahHandler,
-    @AutoInject AHProfileGui ahProfileGui
+    @AutoInject AHProfileGui ahProfileGui,
+    @AutoInject TimeUtil timeUtil
   ) {
     super(6, "2-8,11-17,20-26,29-35,38-44", i -> (
       cfg.get(ConfigKey.GUI_AH)
@@ -51,6 +59,7 @@ public class AHGui extends AGui<Object> {
     this.singleChoiceGui = singleChoiceGui;
     this.chatUtil = chatUtil;
     this.ahProfileGui = ahProfileGui;
+    this.timeUtil = timeUtil;
 
     // Refresh page contents of all AH GUI instances after an auction delta
     this.ahHandler.registerAuctionDeltaInterest(() -> {
@@ -98,11 +107,27 @@ public class AHGui extends AGui<Object> {
     inst.setPageContents(() -> {
       // List all auctions based on the currently applied filters
       AHStateModel state = ahHandler.getState(inst.getViewer());
+
       return ahHandler.listAuctions(state.getCategory(), state.getSort(), state.getSearch())
-        .stream().map(auction -> (
+        .stream().map(t -> (
           new GuiItem(
             s -> (
-              new ItemStackBuilder(auction.getItem(), auction.getItem().getAmount())
+              new ItemStackBuilder(t.a().getItem(), t.a().getItem().getAmount())
+                .withName(
+                  cfg.get(ConfigKey.GUI_AH_AUCTION_NAME)
+                    .withVariable(
+                      "name",
+                      getDisplayName(t.a().getItem())
+                        .orElse(formatConstant(t.a().getItem().getType().name()))
+                    )
+                )
+                .withLore(
+                  cfg.get(ConfigKey.GUI_AH_AUCTION_LORE)
+                    .withVariable("seller", t.a().getCreator().getName())
+                    .withVariable("start_bid", t.a().getStartBid())
+                    .withVariable("current_bid", t.b() == null ? "/" : t.b())
+                    .withVariable("duration", getRemainingDuration(t.a()))
+                )
                 .build()
             ),
             e -> {},
@@ -113,6 +138,33 @@ public class AHGui extends AGui<Object> {
     });
 
     return true;
+  }
+
+  /**
+   * Get the remaining formatted duration or fall back to the immediate string
+   * @param auction Auction to read the duration from
+   */
+  private String getRemainingDuration(AHAuctionModel auction) {
+    if (auction.getDurationSeconds() == null)
+      return cfg.get(ConfigKey.GUI_CREATE_AH_DURATION_IMMEDIATE).asScalar();
+
+    int duration = auction.getDurationSeconds();
+    int elapsed = (int) (System.currentTimeMillis() - auction.getCreatedAt().getTime()) / 1000;
+    return timeUtil.formatDuration(Math.max(0, duration - elapsed));
+  }
+
+  /**
+   * Get the custom displayname of an item
+   * @param item Target item stack
+   * @return Optional value, empty if there is no name set yet
+   */
+  private Optional<String> getDisplayName(ItemStack item) {
+    ItemMeta meta = item.getItemMeta();
+
+    if (meta == null)
+      return Optional.empty();
+
+    return meta.getDisplayName().isBlank() ? Optional.empty() : Optional.of(meta.getDisplayName());
   }
 
   /**

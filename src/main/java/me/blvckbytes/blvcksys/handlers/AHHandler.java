@@ -11,6 +11,7 @@ import me.blvckbytes.blvcksys.persistence.models.AHAuctionModel;
 import me.blvckbytes.blvcksys.persistence.models.AHBidModel;
 import me.blvckbytes.blvcksys.persistence.models.AHStateModel;
 import me.blvckbytes.blvcksys.persistence.query.*;
+import net.minecraft.util.Tuple;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -36,6 +37,8 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
 
   // Default maximum number of auctions a player may have
   private static final int DEFAULT_MAX_AUCTIONS = 2;
+
+  // TODO: Create another domain model which adds the last bid to the auction
 
   private final IPersistence pers;
   private final Map<Player, AHStateModel> stateCache;
@@ -163,7 +166,7 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
   }
 
   @Override
-  public List<AHAuctionModel> listAuctions(AuctionCategory category, AuctionSort sort, @Nullable String searchQuery) {
+  public List<Tuple<AHAuctionModel, Integer>> listAuctions(AuctionCategory category, AuctionSort sort, @Nullable String searchQuery) {
     return auctionCache.keySet().stream()
       .filter(auction -> (
         // Category matches or is a wildcard
@@ -171,6 +174,7 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
         // Search matches or is a wildcard
         (searchQuery == null || matchesSearch(auction.getItem(), searchQuery))
       ))
+      .map(auction -> new Tuple<>(auction, 0))
       .collect(Collectors.toList());
   }
 

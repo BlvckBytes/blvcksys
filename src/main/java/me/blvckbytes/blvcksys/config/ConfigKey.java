@@ -1972,6 +1972,65 @@ public enum ConfigKey {
   GUI_HOMES_CHOICE_ICON_TITLE("gui.homes.choice.icon.title", "$2Icon"),
 
   //=========================================================================//
+  //                                  AH GUI                                 //
+  //=========================================================================//
+
+  GUI_AH("gui.ah.title", "$2Auktionshaus"),
+  GUI_AH_CAT_GENERIC_LORE(
+    "gui.ah.cat.generic.lore",
+    " ",
+    "$0Klicke, um Auktionen dieser",
+    "$0Kategorie anzuzeigen."
+  ),
+  GUI_AH_CAT_COMBAT_NAME("gui.ah.cat.combat.name", "$0» $2Kampfitems $0«"),
+  GUI_AH_CAT_ARMOR_NAME("gui.ah.cat.armor.name", "$0» $2Rüstungen $0«"),
+  GUI_AH_CAT_TOOLS_NAME("gui.ah.cat.tools.name", "$0» $2Werkzeuge $0«"),
+  GUI_AH_CAT_BUILDING_NAME("gui.ah.cat.building.name", "$0» $2Bauitems $0«"),
+  GUI_AH_CAT_MISC_NAME("gui.ah.cat.misc.name", "$0» $2Sonstiges $0«"),
+  GUI_AH_CAT_ALL_NAME("gui.ah.cat.all.name", "$0» $2Alle Kategorien $0«"),
+  GUI_AH_SORT_HIGHEST_BID("gui.ah.sort.highest_bid.name", "Höchstes Gebot"),
+  GUI_AH_SORT_LOWEST_BID("gui.ah.sort.lowest_bid.name", "Niedrigstes Gebot"),
+  GUI_AH_SORT_MOST_BIDS("gui.ah.sort.most_bids.name", "Höchste Anzahl Gebote"),
+  GUI_AH_SORT_LEAST_BIDS("gui.ah.sort.least_bids.name", "Niedrigste Anzahl Gebote"),
+  GUI_AH_SORT_INSTANT_BUY("gui.ah.sort.instant_buy.name", "Sofort kaufen"),
+  GUI_AH_SORT_NEWEST("gui.ah.sort.newest.name", "Neueste zuerst"),
+  GUI_AH_SORT_OLDEST("gui.ah.sort.oldest.name", "Älteste zuerst"),
+  GUI_AH_SORT_NAME("gui.ah.sort.name", "$0» $2Sortierung $0«"),
+  GUI_AH_SORT_FORMAT_ACTIVE("gui.ah.sort.format.active", "$0[$2{{key}}$0] $2{{name}}"),
+  GUI_AH_SORT_FORMAT_INACTIVE("gui.ah.sort.format.inactive", "$0[$2{{key}}$0] $0{{name}}"),
+  GUI_AH_SORT_LORE(
+    "gui.ah.sort.lore",
+    " ",
+    "{{selection_lines}}",
+    " ",
+    "$0Wähle die anzuwendende Sortierung durch",
+    "$0klicken oder mittels Hotbar-Tasten (1-9)."
+  ),
+  GUI_AH_SEARCH_NAME("gui.ah.search.name", "$0» $2Freitextsuche $0«"),
+  GUI_AH_SEARCH_LORE_ACTIVE(
+    "gui.ah.search.lore.active",
+    " ",
+    "$0Klicke, um die Suche zurückzusetzen.",
+    " ",
+    "$0Aktuelle Suche: $2{{search}}"
+  ),
+  GUI_AH_SEARCH_LORE_INACTIVE(
+    "gui.ah.search.lore.inactive",
+    " ",
+    "$0Suche nach einer Freitexteingabe, Farben,",
+    "$0Groß- und Kleinschreibung und Abstände",
+    "$0werden ignoriert."
+  ),
+  GUI_AH_SEARCH_PROMPT("gui.ah.search.prompt", "$0Bitte gib die $2Suchanfrage $0in den $2Chat $0ein: "),
+  GUI_AH_PROFILE_NAME("gui.ah.profile.name", "$0» $2Dein Profil $0«"),
+  GUI_AH_PROFILE_LORE(
+    "gui.ah.profile.lore",
+    " ",
+    "$0Verwalte deine Auktionen sowie",
+    "$0platzierte Gebote."
+  ),
+
+  //=========================================================================//
   //                               Furnaces GUI                              //
   //=========================================================================//
 

@@ -223,6 +223,11 @@ public class GuiInstance<T> {
       int slot = template.getPageSlots().get(targetPage.size());
       targetPage.put(slot, item);
     }
+
+    // Move back as many pages as necessary to not be out of bounds
+    // after re-fetching the pages (results might have shrunken)
+    if (currPage >= pages.size())
+      currPage = pages.size() == 0 ? 0 : pages.size() - 1;
   }
 
   /**

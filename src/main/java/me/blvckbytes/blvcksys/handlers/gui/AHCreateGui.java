@@ -9,7 +9,9 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.events.ManipulationAction;
+import me.blvckbytes.blvcksys.handlers.IAHHandler;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
+import me.blvckbytes.blvcksys.handlers.TriResult;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.SymbolicHead;
 import me.blvckbytes.blvcksys.util.TimeUtil;
@@ -61,6 +63,7 @@ public class AHCreateGui extends AGui<Object> {
   private final ChatUtil chatUtil;
   private final IGiveCommand giveCommand;
   private final Map<Player, AHCreateState> states;
+  private final IAHHandler ahHandler;
 
   public AHCreateGui(
     @AutoInject IConfig cfg,
@@ -68,7 +71,8 @@ public class AHCreateGui extends AGui<Object> {
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject TimeUtil timeUtil,
     @AutoInject ChatUtil chatUtil,
-    @AutoInject IGiveCommand giveCommand
+    @AutoInject IGiveCommand giveCommand,
+    @AutoInject IAHHandler ahHandler
   ) {
     super(3, "", i -> (
       cfg.get(ConfigKey.GUI_CREATE_AH)
@@ -79,6 +83,7 @@ public class AHCreateGui extends AGui<Object> {
     this.timeUtil = timeUtil;
     this.chatUtil = chatUtil;
     this.giveCommand = giveCommand;
+    this.ahHandler = ahHandler;
   }
 
   @Override
@@ -279,8 +284,22 @@ public class AHCreateGui extends AGui<Object> {
       if (!state.isValid())
         return;
 
-      // Reset the item, which is now in an auction
-      state.item = null;
+      // Create an auction based on the provided parameters
+      boolean res = ahHandler.createAuction(
+        p, state.item, state.startBid, state.durationSeconds,
+        AuctionCategory.fromItem(state.item)
+      );
+
+      p.sendMessage(
+        cfg.get(res ? ConfigKey.GUI_CREATE_AH_CREATED : ConfigKey.GUI_CREATE_AH_NO_SLOTS)
+          .withPrefix()
+          .withVariable("max_auctions", ahHandler.getMaxAuctions(p))
+          .asScalar()
+      );
+
+      // Reset the item on success, which is now in an auction
+      if (res)
+        state.item = null;
 
       // Move back to the profile
       back.run();

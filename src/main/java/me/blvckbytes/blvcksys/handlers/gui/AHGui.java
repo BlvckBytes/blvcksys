@@ -17,6 +17,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.Arrays;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -50,6 +51,11 @@ public class AHGui extends AGui<Object> {
     this.singleChoiceGui = singleChoiceGui;
     this.chatUtil = chatUtil;
     this.ahProfileGui = ahProfileGui;
+
+    // Refresh page contents of all AH GUI instances after an auction delta
+    this.ahHandler.registerAuctionDeltaInterest(() -> {
+      getActiveInstances().values().forEach(insts -> insts.forEach(GuiInstance::refreshPageContents));
+    });
   }
 
   @Override
@@ -88,6 +94,23 @@ public class AHGui extends AGui<Object> {
 
     // Paginator
     inst.addPagination(51, 52, 53);
+
+    inst.setPageContents(() -> {
+      // List all auctions based on the currently applied filters
+      AHStateModel state = ahHandler.getState(inst.getViewer());
+      return ahHandler.listAuctions(state.getCategory(), state.getSort(), state.getSearch())
+        .stream().map(auction -> (
+          new GuiItem(
+            s -> (
+              new ItemStackBuilder(auction.getItem(), auction.getItem().getAmount())
+                .build()
+            ),
+            e -> {},
+            10 // Redraw every 1s/2 to guarantee proper countdowns
+          )
+        ))
+        .collect(Collectors.toList());
+    });
 
     return true;
   }
@@ -170,6 +193,8 @@ public class AHGui extends AGui<Object> {
       promptSearch(inst, search -> {
         state.setSearch(search);
         ahHandler.storeState(state);
+
+        inst.refreshPageContents();
         inst.redraw("*");
       });
     });
@@ -230,6 +255,8 @@ public class AHGui extends AGui<Object> {
 
       state.setSort(sorts[index]);
       ahHandler.storeState(state);
+
+      inst.refreshPageContents();
       inst.redraw("*");
     });
   }
@@ -253,6 +280,8 @@ public class AHGui extends AGui<Object> {
       AHStateModel state = ahHandler.getState(inst.getViewer());
       state.setCategory(category);
       ahHandler.storeState(state);
+
+      inst.refreshPageContents();
       inst.redraw("*");
     });
 

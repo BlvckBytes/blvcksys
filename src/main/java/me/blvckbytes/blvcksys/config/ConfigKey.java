@@ -2096,6 +2096,8 @@ public enum ConfigKey {
     " ",
     "$0Bitte wähle zuerst ein Item aus."
   ),
+  GUI_CREATE_AH_CREATED("gui.ah_create.created", "$0Dein Inserat wurde $2erfolgreich $0erstellt!"),
+  GUI_CREATE_AH_NO_SLOTS("gui.ah_create.no_slots", "$0Du hast deine $4maximalen gleichzeitigen $0Auktionen von $4{{max_auctions}} $0erreicht!"),
 
   //=========================================================================//
   //                              AH Profile GUI                             //

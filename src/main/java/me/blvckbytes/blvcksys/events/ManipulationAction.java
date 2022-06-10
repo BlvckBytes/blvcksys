@@ -8,6 +8,7 @@ package me.blvckbytes.blvcksys.events;
 */
 public enum ManipulationAction {
   PICKUP,
+  COLLECT,
   PLACE,
   SWAP,
   DROP,

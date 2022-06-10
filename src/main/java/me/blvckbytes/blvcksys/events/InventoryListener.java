@@ -143,7 +143,8 @@ public class InventoryListener implements Listener {
         slotsOwn.add(e.getSlot());
 
       // Collected all similar items to the cursor
-      if (e.getAction() == InventoryAction.COLLECT_TO_CURSOR && e.getCursor() != null) {
+      boolean isCollect = e.getAction() == InventoryAction.COLLECT_TO_CURSOR;
+      if (isCollect && e.getCursor() != null) {
         ItemStack cursor = e.getCursor();
         int remaining = cursor.getMaxStackSize() - cursor.getAmount();
 
@@ -178,10 +179,12 @@ public class InventoryListener implements Listener {
         }
       }
 
-      if (slotsTop.stream().anyMatch(slot -> checkCancellation(top, p, ManipulationAction.PICKUP, slot, e.getClick())))
+      ManipulationAction action = isCollect ? ManipulationAction.COLLECT : ManipulationAction.PICKUP;
+
+      if (slotsTop.stream().anyMatch(slot -> checkCancellation(top, p, action, slot, e.getClick())))
         e.setCancelled(true);
 
-      if (slotsOwn.stream().anyMatch(slot -> checkCancellation(p.getInventory(), p, ManipulationAction.PICKUP, slot, e.getClick())))
+      if (slotsOwn.stream().anyMatch(slot -> checkCancellation(p.getInventory(), p, action, slot, e.getClick())))
         e.setCancelled(true);
 
       return;
@@ -224,11 +227,20 @@ public class InventoryListener implements Listener {
     if (!(e.getWhoClicked() instanceof Player p))
       return;
 
+    Inventory top = p.getOpenInventory().getTopInventory();
+
     // Check whether this drag event needs to be cancelled by firing an individual
     // place event for each slot (because that's what in effect occurs). If any event
     // receiver cancels any of the slots, the whole drag event needs to be cancelled.
-    boolean cancel = e.getInventorySlots().stream()
-      .anyMatch(slot -> checkCancellation(e.getInventory(), p, ManipulationAction.PLACE, slot, ClickType.RIGHT));
+    boolean cancel = e.getRawSlots().stream()
+      .anyMatch(slot -> {
+
+        // This slot didn't affect the top inventory, always permit
+        if (slot >= top.getSize())
+          return false;
+
+        return checkCancellation(e.getInventory(), p, ManipulationAction.PLACE, slot, ClickType.RIGHT);
+      });
 
     if (cancel)
       e.setCancelled(true);

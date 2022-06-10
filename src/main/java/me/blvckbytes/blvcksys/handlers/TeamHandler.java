@@ -4,20 +4,19 @@ import me.blvckbytes.blvcksys.commands.IVanishCommand;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.di.AutoConstruct;
+import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.di.AutoInjectLate;
+import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.events.IAfkListener;
 import me.blvckbytes.blvcksys.events.PlayerPermissionsChangedEvent;
 import me.blvckbytes.blvcksys.packets.communicators.team.ITeamCommunicator;
 import me.blvckbytes.blvcksys.packets.communicators.team.TeamAction;
 import me.blvckbytes.blvcksys.packets.communicators.team.TeamGroup;
 import me.blvckbytes.blvcksys.util.MCReflect;
-import me.blvckbytes.blvcksys.di.AutoConstruct;
-import me.blvckbytes.blvcksys.di.AutoInject;
-import me.blvckbytes.blvcksys.di.AutoInjectLate;
-import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import net.minecraft.network.chat.ChatComponentText;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.PacketPlayOutPlayerListHeaderFooter;
-import net.minecraft.util.Tuple;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -31,7 +30,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.regex.Pattern;
 
 @AutoConstruct
 public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
@@ -478,7 +476,7 @@ public class TeamHandler implements Listener, IAutoConstructed, ITeamHandler {
         new ChatComponentText(""), new ChatComponentText("")
       );
 
-    Map<String, Tuple<Pattern, String>> vars = ConfigValue.makeEmpty()
+    Map<String, String> vars = ConfigValue.makeEmpty()
       .withVariable("player", p.getName())
       .withVariable("num_online", Bukkit.getOnlinePlayers().size())
       .withVariable("num_slots", plugin.getServer().getMaxPlayers())

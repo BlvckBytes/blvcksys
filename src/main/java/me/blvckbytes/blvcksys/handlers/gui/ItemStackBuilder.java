@@ -2,10 +2,8 @@ package me.blvckbytes.blvcksys.handlers.gui;
 
 import com.mojang.authlib.GameProfile;
 import me.blvckbytes.blvcksys.config.ConfigValue;
-import net.minecraft.util.Tuple;
 import org.bukkit.Color;
 import org.bukkit.Material;
-import org.bukkit.attribute.Attribute;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -18,7 +16,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -146,7 +143,7 @@ public class ItemStackBuilder {
    * Build this item with additional template variables
    * @param variables Variables to apply
    */
-  public ItemStack build(Map<String, Tuple<Pattern, String>> variables) {
+  public ItemStack build(Map<String, String> variables) {
     if (stack == null)
       stack = new ItemStack(this.mat, this.amount);
     else {

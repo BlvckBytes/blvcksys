@@ -14,7 +14,6 @@ import me.blvckbytes.blvcksys.persistence.query.FieldOperation;
 import me.blvckbytes.blvcksys.persistence.query.FieldQueryGroup;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import me.blvckbytes.blvcksys.util.TimeUtil;
-import net.minecraft.util.Tuple;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -24,7 +23,6 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.regex.Pattern;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -123,7 +121,7 @@ public class MuteHandler implements IMuteHandler, Listener {
   }
 
   @Override
-  public Map<String, Tuple<Pattern, String>> buildMuteVariables(MuteModel mute) {
+  public Map<String, String> buildMuteVariables(MuteModel mute) {
     return ConfigValue.makeEmpty()
       .withVariable("creator", mute.getCreator().getName())
       .withVariable("target", mute.getTarget().getName())

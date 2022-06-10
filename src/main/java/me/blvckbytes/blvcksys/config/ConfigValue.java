@@ -5,11 +5,8 @@ import net.minecraft.util.Tuple;
 import org.bukkit.ChatColor;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.regex.Pattern;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 /*
@@ -27,19 +24,12 @@ import java.util.stream.Stream;
 */
 public class ConfigValue {
 
-  // What marks a variable within the config file?
-  private static final String varMakerS = "{{";
-  private static final String varMakerE = "}}";
-
-  // Whether or not to ignore the casing of variable names
-  private static final boolean ignoreVarCasing = true;
-
   // Unmodified lines of text read from the config
   private final List<String> lines;
 
   // Variable names and their values that need to be substituted
   // Names are translated to a pattern when added to the instance
-  private final Map<String, Tuple<Pattern, String>> vars;
+  private final Map<String, String> vars;
 
   // Global prefix value
   private final String prefix;
@@ -96,13 +86,9 @@ public class ConfigValue {
    * @param value Value of the variable
    */
   public ConfigValue withVariable(String name, @Nullable Object value) {
-    int flags = Pattern.LITERAL | (ignoreVarCasing ? Pattern.CASE_INSENSITIVE : 0);
     this.vars.put(
       name.toLowerCase(),
-      new Tuple<>(
-        Pattern.compile(varMakerS + name + varMakerE, flags),
-        value == null ? "null" : value.toString()
-      )
+      value == null ? "null" : value.toString()
     );
     return this;
   }
@@ -111,7 +97,7 @@ public class ConfigValue {
    * Apply an external map of variables all at once
    * @param variables Map of variables
    */
-  public ConfigValue withVariables(Map<String, Tuple<Pattern, String>> variables) {
+  public ConfigValue withVariables(Map<String, String> variables) {
     this.vars.putAll(variables);
     return this;
   }
@@ -120,7 +106,7 @@ public class ConfigValue {
    * Export all currently known variables
    * @return Map of variables
    */
-  public Map<String, Tuple<Pattern, String>> exportVariables() {
+  public Map<String, String> exportVariables() {
     return Collections.unmodifiableMap(this.vars);
   }
 
@@ -186,7 +172,11 @@ public class ConfigValue {
   public List<String> asList() {
     return lines.stream()
       .map(this::transformLine)
-      .toList();
+      .map(line -> Arrays.asList(line.split("\n")))
+      .reduce(new ArrayList<>(), (a, b) -> {
+        a.addAll(b);
+        return a;
+      });
   }
 
   /**
@@ -253,19 +243,124 @@ public class ConfigValue {
   }
 
   /**
+   * Find all effective colors in a string in their appearing order
+   * @param input String to search colors in
+   * @return Map mapping starting indices to a tuple of the color and the formatting chars
+   */
+  private LinkedHashMap<Integer, Tuple<Character, Character>> findColors(String input) {
+    LinkedHashMap<Integer, Tuple<Character, Character>> colors = new LinkedHashMap<>();
+    char lastColor = 0, lastFormat;
+
+    char[] chars = input.toCharArray();
+    for (int i = 0; i < chars.length; i++) {
+      if (i == chars.length - 1)
+        break;
+
+      char c = chars[i];
+      char n = chars[i + 1];
+
+      // Could be a color/formatting indicator
+      if (c == '§') {
+        // Is a color indicator
+        if (n >= '0' && n <= '9' || n >= 'a' && n <= 'f') {
+          lastFormat = 0;
+          lastColor = n;
+        }
+
+        // Is a formatting indicator
+        else if (n >= 'k' && n <= 'o')
+          lastFormat = n;
+
+        // Reset all colors
+        else if (n == 'r') {
+          lastColor = 0;
+          lastFormat = 0;
+        }
+
+        // Didn't manipulate colors, ignore
+        else
+          continue;
+
+        colors.put(i, new Tuple<>(lastColor, lastFormat));
+      }
+    }
+
+    return colors;
+  }
+
+  /**
    * Substitutes all registered variables into the string's placeholders
    * @param input Input string
    * @return Transformed result
    */
   private String applyVariables(String input) {
-    for (Map.Entry<String, Tuple<Pattern, String>> var : vars.entrySet()) {
-      Tuple<Pattern, String> t = var.getValue();
+    LinkedHashMap<Integer, Tuple<Character, Character>> colors = findColors(input);
+    StringBuilder sb = new StringBuilder();
 
-      // Escape dollars before applying the regex replace, unescape afterwards
-      // This avoids illegal group reference exceptions
-      input = t.a().matcher(input).replaceAll(t.b().replace("$", "\\$")).replace("\\$", "$");
+    int startIndInp = -1, startIndSb = -1;
+    for (int i = 0; i < input.length(); i++) {
+      char c = input.charAt(i);
+
+      sb.append(c);
+
+      if (i == input.length() - 1)
+        break;
+
+      char n = input.charAt(i + 1);
+
+      // Store the possible variable begin marker
+      if (c == '{' && n == '{') {
+        startIndInp = i;
+        startIndSb = sb.length() - 1;
+        continue;
+      }
+
+      // Substitute the variable value
+      if (c == '}' && n == '}') {
+        String name = input.substring(startIndInp + 2, i);
+        String value = vars.get(name);
+
+        // Variable found, substitute
+        if (value != null) {
+          sb.delete(startIndSb, sb.length());
+
+          // Find the last color specified
+          String color = "";
+          for (Integer startInd : colors.keySet()) {
+
+            // Not affecting this variable anymore
+            if (startInd > startIndInp)
+              break;
+
+            color = "";
+
+            Tuple<Character, Character> t = colors.get(startInd);
+            if (t.a() != 0)
+              color += "§" + t.a();
+
+            if (t.b() != 0)
+              color += "§" + t.b();
+          }
+
+          // Apply affecting colors on all lines of the variable
+          sb.append(
+            Arrays.stream(value.split("\n"))
+              .collect(Collectors.joining("\n" + color, color, ""))
+          );
+
+          // Skip the second closing bracket
+          i++;
+        }
+
+        // End of input reached
+        if (i == input.length() - 1)
+          break;
+
+        startIndSb = startIndInp = -1;
+      }
     }
-    return input;
+
+    return sb.toString();
   }
 
   @Override

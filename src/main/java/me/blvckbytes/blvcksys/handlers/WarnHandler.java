@@ -14,7 +14,6 @@ import me.blvckbytes.blvcksys.persistence.query.FieldOperation;
 import me.blvckbytes.blvcksys.persistence.query.FieldQueryGroup;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
 import me.blvckbytes.blvcksys.util.TimeUtil;
-import net.minecraft.util.Tuple;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -24,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -105,7 +103,7 @@ public class WarnHandler implements IWarnHandler {
   }
 
   @Override
-  public Map<String, Tuple<Pattern, String>> buildWarnVariables(WarnModel warn) {
+  public Map<String, String> buildWarnVariables(WarnModel warn) {
     int remaining = 0;
 
     // Remaining: (createdAt + durationSections) - now

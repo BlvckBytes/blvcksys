@@ -2,7 +2,6 @@ package me.blvckbytes.blvcksys.handlers;
 
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.WarnModel;
-import net.minecraft.util.Tuple;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.Nullable;
@@ -11,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -64,7 +62,7 @@ public interface IWarnHandler {
    * @param warn Warn model to use as a variable value supplier
    * @return Variable map
    */
-  Map<String, Tuple<Pattern, String>> buildWarnVariables(WarnModel warn);
+  Map<String, String> buildWarnVariables(WarnModel warn);
 
   /**
    * Find a specific warn by it's ID

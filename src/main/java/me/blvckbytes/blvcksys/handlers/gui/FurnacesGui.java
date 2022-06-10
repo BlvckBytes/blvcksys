@@ -6,6 +6,7 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.handlers.IVirtualFurnaceHandler;
+import me.blvckbytes.blvcksys.util.SymbolicHead;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -60,7 +61,7 @@ public class FurnacesGui extends AGui<Object> {
     }
 
     inst.fixedItem(26, () -> (
-      new ItemStackBuilder(Material.GREEN_DYE)
+      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.GREEN_PLUS.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_FURNACES_CREATE_NAME))
         .withLore(
           cfg.get(ConfigKey.GUI_FURNACES_CREATE_LORE)

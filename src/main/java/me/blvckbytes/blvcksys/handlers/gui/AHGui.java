@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.handlers.gui;
 
 import lombok.NonNull;
 import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -81,7 +82,7 @@ public class AHGui extends AGui<Object> {
     ), e -> {});
 
     // Spacer
-    inst.fixedItem(50, () -> new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build(), null);
+    inst.addSpacer("50", Material.BLACK_STAINED_GLASS_PANE);
 
     // Paginator
     inst.addPagination(51, 52, 53);
@@ -255,6 +256,7 @@ public class AHGui extends AGui<Object> {
           Material.PURPLE_STAINED_GLASS_PANE :
           Material.BLACK_STAINED_GLASS_PANE
         )
+        .withName(ConfigValue.immediate(" "))
         .build()
     ), null);
   }

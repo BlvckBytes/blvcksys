@@ -374,17 +374,11 @@ public class GuiInstance<T> {
     StringBuilder slotExpr = new StringBuilder();
 
     for (int i = 0; i < template.getRows() * 9; i++) {
-      if (template.getPageSlots().contains(i))
-        continue;
-
-      slotExpr.append(i == 0 ? "" : ",").append(i);
+      if (!template.getPageSlots().contains(i))
+        slotExpr.append(i == 0 ? "" : ",").append(i);
     }
 
-    fill = new ItemStackBuilder(mat)
-      .withName(ConfigValue.immediate(" "))
-      .build();
-
-    fixedItem(slotExpr.toString(), () -> fill, null, null);
+    addSpacer(slotExpr.toString(), mat);
   }
 
   /**
@@ -403,18 +397,26 @@ public class GuiInstance<T> {
       if (i == 0 || i == template.getRows() - 1)
         slotExpr.append('-');
 
-        // Inbetween, only use first and last
+      // Inbetween, only use first and last
       else
         slotExpr.append(',');
 
       slotExpr.append(lastSlot);
     }
 
+    addSpacer(slotExpr.toString(), mat);
+  }
+
+  /**
+   * Adds a spacer with no name to a given slot
+   * @param slotExpr Where to set the item
+   * @param mat Material to use as a spacer
+   */
+  protected void addSpacer(String slotExpr, Material mat) {
     border = new ItemStackBuilder(mat)
       .withName(ConfigValue.immediate(" "))
       .build();
-
-    fixedItem(slotExpr.toString(), () -> border, null, null);
+    fixedItem(slotExpr, () -> border, null, null);
   }
 
   /**

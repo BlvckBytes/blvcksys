@@ -31,6 +31,7 @@ public class AHGui extends AGui<Object> {
   private final IAHHandler ahHandler;
   private final SingleChoiceGui singleChoiceGui;
   private final ChatUtil chatUtil;
+  private final AHProfileGui ahProfileGui;
 
   public AHGui(
     @AutoInject IConfig cfg,
@@ -38,7 +39,8 @@ public class AHGui extends AGui<Object> {
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject SingleChoiceGui singleChoiceGui,
     @AutoInject ChatUtil chatUtil,
-    @AutoInject IAHHandler ahHandler
+    @AutoInject IAHHandler ahHandler,
+    @AutoInject AHProfileGui ahProfileGui
   ) {
     super(6, "2-8,11-17,20-26,29-35,38-44", i -> (
       cfg.get(ConfigKey.GUI_AH)
@@ -47,6 +49,7 @@ public class AHGui extends AGui<Object> {
     this.ahHandler = ahHandler;
     this.singleChoiceGui = singleChoiceGui;
     this.chatUtil = chatUtil;
+    this.ahProfileGui = ahProfileGui;
   }
 
   @Override
@@ -78,7 +81,7 @@ public class AHGui extends AGui<Object> {
         .withName(cfg.get(ConfigKey.GUI_AH_PROFILE_NAME))
         .withLore(cfg.get(ConfigKey.GUI_AH_PROFILE_LORE))
         .build()
-    ), e -> {});
+    ), e -> inst.switchTo(AnimationType.SLIDE_LEFT, ahProfileGui, null));
 
     // Spacer
     inst.addSpacer("50", Material.BLACK_STAINED_GLASS_PANE);

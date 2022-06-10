@@ -2031,6 +2031,78 @@ public enum ConfigKey {
   ),
 
   //=========================================================================//
+  //                               AH Create GUI                             //
+  //=========================================================================//
+
+  GUI_CREATE_AH("gui.ah_create.title", "$2Auktion erstellen"),
+  GUI_CREATE_AH_START_NAME("gui.ah_create.start.name", "$0» $2Startgebot $0«"),
+  GUI_CREATE_AH_START_LORE(
+    "gui.ah_profile.start.lore",
+    " ",
+    "$0Wähle das mindeste Initialgebot durch",
+    "$0eine Eingabeaufforderung aus.",
+    " ",
+    "$0Aktueller Betrag: $2{{start_bid}}"
+  ),
+  GUI_CREATE_AH_START_PROMPT_MESSAGE("gui.ah_create.start.prompt.message", "$0Bitte gib das gewünschte $2Startgebot $0in den $2Chat $0ein: "),
+  GUI_CREATE_AH_START_PROMPT_INVALID("gui.ah_create.start.prompt.invalid", "$0Der Betrag von muss größer als $40 $0sein!"),
+  GUI_CREATE_AH_START_PROMPT_SUCCESS("gui.ah_create.start.prompt.success", "$0Das $2Startgebot $0deiner Auktion wurde auf $2{{amount}} $0gesetzt."),
+  GUI_CREATE_AH_ITEM_RETURNED("gui.ah_create.item.returned", "$0Dein $2Auktionsitem $0wurde dir aufgrund des Abbruches $2retourniert$0."),
+  GUI_CREATE_AH_ITEM_NAME("gui.ah_create.item.name", "$0» &cKein Item gewählt $0«"),
+  GUI_CREATE_AH_ITEM_LORE_VACANT(
+    "gui.ah_create.item.lore.vacant",
+    " ",
+    "$0Lege ein Item aus deinem Inventar",
+    "$0in diesen Slot um es für die Auktion",
+    "$0bereitzustellen."
+  ),
+  GUI_CREATE_AH_ITEM_LORE_CHOSEN(
+    "gui.ah_create.item.lore.chosen",
+    " ",
+    "$0Klicke auf dieses Item, um es wieder",
+    "$0aus der Auktion zu entfernen"
+  ),
+  GUI_CREATE_AH_DURATION_NAME("gui.ah_create.duration.name", "$0» $2Dauer $0«"),
+  GUI_CREATE_AH_DURATION_LORE(
+    "gui.ah_create.duration.lore",
+    " ",
+    "$0Wie lange sollen Gebote für diese",
+    "$0Auktion möglich sein? Wähle 00:00",
+    "$0für einen Sofortverkauf.",
+    " ",
+    "$0Aktuelle Dauer: $2{{duration}}",
+    " ",
+    "$0Linksklick: $2+1 Stunde",
+    "$0Rechtsklick: $2-1 Stunde",
+    "$0Shift + Linksklick: $2+10 Minuten",
+    "$0Shift + Rechtsklick: $2-10 Minuten"
+  ),
+
+  //=========================================================================//
+  //                              AH Profile GUI                             //
+  //=========================================================================//
+
+  GUI_PROFILE_AH("gui.ah_profile.title", "$0Auktionsprofil $2{{name}}"),
+  GUI_PROFILE_AH_CREATE_NAME("gui.ah_profile.create.name", "$0» $2Neues Inserat $0«"),
+  GUI_PROFILE_AH_CREATE_LORE(
+    "gui.ah_profile.create.lore",
+    " ",
+    "$0Erstelle ein neues Inserat."
+  ),
+  GUI_PROFILE_AH_MANAGE_AUCTIONS_NAME("gui.ah_profile.manage_auctions.name", "$0» $2Inserate verwalten $0«"),
+  GUI_PROFILE_AH_MANAGE_AUCTIONS_LORE(
+    "gui.ah_profile.manage_auctions.lore",
+    " ",
+    "$0Verwalte deine Inserate."
+  ),
+  GUI_PROFILE_AH_MANAGE_BIDS_NAME("gui.ah_profile.manage_bids.name", "$0» $2Gebote verwalten $0«"),
+  GUI_PROFILE_AH_MANAGE_BIDS_LORE(
+    "gui.ah_profile.manage_bids.lore",
+    " ",
+    "$0Verwalte deine Gebote."
+  ),
+
+  //=========================================================================//
   //                               Furnaces GUI                              //
   //=========================================================================//
 

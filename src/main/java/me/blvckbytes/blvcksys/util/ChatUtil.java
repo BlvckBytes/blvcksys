@@ -98,6 +98,14 @@ public class ChatUtil implements Listener {
   }
 
   /**
+   * Checks whether the player currently has an active, waiting chat prompt
+   * @param p Target player
+   */
+  public boolean hasActivePrompt(Player p) {
+    return prompts.containsKey(p);
+  }
+
+  /**
    * Register and send buttons to a player
    * @param p Target player
    * @param btns Previously built set of buttons
@@ -119,14 +127,6 @@ public class ChatUtil implements Listener {
 
     // Remove element
     buttonSessions.get(p).remove(btns);
-  }
-
-  /**
-   * Clear all sessions of a player
-   * @param p Target player
-   */
-  public void clearPlayer(Player p) {
-    buttonSessions.remove(p);
   }
 
   @EventHandler(priority = EventPriority.HIGHEST)

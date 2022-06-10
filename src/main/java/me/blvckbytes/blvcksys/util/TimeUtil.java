@@ -128,4 +128,16 @@ public class TimeUtil {
 
     return sb.toString().trim();
   }
+
+  /**
+   * Format a duration in seconds to a time string with the format
+   * of hours (two digits) colon minutes (two digits), example: 02:25
+   * @param duration Duration in seconds
+   * @return Formatted duration string
+   */
+  public String formatDurationHHCMM(long duration) {
+    long hours = duration / 3600;
+    long minutes = duration % 3600 / 60;
+    return (hours <= 9 ? "0" + hours : hours) + ":" + (minutes <= 9 ? "0" + minutes : minutes);
+  }
 }

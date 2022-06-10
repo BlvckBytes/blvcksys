@@ -2042,7 +2042,7 @@ public enum ConfigKey {
     "$0Wähle das mindeste Initialgebot durch",
     "$0eine Eingabeaufforderung aus.",
     " ",
-    "$0Aktueller Betrag: $2{{start_bid}}"
+    "$0Aktueller Betrag: $2{{start_bid}} Coins"
   ),
   GUI_CREATE_AH_START_PROMPT_MESSAGE("gui.ah_create.start.prompt.message", "$0Bitte gib das gewünschte $2Startgebot $0in den $2Chat $0ein: "),
   GUI_CREATE_AH_START_PROMPT_INVALID("gui.ah_create.start.prompt.invalid", "$0Der Betrag von muss größer als $40 $0sein!"),
@@ -2076,6 +2076,24 @@ public enum ConfigKey {
     "$0Rechtsklick: $2-1 Stunde",
     "$0Shift + Linksklick: $2+10 Minuten",
     "$0Shift + Rechtsklick: $2-10 Minuten"
+  ),
+  GUI_CREATE_AH_DURATION_IMMEDIATE("gui.ah_create.duration.immediate", "Sofortverkauf"),
+  GUI_CREATE_AH_SUBMIT_OK_NAME("gui.ah_create.submit.ok.name", "$0» &aAuktion erstellen $0«"),
+  GUI_CREATE_AH_SUBMIT_OK_LORE(
+    "gui.ah_create.submit.ok.lore",
+    " ",
+    "$0Zusammenfassung:",
+    "$0Startgebot: $2{{start_bid}} Coins",
+    "$0Item: $2{{item}}",
+    "$0Dauer: $2{{duration}}",
+    " ",
+    "$0Klicke, um die Auktion zu erstellen."
+  ),
+  GUI_CREATE_AH_SUBMIT_INVALID_NAME("gui.ah_create.submit.invalid.name", "$0» &cAuktion unvollständig $0«"),
+  GUI_CREATE_AH_SUBMIT_INVALID_LORE(
+    "gui.ah_create.submit.invalid.lore",
+    " ",
+    "$0Bitte wähle zuerst ein Item aus."
   ),
 
   //=========================================================================//

@@ -11,6 +11,7 @@ import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.events.ManipulationAction;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.util.ChatUtil;
+import me.blvckbytes.blvcksys.util.SymbolicHead;
 import me.blvckbytes.blvcksys.util.TimeUtil;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -37,6 +38,14 @@ public class AHCreateGui extends AGui<Object> {
     int startBid;
     int durationSeconds;
     @Nullable ItemStack item;
+
+    /**
+     * Checks whether the state is valid in the sense that it
+     * can be submitted to create an auction based on it
+     */
+    public boolean isValid() {
+      return startBid > 0 && item != null && durationSeconds >= 0;
+    }
 
     private static AHCreateState makeDefault() {
       return new AHCreateState(100, 60 * 60, null);
@@ -77,6 +86,11 @@ public class AHCreateGui extends AGui<Object> {
     Player p = inst.getViewer();
     AHCreateState state = getState(inst);
 
+    // Player has to answer a prompt, this is not cancellation
+    if (chatUtil.hasActivePrompt(p))
+      return false;
+
+    // Hand back the inserted auction item, if applicable
     if (state.item != null) {
       giveCommand.giveItemsOrDrop(p, state.item);
       state.item = null;
@@ -88,6 +102,8 @@ public class AHCreateGui extends AGui<Object> {
       );
     }
 
+    // Invalidate the current state
+    states.remove(p);
     return false;
   }
 
@@ -95,8 +111,10 @@ public class AHCreateGui extends AGui<Object> {
   protected boolean opening(GuiInstance<Object> inst) {
     Player p = inst.getViewer();
 
+    Runnable back = () -> inst.switchTo(AnimationType.SLIDE_RIGHT, ahProfileGui, null);
+
     inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
-    inst.addBack(18, ahProfileGui, null, AnimationType.SLIDE_RIGHT);
+    inst.addBack(18, e -> back.run());
 
     // Auction item markers
     inst.fixedItem("4,22", () -> (
@@ -189,7 +207,7 @@ public class AHCreateGui extends AGui<Object> {
           state.item = item;
         }
 
-        inst.redraw("13");
+        inst.redraw("13,26");
       }
 
       // Tries to pick up an item from the slot
@@ -201,7 +219,7 @@ public class AHCreateGui extends AGui<Object> {
         // Hand the item back to the cursor and clear the state item
         p.setItemOnCursor(state.item);
         state.item = null;
-        inst.redraw("13");
+        inst.redraw("13,26");
       }
     });
 
@@ -211,7 +229,7 @@ public class AHCreateGui extends AGui<Object> {
         .withName(cfg.get(ConfigKey.GUI_CREATE_AH_DURATION_NAME))
         .withLore(
           cfg.get(ConfigKey.GUI_CREATE_AH_DURATION_LORE)
-            .withVariable("duration", timeUtil.formatDurationHHCMM(getState(inst).durationSeconds))
+            .withVariable("duration", formatDuration(getState(inst)))
         )
         .build()
     ), e -> {
@@ -233,10 +251,53 @@ public class AHCreateGui extends AGui<Object> {
       // Constrain towards zero and max duration
       state.durationSeconds = Math.max(0, Math.min(MAX_DURATION_S, state.durationSeconds));
 
-      inst.redraw("15");
+      inst.redraw("15,26");
+    });
+
+    // Submit button
+    inst.fixedItem(26, () -> {
+      AHCreateState state = getState(inst);
+      return new ItemStackBuilder(textures.getProfileOrDefault(
+        state.isValid() ? SymbolicHead.GREEN_PLUS.getOwner() : SymbolicHead.RED_X.getOwner()
+      ))
+        .withName(cfg.get(state.isValid() ? ConfigKey.GUI_CREATE_AH_SUBMIT_OK_NAME : ConfigKey.GUI_CREATE_AH_SUBMIT_INVALID_NAME))
+        .withLore(
+          cfg.get(
+            state.isValid() ?
+              ConfigKey.GUI_CREATE_AH_SUBMIT_OK_LORE :
+              ConfigKey.GUI_CREATE_AH_SUBMIT_INVALID_LORE
+          )
+            .withVariable("item", state.item == null ? "/" : state.item.getType())
+            .withVariable("duration", formatDuration(state))
+            .withVariable("start_bid", state.startBid)
+        )
+        .build();
+    }, e -> {
+      // Don't act on invalid states
+      AHCreateState state = getState(inst);
+      if (!state.isValid())
+        return;
+
+      p.sendMessage("Would now create an auction: (" + state.item.getType() + ", " + timeUtil.formatDurationHHCMM(state.durationSeconds) + ", " + state.startBid + " Coins)");
+
+      // Reset the item, which is now in an auction
+      state.item = null;
+
+      // Move back to the profile
+      back.run();
     });
 
     return true;
+  }
+
+  /**
+   * Correctly formats the selected duration of an auction
+   * @param state State to format
+   */
+  private String formatDuration(AHCreateState state) {
+    if (state.durationSeconds == 0)
+      return cfg.get(ConfigKey.GUI_CREATE_AH_DURATION_IMMEDIATE).asScalar();
+    return timeUtil.formatDurationHHCMM(state.durationSeconds);
   }
 
   /**

@@ -23,7 +23,8 @@ public enum SymbolicHead {
   LETTER_B("OakWoodB"),
   LETTER_R("OakWoodR"),
   LETTER_S("OakWoodS"),
-  GREEN_PLUS("GreenPlus")
+  GREEN_PLUS("GreenPlus"),
+  RED_X("RedX")
   ;
 
   private final String owner;

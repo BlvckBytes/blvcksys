@@ -18,6 +18,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -60,32 +62,35 @@ public class CrateContentGui extends AGui<Tuple<CrateModel, Boolean>> {
     CrateModel crate = inst.getArg().a();
     boolean editMode = inst.getArg().b();
 
-    List<CrateItemModel> items = crateHandler.getItems(crate.getName())
-      .orElse(new ArrayList<>());
+    inst.setPageContents(() -> {
+      List<CrateItemModel> items = crateHandler.getItems(crate.getName()).orElse(new ArrayList<>());
 
-    if (items.size() == 0) {
-      inst.addPagedItem(s -> (
-          new ItemStackBuilder(Material.BARRIER)
-            .withName(cfg.get(ConfigKey.GUI_CRATE_CONTENT_NONE_NAME))
-            .withLore(cfg.get(ConfigKey.GUI_CRATE_CONTENT_NONE_LORE))
-            .build()
-        ), null, null
-      );
-      return true;
-    }
+      // No items available
+      if (items.size() == 0) {
+        return List.of(
+          new GuiItem(
+            s -> (
+              new ItemStackBuilder(Material.BARRIER)
+                .withName(cfg.get(ConfigKey.GUI_CRATE_CONTENT_NONE_NAME))
+                .withLore(cfg.get(ConfigKey.GUI_CRATE_CONTENT_NONE_LORE))
+                .build()
+            ), null, null
+          )
+        );
+      }
 
-    for (CrateItemModel content : items) {
+      return items.stream()
+        .filter(Objects::nonNull)
+        .map(item -> new GuiItem(
+          s -> appendDecoration(crate, item), e -> {
+            if (!editMode)
+              return;
 
-      if (content.getItem() == null)
-        continue;
-
-      inst.addPagedItem(s -> appendDecoration(crate, content), e -> {
-        if (!editMode)
-          return;
-
-        inst.switchTo(AnimationType.SLIDE_LEFT, detailGui, new Tuple<>(crate, content));
-      }, null);
-    }
+            inst.switchTo(AnimationType.SLIDE_LEFT, detailGui, new Tuple<>(crate, item));
+          }, null
+        ))
+        .collect(Collectors.toList());
+    });
 
     return true;
   }

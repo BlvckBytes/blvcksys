@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -53,34 +54,42 @@ public class IgnoresGui extends AGui<Object> {
     inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
     inst.addPagination(28, 31, 34);
 
-    List<PlayerIgnoreModel> active = ignore.listActiveIgnores(p);
+    inst.setPageContents(() -> {
+      List<PlayerIgnoreModel> active = ignore.listActiveIgnores(p);
 
-    if (active.size() == 0) {
-      inst.addPagedItem(s -> (
-        new ItemStackBuilder(Material.BARRIER)
-          .withName(cfg.get(ConfigKey.GUI_IGNORES_NONE_NAME))
-          .withLore(cfg.get(ConfigKey.GUI_IGNORES_NONE_LORE))
-          .build()
-        ), null, null
-      );
-      return true;
-    }
+      // No ignores available
+      if (active.size() == 0) {
+        return List.of(
+          new GuiItem(s -> (
+            new ItemStackBuilder(Material.BARRIER)
+              .withName(cfg.get(ConfigKey.GUI_IGNORES_NONE_NAME))
+              .withLore(cfg.get(ConfigKey.GUI_IGNORES_NONE_LORE))
+              .build()
+            ), null, null
+          )
+        );
+      }
 
-    for (PlayerIgnoreModel ignore : active) {
-      inst.addPagedItem(s -> (
-        new ItemStackBuilder(textures.getProfileOrDefault(ignore.getTarget().getName()))
-          .withName(
-            cfg.get(ConfigKey.GUI_IGNORES_PLAYER_NAME)
-              .withVariable("name", ignore.getTarget().getName())
-          )
-          .withLore(
-            cfg.get(ConfigKey.GUI_IGNORES_PLAYER_LORE)
-              .withVariable("msg_state", inst.statePlaceholder(ignore.isIgnoresMsg()))
-              .withVariable("chat_state", inst.statePlaceholder(ignore.isIgnoresChat()))
-          )
-          .build()
-      ), e -> inst.switchTo(AnimationType.SLIDE_LEFT, ignoreDetailGui, ignore.getTarget()), null);
-    }
+      return active.stream()
+        .map(ignore -> new GuiItem(
+          s -> (
+            new ItemStackBuilder(textures.getProfileOrDefault(ignore.getTarget().getName()))
+              .withName(
+                cfg.get(ConfigKey.GUI_IGNORES_PLAYER_NAME)
+                  .withVariable("name", ignore.getTarget().getName())
+              )
+              .withLore(
+                cfg.get(ConfigKey.GUI_IGNORES_PLAYER_LORE)
+                  .withVariable("msg_state", inst.statePlaceholder(ignore.isIgnoresMsg()))
+                  .withVariable("chat_state", inst.statePlaceholder(ignore.isIgnoresChat()))
+              )
+              .build()
+          ),
+          e -> inst.switchTo(AnimationType.SLIDE_LEFT, ignoreDetailGui, ignore.getTarget()),
+          null
+        ))
+        .collect(Collectors.toList());
+    });
 
     return true;
   }

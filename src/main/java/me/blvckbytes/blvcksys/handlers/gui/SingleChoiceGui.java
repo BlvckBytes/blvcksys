@@ -5,15 +5,14 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
-import net.minecraft.util.Tuple;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -90,16 +89,18 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
       });
     }
 
-    for (Tuple<Object, ItemStack> choice : inst.getArg().representitives()) {
-      inst.addPagedItem(
-        s -> choice.b(),
-        e -> {
-          haveChosen.add(p);
-          inst.getArg().selected().accept(choice.a(), inst);
-        },
-        null
-      );
-    }
+    inst.setPageContents(() -> (
+      inst.getArg().representitives().stream()
+        .map(choice -> new GuiItem(
+          s -> choice.b(),
+          e -> {
+            haveChosen.add(p);
+            inst.getArg().selected().accept(choice.a(), inst);
+          },
+          null
+        ))
+        .collect(Collectors.toList())
+      ));
 
     return true;
   }

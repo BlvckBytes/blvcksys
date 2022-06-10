@@ -12,6 +12,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.stream.Collectors;
+
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 06/01/2022
@@ -52,13 +54,15 @@ public class FurnacesGui extends AGui<Object> {
     inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
     inst.addPagination(37, 40, 43);
 
-    for (VirtualFurnace furnace : furnaceHandler.listFurnaces(p)) {
-      inst.addPagedItem(
-        i -> buildFurnaceIcon(furnace),
-        fe -> inst.switchTo(null, furnaceGui, furnace),
-        1
-      );
-    }
+    inst.setPageContents(() -> (
+      furnaceHandler.listFurnaces(p).stream()
+        .map(furnace -> new GuiItem(
+          i -> buildFurnaceIcon(furnace),
+          fe -> inst.switchTo(null, furnaceGui, furnace),
+          1
+        ))
+        .collect(Collectors.toList())
+    ));
 
     inst.fixedItem(26, () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.GREEN_PLUS.getOwner()))
@@ -82,14 +86,9 @@ public class FurnacesGui extends AGui<Object> {
         return;
       }
 
-      VirtualFurnace furnace = furnaceHandler.accessFurnace(p, used + 1);
-
       // "Touch" the next furnace in the sequence
-      inst.addPagedItem(
-        s -> buildFurnaceIcon(furnace),
-        fe -> inst.switchTo(null, furnaceGui, furnace),
-        1
-      );
+      furnaceHandler.accessFurnace(p, used + 1);
+      inst.refreshPageContents();
 
       // Go to the last page to make sure the new furnace is visible
       inst.lastPage(AnimationType.SLIDE_LEFT);

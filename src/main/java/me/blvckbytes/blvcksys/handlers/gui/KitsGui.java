@@ -24,6 +24,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -91,43 +92,47 @@ public class KitsGui extends AGui<Object> implements Listener {
     Map<KitModel, Tuple<Long, Long>> cooldownCache = cooldownCaches.get(p);
 
     // Add all kits by their representative item
-    for (KitModel kit : kits) {
-      inst.addPagedItem(s -> {
-        // Cache this kit's cooldown, if absent
-        if (!cooldownCache.containsKey(kit)) {
-          cooldownCache.put(kit, new Tuple<>(
-            System.currentTimeMillis(),
-            kit.getCooldownRemaining(p, pers)
-          ));
-        }
+    inst.setPageContents(() -> (
+      kits.stream()
+        .map(kit -> new GuiItem(
+          s -> {
+            // Cache this kit's cooldown, if absent
+            if (!cooldownCache.containsKey(kit)) {
+              cooldownCache.put(kit, new Tuple<>(
+                System.currentTimeMillis(),
+                kit.getCooldownRemaining(p, pers)
+              ));
+            }
 
-        // Calculate the remaining time from the cache's information
-        Tuple<Long, Long> remInfo = cooldownCache.get(kit);
-        long rem = remInfo.b() - ((System.currentTimeMillis() - remInfo.a()) / 1000);
+            // Calculate the remaining time from the cache's information
+            Tuple<Long, Long> remInfo = cooldownCache.get(kit);
+            long rem = remInfo.b() - ((System.currentTimeMillis() - remInfo.a()) / 1000);
 
-        return new ItemStackBuilder(kit.getRepresentativeItem(), 1)
-          .withName(
-            cfg.get(ConfigKey.GUI_KITS_KIT_NAME)
-              .withVariable("name", kit.getName())
-          )
-          .withLore(
-            cfg.get(ConfigKey.GUI_KITS_KIT_LORE)
-              .withVariable("num_items", kit.getNumItems())
-              .withVariable("cooldown", rem < 0 ? "/" : time.formatDuration(rem))
-          )
-          .build();
-      }, e -> {
-        ClickType click = e.getClick();
+            return new ItemStackBuilder(kit.getRepresentativeItem(), 1)
+              .withName(
+                cfg.get(ConfigKey.GUI_KITS_KIT_NAME)
+                  .withVariable("name", kit.getName())
+              )
+              .withLore(
+                cfg.get(ConfigKey.GUI_KITS_KIT_LORE)
+                  .withVariable("num_items", kit.getNumItems())
+                  .withVariable("cooldown", rem < 0 ? "/" : time.formatDuration(rem))
+              )
+              .build();
+          }, e -> {
+            ClickType click = e.getClick();
 
-        // Left click performs a kit request
-        if (click == ClickType.LEFT || click == ClickType.SHIFT_LEFT)
-          p.performCommand("kit " + kit.getName());
+            // Left click performs a kit request
+            if (click == ClickType.LEFT || click == ClickType.SHIFT_LEFT)
+              p.performCommand("kit " + kit.getName());
 
-        // Right click performs a switch to the kit content preview
-        else if (click == ClickType.RIGHT || click == ClickType.SHIFT_RIGHT)
-          inst.switchTo(AnimationType.SLIDE_LEFT, kitContentGui, kit);
-      }, 10);
-    }
+              // Right click performs a switch to the kit content preview
+            else if (click == ClickType.RIGHT || click == ClickType.SHIFT_RIGHT)
+              inst.switchTo(AnimationType.SLIDE_LEFT, kitContentGui, kit);
+          }, 10
+        ))
+        .collect(Collectors.toList())
+    ));
 
     return true;
   }

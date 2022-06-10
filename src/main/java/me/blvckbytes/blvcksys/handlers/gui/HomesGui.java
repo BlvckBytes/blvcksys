@@ -16,6 +16,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -65,132 +66,138 @@ public class HomesGui extends AGui<OfflinePlayer> {
     inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
     inst.addPagination(37, 40, 43);
 
-    List<HomeModel> homes = homeHandler.listHomes(inst.getArg());
+    inst.setPageContents(() -> {
+      List<HomeModel> homes = homeHandler.listHomes(inst.getArg());
 
-    if (homes.size() == 0) {
-      inst.addPagedItem(s -> (
-          new ItemStackBuilder(Material.BARRIER)
-            .withName(cfg.get(ConfigKey.GUI_HOMES_NONE_NAME))
-            .withLore(
-              cfg.get(isSelf ? ConfigKey.GUI_HOMES_NONE_LORE_SELF : ConfigKey.GUI_HOMES_NONE_LORE_OTHERS)
-                .withVariable("name", inst.getArg().getName())
-            )
-            .build()
-        ), null, null
-      );
-      return true;
-    }
-
-    for (HomeModel home : homes) {
-      Location l = home.getLoc();
-      World w = l.getWorld();
-
-      inst.addPagedItem(
-        i -> (new ItemStackBuilder(home.getIcon())
-          .withName(
-            cfg.get(ConfigKey.GUI_HOMES_HOME_NAME)
-              .withVariable("name", home.getName())
-          )
-          .withLore(
-            cfg.get(ConfigKey.GUI_HOMES_HOME_LORE)
-              .withVariable("created_at", home.getCreatedAtStr())
-              .withVariable("updated_at", home.getUpdatedAtStr())
-              .withVariable("world", w == null ? "/" : w.getName())
-              .withVariable("location", "(" + l.getBlockX() + " | " + l.getBlockY() + " | " + l.getBlockZ() + ")")
-          )
-          .build()
-        ),
-        e -> {
-
-          if (e.getClick().isLeftClick()) {
-
-            // Re-set the home at the current position
-            if (e.getClick().isShiftClick()) {
-
-              inst.switchTo(AnimationType.SLIDE_LEFT, confirmationGui, (res, confirmationInst) -> {
-                // Closed the inventory, take no action
-                if (res == TriResult.EMPTY)
-                  return;
-
-                // Perform update on confirmation
-                if (res == TriResult.SUCC) {
-                  boolean succ = homeHandler.updateLocation(p, home.getName(), p.getLocation());
-                  p.sendMessage(
-                    cfg.get(succ ? ConfigKey.HOMES_MOVED : ConfigKey.HOMES_NOT_FOUND)
-                      .withPrefix()
-                      .withVariable("name", home.getName())
-                      .asScalar()
-                  );
-                }
-
-                // In any case, switch back to the list
-                confirmationInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
-              });
-
-              return;
-            }
-
-            // Teleport to the home
-            inst.close();
-            p.performCommand(
-              "home " + home.getName() + (isSelf ? "" : " " + inst.getArg().getName())
-            );
-            return;
-          }
-
-          if (e.getClick().isRightClick()) {
-
-            // Delete this home
-            if (e.getClick().isShiftClick()) {
-
-              inst.switchTo(AnimationType.SLIDE_LEFT, confirmationGui, (res, confirmationInst) -> {
-                // Closed the inventory, take no action
-                if (res == TriResult.EMPTY)
-                  return;
-
-                // Perform deletion
-                if (res == TriResult.SUCC) {
-                  boolean succ = homeHandler.deleteHome(p, home.getName());
-                  p.sendMessage(
-                    cfg.get(succ ? ConfigKey.HOMES_DELETED : ConfigKey.HOMES_NOT_FOUND)
-                      .withPrefix()
-                      .withVariable("name", home.getName())
-                      .asScalar()
-                  );
-                }
-
-                // In any case, switch back to the list
-                confirmationInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
-              });
-              return;
-            }
-
-            // Chose a (new) icon
-            new UserInputChain(inst, values -> {
-              Material mat = (Material) values.get("material");
-              boolean succ = homeHandler.updateIcon(p, home.getName(), mat);
-
-              p.sendMessage(
-                cfg.get(succ ? ConfigKey.GUI_HOMES_ICON_CHANGED : ConfigKey.HOMES_NOT_FOUND)
-                  .withPrefix()
-                  .withVariable("material", formatConstant(mat.name()))
-                  .asScalar()
-              );
-            }, singleChoiceGui, null)
-              .withChoice(
-                "material",
-                cfg.get(ConfigKey.GUI_HOMES_CHOICE_ICON_TITLE),
-                itemEditorGui::buildMaterialRepresentitives,
-                null
+      // No homes available
+      if (homes.size() == 0) {
+        return List.of(
+          new GuiItem(s -> (
+            new ItemStackBuilder(Material.BARRIER)
+              .withName(cfg.get(ConfigKey.GUI_HOMES_NONE_NAME))
+              .withLore(
+                cfg.get(isSelf ? ConfigKey.GUI_HOMES_NONE_LORE_SELF : ConfigKey.GUI_HOMES_NONE_LORE_OTHERS)
+                  .withVariable("name", inst.getArg().getName())
               )
-              .start();
+              .build()
+            ), null, null
+          )
+        );
+      }
 
-            return;
-          }
-        },
-        null
-      );
-    }
+      return homes.stream()
+        .map(home -> {
+
+          Location l = home.getLoc();
+          World w = l.getWorld();
+
+          return new GuiItem(
+            s -> (
+              new ItemStackBuilder(home.getIcon())
+                .withName(
+                  cfg.get(ConfigKey.GUI_HOMES_HOME_NAME)
+                    .withVariable("name", home.getName())
+                )
+                .withLore(
+                  cfg.get(ConfigKey.GUI_HOMES_HOME_LORE)
+                    .withVariable("created_at", home.getCreatedAtStr())
+                    .withVariable("updated_at", home.getUpdatedAtStr())
+                    .withVariable("world", w == null ? "/" : w.getName())
+                    .withVariable("location", "(" + l.getBlockX() + " | " + l.getBlockY() + " | " + l.getBlockZ() + ")")
+                )
+                .build()
+            ),
+            e -> {
+
+              if (e.getClick().isLeftClick()) {
+
+                // Re-set the home at the current position
+                if (e.getClick().isShiftClick()) {
+
+                  inst.switchTo(AnimationType.SLIDE_LEFT, confirmationGui, (res, confirmationInst) -> {
+                    // Closed the inventory, take no action
+                    if (res == TriResult.EMPTY)
+                      return;
+
+                    // Perform update on confirmation
+                    if (res == TriResult.SUCC) {
+                      boolean succ = homeHandler.updateLocation(p, home.getName(), p.getLocation());
+                      p.sendMessage(
+                        cfg.get(succ ? ConfigKey.HOMES_MOVED : ConfigKey.HOMES_NOT_FOUND)
+                          .withPrefix()
+                          .withVariable("name", home.getName())
+                          .asScalar()
+                      );
+                    }
+
+                    // In any case, switch back to the list
+                    confirmationInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
+                  });
+
+                  return;
+                }
+
+                // Teleport to the home
+                inst.close();
+                p.performCommand(
+                  "home " + home.getName() + (isSelf ? "" : " " + inst.getArg().getName())
+                );
+                return;
+              }
+
+              if (e.getClick().isRightClick()) {
+
+                // Delete this home
+                if (e.getClick().isShiftClick()) {
+
+                  inst.switchTo(AnimationType.SLIDE_LEFT, confirmationGui, (res, confirmationInst) -> {
+                    // Closed the inventory, take no action
+                    if (res == TriResult.EMPTY)
+                      return;
+
+                    // Perform deletion
+                    if (res == TriResult.SUCC) {
+                      boolean succ = homeHandler.deleteHome(p, home.getName());
+                      p.sendMessage(
+                        cfg.get(succ ? ConfigKey.HOMES_DELETED : ConfigKey.HOMES_NOT_FOUND)
+                          .withPrefix()
+                          .withVariable("name", home.getName())
+                          .asScalar()
+                      );
+                    }
+
+                    // In any case, switch back to the list
+                    confirmationInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
+                  });
+                  return;
+                }
+
+                // Chose a (new) icon
+                new UserInputChain(inst, values -> {
+                  Material mat = (Material) values.get("material");
+                  boolean succ = homeHandler.updateIcon(p, home.getName(), mat);
+
+                  p.sendMessage(
+                    cfg.get(succ ? ConfigKey.GUI_HOMES_ICON_CHANGED : ConfigKey.HOMES_NOT_FOUND)
+                      .withPrefix()
+                      .withVariable("material", formatConstant(mat.name()))
+                      .asScalar()
+                  );
+                }, singleChoiceGui, null)
+                  .withChoice(
+                    "material",
+                    cfg.get(ConfigKey.GUI_HOMES_CHOICE_ICON_TITLE),
+                    itemEditorGui::buildMaterialRepresentitives,
+                    null
+                  )
+                  .start();
+
+                return;
+              }
+            }, null);
+        })
+        .collect(Collectors.toList());
+    });
 
     return true;
   }

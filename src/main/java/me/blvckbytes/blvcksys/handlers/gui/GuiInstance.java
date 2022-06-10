@@ -20,7 +20,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 /*
@@ -51,10 +50,11 @@ public class GuiInstance<T> {
 
   private int currPage;
   private GuiAnimation currAnimation;
-  private ItemStack fill, border;
+  private ItemStack spacer;
+  private Runnable beforePaging;
 
   @Setter
-  private final List<Runnable> beforePaging;
+  private Supplier<List<GuiItem>> pageContents;
 
   @Setter
   private Consumer<Long> tickReceiver;
@@ -89,7 +89,6 @@ public class GuiInstance<T> {
     this.fixedItems = new HashMap<>();
     this.redrawListeners = new HashMap<>();
     this.pages = new ArrayList<>();
-    this.beforePaging = new ArrayList<>();
     this.animating = new AtomicBoolean(false);
 
     // In order to evaluate the title supplier, this call needs to follow
@@ -204,24 +203,26 @@ public class GuiInstance<T> {
   }
 
   /**
-   * Add another item to the list of paged items
-   * @param item Item to add
-   * @param onClick Click event for the item
-   * @param updatePeriod Update period in ticks, null means never
+   * Refresh the page contents by requesting from the page content supplier
    */
-  public void addPagedItem(
-    Function<Integer, ItemStack> item,
-    @Nullable Consumer<InventoryManipulationEvent> onClick,
-    @Nullable Integer updatePeriod
-  ) {
-    // Create a new page either initially or if the last page is already fully used
-    if (pages.isEmpty() || pages.get(pages.size() - 1).size() >= template.getPageSlots().size())
-      pages.add(new HashMap<>());
+  public void refreshPageContents() {
+    // Cannot fetch page contents as there is no supplier set
+    if (this.pageContents == null)
+      return;
 
-    // Add the new item to the last page and determine it's slot
-    Map<Integer, GuiItem> targetPage = pages.get(pages.size() - 1);
-    int slot = template.getPageSlots().get(targetPage.size());
-    targetPage.put(slot, new GuiItem(item, onClick, updatePeriod));
+    // Clear pages
+    pages.clear();
+
+    for (GuiItem item : this.pageContents.get()) {
+      // Create a new page either initially or if the last page is already fully used
+      if (pages.isEmpty() || pages.get(pages.size() - 1).size() >= template.getPageSlots().size())
+        pages.add(new HashMap<>());
+
+      // Add the new item to the last page and determine it's slot
+      Map<Integer, GuiItem> targetPage = pages.get(pages.size() - 1);
+      int slot = template.getPageSlots().get(targetPage.size());
+      targetPage.put(slot, item);
+    }
   }
 
   /**
@@ -297,7 +298,7 @@ public class GuiInstance<T> {
    * @param nextSlot Slot of the next button
    */
   protected void addPagination(int prevSlot, int indicatorSlot, int nextSlot) {
-    beforePaging.add(() -> Bukkit.getScheduler().runTaskLater(plugin, () -> redraw(String.valueOf(indicatorSlot)), 10));
+    beforePaging = () -> Bukkit.getScheduler().runTaskLater(plugin, () -> redraw(String.valueOf(indicatorSlot)), 10);
 
     fixedItem(prevSlot, () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner()))
@@ -413,10 +414,10 @@ public class GuiInstance<T> {
    * @param mat Material to use as a spacer
    */
   protected void addSpacer(String slotExpr, Material mat) {
-    border = new ItemStackBuilder(mat)
+    spacer = new ItemStackBuilder(mat)
       .withName(ConfigValue.immediate(" "))
       .build();
-    fixedItem(slotExpr, () -> border, null, null);
+    fixedItem(slotExpr, () -> spacer, null, null);
   }
 
   /**
@@ -523,7 +524,7 @@ public class GuiInstance<T> {
    */
   public void lastPage(@Nullable AnimationType animation) {
     if (beforePaging != null)
-      beforePaging.forEach(Runnable::run);
+      beforePaging.run();
 
     // Already at last page
     if (!hasNextPage())
@@ -543,7 +544,7 @@ public class GuiInstance<T> {
    */
   public boolean nextPage(@Nullable AnimationType animation) {
     if (beforePaging != null)
-      beforePaging.forEach(Runnable::run);
+      beforePaging.run();
 
     if (!hasNextPage())
       return false;
@@ -570,7 +571,7 @@ public class GuiInstance<T> {
    */
   public boolean previousPage(@Nullable AnimationType animation) {
     if (beforePaging != null)
-      beforePaging.forEach(Runnable::run);
+      beforePaging.run();
 
     if (!hasPreviousPage())
       return false;
@@ -703,10 +704,7 @@ public class GuiInstance<T> {
     currAnimation = new GuiAnimation(
       plugin, animation,
       from, inv.getContents(),
-      inv, mask,
-      // Use either the border (higher precedence) or the fill
-      // item stack to fill animation gaps
-      border == null ? fill : border,
+      inv, mask, spacer,
       ready == null ? () -> {} : ready,
       () -> {
         // Leave animating lock

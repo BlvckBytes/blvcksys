@@ -129,7 +129,8 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
 
     activeInstances.get(viewer).add(inst);
 
-    // Initially draw the whole gui
+    // Initially draw the whole gui and fetch pages
+    inst.refreshPageContents();
     inst.redraw("*");
     inst.open(animation, animateFrom);
 

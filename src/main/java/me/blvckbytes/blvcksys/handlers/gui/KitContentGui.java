@@ -10,9 +10,12 @@ import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.persistence.models.KitModel;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Material;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.Arrays;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -47,32 +50,38 @@ public class KitContentGui extends AGui<KitModel> {
     inst.addBorder(Material.BLACK_STAINED_GLASS_PANE);
     inst.addBack(36, kitsGui, null, AnimationType.SLIDE_RIGHT);
 
-    for (ItemStack content : inst.getArg().getItems().getContents()) {
+    inst.setPageContents(() -> (
+      Arrays.stream(inst.getArg().getItems().getContents())
+        .map(is -> {
+          if (is == null)
+            return null;
 
-      if (content == null)
-        continue;
+          ItemMeta meta = is.getItemMeta();
+          String name = meta == null ? null : meta.getDisplayName();
 
-      ItemMeta meta = content.getItemMeta();
-      String name = meta == null ? null : meta.getDisplayName();
-
-      inst.addPagedItem(s -> (
-        new ItemStackBuilder(content, content.getAmount())
-          // Keep either the name from ItemMeta or set a human readable type fallback
-          .withName(
-            (name != null && !name.isBlank()) ? ConfigValue.immediate(name) :
-            cfg.get(ConfigKey.GUI_KIT_CONTENT_CONTENT_NAME)
-              .withVariable(
-                "hr_type",
-                WordUtils.capitalizeFully(content.getType().name().replace("_", " "))
+          return new GuiItem(
+            s -> (
+              new ItemStackBuilder(is, is.getAmount())
+              // Keep either the name from ItemMeta or set a human readable type fallback
+              .withName(
+                (name != null && !name.isBlank()) ? ConfigValue.immediate(name) :
+                  cfg.get(ConfigKey.GUI_KIT_CONTENT_CONTENT_NAME)
+                    .withVariable(
+                      "hr_type",
+                      WordUtils.capitalizeFully(is.getType().name().replace("_", " "))
+                    )
               )
-          )
-          .withLore(
-            cfg.get(ConfigKey.GUI_KIT_CONTENT_CONTENT_LORE)
-              .withVariable("name", inst.getArg().getName())
-          )
-          .build()
-      ), null, null);
-    }
+              .withLore(
+                cfg.get(ConfigKey.GUI_KIT_CONTENT_CONTENT_LORE)
+                  .withVariable("name", inst.getArg().getName())
+              )
+              .build()
+            ), null, null
+          );
+        })
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList())
+    ));
 
     return true;
   }

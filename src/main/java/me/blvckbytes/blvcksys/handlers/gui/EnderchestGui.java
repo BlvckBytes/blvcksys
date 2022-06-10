@@ -22,9 +22,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -129,61 +127,70 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
     else
       maxSlots = model.getLastMaxSlots();
 
-    // Add as many items as the enderchest has slots in total
-    for (int j = 0; j < EnderchestModel.NUM_PAGES * EnderchestModel.PAGE_ROWS * 9; j++)
-      inst.addPagedItem(
-        // Dynamic supplier that's reading items directly from the enderchest
-        s -> {
-          ItemStack item = getPageItem(model, inst.getCurrentPage(), s);
-          int absoluteSlot = (inst.getCurrentPage() - 1) * inst.getPageSize() + s;
+    inst.setPageContents(() -> {
+      List<GuiItem> items = new ArrayList<>();
 
-          // Show locks on locked slots but don't shadow any existing items
-          if (absoluteSlot >= maxSlots && item == null)
-            return buildLock(inst.getCurrentPage(), s);
+      // Add as many items as the enderchest has slots in total
+      for (int j = 0; j < EnderchestModel.NUM_PAGES * EnderchestModel.PAGE_ROWS * 9; j++) {
+        items.add(
+          new GuiItem(
+            // Dynamic supplier that's reading items directly from the enderchest
+            s -> {
+              ItemStack item = getPageItem(model, inst.getCurrentPage(), s);
+              int absoluteSlot = (inst.getCurrentPage() - 1) * inst.getPageSize() + s;
 
-          return item;
-        },
-        e -> {
-          // Immediately sync after a change has been made
-          Bukkit.getScheduler().runTaskLater(plugin, () -> syncCurrentPage(inst, chestInst), 1);
+              // Show locks on locked slots but don't shadow any existing items
+              if (absoluteSlot >= maxSlots && item == null)
+                return buildLock(inst.getCurrentPage(), s);
 
-          int slot = e.getOriginInventory().equals(inst.getInv()) ? e.getOriginSlot() : e.getTargetSlot();
-          int absoluteSlot = (inst.getCurrentPage() - 1) * inst.getPageSize() + slot;
-          boolean allowedToUse = absoluteSlot < maxSlots;
+              return item;
+            },
+            e -> {
+              // Immediately sync after a change has been made
+              Bukkit.getScheduler().runTaskLater(plugin, () -> syncCurrentPage(inst, chestInst), 1);
 
-          // Tried to remove something from a locked slot that had an item left
-          // Permit this action, so that items can be gained back, but slots cannot be
-          // used since no items can be put back in
-          if (
-            !allowedToUse &&
-            (
-              e.getAction() == ManipulationAction.PICKUP ||
-              e.getAction() == ManipulationAction.DROP ||
-              // Moved into the player's inventory
-              (e.getAction() == ManipulationAction.MOVE && e.getTargetInventory().equals(e.getPlayer().getInventory()))
-            ) && !isLock(inst.getInv().getItem(slot))
-          ) {
-            allowedToUse = true;
+              int slot = e.getOriginInventory().equals(inst.getInv()) ? e.getOriginSlot() : e.getTargetSlot();
+              int absoluteSlot = (inst.getCurrentPage() - 1) * inst.getPageSize() + slot;
+              boolean allowedToUse = absoluteSlot < maxSlots;
 
-            // Check if this slot is empty on the next tick, if so, put a lock there
-            Bukkit.getScheduler().runTaskLater(plugin, () -> {
-              if (inst.getInv().getItem(slot) == null)
-                inst.getInv().setItem(slot, buildLock(inst.getCurrentPage(), slot));
-            }, 1);
-          }
+              // Tried to remove something from a locked slot that had an item left
+              // Permit this action, so that items can be gained back, but slots cannot be
+              // used since no items can be put back in
+              if (
+                !allowedToUse &&
+                  (
+                    e.getAction() == ManipulationAction.PICKUP ||
+                      e.getAction() == ManipulationAction.DROP ||
+                      // Moved into the player's inventory
+                      (e.getAction() == ManipulationAction.MOVE && e.getTargetInventory().equals(e.getPlayer().getInventory()))
+                  ) && !isLock(inst.getInv().getItem(slot))
+              ) {
+                allowedToUse = true;
 
-          if (!allowedToUse) {
-            p.sendMessage(
-              cfg.get(ConfigKey.ENDERCHEST_LOCKED)
-                .withPrefix()
-                .asScalar()
-            );
-          }
+                // Check if this slot is empty on the next tick, if so, put a lock there
+                Bukkit.getScheduler().runTaskLater(plugin, () -> {
+                  if (inst.getInv().getItem(slot) == null)
+                    inst.getInv().setItem(slot, buildLock(inst.getCurrentPage(), slot));
+                }, 1);
+              }
 
-          e.setCancelled(!allowedToUse);
-        },
-        null
-      );
+              if (!allowedToUse) {
+                p.sendMessage(
+                  cfg.get(ConfigKey.ENDERCHEST_LOCKED)
+                    .withPrefix()
+                    .asScalar()
+                );
+              }
+
+              e.setCancelled(!allowedToUse);
+            },
+            null
+          )
+        );
+      }
+
+      return items;
+    });
 
     return true;
   }

@@ -148,6 +148,7 @@ public class ArmorStandHandler implements IArmorStandHandler, IAutoConstructed {
     // Create a fake random model to register in the main ticking loop
     FakeArmorStand as = new FakeArmorStand(armorComm, properties, loc, recipients);
     cache.put(ArmorStandModel.createDefault(null, UUID.randomUUID().toString(), loc), as);
+    as.tick();
     return as;
   }
 

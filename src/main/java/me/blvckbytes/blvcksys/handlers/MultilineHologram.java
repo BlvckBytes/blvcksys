@@ -9,6 +9,7 @@ import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Consumer;
 import org.bukkit.util.Vector;
@@ -55,7 +56,7 @@ public class MultilineHologram extends ATemplateHandler {
 
   private final Collection<? extends Player> recipients;
   private final List<Integer> entityIds;
-  private final Map<Player, List<Entity>> entities;
+  private final Map<Player, List<Tuple<Entity, ArmorStandProperties>>> entities;
   private final String name;
 
   private Location loc;
@@ -126,6 +127,27 @@ public class MultilineHologram extends ATemplateHandler {
   }
 
   /**
+   * Only updates the lines without re-spawning the entities underneith.
+   * This only works if the number of new lines is equal to the number of
+   * old lines, so no entities need to be removed or added.
+   * @param lines Lines to set
+   * @return True on success, false if the counts mismatched
+   */
+  public boolean updateLines(List<String> lines) {
+    if (this.lineTemplates.size() != lines.size())
+      return false;
+
+    // Build a list of line templates from the string lines
+    this.lineTemplates = lines.stream()
+      .map(this::buildLineTemplate)
+      .toList();
+
+    // Update all entities forcefully
+    entities.keySet().forEach(p -> tickPlayer(p, 0, true));
+    return true;
+  }
+
+  /**
    * Sets the location of this hologram by teleporting all lines
    * of all players to the given location
    * @param loc New hologram location
@@ -170,6 +192,22 @@ public class MultilineHologram extends ATemplateHandler {
       VELOCITY_MAX_SECS * 20L,
       onTick, complete
     );
+  }
+
+  /**
+   * Sets the head item of either the first or the last armor stand in
+   * this multiline hologram
+   * @param first True means first, false means last
+   * @param small Whether to make the armor stand small
+   * @param head ItemStack for the head, null to clear
+   */
+  public void setHead(boolean first, boolean small, @Nullable ItemStack head) {
+    entities.forEach((p, ents) -> {
+      Tuple<Entity, ArmorStandProperties> entity = ents.get(first ? 0 : ents.size() - 1);
+      entity.b().setHelmet(head);
+      entity.b().setSmall(small);
+      holoComm.update(p, entity.a(), entity.b());
+    });
   }
 
   /**
@@ -236,18 +274,18 @@ public class MultilineHologram extends ATemplateHandler {
     if (onTick != null)
       onTick.accept(vel);
 
-    for (Map.Entry<Player, List<Entity>> pe : entities.entrySet()) {
+    for (Map.Entry<Player, List<Tuple<Entity, ArmorStandProperties>>> pe : entities.entrySet()) {
       Location tail = newLoc.clone();
 
       // Start out at the tail (last hologram)
       for (int i = pe.getValue().size() - 1; i >= 0; i--) {
-        Entity e = pe.getValue().get(i);
+        Tuple<Entity, ArmorStandProperties> e = pe.getValue().get(i);
 
         // Send the new velocity vector initially or after collisions
         if (remainingTicks == VELOCITY_MAX_SECS * 20 || collidedWith != null)
-          holoComm.sendVelocity(pe.getKey(), e, vel);
+          holoComm.sendVelocity(pe.getKey(), e.a(), vel);
 
-        holoComm.teleport(pe.getKey(), e, tail, true);
+        holoComm.teleport(pe.getKey(), e.a(), tail, e.b());
         tail.add(0, INTER_LINE_SPACING, 0);
       }
     }
@@ -278,7 +316,7 @@ public class MultilineHologram extends ATemplateHandler {
         continue;
 
       if (isRecipient(t))
-        tickPlayer(t, time);
+        tickPlayer(t, time, false);
 
       // Don't keep players which are out of reach in memory
       else
@@ -297,9 +335,9 @@ public class MultilineHologram extends ATemplateHandler {
     this.destroyed = true;
 
     for (Player t : entities.keySet()) {
-      for (Entity ent : entities.get(t)) {
-        holoComm.delete(t, ent);
-        entityIds.remove(Integer.valueOf(ent.getEntityId()));
+      for (Tuple<Entity, ArmorStandProperties> ent : entities.get(t)) {
+        holoComm.delete(t, ent.a());
+        entityIds.remove(Integer.valueOf(ent.a().getEntityId()));
       }
     }
     entities.clear();
@@ -320,30 +358,30 @@ public class MultilineHologram extends ATemplateHandler {
    * Called whenever the hologram should update for a specific player
    * @param p Target player
    * @param time Relative time in ticks since start
+   * @param force Whether to force tick, no matter of the current time
    */
-  private void tickPlayer(Player p, long time) {
+  private void tickPlayer(Player p, long time, boolean force) {
     // Make sure that the line entities exist for this player
     if (!this.entities.containsKey(p))
       createLineEntities(p);
 
     // Update all lines for this player
-    List<Entity> pEnts = entities.get(p);
+    List<Tuple<Entity, ArmorStandProperties>> pEnts = entities.get(p);
     for (int i = 0; i < Math.min(pEnts.size(), lineTemplates.size()); i++) {
       Tuple<Long, List<Object>> lineTemplate = lineTemplates.get(i);
 
       // Is a static line, doesn't need refreshing
-      if (lineTemplate.a() < 0)
+      if (!force && lineTemplate.a() < 0)
         continue;
 
       // Period did not yet elapse
-      if (time % lineTemplate.a() != 0)
+      if (!force && time % lineTemplate.a() != 0)
         continue;
 
       // Update this line
-      Entity ent = pEnts.get(i);
-
-      ArmorStandProperties props = new ArmorStandProperties(evaluateLineTemplate(p, lineTemplate.b()));
-      holoComm.update(p, ent, props);
+      Tuple<Entity, ArmorStandProperties> ent = pEnts.get(i);
+      ent.b().setName(evaluateLineTemplate(p, lineTemplate.b()));
+      holoComm.update(p, ent.a(), ent.b());
     }
   }
 
@@ -353,19 +391,17 @@ public class MultilineHologram extends ATemplateHandler {
    * @param p Target player
    */
   private void createLineEntities(Player p) {
-    List<Entity> ents = new ArrayList<>();
+    List<Tuple<Entity, ArmorStandProperties>> ents = new ArrayList<>();
 
     // Make lines grow downwards from the head
     Location head = loc.clone();
     for (Tuple<Long, List<Object>> lineTemplate : lineTemplates) {
 
       ArmorStandProperties props = new ArmorStandProperties(evaluateLineTemplate(p, lineTemplate.b()));
-
       Entity ent = holoComm.create(p, head, props);
 
-      ents.add(ent);
+      ents.add(new Tuple<>(ent, props));
       entityIds.add(ent.getEntityId());
-
       head.add(0, -INTER_LINE_SPACING, 0);
     }
 
@@ -377,16 +413,16 @@ public class MultilineHologram extends ATemplateHandler {
    * @param p Target player
    */
   private void destroyLineEntities(Player p) {
-    List<Entity> ents = entities.remove(p);
+    List<Tuple<Entity, ArmorStandProperties>> ents = entities.remove(p);
 
     // Had no lines
     if (ents == null)
       return;
 
     // Destroy all lines
-    for (Entity ent : ents) {
-      holoComm.delete(p, ent);
-      entityIds.remove(Integer.valueOf(ent.getEntityId()));
+    for (Tuple<Entity, ArmorStandProperties> ent : ents) {
+      holoComm.delete(p, ent.a());
+      entityIds.remove(Integer.valueOf(ent.a().getEntityId()));
     }
   }
 
@@ -395,7 +431,7 @@ public class MultilineHologram extends ATemplateHandler {
    * @param p Target player
    */
   private void moveLineEntities(Player p, Location loc) {
-    List<Entity> ents = entities.get(p);
+    List<Tuple<Entity, ArmorStandProperties>> ents = entities.get(p);
 
     // Had no lines
     if (ents == null)
@@ -403,8 +439,8 @@ public class MultilineHologram extends ATemplateHandler {
 
     // Make lines grow downwards from the head
     Location head = loc.clone();
-    for (Entity ent : ents) {
-      holoComm.teleport(p, ent, head, true);
+    for (Tuple<Entity, ArmorStandProperties> ent : ents) {
+      holoComm.teleport(p, ent.a(), head, ent.b());
       head.add(0, -INTER_LINE_SPACING, 0);
     }
   }

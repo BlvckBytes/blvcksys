@@ -42,18 +42,18 @@ public interface IArmorStandCommunicator {
    * @param p Target player
    * @param handle Entity handle from creation
    * @param loc Location to teleport to
-   * @param isShifted Whether the armor stand location is shifted
+   * @param properties Properties of the armor stand
    */
-  void teleport(Player p, Entity handle, Location loc, boolean isShifted);
+  void teleport(Player p, Entity handle, Location loc, ArmorStandProperties properties);
 
   /**
    * Move a armor stand relative to it's current position
    * @param p Target player
    * @param handle Entity handle from creation
    * @param loc Location to move to
-   * @param isShifted Whether the armor stand location is shifted
+   * @param properties Properties of the armor stand
    */
-  void move(Player p, Entity handle, Location loc, boolean isShifted);
+  void move(Player p, Entity handle, Location loc, ArmorStandProperties properties);
 
   /**
    * Sends information about the armor stand's current velocity to the client. This is kind

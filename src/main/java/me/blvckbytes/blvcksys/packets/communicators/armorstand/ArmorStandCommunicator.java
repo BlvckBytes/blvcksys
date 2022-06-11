@@ -7,6 +7,7 @@ import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.network.protocol.game.*;
 import net.minecraft.network.syncher.DataWatcher;
+import net.minecraft.util.Tuple;
 import net.minecraft.world.entity.EnumItemSlot;
 import net.minecraft.world.entity.decoration.EntityArmorStand;
 import net.minecraft.world.phys.Vec3D;
@@ -33,7 +34,10 @@ public class ArmorStandCommunicator implements IArmorStandCommunicator {
 
   private final MCReflect refl;
   private final ILogger logger;
-  private final Map<Entity, Location> lastLocations;
+
+  // Storing the last location for each entity as well as a flag whether
+  // the entity was small the last time
+  private final Map<Entity, Tuple<Location, Boolean>> lastLocations;
 
   public ArmorStandCommunicator(
     @AutoInject MCReflect refl,
@@ -47,7 +51,7 @@ public class ArmorStandCommunicator implements IArmorStandCommunicator {
   @Override
   public Entity create(Player p, Location loc, ArmorStandProperties properties) {
     try {
-      Location shifted = properties.isShifted() ? shiftLocation(loc) : loc;
+      Location shifted = properties.isShifted() ? shiftLocation(loc, properties.isSmall()) : loc;
 
       // Create a new armor stand entity using craftbukkit's wrapper
       EntityArmorStand eas = (EntityArmorStand) refl.invokeMethodByName(
@@ -69,7 +73,7 @@ public class ArmorStandCommunicator implements IArmorStandCommunicator {
       refl.sendPacket(p, metaP);
 
       Entity ret = eas.getBukkitEntity();
-      lastLocations.put(ret, loc.clone());
+      lastLocations.put(ret, new Tuple<>(loc.clone(), properties.isSmall()));
 
       // Send updates for all equipment slots
       sendEquipment(p, (Entity) ent, properties);
@@ -114,9 +118,9 @@ public class ArmorStandCommunicator implements IArmorStandCommunicator {
   }
 
   @Override
-  public void teleport(Player p, Entity handle, Location loc, boolean isShifted) {
+  public void teleport(Player p, Entity handle, Location loc, ArmorStandProperties properties) {
     try {
-      Location shifted = isShifted ? shiftLocation(loc) : loc;
+      Location shifted = properties.isShifted() ? shiftLocation(loc, properties.isSmall()) : loc;
 
       Object teleportP = refl.createPacket(PacketPlayOutEntityTeleport.class);
 
@@ -130,23 +134,23 @@ public class ArmorStandCommunicator implements IArmorStandCommunicator {
 
       refl.sendPacket(p, teleportP);
 
-      lastLocations.put(handle, loc.clone());
+      lastLocations.put(handle, new Tuple<>(loc.clone(), properties.isSmall()));
     } catch (Exception e) {
       logger.logError(e);
     }
   }
 
   @Override
-  public void move(Player p, Entity handle, Location loc, boolean isShifted) {
+  public void move(Player p, Entity handle, Location loc, ArmorStandProperties properties) {
     try {
-      Location toShifted = isShifted ? shiftLocation(loc) : loc;
+      Location toShifted = properties.isShifted() ? shiftLocation(loc, properties.isSmall()) : loc;
 
       // Get the last location of this line
-      Location prev = lastLocations.get(handle);
+      Tuple<Location, Boolean> prev = lastLocations.get(handle);
       if (prev == null)
         throw new IllegalStateException("Unknown armor stand with id=" + handle.getEntityId());
 
-      Location prevShifted = isShifted ? shiftLocation(prev) : prev;
+      Location prevShifted = properties.isShifted() ? shiftLocation(prev.a(), prev.b()) : prev.a();
 
       // Calculate the delta per axis and encode it into the required representation
       PacketPlayOutEntity.PacketPlayOutRelEntityMoveLook moveP = new PacketPlayOutEntity.PacketPlayOutRelEntityMoveLook(
@@ -159,7 +163,7 @@ public class ArmorStandCommunicator implements IArmorStandCommunicator {
         handle.isOnGround()
       );
 
-      lastLocations.put(handle, loc.clone());
+      lastLocations.put(handle, new Tuple<>(loc.clone(), properties.isSmall()));
       refl.sendPacket(p, moveP);
     } catch (Exception e) {
       logger.logError(e);
@@ -178,10 +182,17 @@ public class ArmorStandCommunicator implements IArmorStandCommunicator {
   /**
    * Shift a given location to have it end up at the armor stand's head
    * @param loc Location to shift
+   * @param small Whether the armor stand is small
    */
-  private Location shiftLocation(Location loc) {
+  private Location shiftLocation(Location loc, boolean small) {
+    /*
+      https://minecraft.fandom.com/wiki/Armor_Stand
+      Normal Height: 1.975 Blocks
+      Small Height: 0.9875 Blocks
+     */
+
     // Subtract the length between the armor stand's bottom plate and it's name (round about)
-    return loc.clone().add(0, -2.2, 0);
+    return loc.clone().add(0, small ? -1 : -2, 0);
   }
 
   /**

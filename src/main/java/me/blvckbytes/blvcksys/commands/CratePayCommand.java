@@ -134,8 +134,8 @@ public class CratePayCommand extends APlayerCommand {
         .asScalar()
     );
 
-    if (target instanceof Player online) {
-      online.sendMessage(
+    if (target.isOnline()) {
+      ((Player) target).sendMessage(
         cfg.get(ConfigKey.CRATEPAY_TRANSFERED_RECEIVER)
           .withPrefix()
           .withVariable("keys", amount)

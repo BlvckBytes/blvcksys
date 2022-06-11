@@ -224,8 +224,11 @@ public class AHBidGui extends AGui<AHAuctionModel> {
 
     // Notify the previously highest bidding player, if applicable
     lastBid.ifPresent(bid -> {
-      if (!(bid.getCreator() instanceof Player bidder))
+      // Last bidder isn't online anymore
+      if (!bid.getCreator().isOnline())
         return;
+
+      Player bidder = (Player) bid.getCreator();
 
       // Outbid themselves (why?)
       if (bidder.equals(p))

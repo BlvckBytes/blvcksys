@@ -63,8 +63,8 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
   @Override
   public AHStateModel getState(OfflinePlayer p) {
     // Respond from cache
-    if (p instanceof Player onP && stateCache.containsKey(onP))
-      return stateCache.get(onP);
+    if (p.isOnline() && stateCache.containsKey(((Player) p)))
+      return stateCache.get(((Player) p));
 
     // Try to fetch from DB
     return pers.findFirst(buildStateQuery(p))
@@ -75,8 +75,8 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
         storeState(def);
 
         // Don't cache offline players
-        if (p instanceof Player onP)
-          stateCache.put(onP, def);
+        if (p.isOnline())
+          stateCache.put(((Player) p), def);
 
         return def;
       });

@@ -1,7 +1,6 @@
 package me.blvckbytes.blvcksys.config;
 
 import net.md_5.bungee.api.chat.TextComponent;
-import net.minecraft.util.Tuple;
 import org.bukkit.ChatColor;
 import org.jetbrains.annotations.Nullable;
 
@@ -243,58 +242,11 @@ public class ConfigValue {
   }
 
   /**
-   * Find all effective colors in a string in their appearing order
-   * @param input String to search colors in
-   * @return Map mapping starting indices to a tuple of the color and the formatting chars
-   */
-  private LinkedHashMap<Integer, Tuple<Character, Character>> findColors(String input) {
-    LinkedHashMap<Integer, Tuple<Character, Character>> colors = new LinkedHashMap<>();
-    char lastColor = 0, lastFormat;
-
-    char[] chars = input.toCharArray();
-    for (int i = 0; i < chars.length; i++) {
-      if (i == chars.length - 1)
-        break;
-
-      char c = chars[i];
-      char n = chars[i + 1];
-
-      // Could be a color/formatting indicator
-      if (c == '§') {
-        // Is a color indicator
-        if (n >= '0' && n <= '9' || n >= 'a' && n <= 'f') {
-          lastFormat = 0;
-          lastColor = n;
-        }
-
-        // Is a formatting indicator
-        else if (n >= 'k' && n <= 'o')
-          lastFormat = n;
-
-        // Reset all colors
-        else if (n == 'r') {
-          lastColor = 0;
-          lastFormat = 0;
-        }
-
-        // Didn't manipulate colors, ignore
-        else
-          continue;
-
-        colors.put(i, new Tuple<>(lastColor, lastFormat));
-      }
-    }
-
-    return colors;
-  }
-
-  /**
    * Substitutes all registered variables into the string's placeholders
    * @param input Input string
    * @return Transformed result
    */
   private String applyVariables(String input) {
-    LinkedHashMap<Integer, Tuple<Character, Character>> colors = findColors(input);
     StringBuilder sb = new StringBuilder();
 
     int startIndInp = -1, startIndSb = -1;
@@ -325,22 +277,7 @@ public class ConfigValue {
           sb.delete(startIndSb, sb.length());
 
           // Find the last color specified
-          String color = "";
-          for (Integer startInd : colors.keySet()) {
-
-            // Not affecting this variable anymore
-            if (startInd > startIndInp)
-              break;
-
-            color = "";
-
-            Tuple<Character, Character> t = colors.get(startInd);
-            if (t.a() != 0)
-              color += "§" + t.a();
-
-            if (t.b() != 0)
-              color += "§" + t.b();
-          }
+          String color = ChatColor.getLastColors(sb.toString());
 
           // Apply affecting colors on all lines of the variable
           sb.append(

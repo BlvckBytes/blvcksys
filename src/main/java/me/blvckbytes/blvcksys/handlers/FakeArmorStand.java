@@ -7,6 +7,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -26,6 +27,7 @@ public class FakeArmorStand {
   // given recipient that receives updates here
   private static final double RECIPIENT_MAX_DIST_SQ = Math.pow(30, 2);
 
+  private final Collection<? extends Player> recipients;
   private final IArmorStandCommunicator comm;
   private final Map<Player, Entity> actives;
   private ArmorStandProperties props;
@@ -34,11 +36,13 @@ public class FakeArmorStand {
   public FakeArmorStand(
     IArmorStandCommunicator comm,
     ArmorStandProperties props,
-    Location loc
+    Location loc,
+    @Nullable Collection<? extends Player> recipients
   ) {
     this.comm = comm;
     this.props = props;
     this.loc = loc;
+    this.recipients = recipients;
 
     this.actives = new HashMap<>();
   }

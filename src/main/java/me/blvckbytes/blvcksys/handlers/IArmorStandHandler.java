@@ -4,7 +4,11 @@ import me.blvckbytes.blvcksys.packets.communicators.armorstand.ArmorStandPropert
 import me.blvckbytes.blvcksys.persistence.models.ArmorStandModel;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
+import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /*
@@ -68,4 +72,18 @@ public interface IArmorStandHandler {
    * @return Armor stand on success, false if there was no armor stand at this location within the radius
    */
   Optional<ArmorStandModel> getByLocation(Location loc, int radius);
+
+  /**
+   * Creates a new temporary armor stand which is not persisted
+   * @param loc Location of the armor stand
+   * @param recipients List of recipients, null means all players
+   * @param properties Initial properties to spawn with
+   */
+  FakeArmorStand createTemporary(Location loc, @Nullable Collection<? extends Player> recipients, ArmorStandProperties properties);
+
+  /**
+   * Destroys an existing temporary armor stand
+   * @param stand Armor stand handle
+   */
+  void destroyTemporary(FakeArmorStand stand);
 }

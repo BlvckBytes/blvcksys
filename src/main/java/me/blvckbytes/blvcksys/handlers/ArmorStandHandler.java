@@ -14,8 +14,10 @@ import net.minecraft.util.Tuple;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitTask;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -142,6 +144,19 @@ public class ArmorStandHandler implements IArmorStandHandler, IAutoConstructed {
   }
 
   @Override
+  public FakeArmorStand createTemporary(Location loc, @Nullable Collection<? extends Player> recipients, ArmorStandProperties properties) {
+    // Create a fake random model to register in the main ticking loop
+    FakeArmorStand as = new FakeArmorStand(armorComm, properties, loc, recipients);
+    cache.put(ArmorStandModel.createDefault(null, UUID.randomUUID().toString(), loc), as);
+    return as;
+  }
+
+  @Override
+  public void destroyTemporary(FakeArmorStand stand) {
+    cache.values().remove(stand);
+  }
+
+  @Override
   public void cleanup() {
     if (this.tickerHandle != null)
       this.tickerHandle.cancel();
@@ -203,7 +218,7 @@ public class ArmorStandHandler implements IArmorStandHandler, IAutoConstructed {
       model.getRightLegPose()
     );
 
-    return new FakeArmorStand(armorComm, props, model.getLoc());
+    return new FakeArmorStand(armorComm, props, model.getLoc(), null);
   }
 
   /**

@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.packets.communicators.armorstand;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.EulerAngle;
@@ -17,6 +18,7 @@ import org.jetbrains.annotations.Nullable;
 @Getter
 @Setter
 @AllArgsConstructor
+@NoArgsConstructor
 public class ArmorStandProperties implements Cloneable {
   // Whether the name is visible
   private boolean nameVisible;

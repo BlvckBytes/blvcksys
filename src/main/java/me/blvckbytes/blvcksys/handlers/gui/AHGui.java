@@ -12,15 +12,14 @@ import me.blvckbytes.blvcksys.persistence.models.AHBidModel;
 import me.blvckbytes.blvcksys.persistence.models.AHStateModel;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.TimeUtil;
-import net.minecraft.util.Tuple;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Optional;
@@ -42,6 +41,7 @@ public class AHGui extends AGui<Object> {
   private final ChatUtil chatUtil;
   private final AHProfileGui ahProfileGui;
   private final TimeUtil timeUtil;
+  private final AHBidGui ahBidGui;
 
   public AHGui(
     @AutoInject IConfig cfg,
@@ -51,7 +51,8 @@ public class AHGui extends AGui<Object> {
     @AutoInject ChatUtil chatUtil,
     @AutoInject IAHHandler ahHandler,
     @AutoInject AHProfileGui ahProfileGui,
-    @AutoInject TimeUtil timeUtil
+    @AutoInject TimeUtil timeUtil,
+    @AutoInject AHBidGui ahBidGui
   ) {
     super(6, "2-8,11-17,20-26,29-35,38-44", i -> (
       cfg.get(ConfigKey.GUI_AH)
@@ -62,6 +63,7 @@ public class AHGui extends AGui<Object> {
     this.chatUtil = chatUtil;
     this.ahProfileGui = ahProfileGui;
     this.timeUtil = timeUtil;
+    this.ahBidGui = ahBidGui;
 
     // Refresh page contents of all AH GUI instances after an auction delta
     this.ahHandler.registerAuctionDeltaInterest(() -> {
@@ -113,28 +115,8 @@ public class AHGui extends AGui<Object> {
       return ahHandler.listAuctions(state.getCategory(), state.getSort(), state.getSearch())
         .stream().map(t -> (
           new GuiItem(
-            s -> {
-              AHBidModel currBid = t.b().get();
-              return new ItemStackBuilder(t.a().getItem(), t.a().getItem().getAmount())
-                .withName(
-                  cfg.get(ConfigKey.GUI_AH_AUCTION_NAME)
-                    .withVariable(
-                      "name",
-                      getDisplayName(t.a().getItem())
-                        .orElse(formatConstant(t.a().getItem().getType().name()))
-                    )
-                )
-                .withLore(
-                  cfg.get(ConfigKey.GUI_AH_AUCTION_LORE)
-                    .withVariable("seller", t.a().getCreator().getName())
-                    .withVariable("start_bid", (t.a().getStartBid()) + " Coins")
-                    .withVariable("current_bid", (currBid == null ? "/" : currBid.getAmount() + " Coins"))
-                    .withVariable("current_bidder", currBid == null ? "/" : currBid.getCreator().getName())
-                    .withVariable("duration", getRemainingDuration(t.a()))
-                )
-                .build();
-            },
-            e -> {},
+            s -> buildDisplayItem(t.a(), t.b().get()),
+            e -> inst.switchTo(AnimationType.SLIDE_LEFT, ahBidGui, t.a()),
             10 // Redraw every 1s/2 to guarantee proper countdowns
           )
         ))
@@ -142,6 +124,34 @@ public class AHGui extends AGui<Object> {
     });
 
     return true;
+  }
+
+  /**
+   * Build the auction display item, which consists of the item being sold,
+   * modified with an optional custom displayname and additional informative lore lines
+   * @param auction Auction to display
+   * @param currBid Current last bid
+   * @return Item to display
+   */
+  public ItemStack buildDisplayItem(AHAuctionModel auction, @Nullable AHBidModel currBid) {
+    return new ItemStackBuilder(auction.getItem(), auction.getItem().getAmount())
+      .withName(
+        cfg.get(ConfigKey.GUI_AH_AUCTION_NAME)
+          .withVariable(
+            "name",
+            getDisplayName(auction.getItem())
+              .orElse(formatConstant(auction.getItem().getType().name()))
+          )
+      )
+      .withLore(
+        cfg.get(ConfigKey.GUI_AH_AUCTION_LORE)
+          .withVariable("seller", auction.getCreator().getName())
+          .withVariable("start_bid", (auction.getStartBid()) + " Coins")
+          .withVariable("current_bid", (currBid == null ? "/" : currBid.getAmount() + " Coins"))
+          .withVariable("current_bidder", currBid == null ? "/" : currBid.getCreator().getName())
+          .withVariable("duration", getRemainingDuration(auction))
+      )
+      .build();
   }
 
   /**

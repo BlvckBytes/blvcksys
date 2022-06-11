@@ -2134,6 +2134,44 @@ public enum ConfigKey {
   ),
 
   //=========================================================================//
+  //                                AH Bid GUI                               //
+  //=========================================================================//
+
+  GUI_BID_AH("gui.ah_bid.title", "$2Auktionsgebot"),
+  GUI_BID_AH_IS_HIGHEST_NAME("gui.ah_bid.is_highest.name", "$0» &aHöchstbietend"),
+  GUI_BID_AH_IS_HIGHEST_LORE(
+    "gui.ah_bid.is_highest.lore",
+    " ",
+    "$0Dein Gebot ist zurzeit das Höchste."
+  ),
+  GUI_BID_AH_OUTBID_NAME("gui.ah_bid.not_highest.name", "$0» &cÜberboten"),
+  GUI_BID_AH_OUTBID_LORE(
+    "gui.ah_bid.not_highest.lore",
+    " ",
+    "$0Dein Gebot ist nicht mehr das Höchste."
+  ),
+  GUI_BID_AH_NOT_BIDDING_NAME("gui.ah_bid.not_bidding.name", "$0» &6Noch kein Gebot"),
+  GUI_BID_AH_NOT_BIDDING_LORE(
+    "gui.ah_bid.not_bidding.lore",
+    " ",
+    "$0Du hast noch kein Gebot abgegeben."
+  ),
+  GUI_BID_AH_CUSTOM_BID_NAME("gui.ah_bid.custom_bid.name", "$0» $2Individuelles Gebot $0«"),
+  GUI_BID_AH_CUSTOM_BID_LORE(
+    "gui.ah_bid.custom_bid.lore",
+    " ",
+    "$0Öffnet eine Eingabeaufforderung für",
+    "$0einen individuellen Gebotsbetrag."
+  ),
+  GUI_BID_AH_MIN_BID_NAME("gui.ah_bid.min_bid.name", "$0» $2Niedrigstes Gebot $0«"),
+  GUI_BID_AH_MIN_BID_LORE(
+    "gui.ah_bid.min_bid.lore",
+    " ",
+    "$0Biete das nächst mögliche",
+    "$0und niedrigste Gebot."
+  ),
+
+  //=========================================================================//
   //                               Furnaces GUI                              //
   //=========================================================================//
 

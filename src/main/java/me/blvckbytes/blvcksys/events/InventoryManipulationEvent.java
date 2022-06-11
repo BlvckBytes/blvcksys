@@ -10,6 +10,8 @@ import org.bukkit.event.HandlerList;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.Inventory;
 
+import java.util.Optional;
+
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 05/24/2022
@@ -49,6 +51,34 @@ public class InventoryManipulationEvent extends Event implements Cancellable {
     this.originSlot = originSlot;
     this.targetSlot = targetSlot;
     this.click = click;
+  }
+
+  /**
+   * Get the non-zero-based pressed hotbar key, if any
+   * @return Horbar key if pressed
+   */
+  public Optional<Integer> getHotbarKey() {
+    // No number key has been pressed
+    if (click != ClickType.NUMBER_KEY)
+      return Optional.empty();
+
+    // Swapped items between hotbar and target slot
+    // Hotbar slot will always be origin, by definition
+    if (action == ManipulationAction.SWAP)
+      return Optional.of(originSlot + 1);
+
+    // Moved either from the hotbar into the inv or the other way around
+    if (action == ManipulationAction.MOVE) {
+      // Moved from their own inventory, thus originSlot is the hotbar key
+      if (originInventory.equals(player.getInventory()))
+        return Optional.of(originSlot + 1);
+
+      // Moved into their hotbar, thus target is the hotbar slot
+      else
+        return Optional.of(targetSlot + 1);
+    }
+
+    return Optional.empty();
   }
 
   @Override

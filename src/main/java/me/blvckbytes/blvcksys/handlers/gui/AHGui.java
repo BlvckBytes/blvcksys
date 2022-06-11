@@ -311,13 +311,10 @@ public class AHGui extends AGui<Object> {
       AuctionSort[] sorts = AuctionSort.values();
 
       // Select the sort by it's index, corresponding to the key pressed
-      int index;
-      if (e.getClick() == ClickType.NUMBER_KEY)
-        index = Math.min(sorts.length - 1, Math.max(0, e.getTargetSlot()));
-
-      // Select the next index, wrapping around
-      else
-        index = (Arrays.binarySearch(sorts, curr) + 1) % sorts.length;
+      int index = e.getHotbarKey()
+        .map(key -> Math.min(sorts.length - 1, Math.max(0, key - 1)))
+        // Just select the next index, wrapping around
+        .orElseGet(() -> (Arrays.binarySearch(sorts, curr) + 1) % sorts.length);
 
       state.setSort(sorts[index]);
       ahHandler.storeState(state);

@@ -34,6 +34,7 @@ public class PreferencesHandler implements IPreferencesHandler {
   private final static boolean DEF_MSG_DISABLED = false;
   private final static Particle DEF_ARROW_TRAIL_PARTICLE = null;
   private final static Color DEF_ARROW_TRAIL_COLOR = null;
+  private final static boolean DEF_SHOW_HOME_LASERS = true;
 
   private final IPersistence pers;
   private final Map<UUID, PreferencesModel> cache;
@@ -61,6 +62,22 @@ public class PreferencesHandler implements IPreferencesHandler {
     getOrCreatePreferences(p)
       .ifPresent(prefs -> {
         prefs.setScoreboardHidden(hidden);
+        pers.store(prefs);
+      });
+  }
+
+  @Override
+  public boolean showHomeLasers(Player p) {
+    return getOrCreatePreferences(p)
+      .map(PreferencesModel::isShowHomeLasers)
+      .orElse(DEF_SHOW_HOME_LASERS);
+  }
+
+  @Override
+  public void setShowHomeLasers(Player p, boolean shown) {
+    getOrCreatePreferences(p)
+      .ifPresent(prefs -> {
+        prefs.setShowHomeLasers(shown);
         pers.store(prefs);
       });
   }
@@ -172,7 +189,8 @@ public class PreferencesHandler implements IPreferencesHandler {
       DEF_CHAT_HIDDEN,
       DEF_MSG_DISABLED,
       DEF_ARROW_TRAIL_PARTICLE,
-      DEF_ARROW_TRAIL_COLOR
+      DEF_ARROW_TRAIL_COLOR,
+      DEF_SHOW_HOME_LASERS
     );
 
     pers.store(prefs);

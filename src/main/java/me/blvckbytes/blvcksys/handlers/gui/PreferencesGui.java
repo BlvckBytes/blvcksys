@@ -80,31 +80,31 @@ public class PreferencesGui extends AGui<Object> {
     ), null);
 
     // Chat disable
-    inst.addStateToggle(21, 12, () -> !prefs.isChatHidden(p), s -> prefs.setChatHidden(p, s));
-    inst.fixedItem(12, () -> (
+    inst.addStateToggle(20, 11, () -> !prefs.isChatHidden(p), s -> prefs.setChatHidden(p, s));
+    inst.fixedItem(11, () -> (
       new ItemStackBuilder(Material.PAPER)
         .withName(cfg.get(ConfigKey.GUI_PREFERENCES_CHAT_NAME))
         .withLore(
           cfg.get(ConfigKey.GUI_PREFERENCES_CHAT_LORE)
-            .withVariable("state", !prefs.isChatHidden(p))
+            .withVariable("state", inst.statePlaceholder(!prefs.isChatHidden(p)))
         )
         .build()
     ), null);
 
     // Scoreboard hide
-    inst.addStateToggle(23, 14, () -> obj.getSidebarVisibility(p), s -> obj.setSidebarVisibility(p, !s));
-    inst.fixedItem(14, () -> (
+    inst.addStateToggle(21, 12, () -> obj.getSidebarVisibility(p), s -> obj.setSidebarVisibility(p, !s));
+    inst.fixedItem(12, () -> (
       new ItemStackBuilder(Material.LADDER)
         .withName(cfg.get(ConfigKey.GUI_PREFERENCES_SCOREBOARD_NAME))
         .withLore(
           cfg.get(ConfigKey.GUI_PREFERENCES_SCOREBOARD_LORE)
-            .withVariable("state", obj.getSidebarVisibility(p))
+            .withVariable("state", inst.statePlaceholder(obj.getSidebarVisibility(p)))
         )
         .build()
     ), null);
 
     // Arrow trails
-    inst.fixedItem(16, () -> {
+    inst.fixedItem(13, () -> {
       Tuple<@Nullable Particle, @Nullable Color> currTrail = prefs.getArrowTrail(p);
       Particle particle = currTrail.a();
       Color color = currTrail.b();
@@ -173,7 +173,7 @@ public class PreferencesGui extends AGui<Object> {
     });
 
     // Arrow trails clear
-    inst.fixedItem(25, () -> {
+    inst.fixedItem(22, () -> {
       boolean hasTrails = prefs.getArrowTrail(p).a() != null;
 
       return new ItemStackBuilder(hasTrails ? Material.BARRIER : Material.WHITE_STAINED_GLASS_PANE)
@@ -183,8 +183,20 @@ public class PreferencesGui extends AGui<Object> {
     }, e -> {
       // Remove the arrow trail and redraw both the arrow and the remove slot
       prefs.setArrowTrail(p, null, null);
-      inst.redraw("25,16");
+      inst.redraw("22,13");
     });
+
+    // Home laser enable
+    inst.addStateToggle(23, 14, () -> prefs.showHomeLasers(p), s -> prefs.setShowHomeLasers(p, !s));
+    inst.fixedItem(14, () -> (
+      new ItemStackBuilder(Material.BEACON)
+        .withName(cfg.get(ConfigKey.GUI_PREFERENCES_HOME_LASERS_NAME))
+        .withLore(
+          cfg.get(ConfigKey.GUI_PREFERENCES_HOME_LASERS_LORE)
+            .withVariable("state", inst.statePlaceholder(prefs.showHomeLasers(p)))
+        )
+        .build()
+    ), null);
 
     return true;
   }

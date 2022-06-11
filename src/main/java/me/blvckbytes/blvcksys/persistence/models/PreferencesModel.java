@@ -36,4 +36,7 @@ public class PreferencesModel extends APersistentModel {
 
   @ModelProperty(isNullable = true, migrationDefault = MigrationDefault.NULL)
   private Color arrowTrailColor;
+
+  @ModelProperty(migrationDefault = MigrationDefault.TRUE)
+  private boolean showHomeLasers;
 }

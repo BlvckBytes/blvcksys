@@ -28,6 +28,19 @@ public interface IPreferencesHandler {
   void setScoreboardHidden(Player p, boolean hidden);
 
   /**
+   * Get the show home lasers preference
+   * @param p Target player
+   */
+  boolean showHomeLasers(Player p);
+
+  /**
+   * Set the show home lasers preference
+   * @param p Target player
+   * @param shown Whether the home lasers should be shown
+   */
+  void setShowHomeLasers(Player p, boolean shown);
+
+  /**
    * Get the chat hidden preference
    * @param p Target player
    */

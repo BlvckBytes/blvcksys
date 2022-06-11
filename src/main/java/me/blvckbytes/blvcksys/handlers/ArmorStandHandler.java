@@ -154,6 +154,7 @@ public class ArmorStandHandler implements IArmorStandHandler, IAutoConstructed {
   @Override
   public void destroyTemporary(FakeArmorStand stand) {
     cache.values().remove(stand);
+    stand.destroy();
   }
 
   @Override

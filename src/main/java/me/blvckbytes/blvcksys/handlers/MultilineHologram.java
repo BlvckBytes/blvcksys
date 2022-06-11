@@ -9,7 +9,6 @@ import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Consumer;
 import org.bukkit.util.Vector;
@@ -127,6 +126,15 @@ public class MultilineHologram extends ATemplateHandler {
   }
 
   /**
+   * Get the location where the next line would end up at
+   */
+  public Location getNextLocation() {
+    Location head = loc.clone();
+    head.add(0, lineTemplates.size() * -INTER_LINE_SPACING, 0);
+    return head;
+  }
+
+  /**
    * Only updates the lines without re-spawning the entities underneith.
    * This only works if the number of new lines is equal to the number of
    * old lines, so no entities need to be removed or added.
@@ -192,22 +200,6 @@ public class MultilineHologram extends ATemplateHandler {
       VELOCITY_MAX_SECS * 20L,
       onTick, complete
     );
-  }
-
-  /**
-   * Sets the head item of either the first or the last armor stand in
-   * this multiline hologram
-   * @param first True means first, false means last
-   * @param small Whether to make the armor stand small
-   * @param head ItemStack for the head, null to clear
-   */
-  public void setHead(boolean first, boolean small, @Nullable ItemStack head) {
-    entities.forEach((p, ents) -> {
-      Tuple<Entity, ArmorStandProperties> entity = ents.get(first ? 0 : ents.size() - 1);
-      entity.b().setHelmet(head);
-      entity.b().setSmall(small);
-      holoComm.update(p, entity.a(), entity.b());
-    });
   }
 
   /**

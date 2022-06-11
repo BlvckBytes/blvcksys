@@ -39,6 +39,9 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
   // Default maximum number of auctions a player may have
   private static final int DEFAULT_MAX_AUCTIONS = 2;
 
+  // How many percent to increase the bid by each time
+  private static final double BID_INCREASE_PERCENT = 0.05;
+
   private final IPersistence pers;
   private final Map<Player, AHStateModel> stateCache;
   private final Map<AHAuctionModel, List<AHBidModel>> auctionCache;
@@ -199,6 +202,20 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
   }
 
   @Override
+  public Optional<AHBidModel> lastBid(UUID auctionId) {
+    return listBids(auctionId)
+      .flatMap(list -> list.size() == 0 ? Optional.empty() : Optional.of(list.get(list.size() - 1)));
+  }
+
+  @Override
+  public Optional<Integer> nextBid(UUID auctionId) {
+    // Either get the last bid + the min step size
+    return lastBid(auctionId).map(bid -> (int) Math.ceil(bid.getAmount() * (1 + BID_INCREASE_PERCENT)))
+      // Or get the start bid if there are no bids yet
+      .or(() -> getAuctionById(auctionId).map(AHAuctionModel::getStartBid));
+  }
+
+  @Override
   public void registerAuctionDeltaInterest(Runnable delta) {
     auctionDeltaInterests.add(delta);
   }
@@ -221,7 +238,7 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
       // Sort bids by amount descending, so bids(len-1) is always the highest bid
       List<AHBidModel> auctionBids = bids.stream()
         .filter(bid -> bid.getAuctionId().equals(auctionModel.getId()))
-        .sorted((a, b) -> b.getAmount() - a.getAmount())
+        .sorted(Comparator.comparingInt(AHBidModel::getAmount))
         .collect(Collectors.toList());
 
       // Remove taken bids and write to cache

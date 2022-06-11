@@ -106,6 +106,10 @@ public interface IAHHandler {
    */
   Optional<List<AHBidModel>> listBids(UUID auctionId);
 
+  Optional<AHBidModel> lastBid(UUID auctionId);
+
+  Optional<Integer> nextBid(UUID auctionId);
+
   /**
    * Register an interest for auction delta (new auctions, deleted auctions)
    * @param delta Callback to run after the delta

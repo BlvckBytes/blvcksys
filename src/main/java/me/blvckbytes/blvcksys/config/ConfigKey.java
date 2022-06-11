@@ -2168,7 +2168,23 @@ public enum ConfigKey {
     "gui.ah_bid.min_bid.lore",
     " ",
     "$0Biete das nächst mögliche",
-    "$0und niedrigste Gebot."
+    "$0und niedrigste Gebot.",
+    " ",
+    "$0Nächstes Gebot: $2{{next_bid}}"
+  ),
+  GUI_BID_AH_CUSTOM_BID_PROMPT_MESSAGE("gui.ah_bid.custom_bid.prompt.message", "$0Bitte gib das gewünschte $2Gebot $0in den $2Chat $0ein: "),
+  GUI_BID_AH_CUSTOM_BID_PROMPT_INVALID("gui.ah_bid.custom_bid.prompt.invalid", "$0Der Betrag von muss größer als $40 $0sein!"),
+  GUI_BID_AH_CUSTOM_BID_PROMPT_OUTBID("gui.ah_bid.custom_bid.prompt.outbid", "$0Da das letzte Gebot $4{{last_bid}} $0beträgt, musst du mindestens $4{{min_bid}} $0bieten!"),
+  GUI_BID_AH_GONE("gui.ah_bid.gone", "$0Diese Auktion ist $4nicht mehr $0verfügbar!"),
+  GUI_BID_AH_BID_PLACED("gui.ah_bid.bid_placed", "$0Dein Gebot von $2{{bid}} $0wurde abgegeben."),
+  GUI_BID_AH_BID_OUTBID("gui.ah_bid.bid_outbid", "$0Dein Gebot von $2{{bid}} $0wurde durch $2{{outbidder}} $0mit $2{{new_bid}} $0überboten."),
+  GUI_BID_AH_BID_HISTORY_NAME("gui.ah_bid.bid_history.name", "$0» $2Gebotshistorie $0«"),
+  GUI_BID_AH_BID_HISTORY_LINE("gui.ah_bid.bid_history.line", "$0{{bidder}}$0: $2{{bid}} $0({{date}})"),
+  GUI_BID_AH_BID_HISTORY_NONE("gui.ah_bid.bid_history.none", "&cNoch keine Gebote"),
+  GUI_BID_AH_BID_HISTORY_LORE(
+    "gui.ah_bid.bid_history.lore",
+    " ",
+    "{{history_lines}}"
   ),
 
   //=========================================================================//

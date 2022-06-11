@@ -2,9 +2,7 @@ package me.blvckbytes.blvcksys.persistence.models;
 
 import lombok.*;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
-import org.bukkit.Location;
-import org.bukkit.Material;
-import org.bukkit.OfflinePlayer;
+import org.bukkit.*;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -31,7 +29,10 @@ public class HomeModel extends APersistentModel {
   @ModelProperty
   private Material icon;
 
+  @ModelProperty
+  private ChatColor color;
+
   public static HomeModel createDefault(OfflinePlayer creator, String name, Location loc) {
-    return new HomeModel(creator, name, loc, Material.GRASS_BLOCK);
+    return new HomeModel(creator, name, loc, Material.GRASS_BLOCK, ChatColor.GOLD);
   }
 }

@@ -1277,6 +1277,11 @@ public enum ConfigKey {
   HOMES_CREATED("homes.created", "$0Das Home $3{{name}} $0wurde erstellt."),
   HOMES_MOVED("homes.moved", "$0Das Home $3{{name}} $0wurde zu deiner Position $3bewegt$0."),
   HOMES_MAX_REACHED("homes.max_reached", "$0Du hast deine $4maximale Anzahl $0an Homes von $4{{num_max_homes}} $0erreicht!"),
+  HOMES_LASER_LINES(
+    "homes.laser_lines",
+    "$0» {{color}}Home \"{{name}}\"",
+    "$0({{x}} | {{y}} | {{z}})"
+  ),
 
   //=========================================================================//
   //                               WARP Command                              //
@@ -1737,6 +1742,15 @@ public enum ConfigKey {
     " ",
     "$0Klicke um diese Farbe zu wählen."
   ),
+  GUI_PREFERENCES_HOME_LASERS_NAME("gui.preferences.home_lasers.name", "$0» $2Home-Lasers $0«"),
+  GUI_PREFERENCES_HOME_LASERS_LORE(
+    "gui.preferences.home_lasers.lore",
+    " ",
+    "$0Gibt an, ob dir die Home Laser",
+    "$0Markierungen angezeigt werden.",
+    " ",
+    "$0Aktueller Zustand: {{state}}"
+  ),
 
   //=========================================================================//
   //                           Crate Item Detail GUI                         //
@@ -1962,14 +1976,24 @@ public enum ConfigKey {
     "$0Zuletzt geändert: $3{{updated_at}}",
     "$0Welt: $3{{world}}",
     "$0Position: $3{{location}}",
+    "$0Farbe: $3{{color}}█",
     " ",
     "$0Linksklick: $2Teleportieren",
-    "$0Rechtsklick: $2Icon wählen",
-    "$0Shift + Linksklick: $2Erneut setzen",
-    "$0Shift + Rechtsklick: $2Löschen"
+    "$0[1]: $2Icon wählen",
+    "$0[2]: $2Zu dir bewegen",
+    "$0[3]: $2Farbe wählen",
+    "$0[4]: $2Löschen"
   ),
   GUI_HOMES_ICON_CHANGED("gui.homes.icon_changed", "$0Du hast das Icon $2{{material}} $0gewählt."),
+  GUI_HOMES_COLOR_CHANGED("gui.homes.color_changed", "$0Du hast die Farbe $2{{color}}█ $0gewählt."),
   GUI_HOMES_CHOICE_ICON_TITLE("gui.homes.choice.icon.title", "$2Icon"),
+  GUI_HOMES_CHOICE_COLOR_TITLE("gui.homes.choice.color.title", "$2Farbe"),
+  GUI_HOMES_CHOICE_COLOR_NAME("gui.homes.choice.color.name", "$0» $2{{name}}"),
+  GUI_HOMES_CHOICE_COLOR_LORE(
+    "gui.homes.choice.color.lore",
+    " ",
+    "$0Klicke, um die Farbe {{color}}█ $0zu wählen."
+  ),
 
   //=========================================================================//
   //                                  AH GUI                                 //

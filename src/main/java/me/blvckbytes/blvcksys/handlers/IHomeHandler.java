@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.handlers;
 
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
 import me.blvckbytes.blvcksys.persistence.models.HomeModel;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -43,6 +44,15 @@ public interface IHomeHandler {
    * @return True on success, false if no home with this name existed
    */
   boolean updateIcon(OfflinePlayer creator, String name, Material icon) throws PersistenceException;
+
+  /**
+   * Update an existing home by it's name and set a new laser color
+   * @param creator creator of this home
+   * @param name Name of the home
+   * @param color New laser color of this home
+   * @return True on success, false if no home with this name existed
+   */
+  boolean updateColor(OfflinePlayer creator, String name, ChatColor color) throws PersistenceException;
 
   /**
    * Delete an existing home by it's name

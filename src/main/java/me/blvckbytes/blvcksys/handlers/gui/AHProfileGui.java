@@ -20,6 +20,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class AHProfileGui extends AGui<Object> {
 
   private final AHCreateGui ahCreateGui;
+  private final AHBidsGui ahBidsGui;
+  private final AHAuctionsGui ahAuctionsGui;
 
   @AutoInjectLate
   private AHGui ahGui;
@@ -28,7 +30,9 @@ public class AHProfileGui extends AGui<Object> {
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
     @AutoInject IPlayerTextureHandler textures,
-    @AutoInject AHCreateGui ahCreateGui
+    @AutoInject AHCreateGui ahCreateGui,
+    @AutoInject AHBidsGui ahBidsGui,
+    @AutoInject AHAuctionsGui ahAuctionsGui
   ) {
     super(3, "", i -> (
       cfg.get(ConfigKey.GUI_PROFILE_AH)
@@ -36,6 +40,8 @@ public class AHProfileGui extends AGui<Object> {
     ), plugin, cfg, textures);
 
     this.ahCreateGui = ahCreateGui;
+    this.ahBidsGui = ahBidsGui;
+    this.ahAuctionsGui = ahAuctionsGui;
   }
 
   @Override
@@ -63,7 +69,7 @@ public class AHProfileGui extends AGui<Object> {
         .withName(cfg.get(ConfigKey.GUI_PROFILE_AH_MANAGE_AUCTIONS_NAME))
         .withLore(cfg.get(ConfigKey.GUI_PROFILE_AH_MANAGE_AUCTIONS_LORE))
         .build()
-    ), e -> {});
+    ), e -> inst.switchTo(AnimationType.SLIDE_LEFT, ahAuctionsGui, null));
 
     // Manage bids
     inst.fixedItem(15, () -> (
@@ -71,7 +77,7 @@ public class AHProfileGui extends AGui<Object> {
         .withName(cfg.get(ConfigKey.GUI_PROFILE_AH_MANAGE_BIDS_NAME))
         .withLore(cfg.get(ConfigKey.GUI_PROFILE_AH_MANAGE_BIDS_LORE))
         .build()
-    ), e -> {});
+    ), e -> inst.switchTo(AnimationType.SLIDE_LEFT, ahBidsGui, null));
 
     return true;
   }

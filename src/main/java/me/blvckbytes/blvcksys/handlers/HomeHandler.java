@@ -420,10 +420,15 @@ public class HomeHandler implements IHomeHandler, IAutoConstructed, Listener {
           return;
 
         // Holos should always be on the head height of the player
+        double dY = Math.abs(holo.a().getLoc().getY() - p.getEyeLocation().getY());
         Location loc = home.getLoc().clone();
-        loc.setY(p.getEyeLocation().getY());
-        holo.a().setLoc(loc);
-        updateIcon(home, holo);
+
+        // Only move the hologram vertically if there's actually a noticable difference
+        if (1.5 - dY <= 0.05) {
+          loc.setY(p.getEyeLocation().getY());
+          holo.a().setLoc(loc);
+          updateIcon(home, holo);
+        }
 
         // Cannot draw the laser without a world
         World w = loc.getWorld();

@@ -97,7 +97,9 @@ public interface IAHHandler {
   List<Tuple<AHAuctionModel, Supplier<@Nullable AHBidModel>>> listAuctions(
     AuctionCategory category,
     AuctionSort sort,
-    @Nullable String searchQuery
+    @Nullable String searchQuery,
+    @Nullable OfflinePlayer bidder,
+    @Nullable OfflinePlayer creator
   );
 
   /**

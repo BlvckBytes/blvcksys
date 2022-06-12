@@ -12,6 +12,7 @@ import me.blvckbytes.blvcksys.persistence.models.AHBidModel;
 import me.blvckbytes.blvcksys.persistence.models.AHStateModel;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.TimeUtil;
+import net.minecraft.util.Tuple;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -21,8 +22,10 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /*
@@ -111,22 +114,37 @@ public class AHGui extends AGui<Object> {
       // List all auctions based on the currently applied filters
       AHStateModel state = ahHandler.getState(inst.getViewer());
 
-      return ahHandler.listAuctions(state.getCategory(), state.getSort(), state.getSearch())
-        .stream().map(t -> (
+      List<Tuple<AHAuctionModel, Supplier<@Nullable AHBidModel>>> auctions = ahHandler.listAuctions(state.getCategory(), state.getSort(), state.getSearch(), null, null);
+
+      // No active auctions available
+      if (auctions.size() == 0) {
+        return List.of(
           new GuiItem(
-            s -> {
-
-              // An auction just ended, refresh contents
-              if (!t.a().isActive())
-                inst.refreshPageContents();
-
-              return buildDisplayItem(t.a(), t.b().get());
-            },
-            e -> inst.switchTo(AnimationType.SLIDE_LEFT, ahBidGui, t.a()),
-            10 // Redraw every 1s/2 to guarantee proper synchronicity
+            s -> (
+              new ItemStackBuilder(Material.BARRIER)
+                .withName(cfg.get(ConfigKey.GUI_AH_NONE_NAME))
+                .withLore(cfg.get(ConfigKey.GUI_AH_NONE_LORE))
+                .build()
+            ), null, null
           )
-        ))
-        .collect(Collectors.toList());
+        );
+      }
+
+      return auctions.stream().map(t -> (
+        new GuiItem(
+          s -> {
+
+            // An auction just ended, refresh contents
+            if (!t.a().isActive())
+              inst.refreshPageContents();
+
+            return buildDisplayItem(t.a(), t.b().get());
+          },
+          e -> inst.switchTo(AnimationType.SLIDE_LEFT, ahBidGui, t.a()),
+          10 // Redraw every 1s/2 to guarantee proper synchronicity
+        )
+      ))
+      .collect(Collectors.toList());
     });
 
     return true;

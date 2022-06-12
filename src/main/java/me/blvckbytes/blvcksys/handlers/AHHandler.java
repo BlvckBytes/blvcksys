@@ -174,7 +174,9 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
   public List<Tuple<AHAuctionModel, Supplier<@Nullable AHBidModel>>> listAuctions(
     AuctionCategory category,
     AuctionSort sort,
-    @Nullable String searchQuery
+    @Nullable String searchQuery,
+    @Nullable OfflinePlayer bidder,
+    @Nullable OfflinePlayer creator
   ) {
     return auctionCache.keySet().stream()
       .filter(auction -> (
@@ -183,7 +185,17 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
         // Search matches or is a wildcard
         (searchQuery == null || matchesSearch(auction.getItem(), searchQuery)) &&
         // Only show active auctions
-        auction.isActive()
+        auction.isActive() &&
+        // Matching creator, if requested
+        (creator == null || creator.equals(auction.getCreator())) &&
+        // Has had a bid on this auction, if requested
+        (
+          bidder == null ||
+          listBids(auction.getId())
+            .orElse(new ArrayList<>())
+            .stream()
+            .anyMatch(bid -> bid.getCreator().equals(bidder))
+        )
       ))
       .map(auction -> new Tuple<>(auction, (Supplier<@Nullable AHBidModel>) () -> {
         List<AHBidModel> bids = auctionCache.getOrDefault(auction, new ArrayList<>());

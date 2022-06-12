@@ -2063,6 +2063,13 @@ public enum ConfigKey {
     "$0Aktuelles Gebot: $2{{current_bid}} $0({{current_bidder}})",
     "$0Endet in: $2{{duration}}"
   ),
+  GUI_AH_NONE_NAME("gui.ah.none.name", "$0» &cKeine Auktionen"),
+  GUI_AH_NONE_LORE(
+    "gui.ah.none.lore",
+    " ",
+    "$0Es existieren zum aktuellen Zeitpunkt",
+    "$0keine laufenden Auktionen."
+  ),
 
   //=========================================================================//
   //                               AH Create GUI                             //
@@ -2210,6 +2217,30 @@ public enum ConfigKey {
     "gui.ah_bid.bid_history.lore",
     " ",
     "{{history_lines}}"
+  ),
+
+  //=========================================================================//
+  //                               AH Bids GUI                               //
+  //=========================================================================//
+
+  GUI_BIDS_AH("gui.ah_bids.title", "$0Gebote von $2{{name}}"),
+  GUI_BIDS_AH_NONE_NAME("gui.ah_bids.none.name", "$0» &cKeine Gebote"),
+  GUI_BIDS_AH_NONE_LORE(
+    "gui.ah_bids.none.lore",
+    " ",
+    "$0Du besitzt aktuell keine aktiven Gebote."
+  ),
+
+  //=========================================================================//
+  //                              AH Auctions GUI                            //
+  //=========================================================================//
+
+  GUI_AUCTIONS_AH("gui.ah_auctions.title", "$0Auktionen von $2{{name}}"),
+  GUI_AUCTIONS_AH_NONE_NAME("gui.ah_auctions.none.name", "$0» &cKeine Auktionen"),
+  GUI_AUCTIONS_AH_NONE_LORE(
+    "gui.ah_auctions.none.lore",
+    " ",
+    "$0Du besitzt aktuell keine aktiven Auktionen."
   ),
 
   //=========================================================================//

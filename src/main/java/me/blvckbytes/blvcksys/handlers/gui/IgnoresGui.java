@@ -80,8 +80,8 @@ public class IgnoresGui extends AGui<Object> {
               )
               .withLore(
                 cfg.get(ConfigKey.GUI_IGNORES_PLAYER_LORE)
-                  .withVariable("msg_state", inst.statePlaceholder(ignore.isIgnoresMsg()))
-                  .withVariable("chat_state", inst.statePlaceholder(ignore.isIgnoresChat()))
+                  .withVariable("msg_state", statePlaceholderED(ignore.isIgnoresMsg()))
+                  .withVariable("chat_state", statePlaceholderED(ignore.isIgnoresChat()))
               )
               .build()
           ),

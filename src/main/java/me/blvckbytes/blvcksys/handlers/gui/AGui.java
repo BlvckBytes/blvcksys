@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import lombok.Getter;
+import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
@@ -337,5 +338,23 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
    */
   protected String formatConstant(String constant) {
     return WordUtils.capitalizeFully(constant.replace("_", " ").replace(".", " "));
+  }
+
+  /**
+   * Get the standardized state placeholder based on a state (enabled / disabled)
+   * @param state State
+   * @return State placeholder
+   */
+  protected String statePlaceholderED(boolean state) {
+    return cfg.get(state ? ConfigKey.GUI_GENERICS_PLACEHOLDERS_ENABLED : ConfigKey.GUI_GENERICS_PLACEHOLDERS_DISABLED).asScalar();
+  }
+
+  /**
+   * Get the standardized state placeholder based on a state (yes / no)
+   * @param state State
+   * @return State placeholder
+   */
+  protected String statePlaceholderYN(boolean state) {
+    return cfg.get(state ? ConfigKey.GUI_GENERICS_PLACEHOLDERS_YES : ConfigKey.GUI_GENERICS_PLACEHOLDERS_NO).asScalar();
   }
 }

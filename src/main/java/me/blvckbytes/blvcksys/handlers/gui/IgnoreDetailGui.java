@@ -57,7 +57,7 @@ public class IgnoreDetailGui extends AGui<OfflinePlayer> {
         .withName(cfg.get(ConfigKey.GUI_IGNORE_MSG_NAME))
         .withLore(
           cfg.get(ConfigKey.GUI_IGNORE_MSG_LORE)
-            .withVariable("state", inst.statePlaceholder(ignore.getMsgIgnore(p, inst.getArg())))
+            .withVariable("state", statePlaceholderED(ignore.getMsgIgnore(p, inst.getArg())))
             .withVariable("target", inst.getArg().getName())
         )
         .build()
@@ -68,7 +68,7 @@ public class IgnoreDetailGui extends AGui<OfflinePlayer> {
         .withName(cfg.get(ConfigKey.GUI_IGNORE_CHAT_NAME))
         .withLore(
           cfg.get(ConfigKey.GUI_IGNORE_CHAT_LORE)
-            .withVariable("state", inst.statePlaceholder(ignore.getChatIgnore(p, inst.getArg())))
+            .withVariable("state", statePlaceholderED(ignore.getChatIgnore(p, inst.getArg())))
             .withVariable("target", inst.getArg().getName())
         )
         .build()

@@ -364,15 +364,6 @@ public class GuiInstance<T> {
   }
 
   /**
-   * Get the standardized state placeholder based on a state
-   * @param state State
-   * @return State placeholder
-   */
-  protected String statePlaceholder(boolean state) {
-    return cfg.get(state ? ConfigKey.GUI_GENERICS_PLACEHOLDERS_ENABLED : ConfigKey.GUI_GENERICS_PLACEHOLDERS_DISABLED).asScalar();
-  }
-
-  /**
    * Adds a fill of fixed items consiting of the provided material to the GUI
    * @param mat Material to use to fill
    */

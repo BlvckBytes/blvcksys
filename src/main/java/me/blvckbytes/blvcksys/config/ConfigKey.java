@@ -1363,6 +1363,8 @@ public enum ConfigKey {
   ),
   GUI_GENERICS_PLACEHOLDERS_ENABLED("gui.generics.placeholders.enabled", "&aaktiviert"),
   GUI_GENERICS_PLACEHOLDERS_DISABLED("gui.generics.placeholders.disabled", "&cdeaktiviert"),
+  GUI_GENERICS_PLACEHOLDERS_YES("gui.generics.placeholders.yes", "&aja"),
+  GUI_GENERICS_PLACEHOLDERS_NO("gui.generics.placeholders.no", "&cnein"),
 
   //=========================================================================//
   //                              Enderchest GUI                             //

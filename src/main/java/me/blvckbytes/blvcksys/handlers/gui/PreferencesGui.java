@@ -74,7 +74,7 @@ public class PreferencesGui extends AGui<Object> {
         .withName(cfg.get(ConfigKey.GUI_PREFERENCES_MSG_NAME))
         .withLore(
           cfg.get(ConfigKey.GUI_PREFERENCES_MSG_LORE)
-            .withVariable("state", inst.statePlaceholder(!prefs.isMsgDisabled(p)))
+            .withVariable("state", statePlaceholderED(!prefs.isMsgDisabled(p)))
         )
         .build()
     ), null);
@@ -86,7 +86,7 @@ public class PreferencesGui extends AGui<Object> {
         .withName(cfg.get(ConfigKey.GUI_PREFERENCES_CHAT_NAME))
         .withLore(
           cfg.get(ConfigKey.GUI_PREFERENCES_CHAT_LORE)
-            .withVariable("state", inst.statePlaceholder(!prefs.isChatHidden(p)))
+            .withVariable("state", statePlaceholderED(!prefs.isChatHidden(p)))
         )
         .build()
     ), null);
@@ -98,7 +98,7 @@ public class PreferencesGui extends AGui<Object> {
         .withName(cfg.get(ConfigKey.GUI_PREFERENCES_SCOREBOARD_NAME))
         .withLore(
           cfg.get(ConfigKey.GUI_PREFERENCES_SCOREBOARD_LORE)
-            .withVariable("state", inst.statePlaceholder(obj.getSidebarVisibility(p)))
+            .withVariable("state", statePlaceholderED(obj.getSidebarVisibility(p)))
         )
         .build()
     ), null);
@@ -193,7 +193,7 @@ public class PreferencesGui extends AGui<Object> {
         .withName(cfg.get(ConfigKey.GUI_PREFERENCES_HOME_LASERS_NAME))
         .withLore(
           cfg.get(ConfigKey.GUI_PREFERENCES_HOME_LASERS_LORE)
-            .withVariable("state", inst.statePlaceholder(prefs.showHomeLasers(p)))
+            .withVariable("state", statePlaceholderED(prefs.showHomeLasers(p)))
         )
         .build()
     ), null);

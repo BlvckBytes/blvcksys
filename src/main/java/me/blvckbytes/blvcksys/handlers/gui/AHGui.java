@@ -15,7 +15,6 @@ import me.blvckbytes.blvcksys.util.TimeUtil;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -115,9 +114,16 @@ public class AHGui extends AGui<Object> {
       return ahHandler.listAuctions(state.getCategory(), state.getSort(), state.getSearch())
         .stream().map(t -> (
           new GuiItem(
-            s -> buildDisplayItem(t.a(), t.b().get()),
+            s -> {
+
+              // An auction just ended, refresh contents
+              if (!t.a().isActive())
+                inst.refreshPageContents();
+
+              return buildDisplayItem(t.a(), t.b().get());
+            },
             e -> inst.switchTo(AnimationType.SLIDE_LEFT, ahBidGui, t.a()),
-            10 // Redraw every 1s/2 to guarantee proper countdowns
+            10 // Redraw every 1s/2 to guarantee proper synchronicity
           )
         ))
         .collect(Collectors.toList());

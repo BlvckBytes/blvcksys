@@ -247,7 +247,7 @@ public class AHCreateGui extends AGui<Object> {
 
       // Shift changes minutes
       if (e.getClick().isShiftClick())
-        state.durationSeconds += 60 * 10 * (e.getClick().isRightClick() ? -1 : 1);
+        state.durationSeconds += 60 * 5 * (e.getClick().isRightClick() ? -1 : 1);
 
       // Non-shift changes hours
       else

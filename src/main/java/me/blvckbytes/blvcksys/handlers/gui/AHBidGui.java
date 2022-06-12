@@ -11,10 +11,12 @@ import me.blvckbytes.blvcksys.handlers.TriResult;
 import me.blvckbytes.blvcksys.persistence.models.AHAuctionModel;
 import me.blvckbytes.blvcksys.persistence.models.AHBidModel;
 import me.blvckbytes.blvcksys.util.ChatUtil;
+import net.minecraft.util.Tuple;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,7 +33,7 @@ import java.util.Optional;
 public class AHBidGui extends AGui<AHAuctionModel> {
 
   // Maximum number of lines (bids) in the bid history lore
-  private static int BID_HISTORY_MAXLINES = 10;
+  private static final int BID_HISTORY_MAXLINES = 10;
 
   private final ChatUtil chatUtil;
   private final IAHHandler ahHandler;
@@ -52,6 +54,20 @@ public class AHBidGui extends AGui<AHAuctionModel> {
 
     this.ahHandler = ahHandler;
     this.chatUtil = chatUtil;
+
+    // Redraw the GUI if it contains an auction which has just received a new bid
+    ahHandler.registerBidInterest((auction, bid) -> {
+      getActiveInstances().values().forEach(insts -> {
+        insts.forEach(inst -> {
+          // Different auction, ignore
+          if (!inst.getArg().equals(auction))
+            return;
+
+          // Redraw affected slots (status, item, min-bid, log)
+          inst.redraw("2,20,11,15,26");
+        });
+      });
+    });
   }
 
   @Override
@@ -70,10 +86,14 @@ public class AHBidGui extends AGui<AHAuctionModel> {
     inst.addBack(18, e -> back.run());
 
     // Target item status indicators
-    inst.fixedItem("2,20", () -> {
-      ItemStack item = createStatusIndicator(inst).orElse(null);
+    inst.fixedItem("2,20", () -> createStatusIndicator(inst).orElse(null), null);
 
-      if (item == null) {
+    // Target item itself
+    inst.fixedItem(11, () -> {
+      Tuple<TriResult, @Nullable AHBidModel> lastBid = ahHandler.lastBid(auction.getId());
+
+      // Auction not available anymore, close the screen
+      if (lastBid.a() == TriResult.ERR) {
         p.sendMessage(
           cfg.get(ConfigKey.GUI_BID_AH_GONE)
             .withPrefix()
@@ -82,13 +102,8 @@ public class AHBidGui extends AGui<AHAuctionModel> {
         back.run();
       }
 
-      return item;
+      return ahGui.buildDisplayItem(auction, lastBid.b());
     }, null, 10);
-
-    // Target item itself
-    inst.fixedItem(11, () -> (
-      ahGui.buildDisplayItem(auction, ahHandler.lastBid(auction.getId()).orElse(null))
-    ), null, 10);
 
     // Custom bid
     inst.fixedItem(13, () -> (
@@ -140,8 +155,7 @@ public class AHBidGui extends AGui<AHAuctionModel> {
       e -> {
         int nextBid = ahHandler.nextBid(auction.getId()).orElseGet(auction::getStartBid);
         bidAmount(inst, nextBid, back);
-      },
-      10
+      }
     );
 
     // Bidding history log
@@ -173,7 +187,7 @@ public class AHBidGui extends AGui<AHAuctionModel> {
             .withVariable("history_lines", lines)
         )
         .build();
-    }, null, 10);
+    }, null);
 
     return true;
   }
@@ -188,29 +202,42 @@ public class AHBidGui extends AGui<AHAuctionModel> {
   private void bidAmount(GuiInstance<AHAuctionModel> inst, int amount, Runnable back) {
     Player p = inst.getViewer();
     AHAuctionModel auction = inst.getArg();
-    Optional<AHBidModel> lastBid = ahHandler.lastBid(auction.getId());
-    TriResult res = ahHandler.createBid(p, auction, amount);
 
-    // Already outbid before placing the bid
-    if (res == TriResult.ERR) {
+    // Cannot bid on their own auction
+    if (auction.getCreator().equals(p)) {
       p.sendMessage(
-        cfg.get(ConfigKey.GUI_BID_AH_CUSTOM_BID_PROMPT_OUTBID)
+        cfg.get(ConfigKey.GUI_BID_AH_BID_SELF)
           .withPrefix()
-          .withVariable("last_bid", ahHandler.lastBid(auction.getId()).map(AHBidModel::getAmount).orElse(0) + " Coins")
-          .withVariable("min_bid", ahHandler.nextBid(auction.getId()).orElse(0) + " Coins")
           .asScalar()
       );
       return;
     }
 
+    Tuple<TriResult, @Nullable AHBidModel> lastBid = ahHandler.lastBid(auction.getId());
+    AHBidModel bid = lastBid.b();
+    TriResult res = ahHandler.createBid(p, auction, amount);
+    Optional<Integer> nextBid = ahHandler.nextBid(auction.getId());
+
     // Auction has been invalidated in the meantime
-    if (res == TriResult.EMPTY) {
+    if (res == TriResult.EMPTY || nextBid.isEmpty()) {
       p.sendMessage(
         cfg.get(ConfigKey.GUI_BID_AH_GONE)
           .withPrefix()
           .asScalar()
       );
       back.run();
+      return;
+    }
+
+    // Already outbid before placing the bid
+    if (res == TriResult.ERR) {
+      p.sendMessage(
+        cfg.get(ConfigKey.GUI_BID_AH_CUSTOM_BID_PROMPT_OUTBID)
+          .withPrefix()
+          .withVariable("last_bid", bid == null ? "/" : (bid.getAmount() + " Coins"))
+          .withVariable("min_bid", nextBid.get() + " Coins")
+          .asScalar()
+      );
       return;
     }
 
@@ -223,7 +250,7 @@ public class AHBidGui extends AGui<AHAuctionModel> {
     );
 
     // Notify the previously highest bidding player, if applicable
-    lastBid.ifPresent(bid -> {
+    if (bid != null) {
       // Last bidder isn't online anymore
       if (!bid.getCreator().isOnline())
         return;
@@ -242,7 +269,7 @@ public class AHBidGui extends AGui<AHAuctionModel> {
           .withVariable("new_bid", amount + " Coins")
           .asScalar()
       );
-    });
+    }
   }
 
   /**

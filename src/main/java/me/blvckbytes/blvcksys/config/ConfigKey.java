@@ -2108,8 +2108,8 @@ public enum ConfigKey {
     " ",
     "$0Linksklick: $2+1 Stunde",
     "$0Rechtsklick: $2-1 Stunde",
-    "$0Shift + Linksklick: $2+10 Minuten",
-    "$0Shift + Rechtsklick: $2-10 Minuten"
+    "$0Shift + Linksklick: $2+5 Minuten",
+    "$0Shift + Rechtsklick: $2-5 Minuten"
   ),
   GUI_CREATE_AH_DURATION_IMMEDIATE("gui.ah_create.duration.immediate", "Sofortverkauf"),
   GUI_CREATE_AH_SUBMIT_OK_NAME("gui.ah_create.submit.ok.name", "$0» &aAuktion erstellen $0«"),
@@ -2202,6 +2202,7 @@ public enum ConfigKey {
   GUI_BID_AH_GONE("gui.ah_bid.gone", "$0Diese Auktion ist $4nicht mehr $0verfügbar!"),
   GUI_BID_AH_BID_PLACED("gui.ah_bid.bid_placed", "$0Dein Gebot von $2{{bid}} $0wurde abgegeben."),
   GUI_BID_AH_BID_OUTBID("gui.ah_bid.bid_outbid", "$0Dein Gebot von $2{{bid}} $0wurde durch $2{{outbidder}} $0mit $2{{new_bid}} $0überboten."),
+  GUI_BID_AH_BID_SELF("gui.ah_bid.bid_self", "$0Du kannst nicht bei deiner $4eigenen Auktion $0mitbieten!"),
   GUI_BID_AH_BID_HISTORY_NAME("gui.ah_bid.bid_history.name", "$0» $2Gebotshistorie $0«"),
   GUI_BID_AH_BID_HISTORY_LINE("gui.ah_bid.bid_history.line", "$0{{bidder}}$0: $2{{bid}} $0({{date}})"),
   GUI_BID_AH_BID_HISTORY_NONE("gui.ah_bid.bid_history.none", "&cNoch keine Gebote"),

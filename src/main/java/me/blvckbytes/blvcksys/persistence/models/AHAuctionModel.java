@@ -50,6 +50,6 @@ public class AHAuctionModel extends APersistentModel {
    * Checks whether the auction is still active (can be bidden on)
    */
   public boolean isActive() {
-    return sold || System.currentTimeMillis() > createdAt.getTime() + durationSeconds * 1000;
+    return !sold && System.currentTimeMillis() < createdAt.getTime() + durationSeconds * 1000 && canceller == null;
   }
 }

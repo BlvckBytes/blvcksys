@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Consumer;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 /*
@@ -106,8 +106,18 @@ public interface IAHHandler {
    */
   Optional<List<AHBidModel>> listBids(UUID auctionId);
 
-  Optional<AHBidModel> lastBid(UUID auctionId);
+  /**
+   * Get the last bid from an auction by it's ID
+   * @param auctionId ID of the target auction
+   * @return Last bid if exists (SUCC), EMPTY if there are no bids yet, ERR if the auction is unknown
+   */
+  Tuple<TriResult, @Nullable AHBidModel> lastBid(UUID auctionId);
 
+  /**
+   * Get the next lowest bid on an auction by it's ID
+   * @param auctionId ID of the target auction
+   * @return Next lowest bid, empty if the auction is unknown
+   */
   Optional<Integer> nextBid(UUID auctionId);
 
   /**
@@ -115,4 +125,11 @@ public interface IAHHandler {
    * @param delta Callback to run after the delta
    */
   void registerAuctionDeltaInterest(Runnable delta);
+
+  /**
+   * Register an interest for new bids on auctions
+   * @param bid Callback to run after a new bid came in,
+   *            containing the affected auction and the new bid
+   */
+  void registerBidInterest(BiConsumer<AHAuctionModel, AHBidModel> bid);
 }

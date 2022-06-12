@@ -23,6 +23,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -46,12 +47,14 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
   private final Map<Player, AHStateModel> stateCache;
   private final Map<AHAuctionModel, List<AHBidModel>> auctionCache;
   private final List<Runnable> auctionDeltaInterests;
+  private final List<BiConsumer<AHAuctionModel, AHBidModel>> bidInterests;
 
   public AHHandler(
     @AutoInject IPersistence pers
   ) {
     this.pers = pers;
     this.auctionDeltaInterests = new ArrayList<>();
+    this.bidInterests = new ArrayList<>();
     this.stateCache = new HashMap<>();
     this.auctionCache = new HashMap<>();
   }
@@ -151,7 +154,7 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
       return TriResult.EMPTY;
 
     // Already expired or cancelled
-    if (!target.isActive() || target.getCanceller() != null)
+    if (!target.isActive())
       return TriResult.EMPTY;
 
     // Has been outbid already
@@ -162,7 +165,7 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
     AHBidModel bid = new AHBidModel(executor, target.getId(), amount);
     pers.store(bid);
     bids.add(bid);
-    auctionDeltaInterests.forEach(Runnable::run);
+    bidInterests.forEach(interest -> interest.accept(auction, bid));
 
     return TriResult.SUCC;
   }
@@ -178,7 +181,9 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
         // Category matches or is a wildcard
         (category == AuctionCategory.ALL || auction.getCategory().equals(category)) &&
         // Search matches or is a wildcard
-        (searchQuery == null || matchesSearch(auction.getItem(), searchQuery))
+        (searchQuery == null || matchesSearch(auction.getItem(), searchQuery)) &&
+        // Only show active auctions
+        auction.isActive()
       ))
       .map(auction -> new Tuple<>(auction, (Supplier<@Nullable AHBidModel>) () -> {
         List<AHBidModel> bids = auctionCache.getOrDefault(auction, new ArrayList<>());
@@ -196,23 +201,42 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
   @Override
   public Optional<List<AHBidModel>> listBids(UUID auctionId) {
     return auctionCache.keySet().stream()
-      .filter(auction -> auction.getId().equals(auctionId))
+      .filter(auction -> auction.getId().equals(auctionId) && auction.isActive())
       .findFirst()
       .map(auctionCache::get);
   }
 
   @Override
-  public Optional<AHBidModel> lastBid(UUID auctionId) {
-    return listBids(auctionId)
-      .flatMap(list -> list.size() == 0 ? Optional.empty() : Optional.of(list.get(list.size() - 1)));
+  public Tuple<TriResult, @Nullable AHBidModel> lastBid(UUID auctionId) {
+    List<AHBidModel> bids = listBids(auctionId).orElse(null);
+
+    // Auction not existing
+    if (bids == null)
+      return new Tuple<>(TriResult.ERR, null);
+
+    // No bids yet
+    if (bids.size() == 0)
+      return new Tuple<>(TriResult.EMPTY, null);
+
+    // Return last bid
+    return new Tuple<>(TriResult.SUCC, bids.get(bids.size() - 1));
   }
 
   @Override
   public Optional<Integer> nextBid(UUID auctionId) {
-    // Either get the last bid + the min step size
-    return lastBid(auctionId).map(bid -> (int) Math.ceil(bid.getAmount() * (1 + BID_INCREASE_PERCENT)))
-      // Or get the start bid if there are no bids yet
-      .or(() -> getAuctionById(auctionId).map(AHAuctionModel::getStartBid));
+    AHBidModel currBid = lastBid(auctionId).b();
+
+    // Get the start bid if there are no bids yet
+    if (currBid == null)
+      return getAuctionById(auctionId).map(AHAuctionModel::getStartBid);
+
+    // Return the last bid + min step size
+    return Optional.of((int) (currBid.getAmount() * (1 + BID_INCREASE_PERCENT)));
+  }
+
+  @Override
+  public void registerBidInterest(BiConsumer<AHAuctionModel, AHBidModel> bid) {
+    bidInterests.add(bid);
   }
 
   @Override

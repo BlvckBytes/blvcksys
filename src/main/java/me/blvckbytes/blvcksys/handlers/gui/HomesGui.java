@@ -106,6 +106,7 @@ public class HomesGui extends AGui<OfflinePlayer> {
                     .withVariable("world", w == null ? "/" : w.getName())
                     .withVariable("location", "(" + l.getBlockX() + " | " + l.getBlockY() + " | " + l.getBlockZ() + ")")
                 )
+                .hideAttributes()
                 .build()
             ),
             e -> {

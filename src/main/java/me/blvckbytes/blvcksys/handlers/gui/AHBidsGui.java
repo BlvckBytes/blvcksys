@@ -7,6 +7,7 @@ import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.handlers.IAHHandler;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
+import me.blvckbytes.blvcksys.handlers.TriResult;
 import me.blvckbytes.blvcksys.persistence.models.AHAuctionModel;
 import me.blvckbytes.blvcksys.persistence.models.AHBidModel;
 import net.minecraft.util.Tuple;
@@ -69,7 +70,7 @@ public class AHBidsGui extends AGui<Object> {
     inst.addBack(36, e -> back.run());
 
     inst.setPageContents(() -> {
-      List<Tuple<AHAuctionModel, Supplier<@Nullable AHBidModel>>> auctions = ahHandler.listAuctions(AuctionCategory.ALL, AuctionSort.NEWEST, null, p, null);
+      List<Tuple<AHAuctionModel, AHBidModel>> auctions = ahHandler.listParticipatingOrRetrievableBidAuctions(p);
 
       // No active bids available
       if (auctions.size() == 0) {
@@ -85,19 +86,44 @@ public class AHBidsGui extends AGui<Object> {
         );
       }
 
-      // TODO: Decide whether the bid has expired and can be collected or if it's active and displays isHighest
-
       return auctions.stream().map(t -> (
         new GuiItem(
           s -> {
-
             // An auction just ended, refresh contents
             if (!t.a().isActive())
               inst.refreshPageContents();
 
-            return ahGui.buildDisplayItem(t.a(), t.b().get());
+            AHBidModel lastBid = ahHandler.lastBid(t.a(), null).b();
+            return ahGui.buildDisplayItem(
+              p, t.a(), lastBid,
+              cfg.get(
+                // Is the last bid and thus cannot retrieve
+                t.a().isActive() ?
+                  (
+                    lastBid != null && lastBid.getCreator().equals(p) ?
+                      ConfigKey.GUI_AH_AUCTION_LORE_BIDDING_HIGHEST :
+                      ConfigKey.GUI_AH_AUCTION_LORE_BIDDING_BUT_RETRIEVABLE
+                  ) :
+                  // Not active anymore
+                  ConfigKey.GUI_AH_AUCTION_LORE_BID_RETRIEVABLE
+              )
+            );
           },
-          e -> inst.switchTo(AnimationType.SLIDE_LEFT, ahBidGui, t.a()),
+          e -> {
+            // TODO: Handle retrieval- or new bid states properly
+
+            // Auction is still active, go to the bid gui
+            if (t.a().isActive()) {
+              inst.switchTo(AnimationType.SLIDE_LEFT, ahBidGui, t.a());
+              return;
+            }
+
+            // Already retrieved, should not be displayed here anyways
+            if (t.b().isRetrieved())
+              return;
+
+            p.sendMessage("§aWould now retrieve " + t.b().getAmount() + " Coins");
+          },
           10 // Redraw every 1s/2 to guarantee proper synchronicity
         )
       ))

@@ -12,7 +12,6 @@ import me.blvckbytes.blvcksys.persistence.models.AHBidModel;
 import me.blvckbytes.blvcksys.persistence.models.AHStateModel;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.TimeUtil;
-import net.minecraft.util.Tuple;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -25,7 +24,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /*
@@ -114,7 +112,10 @@ public class AHGui extends AGui<Object> {
       // List all auctions based on the currently applied filters
       AHStateModel state = ahHandler.getState(inst.getViewer());
 
-      List<Tuple<AHAuctionModel, Supplier<@Nullable AHBidModel>>> auctions = ahHandler.listAuctions(state.getCategory(), state.getSort(), state.getSearch(), null, null);
+      // List all auctions according to the state's filter
+      List<AHAuctionModel> auctions = ahHandler.listPublicAuctions(
+        state.getCategory(), state.getSort(), state.getSearch()
+      );
 
       // No active auctions available
       if (auctions.size() == 0) {
@@ -130,17 +131,29 @@ public class AHGui extends AGui<Object> {
         );
       }
 
-      return auctions.stream().map(t -> (
+      return auctions.stream().map(auction -> (
         new GuiItem(
           s -> {
 
             // An auction just ended, refresh contents
-            if (!t.a().isActive())
+            if (!auction.isActive())
               inst.refreshPageContents();
 
-            return buildDisplayItem(t.a(), t.b().get());
+            AHBidModel lastBid = ahHandler.lastBid(auction, null).b();
+            return buildDisplayItem(
+              p, auction, lastBid,
+              cfg.get(
+                ahHandler.isBidding(p, auction) ?
+                  (
+                    lastBid != null && lastBid.getCreator().equals(p) ?
+                      ConfigKey.GUI_AH_AUCTION_LORE_BIDDING_HIGHEST :
+                      ConfigKey.GUI_AH_AUCTION_LORE_BIDDING_BUT_RETRIEVABLE
+                  ) :
+                  ConfigKey.GUI_AH_AUCTION_LORE_PUBLIC
+              )
+            );
           },
-          e -> inst.switchTo(AnimationType.SLIDE_LEFT, ahBidGui, t.a()),
+          e -> inst.switchTo(AnimationType.SLIDE_LEFT, ahBidGui, auction),
           10 // Redraw every 1s/2 to guarantee proper synchronicity
         )
       ))
@@ -153,11 +166,14 @@ public class AHGui extends AGui<Object> {
   /**
    * Build the auction display item, which consists of the item being sold,
    * modified with an optional custom displayname and additional informative lore lines
+   * @param viewer Viewing player
    * @param auction Auction to display
    * @param currBid Current last bid
+   * @param lore Lore to display, available variables are added internally
    * @return Item to display
    */
-  public ItemStack buildDisplayItem(AHAuctionModel auction, @Nullable AHBidModel currBid) {
+  public ItemStack buildDisplayItem(Player viewer, AHAuctionModel auction, @Nullable AHBidModel currBid, ConfigValue lore) {
+    AHBidModel viewerBid = ahHandler.lastBid(auction, viewer).b();
     return new ItemStackBuilder(auction.getItem(), auction.getItem().getAmount())
       .withName(
         cfg.get(ConfigKey.GUI_AH_AUCTION_NAME)
@@ -168,11 +184,13 @@ public class AHGui extends AGui<Object> {
           )
       )
       .withLore(
-        cfg.get(ConfigKey.GUI_AH_AUCTION_LORE)
+          lore
+          .withVariable("is_highest", currBid == null ? "/" : statePlaceholderYN(viewer.equals(currBid.getCreator())))
           .withVariable("seller", auction.getCreator().getName())
           .withVariable("start_bid", (auction.getStartBid()) + " Coins")
           .withVariable("current_bid", (currBid == null ? "/" : currBid.getAmount() + " Coins"))
           .withVariable("current_bidder", currBid == null ? "/" : currBid.getCreator().getName())
+          .withVariable("viewer_bid", (viewerBid == null ? "/" : viewerBid.getAmount() + " Coins"))
           .withVariable("duration", getRemainingDuration(auction))
       )
       .build();
@@ -188,7 +206,9 @@ public class AHGui extends AGui<Object> {
 
     int duration = auction.getDurationSeconds();
     int elapsed = (int) (System.currentTimeMillis() - auction.getCreatedAt().getTime()) / 1000;
-    return timeUtil.formatDuration(Math.max(0, duration - elapsed));
+    int remaining = Math.max(0, duration - elapsed);
+
+    return remaining > 0 ? timeUtil.formatDuration(remaining) : cfg.get(ConfigKey.GUI_CREATE_AH_DURATION_EXPIRED).asScalar();
   }
 
   /**

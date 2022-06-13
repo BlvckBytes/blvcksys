@@ -2056,14 +2056,82 @@ public enum ConfigKey {
     "$0platzierte Gebote."
   ),
   GUI_AH_AUCTION_NAME("gui.ah.auction.name", "$2{{name}}"),
-  GUI_AH_AUCTION_LORE(
-    "gui.ah.auction.lore",
+  GUI_AH_AUCTION_LORE_PUBLIC(
+    "gui.ah.auction.lore.public",
     " ",
     "$0&m----------------------",
     "$0Verkäufer: $2{{seller}}",
     "$0Startgebot: $2{{start_bid}}",
     "$0Aktuelles Gebot: $2{{current_bid}} $0({{current_bidder}})",
     "$0Endet in: $2{{duration}}"
+  ),
+  GUI_AH_AUCTION_LORE_DELETABLE(
+    "gui.ah.auction.lore.deletable",
+    " ",
+    "$0&m----------------------",
+    "$0Verkäufer: $2{{seller}}",
+    "$0Startgebot: $2{{start_bid}}",
+    "$0Aktuelles Gebot: $2{{current_bid}} $0({{current_bidder}})",
+    "$0Endet in: $2{{duration}}",
+    " ",
+    "$0Linksklick: $2Löschen"
+  ),
+  GUI_AH_AUCTION_LORE_BIDDING_HIGHEST(
+    "gui.ah.auction.lore.bidding_highest",
+    " ",
+    "$0&m----------------------",
+    "$0Verkäufer: $2{{seller}}",
+    "$0Startgebot: $2{{start_bid}}",
+    "$0Aktuelles Gebot: $2{{current_bid}} $0({{current_bidder}})",
+    "$0Endet in: $2{{duration}}",
+    "$0Höchstbietend: $2{{is_highest}}"
+  ),
+  GUI_AH_AUCTION_LORE_BID_RETRIEVABLE(
+    "gui.ah.auction.lore.bid_retrievable",
+    " ",
+    "$0&m----------------------",
+    "$0Verkäufer: $2{{seller}}",
+    "$0Startgebot: $2{{start_bid}}",
+    "$0Aktuelles Gebot: $2{{current_bid}} $0({{current_bidder}})",
+    "$0Dein Gebot: $2{{viewer_bid}}",
+    "$0Endet in: $2{{duration}}",
+    " ",
+    "$0Linksklick: $2Gebot zurückerhalten"
+  ),
+  GUI_AH_AUCTION_LORE_BIDDING_BUT_RETRIEVABLE(
+    "gui.ah.auction.lore.bidding_but_retrievable",
+    " ",
+    "$0&m----------------------",
+    "$0Verkäufer: $2{{seller}}",
+    "$0Startgebot: $2{{start_bid}}",
+    "$0Aktuelles Gebot: $2{{current_bid}} $0({{current_bidder}})",
+    "$0Dein Gebot: $2{{viewer_bid}}",
+    "$0Endet in: $2{{duration}}",
+    "$0Höchstbietend: $2{{is_highest}}",
+    " ",
+    "$0Rechtsklick: $2Gebot zurückerhalten"
+  ),
+  GUI_AH_AUCTION_LORE_PRICE_RETRIEVABLE(
+    "gui.ah.auction.lore.price_retrievable",
+    " ",
+    "$0&m----------------------",
+    "$0Verkäufer: $2{{seller}}",
+    "$0Startgebot: $2{{start_bid}}",
+    "$0Aktuelles Gebot: $2{{current_bid}} $0({{current_bidder}})",
+    "$0Endet in: $2{{duration}}",
+    " ",
+    "$0Linksklick: $2Geld ausbezahlen"
+  ),
+  GUI_AH_AUCTION_LORE_ITEMS_RETRIEVABLE(
+    "gui.ah.auction.lore.items_retrievable",
+    " ",
+    "$0&m----------------------",
+    "$0Verkäufer: $2{{seller}}",
+    "$0Startgebot: $2{{start_bid}}",
+    "$0Aktuelles Gebot: $2{{current_bid}} $0({{current_bidder}})",
+    "$0Endet in: $2{{duration}}",
+    " ",
+    "$0Linksklick: $2Items zurückerhalten"
   ),
   GUI_AH_NONE_NAME("gui.ah.none.name", "$0» &cKeine Auktionen"),
   GUI_AH_NONE_LORE(
@@ -2121,6 +2189,7 @@ public enum ConfigKey {
     "$0Shift + Rechtsklick: $2-5 Minuten"
   ),
   GUI_CREATE_AH_DURATION_IMMEDIATE("gui.ah_create.duration.immediate", "Sofortverkauf"),
+  GUI_CREATE_AH_DURATION_EXPIRED("gui.ah_create.duration.expired", "Abgelaufen"),
   GUI_CREATE_AH_SUBMIT_OK_NAME("gui.ah_create.submit.ok.name", "$0» &aAuktion erstellen $0«"),
   GUI_CREATE_AH_SUBMIT_OK_LORE(
     "gui.ah_create.submit.ok.lore",
@@ -2139,7 +2208,7 @@ public enum ConfigKey {
     " ",
     "$0Bitte wähle zuerst ein Item aus."
   ),
-  GUI_CREATE_AH_CREATED("gui.ah_create.created", "$0Dein Inserat wurde $2erfolgreich $0erstellt!"),
+  GUI_CREATE_AH_CREATED("gui.ah_create.created", "$0Deine Auktion wurde $2erfolgreich $0erstellt!"),
   GUI_CREATE_AH_NO_SLOTS("gui.ah_create.no_slots", "$0Du hast deine $4maximalen gleichzeitigen $0Auktionen von $4{{max_auctions}} $0erreicht!"),
 
   //=========================================================================//
@@ -2147,17 +2216,17 @@ public enum ConfigKey {
   //=========================================================================//
 
   GUI_PROFILE_AH("gui.ah_profile.title", "$0Auktionsprofil $2{{name}}"),
-  GUI_PROFILE_AH_CREATE_NAME("gui.ah_profile.create.name", "$0» $2Neues Inserat $0«"),
+  GUI_PROFILE_AH_CREATE_NAME("gui.ah_profile.create.name", "$0» $2Neue Auktion $0«"),
   GUI_PROFILE_AH_CREATE_LORE(
     "gui.ah_profile.create.lore",
     " ",
-    "$0Erstelle ein neues Inserat."
+    "$0Erstelle eine neue Auktion."
   ),
-  GUI_PROFILE_AH_MANAGE_AUCTIONS_NAME("gui.ah_profile.manage_auctions.name", "$0» $2Inserate verwalten $0«"),
+  GUI_PROFILE_AH_MANAGE_AUCTIONS_NAME("gui.ah_profile.manage_auctions.name", "$0» $2Auktionen verwalten $0«"),
   GUI_PROFILE_AH_MANAGE_AUCTIONS_LORE(
     "gui.ah_profile.manage_auctions.lore",
     " ",
-    "$0Verwalte deine Inserate."
+    "$0Verwalte deine Auktionen."
   ),
   GUI_PROFILE_AH_MANAGE_BIDS_NAME("gui.ah_profile.manage_bids.name", "$0» $2Gebote verwalten $0«"),
   GUI_PROFILE_AH_MANAGE_BIDS_LORE(
@@ -2244,6 +2313,7 @@ public enum ConfigKey {
     " ",
     "$0Du besitzt aktuell keine aktiven Auktionen."
   ),
+  GUI_AUCTIONS_AH_DELETED("gui.ah_auctions.deleted", "$0Du hast diese Auktion erfolgreich $2gelöscht$0."),
 
   //=========================================================================//
   //                               Furnaces GUI                              //

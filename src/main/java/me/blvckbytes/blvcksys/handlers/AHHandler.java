@@ -24,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.BiConsumer;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /*
@@ -92,7 +91,9 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
 
   @Override
   public int countActiveAuctions(Player creator) {
-    return pers.count(buildAuctionQuery(creator, true));
+    return (int) auctionCache.keySet().stream()
+      .filter(auction -> auction.isActive() && auction.getCreator().equals(creator))
+      .count();
   }
 
   @Override
@@ -107,7 +108,7 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
     if (maxAuctions <= countActiveAuctions(creator))
       return false;
 
-    AHAuctionModel auction = new AHAuctionModel(creator, item, durationSeconds, startBid, category, null, false);
+    AHAuctionModel auction = AHAuctionModel.makeDefault(creator, item, durationSeconds, startBid, category);
     pers.store(auction);
     auctionCache.put(auction, new ArrayList<>());
     auctionDeltaInterests.forEach(Runnable::run);
@@ -115,10 +116,12 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
   }
 
   @Override
-  public void deleteAuction(AHAuctionModel auction) {
-    pers.delete(auction);
+  public boolean deleteAuction(AHAuctionModel auction) {
+    // TODO: Notify bidding players of deletion, if online (how to handle offline players?)
+    boolean res = pers.delete(auction);
     auctionCache.remove(auction);
     auctionDeltaInterests.forEach(Runnable::run);
+    return res;
   }
 
   @Override
@@ -162,7 +165,7 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
       return TriResult.ERR;
 
     // Create the new bid
-    AHBidModel bid = new AHBidModel(executor, target.getId(), amount);
+    AHBidModel bid = AHBidModel.makeDefault(executor, target, amount);
     pers.store(bid);
     bids.add(bid);
     bidInterests.forEach(interest -> interest.accept(auction, bid));
@@ -171,60 +174,80 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
   }
 
   @Override
-  public List<Tuple<AHAuctionModel, Supplier<@Nullable AHBidModel>>> listAuctions(
-    AuctionCategory category,
-    AuctionSort sort,
-    @Nullable String searchQuery,
-    @Nullable OfflinePlayer bidder,
-    @Nullable OfflinePlayer creator
+  public List<AHAuctionModel> listPublicAuctions(
+    AuctionCategory category, AuctionSort sort, @Nullable String searchQuery
   ) {
     return auctionCache.keySet().stream()
-      .filter(auction -> (
-        // Category matches or is a wildcard
-        (category == AuctionCategory.ALL || auction.getCategory().equals(category)) &&
-        // Search matches or is a wildcard
-        (searchQuery == null || matchesSearch(auction.getItem(), searchQuery)) &&
-        // Only show active auctions
-        auction.isActive() &&
-        // Matching creator, if requested
-        (creator == null || creator.equals(auction.getCreator())) &&
-        // Has had a bid on this auction, if requested
-        (
-          bidder == null ||
-          listBids(auction.getId())
-            .orElse(new ArrayList<>())
-            .stream()
-            .anyMatch(bid -> bid.getCreator().equals(bidder))
-        )
-      ))
-      .map(auction -> new Tuple<>(auction, (Supplier<@Nullable AHBidModel>) () -> {
-        List<AHBidModel> bids = auctionCache.getOrDefault(auction, new ArrayList<>());
+      .filter(auction -> {
+        // Not active anymore
+        if (!auction.isActive())
+          return false;
 
-        // No bids available yet
-        if (bids.size() == 0)
-          return null;
+        // Category mismatches and is not a wildcard
+        if (category != AuctionCategory.ALL && !auction.getCategory().equals(category))
+          return false;
 
-        // Return the last bid
-        return bids.get(bids.size() - 1);
-      }))
+        // Search mismatches and is not a wildcard
+        return searchQuery == null || matchesSearch(auction.getItem(), searchQuery);
+      })
+      .sorted(auctionComparator(sort))
       .collect(Collectors.toList());
   }
 
   @Override
-  public Optional<List<AHBidModel>> listBids(UUID auctionId) {
-    return auctionCache.keySet().stream()
-      .filter(auction -> auction.getId().equals(auctionId) && auction.isActive())
-      .findFirst()
-      .map(auctionCache::get);
+  public List<Tuple<AHAuctionModel, AHBidModel>> listParticipatingOrRetrievableBidAuctions(OfflinePlayer participant) {
+    return auctionCache.entrySet().stream()
+      // Map each auction to a list of bids from this participant
+      .map(e -> new Tuple<>(e.getKey(), e.getValue().stream().filter(bid -> bid.getCreator().equals(participant)).collect(Collectors.toList())))
+      // Filter out auctions where the player didn't bid on
+      .filter(t -> t.b().size() > 0)
+      // Get the last bid, as that will be the highest and represents what the player payed in total
+      .map(t -> new Tuple<>(t.a(), t.b().get(t.b().size() - 1)))
+      // Ignore already retrieved bids
+      .filter(t -> !t.b().isRetrieved())
+      // Sort by creation of the bid descending (newest first)
+      .sorted((a, b) -> a.b().getCreatedAt().compareTo(b.b().getCreatedAt()))
+      .collect(Collectors.toList());
   }
 
   @Override
-  public Tuple<TriResult, @Nullable AHBidModel> lastBid(UUID auctionId) {
-    List<AHBidModel> bids = listBids(auctionId).orElse(null);
+  public List<AHAuctionModel> listCancellableOrRetrievableAuctions(OfflinePlayer creator) {
+    return auctionCache.keySet().stream()
+      .filter(ahBidModels -> {
+        // Different creator
+        if (!ahBidModels.getCreator().equals(creator))
+          return false;
+
+        // Has already received the money of this auction, if it's sold
+        return !(ahBidModels.isSold() && ahBidModels.isPayed());
+      })
+      .collect(Collectors.toList());
+  }
+
+  @Override
+  public Optional<List<AHBidModel>> listBids(AHAuctionModel auction) {
+    List<AHBidModel> bids = auctionCache.get(auction);
+
+    if (bids == null)
+      return Optional.empty();
+
+    return Optional.of(bids);
+  }
+
+  @Override
+  public Tuple<TriResult, @Nullable AHBidModel> lastBid(AHAuctionModel auction, @Nullable OfflinePlayer bidder) {
+    List<AHBidModel> bids = listBids(auction).orElse(null);
 
     // Auction not existing
     if (bids == null)
       return new Tuple<>(TriResult.ERR, null);
+
+    // Filter to respond last bid relative to bidder argument
+    if (bidder != null) {
+      bids = bids.stream()
+        .filter(bid -> bid.getCreator().equals(bidder))
+        .collect(Collectors.toList());
+    }
 
     // No bids yet
     if (bids.size() == 0)
@@ -235,15 +258,28 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
   }
 
   @Override
-  public Optional<Integer> nextBid(UUID auctionId) {
-    AHBidModel currBid = lastBid(auctionId).b();
+  public boolean isBidding(OfflinePlayer player, AHAuctionModel auction) {
+    return listBids(auction)
+      // Check if any of the bids stem from the player
+      .map(list -> list.stream().anyMatch(bid -> bid.getCreator().equals(player)))
+      // Auction not found, so they're definitely not bidding
+      .orElse(false);
+  }
+
+  @Override
+  public Optional<Integer> nextBid(AHAuctionModel auction) {
+    Tuple<TriResult, AHBidModel> currBid = lastBid(auction, null);
+
+    // Auction unknown
+    if (currBid.a() == TriResult.ERR)
+      return Optional.empty();
 
     // Get the start bid if there are no bids yet
-    if (currBid == null)
-      return getAuctionById(auctionId).map(AHAuctionModel::getStartBid);
+    if (currBid.b() == null)
+      return Optional.of(auction.getStartBid());
 
     // Return the last bid + min step size
-    return Optional.of((int) (currBid.getAmount() * (1 + BID_INCREASE_PERCENT)));
+    return Optional.of((int) (currBid.b().getAmount() * (1 + BID_INCREASE_PERCENT)));
   }
 
   @Override
@@ -335,28 +371,15 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
   }
 
   /**
-   * Builds a query to select all auctions of a player
-   * @param creator Target player
-   * @param active Whether the auction should still be active
+   * Comparator for sorting auctions based on the sorting parameters
+   * @param sort Sorting parameters
+   * @return Comparator to be used when sorting
    */
-  private QueryBuilder<AHAuctionModel> buildAuctionQuery(OfflinePlayer creator, boolean active) {
-    QueryBuilder<AHAuctionModel> query = new QueryBuilder<>(
-      AHAuctionModel.class,
-      "creator__uuid", EqualityOperation.EQ, creator.getUniqueId()
-    );
-
-    if (active) {
-      query.and(
-        // Either still has a duration remaining
-        new FieldQueryGroup("createdAt", FieldOperation.PLUS, "durationSeconds", EqualityOperation.GTE, System.currentTimeMillis() / 1000)
-          // Or has no duration at all (instant buy)
-          .or("durationSeconds", EqualityOperation.EQ, null)
-      )
-        // Has not yet been sold
-        .and("sold", EqualityOperation.EQ, false);
-    }
-
-    return query;
+  private Comparator<AHAuctionModel> auctionComparator(AuctionSort sort) {
+    return (a, b) -> {
+      // TODO: Actually implement
+      return 0;
+    };
   }
 
   /**

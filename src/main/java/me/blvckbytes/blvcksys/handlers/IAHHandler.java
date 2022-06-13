@@ -66,8 +66,9 @@ public interface IAHHandler {
   /**
    * Delete an existing auction
    * @param auction Auction to delete
+   * @return Success state, false if the auction was already gone
    */
-  void deleteAuction(AHAuctionModel auction);
+  boolean deleteAuction(AHAuctionModel auction);
 
   /**
    * Prematurely cancel an active auction as a moderator
@@ -88,39 +89,56 @@ public interface IAHHandler {
   TriResult createBid(OfflinePlayer executor, AHAuctionModel auction, int amount);
 
   /**
-   * List all auctions based on a set of filters to apply
-   * @param category Category to browse in
-   * @param sort Direction to sort the results
-   * @param searchQuery Query to use to search in names and lores as well as materials
-   * @return List of results, tuple of auctions to their current bids (nullable for no bids)
+   * List all publicly visible auctions which can still be bid on
+   * @param category Selected category
+   * @param sort Selected sorting
+   * @param searchQuery Selected search query
    */
-  List<Tuple<AHAuctionModel, Supplier<@Nullable AHBidModel>>> listAuctions(
-    AuctionCategory category,
-    AuctionSort sort,
-    @Nullable String searchQuery,
-    @Nullable OfflinePlayer bidder,
-    @Nullable OfflinePlayer creator
+  List<AHAuctionModel> listPublicAuctions(
+    AuctionCategory category, AuctionSort sort, @Nullable String searchQuery
   );
 
   /**
-   * List all bids of an auction
-   * @param auctionId ID of the target auction
+   * List all active auctions which the player is participating in or all past auctions
+   * which the player didn't win and where money is still to be retrieved
+   * @param participant Target player
+   * @return List of tuples from auction to the player's latest bid on that auction
    */
-  Optional<List<AHBidModel>> listBids(UUID auctionId);
+  List<Tuple<AHAuctionModel, AHBidModel>> listParticipatingOrRetrievableBidAuctions(OfflinePlayer participant);
 
   /**
-   * Get the last bid from an auction by it's ID
-   * @param auctionId ID of the target auction
+   * List all auctions which the player either may still cancel or where money is still to be retrieved
+   * @param creator Target player
+   */
+  List<AHAuctionModel> listCancellableOrRetrievableAuctions(OfflinePlayer creator);
+
+  /**
+   * List all bids of an auction
+   * @param auction Target auction
+   */
+  Optional<List<AHBidModel>> listBids(AHAuctionModel auction);
+
+  /**
+   * Get the last bid from an auction
+   * @param auction Target auction
+   * @param bidder Optional player to respond relative to
    * @return Last bid if exists (SUCC), EMPTY if there are no bids yet, ERR if the auction is unknown
    */
-  Tuple<TriResult, @Nullable AHBidModel> lastBid(UUID auctionId);
+  Tuple<TriResult, @Nullable AHBidModel> lastBid(AHAuctionModel auction, @Nullable OfflinePlayer bidder);
 
   /**
-   * Get the next lowest bid on an auction by it's ID
-   * @param auctionId ID of the target auction
+   * Checks whether the given player is bidding on the auction
+   * @param player Target player
+   * @param auction Auction in question
+   */
+  boolean isBidding(OfflinePlayer player, AHAuctionModel auction);
+
+  /**
+   * Get the next lowest bid on an auction
+   * @param auction Target auction
    * @return Next lowest bid, empty if the auction is unknown
    */
-  Optional<Integer> nextBid(UUID auctionId);
+  Optional<Integer> nextBid(AHAuctionModel auction);
 
   /**
    * Register an interest for auction delta (new auctions, deleted auctions)

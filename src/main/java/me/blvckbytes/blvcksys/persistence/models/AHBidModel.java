@@ -30,4 +30,13 @@ public class AHBidModel extends APersistentModel {
 
   @ModelProperty
   private int amount;
+
+  // Whether the player has retrieved this bid
+  // again after loosing on an auction
+  @ModelProperty
+  private boolean retrieved;
+
+  public static AHBidModel makeDefault(OfflinePlayer creator, AHAuctionModel auction, int amount) {
+    return new AHBidModel(creator, auction.getId(), amount, false);
+  }
 }

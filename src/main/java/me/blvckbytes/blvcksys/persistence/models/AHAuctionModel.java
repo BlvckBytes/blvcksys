@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.persistence.models;
 
 import lombok.*;
 import me.blvckbytes.blvcksys.handlers.gui.AuctionCategory;
+import me.blvckbytes.blvcksys.persistence.MigrationDefault;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.inventory.ItemStack;
@@ -41,15 +42,28 @@ public class AHAuctionModel extends APersistentModel {
   @ModelProperty(isNullable = true)
   private OfflinePlayer canceller;
 
-  // Whether the item has been sold, items which expire before any
-  // bids are not sold, even though they're inactive
+  // Whether the item has been sold (used for instant buy)
   @ModelProperty
   private boolean sold;
+
+  // Whether the creator has been payed already
+  @ModelProperty(migrationDefault = MigrationDefault.FALSE)
+  private boolean payed;
 
   /**
    * Checks whether the auction is still active (can be bidden on)
    */
   public boolean isActive() {
     return !sold && System.currentTimeMillis() < createdAt.getTime() + durationSeconds * 1000 && canceller == null;
+  }
+
+  public static AHAuctionModel makeDefault(
+    OfflinePlayer creator,
+    ItemStack item,
+    Integer durationSeconds,
+    int startBid,
+    AuctionCategory category
+  ) {
+    return new AHAuctionModel(creator, item, durationSeconds, startBid, category, null, false, false);
   }
 }

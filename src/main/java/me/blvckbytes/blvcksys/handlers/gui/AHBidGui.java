@@ -90,10 +90,10 @@ public class AHBidGui extends AGui<AHAuctionModel> {
 
     // Target item itself
     inst.fixedItem(11, () -> {
-      Tuple<TriResult, @Nullable AHBidModel> lastBid = ahHandler.lastBid(auction.getId());
+      Tuple<TriResult, @Nullable AHBidModel> bidT = ahHandler.lastBid(auction, null);
 
       // Auction not available anymore, close the screen
-      if (lastBid.a() == TriResult.ERR) {
+      if (bidT.a() == TriResult.ERR) {
         p.sendMessage(
           cfg.get(ConfigKey.GUI_BID_AH_GONE)
             .withPrefix()
@@ -102,7 +102,19 @@ public class AHBidGui extends AGui<AHAuctionModel> {
         back.run();
       }
 
-      return ahGui.buildDisplayItem(auction, lastBid.b());
+      AHBidModel lastBid = bidT.b();
+      return ahGui.buildDisplayItem(
+        p, auction, lastBid,
+        cfg.get(
+          ahHandler.isBidding(p, auction) ?
+            (
+              lastBid != null && lastBid.getCreator().equals(p) ?
+                ConfigKey.GUI_AH_AUCTION_LORE_BIDDING_HIGHEST :
+                ConfigKey.GUI_AH_AUCTION_LORE_BIDDING_BUT_RETRIEVABLE
+            ) :
+            ConfigKey.GUI_AH_AUCTION_LORE_PUBLIC
+        )
+      );
     }, null, 10);
 
     // Custom bid
@@ -148,12 +160,12 @@ public class AHBidGui extends AGui<AHAuctionModel> {
         .withName(cfg.get(ConfigKey.GUI_BID_AH_MIN_BID_NAME))
         .withLore(
           cfg.get(ConfigKey.GUI_BID_AH_MIN_BID_LORE)
-            .withVariable("next_bid", ahHandler.nextBid(auction.getId()).orElseGet(auction::getStartBid) + " Coins")
+            .withVariable("next_bid", ahHandler.nextBid(auction).orElseGet(auction::getStartBid) + " Coins")
         )
         .build()
       ),
       e -> {
-        int nextBid = ahHandler.nextBid(auction.getId()).orElseGet(auction::getStartBid);
+        int nextBid = ahHandler.nextBid(auction).orElseGet(auction::getStartBid);
         bidAmount(inst, nextBid, back);
       }
     );
@@ -161,7 +173,7 @@ public class AHBidGui extends AGui<AHAuctionModel> {
     // Bidding history log
     inst.fixedItem(26, () -> {
       StringBuilder lines = new StringBuilder();
-      List<AHBidModel> bids = ahHandler.listBids(auction.getId()).orElse(new ArrayList<>());
+      List<AHBidModel> bids = ahHandler.listBids(auction).orElse(new ArrayList<>());
 
       if (bids.size() == 0)
         lines.append(cfg.get(ConfigKey.GUI_BID_AH_BID_HISTORY_NONE).asScalar());
@@ -213,10 +225,10 @@ public class AHBidGui extends AGui<AHAuctionModel> {
       return;
     }
 
-    Tuple<TriResult, @Nullable AHBidModel> lastBid = ahHandler.lastBid(auction.getId());
+    Tuple<TriResult, @Nullable AHBidModel> lastBid = ahHandler.lastBid(auction, null);
     AHBidModel bid = lastBid.b();
     TriResult res = ahHandler.createBid(p, auction, amount);
-    Optional<Integer> nextBid = ahHandler.nextBid(auction.getId());
+    Optional<Integer> nextBid = ahHandler.nextBid(auction);
 
     // Auction has been invalidated in the meantime
     if (res == TriResult.EMPTY || nextBid.isEmpty()) {
@@ -279,7 +291,7 @@ public class AHBidGui extends AGui<AHAuctionModel> {
    * @return Optional indicator, empty if the auction could not be found
    */
   private Optional<ItemStack> createStatusIndicator(GuiInstance<AHAuctionModel> inst) {
-    List<AHBidModel> bids = ahHandler.listBids(inst.getArg().getId()).orElse(null);
+    List<AHBidModel> bids = ahHandler.listBids(inst.getArg()).orElse(null);
 
     // Could not find the target auction
     if (bids == null)

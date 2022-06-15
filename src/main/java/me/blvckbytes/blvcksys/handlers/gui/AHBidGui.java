@@ -103,18 +103,8 @@ public class AHBidGui extends AGui<AHAuctionModel> {
       }
 
       AHBidModel lastBid = bidT.b();
-      return ahGui.buildDisplayItem(
-        p, auction, lastBid,
-        cfg.get(
-          ahHandler.isBidding(p, auction) ?
-            (
-              lastBid != null && lastBid.getCreator().equals(p) ?
-                ConfigKey.GUI_AH_AUCTION_LORE_BIDDING_HIGHEST :
-                ConfigKey.GUI_AH_AUCTION_LORE_BIDDING_BUT_RETRIEVABLE
-            ) :
-            ConfigKey.GUI_AH_AUCTION_LORE_PUBLIC
-        )
-      );
+      AHBidModel viewerBid = ahHandler.lastBid(auction, p).b();
+      return ahGui.buildDisplayItem(p, auction, lastBid, viewerBid, null);
     }, null, 10);
 
     // Custom bid
@@ -263,11 +253,11 @@ public class AHBidGui extends AGui<AHAuctionModel> {
 
     // Notify the previously highest bidding player, if applicable
     if (bid != null) {
-      // Last bidder isn't online anymore
-      if (!bid.getCreator().isOnline())
-        return;
+      Player bidder = bid.getCreator().getPlayer();
 
-      Player bidder = (Player) bid.getCreator();
+      // Not online
+      if (bidder == null)
+        return;
 
       // Outbid themselves (why?)
       if (bidder.equals(p))

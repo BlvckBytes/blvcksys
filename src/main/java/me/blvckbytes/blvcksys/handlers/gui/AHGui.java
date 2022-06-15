@@ -139,19 +139,10 @@ public class AHGui extends AGui<Object> {
             if (!auction.isActive())
               inst.refreshPageContents();
 
-            AHBidModel lastBid = ahHandler.lastBid(auction, null).b();
-            return buildDisplayItem(
-              p, auction, lastBid,
-              cfg.get(
-                ahHandler.isBidding(p, auction) ?
-                  (
-                    lastBid != null && lastBid.getCreator().equals(p) ?
-                      ConfigKey.GUI_AH_AUCTION_LORE_BIDDING_HIGHEST :
-                      ConfigKey.GUI_AH_AUCTION_LORE_BIDDING_BUT_RETRIEVABLE
-                  ) :
-                  ConfigKey.GUI_AH_AUCTION_LORE_PUBLIC
-              )
-            );
+            AHBidModel currBid = ahHandler.lastBid(auction, null).b();
+            AHBidModel viewerBid = ahHandler.lastBid(auction, p).b();
+
+            return buildDisplayItem(p, auction, currBid, viewerBid, null);
           },
           e -> inst.switchTo(AnimationType.SLIDE_LEFT, ahBidGui, auction),
           10 // Redraw every 1s/2 to guarantee proper synchronicity
@@ -169,11 +160,16 @@ public class AHGui extends AGui<Object> {
    * @param viewer Viewing player
    * @param auction Auction to display
    * @param currBid Current last bid
-   * @param lore Lore to display, available variables are added internally
+   * @param additionalLore Additional lore to display, available variables are added internally
    * @return Item to display
    */
-  public ItemStack buildDisplayItem(Player viewer, AHAuctionModel auction, @Nullable AHBidModel currBid, ConfigValue lore) {
-    AHBidModel viewerBid = ahHandler.lastBid(auction, viewer).b();
+  public ItemStack buildDisplayItem(
+    Player viewer,
+    AHAuctionModel auction,
+    @Nullable AHBidModel currBid,
+    @Nullable AHBidModel viewerBid,
+    @Nullable ConfigValue additionalLore
+  ) {
     return new ItemStackBuilder(auction.getItem(), auction.getItem().getAmount())
       .withName(
         cfg.get(ConfigKey.GUI_AH_AUCTION_NAME)
@@ -184,14 +180,30 @@ public class AHGui extends AGui<Object> {
           )
       )
       .withLore(
-          lore
-          .withVariable("is_highest", currBid == null ? "/" : statePlaceholderYN(viewer.equals(currBid.getCreator())))
-          .withVariable("seller", auction.getCreator().getName())
-          .withVariable("start_bid", (auction.getStartBid()) + " Coins")
-          .withVariable("current_bid", (currBid == null ? "/" : currBid.getAmount() + " Coins"))
-          .withVariable("current_bidder", currBid == null ? "/" : currBid.getCreator().getName())
-          .withVariable("viewer_bid", (viewerBid == null ? "/" : viewerBid.getAmount() + " Coins"))
-          .withVariable("duration", getRemainingDuration(auction))
+        cfg.get(
+          auction.getDurationSeconds() == null ?
+            ConfigKey.GUI_AH_INSTANT_LORE :
+            ConfigKey.GUI_AH_AUCTION_LORE_BASE
+        )
+        // Add bidding-specific information if the player is involved
+        .joinWith(() ->
+            cfg.get(ConfigKey.GUI_AH_AUCTION_LORE_BIDDING)
+              .withVariable("viewer_bid", (viewerBid == null ? "/" : viewerBid.getAmount() + " Coins")),
+          viewerBid != null
+        )
+        // Has been outbid, display actions
+        .joinWith(() ->
+            cfg.get(ConfigKey.GUI_AH_AUCTION_LORE_BIDDING_OUTBID),
+          viewerBid != null && currBid != null && currBid.getCreator() != viewer
+        )
+        // Add any additional lore lines
+        .joinWith(() -> additionalLore, additionalLore != null)
+        .withVariable("is_highest", currBid == null ? "/" : statePlaceholderYN(viewer.equals(currBid.getCreator())))
+        .withVariable("seller", auction.getCreator().getName())
+        .withVariable("start_bid", (auction.getStartBid()) + " Coins")
+        .withVariable("current_bid", (currBid == null ? "/" : currBid.getAmount() + " Coins"))
+        .withVariable("current_bidder", currBid == null ? "/" : currBid.getCreator().getName())
+        .withVariable("duration", getRemainingDuration(auction))
       )
       .build();
   }

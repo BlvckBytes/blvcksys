@@ -181,7 +181,7 @@ public class AHCreateGui extends AGui<Object> {
         state.item == null ? new ItemStack(Material.BARRIER) : state.item,
         state.item == null ? 1 : state.item.getAmount()
       )
-        .withName(cfg.get(ConfigKey.GUI_CREATE_AH_ITEM_NAME), () -> state.item == null)
+        .withName(cfg.get(ConfigKey.GUI_CREATE_AH_ITEM_NAME), state.item == null)
         .withLore(
           state.item == null ?
             cfg.get(ConfigKey.GUI_CREATE_AH_ITEM_LORE_VACANT) :

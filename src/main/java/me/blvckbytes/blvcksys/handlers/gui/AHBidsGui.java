@@ -94,20 +94,8 @@ public class AHBidsGui extends AGui<Object> {
               inst.refreshPageContents();
 
             AHBidModel lastBid = ahHandler.lastBid(t.a(), null).b();
-            return ahGui.buildDisplayItem(
-              p, t.a(), lastBid,
-              cfg.get(
-                // Is the last bid and thus cannot retrieve
-                t.a().isActive() ?
-                  (
-                    lastBid != null && lastBid.getCreator().equals(p) ?
-                      ConfigKey.GUI_AH_AUCTION_LORE_BIDDING_HIGHEST :
-                      ConfigKey.GUI_AH_AUCTION_LORE_BIDDING_BUT_RETRIEVABLE
-                  ) :
-                  // Not active anymore
-                  ConfigKey.GUI_AH_AUCTION_LORE_BID_RETRIEVABLE
-              )
-            );
+            AHBidModel viewerBid = ahHandler.lastBid(t.a(), p).b();
+            return ahGui.buildDisplayItem(p, t.a(), lastBid, viewerBid, null);
           },
           e -> {
             // TODO: Handle retrieval- or new bid states properly

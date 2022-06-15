@@ -65,8 +65,9 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
   @Override
   public AHStateModel getState(OfflinePlayer p) {
     // Respond from cache
-    if (p.isOnline() && stateCache.containsKey(((Player) p)))
-      return stateCache.get(((Player) p));
+    Player online = p.getPlayer();
+    if (online != null && stateCache.containsKey(online))
+      return stateCache.get(online);
 
     // Try to fetch from DB
     return pers.findFirst(buildStateQuery(p))
@@ -77,8 +78,8 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
         storeState(def);
 
         // Don't cache offline players
-        if (p.isOnline())
-          stateCache.put(((Player) p), def);
+        if (online != null)
+          stateCache.put(online, def);
 
         return def;
       });
@@ -92,7 +93,7 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
   @Override
   public int countActiveAuctions(Player creator) {
     return (int) auctionCache.keySet().stream()
-      .filter(auction -> auction.isActive() && auction.getCreator().equals(creator))
+      .filter(auction -> auction.isActive() && auction.comparePlayers(auction.getCreator(), creator))
       .count();
   }
 
@@ -198,7 +199,7 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
   public List<Tuple<AHAuctionModel, AHBidModel>> listParticipatingOrRetrievableBidAuctions(OfflinePlayer participant) {
     return auctionCache.entrySet().stream()
       // Map each auction to a list of bids from this participant
-      .map(e -> new Tuple<>(e.getKey(), e.getValue().stream().filter(bid -> bid.getCreator().equals(participant)).collect(Collectors.toList())))
+      .map(e -> new Tuple<>(e.getKey(), e.getValue().stream().filter(bid -> bid.comparePlayers(bid.getCreator(), participant)).collect(Collectors.toList())))
       // Filter out auctions where the player didn't bid on
       .filter(t -> t.b().size() > 0)
       // Get the last bid, as that will be the highest and represents what the player payed in total
@@ -213,13 +214,13 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
   @Override
   public List<AHAuctionModel> listCancellableOrRetrievableAuctions(OfflinePlayer creator) {
     return auctionCache.keySet().stream()
-      .filter(ahBidModels -> {
+      .filter(auction -> {
         // Different creator
-        if (!ahBidModels.getCreator().equals(creator))
+        if (!auction.comparePlayers(auction.getCreator(), creator))
           return false;
 
         // Has already received the money of this auction, if it's sold
-        return !(ahBidModels.isSold() && ahBidModels.isPayed());
+        return !(auction.isSold() && auction.isPayed());
       })
       .collect(Collectors.toList());
   }
@@ -245,7 +246,7 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
     // Filter to respond last bid relative to bidder argument
     if (bidder != null) {
       bids = bids.stream()
-        .filter(bid -> bid.getCreator().equals(bidder))
+        .filter(bid -> bid.comparePlayers(bid.getCreator(), bidder))
         .collect(Collectors.toList());
     }
 
@@ -255,15 +256,6 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
 
     // Return last bid
     return new Tuple<>(TriResult.SUCC, bids.get(bids.size() - 1));
-  }
-
-  @Override
-  public boolean isBidding(OfflinePlayer player, AHAuctionModel auction) {
-    return listBids(auction)
-      // Check if any of the bids stem from the player
-      .map(list -> list.stream().anyMatch(bid -> bid.getCreator().equals(player)))
-      // Auction not found, so they're definitely not bidding
-      .orElse(false);
   }
 
   @Override

@@ -127,13 +127,6 @@ public interface IAHHandler {
   Tuple<TriResult, @Nullable AHBidModel> lastBid(AHAuctionModel auction, @Nullable OfflinePlayer bidder);
 
   /**
-   * Checks whether the given player is bidding on the auction
-   * @param player Target player
-   * @param auction Auction in question
-   */
-  boolean isBidding(OfflinePlayer player, AHAuctionModel auction);
-
-  /**
    * Get the next lowest bid on an auction
    * @param auction Target auction
    * @return Next lowest bid, empty if the auction is unknown

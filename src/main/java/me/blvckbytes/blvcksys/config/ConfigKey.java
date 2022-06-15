@@ -2056,8 +2056,16 @@ public enum ConfigKey {
     "$0platzierte Gebote."
   ),
   GUI_AH_AUCTION_NAME("gui.ah.auction.name", "$2{{name}}"),
-  GUI_AH_AUCTION_LORE_PUBLIC(
-    "gui.ah.auction.lore.public",
+  GUI_AH_INSTANT_LORE(
+    "gui.ah.instant.lore",
+    " ",
+    "$0&m----------------------",
+    "$0Verkäufer: $2{{seller}}",
+    "$0Preis: $2{{start_bid}}",
+    "$0Endet in: $2{{duration}}"
+  ),
+  GUI_AH_AUCTION_LORE_BASE(
+    "gui.ah.auction.lore.base",
     " ",
     "$0&m----------------------",
     "$0Verkäufer: $2{{seller}}",
@@ -2065,71 +2073,29 @@ public enum ConfigKey {
     "$0Aktuelles Gebot: $2{{current_bid}} $0({{current_bidder}})",
     "$0Endet in: $2{{duration}}"
   ),
-  GUI_AH_AUCTION_LORE_DELETABLE(
-    "gui.ah.auction.lore.deletable",
-    " ",
-    "$0&m----------------------",
-    "$0Verkäufer: $2{{seller}}",
-    "$0Startgebot: $2{{start_bid}}",
-    "$0Aktuelles Gebot: $2{{current_bid}} $0({{current_bidder}})",
-    "$0Endet in: $2{{duration}}",
-    " ",
-    "$0Linksklick: $2Löschen"
-  ),
-  GUI_AH_AUCTION_LORE_BIDDING_HIGHEST(
-    "gui.ah.auction.lore.bidding_highest",
-    " ",
-    "$0&m----------------------",
-    "$0Verkäufer: $2{{seller}}",
-    "$0Startgebot: $2{{start_bid}}",
-    "$0Aktuelles Gebot: $2{{current_bid}} $0({{current_bidder}})",
-    "$0Endet in: $2{{duration}}",
+  GUI_AH_AUCTION_LORE_BIDDING(
+    "gui.ah.auction.lore.bidding",
+    "$0Dein Gebot: $2{{viewer_bid}}",
     "$0Höchstbietend: $2{{is_highest}}"
   ),
-  GUI_AH_AUCTION_LORE_BID_RETRIEVABLE(
-    "gui.ah.auction.lore.bid_retrievable",
+  GUI_AH_AUCTION_LORE_BIDDING_OUTBID(
+    "gui.ah.auction.lore.bidding_outbid",
     " ",
-    "$0&m----------------------",
-    "$0Verkäufer: $2{{seller}}",
-    "$0Startgebot: $2{{start_bid}}",
-    "$0Aktuelles Gebot: $2{{current_bid}} $0({{current_bidder}})",
-    "$0Dein Gebot: $2{{viewer_bid}}",
-    "$0Endet in: $2{{duration}}",
-    " ",
-    "$0Linksklick: $2Gebot zurückerhalten"
+    "$0Rechtsklick: $2Gebot zurückerhalten",
+    "$0Linksklick: $2Erneut bieten"
   ),
-  GUI_AH_AUCTION_LORE_BIDDING_BUT_RETRIEVABLE(
-    "gui.ah.auction.lore.bidding_but_retrievable",
+  GUI_AH_AUCTION_LORE_CANCEL(
+    "gui.ah.auction.lore.cancel",
     " ",
-    "$0&m----------------------",
-    "$0Verkäufer: $2{{seller}}",
-    "$0Startgebot: $2{{start_bid}}",
-    "$0Aktuelles Gebot: $2{{current_bid}} $0({{current_bidder}})",
-    "$0Dein Gebot: $2{{viewer_bid}}",
-    "$0Endet in: $2{{duration}}",
-    "$0Höchstbietend: $2{{is_highest}}",
-    " ",
-    "$0Rechtsklick: $2Gebot zurückerhalten"
+    "$0Linksklick: $2Abbrechen"
   ),
-  GUI_AH_AUCTION_LORE_PRICE_RETRIEVABLE(
-    "gui.ah.auction.lore.price_retrievable",
-    " ",
-    "$0&m----------------------",
-    "$0Verkäufer: $2{{seller}}",
-    "$0Startgebot: $2{{start_bid}}",
-    "$0Aktuelles Gebot: $2{{current_bid}} $0({{current_bidder}})",
-    "$0Endet in: $2{{duration}}",
+  GUI_AH_AUCTION_LORE_MONEY_RETRIEVABLE(
+    "gui.ah.auction.lore.money_retrievable",
     " ",
     "$0Linksklick: $2Geld ausbezahlen"
   ),
   GUI_AH_AUCTION_LORE_ITEMS_RETRIEVABLE(
     "gui.ah.auction.lore.items_retrievable",
-    " ",
-    "$0&m----------------------",
-    "$0Verkäufer: $2{{seller}}",
-    "$0Startgebot: $2{{start_bid}}",
-    "$0Aktuelles Gebot: $2{{current_bid}} $0({{current_bidder}})",
-    "$0Endet in: $2{{duration}}",
     " ",
     "$0Linksklick: $2Items zurückerhalten"
   ),

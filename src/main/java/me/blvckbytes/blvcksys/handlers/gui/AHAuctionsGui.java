@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.handlers.gui;
 
 import me.blvckbytes.blvcksys.commands.IGiveCommand;
 import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -91,27 +92,22 @@ public class AHAuctionsGui extends AGui<Object> {
       return auctions.stream().map(auction -> (
         new GuiItem(
           s -> {
-
-            // An auction just ended, refresh contents
-            if (!auction.isActive())
-              inst.refreshPageContents();
-
             AHBidModel lastBid = ahHandler.lastBid(auction, null).b();
-            return ahGui.buildDisplayItem(
-              p, auction, lastBid,
-              cfg.get(
-                auction.isActive() ?
-                  // Auction is still active and may be deleted
-                  ConfigKey.GUI_AH_AUCTION_LORE_DELETABLE :
-                  (
-                    lastBid == null ?
-                    // Auction over, no bids, item retrievable
-                    ConfigKey.GUI_AH_AUCTION_LORE_ITEMS_RETRIEVABLE :
-                    // Auction over, bids, money retrievable
-                    ConfigKey.GUI_AH_AUCTION_LORE_PRICE_RETRIEVABLE
-                  )
-              )
-            );
+            ConfigValue additionalLore = null;
+
+            // Has been sold but not payed out, money is retrievable
+            if (auction.isSold() && !auction.isPayed())
+              additionalLore = cfg.get(ConfigKey.GUI_AH_AUCTION_LORE_MONEY_RETRIEVABLE);
+
+            // Has not bin sold and isn't active anymore, items are retrievable
+            if (!auction.isActive() && !auction.isSold())
+              additionalLore = cfg.get(ConfigKey.GUI_AH_AUCTION_LORE_ITEMS_RETRIEVABLE);
+
+            // Auction is still active but there are no bids yet, still cancelable
+            if (auction.isActive() && lastBid == null)
+              additionalLore = cfg.get(ConfigKey.GUI_AH_AUCTION_LORE_CANCEL);
+
+            return ahGui.buildDisplayItem(p, auction, lastBid, null, additionalLore);
           },
           e -> {
             if (e.getClick().isShiftClick() || !e.getClick().isLeftClick())

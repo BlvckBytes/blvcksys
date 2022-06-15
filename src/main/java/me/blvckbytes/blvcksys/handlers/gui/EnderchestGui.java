@@ -117,8 +117,9 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
     int maxSlots;
 
     // Opened their own enderchest, or the enderchest of another online player
-    if (inst.getArg().isOnline()) {
-      maxSlots = PlayerPermission.COMMAND_ENDERCHEST_MAX_SLOTS.getSuffixNumber(((Player) inst.getArg()), true)
+    Player online = inst.getArg().getPlayer();
+    if (online != null) {
+      maxSlots = PlayerPermission.COMMAND_ENDERCHEST_MAX_SLOTS.getSuffixNumber(online, true)
         .orElse(EnderchestModel.DEFAULT_MAX_SLOTS);
       model.setLastMaxSlots(maxSlots);
     }

@@ -165,8 +165,9 @@ public class CrateKeysCommand extends APlayerCommand {
     );
 
     // Not self, notify the receiver
-    if (!isSelf && target.isOnline()) {
-      ((Player) target).sendMessage(
+    Player onlineTarget = target.getPlayer();
+    if (!isSelf && onlineTarget != null) {
+      onlineTarget.sendMessage(
         cfg.get(ConfigKey.COMMAND_CRATEKEYS_SET_OTHERS_RECEIVER)
           .withPrefix()
           .withVariable("issuer", p.getName())

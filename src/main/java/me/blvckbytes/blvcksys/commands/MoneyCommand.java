@@ -131,8 +131,9 @@ public class MoneyCommand extends APlayerCommand {
     );
 
     // Not self, notify the receiver
-    if (!isSelf && target.isOnline())
-      ((Player) target).sendMessage(
+    Player targetOnline = target.getPlayer();
+    if (!isSelf && targetOnline != null)
+      targetOnline.sendMessage(
         cfg.get(ConfigKey.MONEY_SET_OTHERS_RECEIVER)
           .withPrefix()
           .withVariable("issuer", p.getName())

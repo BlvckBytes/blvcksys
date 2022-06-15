@@ -302,8 +302,9 @@ public class ObjectiveHandler implements Listener, IAutoConstructed, IObjectiveH
    * @param p Target player
    */
   private void updateSidebarIfOnline(OfflinePlayer p) {
-    if (p.isOnline())
-      updateSidebar(((Player) p));
+    Player online = p.getPlayer();
+    if (online != null)
+      updateSidebar(online);
   }
 
   /**

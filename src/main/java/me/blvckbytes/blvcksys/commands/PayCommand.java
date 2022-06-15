@@ -112,8 +112,9 @@ public class PayCommand extends APlayerCommand {
         .asScalar()
     );
 
-    if (target.isOnline()) {
-      ((Player) target).sendMessage(
+    Player targetOnline = target.getPlayer();
+    if (targetOnline != null) {
+      targetOnline.sendMessage(
         cfg.get(ConfigKey.PAY_TRANSFERED_RECEIVER)
           .withPrefix()
           .withVariable("amount", amount)

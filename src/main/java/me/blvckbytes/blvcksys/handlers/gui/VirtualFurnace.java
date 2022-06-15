@@ -189,15 +189,14 @@ public class VirtualFurnace {
    * @param refl MCReflect ref for sending packets
    */
   private void syncWindow(int containerId, MCReflect refl) {
-    if (!holder.isOnline())
+    Player online = holder.getPlayer();
+    if (online == null)
       return;
-
-    Player p = (Player) holder;
 
     // Send the fuel left status
     // 0: Fire icon (fuel left) counting from fuel burn time down to 0 (in-game ticks)
     refl.sendPacket(
-      p, new PacketPlayOutWindowData(containerId, 0, remainingBurningTime)
+      online, new PacketPlayOutWindowData(containerId, 0, remainingBurningTime)
     );
 
     // Maximum burning time hasn't yet been announced
@@ -205,7 +204,7 @@ public class VirtualFurnace {
     if (!maximumBurningTimeSent) {
       maximumBurningTimeSent = true;
       refl.sendPacket(
-        p, new PacketPlayOutWindowData(containerId, 1, maximumBurningTime)
+        online, new PacketPlayOutWindowData(containerId, 1, maximumBurningTime)
       );
     }
 
@@ -214,13 +213,13 @@ public class VirtualFurnace {
     if (!maximumSmeltingTimeSent) {
       maximumSmeltingTimeSent = true;
       refl.sendPacket(
-        p, new PacketPlayOutWindowData(containerId, 3, SMELT_DURATION_T)
+        online, new PacketPlayOutWindowData(containerId, 3, SMELT_DURATION_T)
       );
     }
 
     // 2: Progress arrow counting from 0 to maximum progress (in-game ticks)
     refl.sendPacket(
-      p, new PacketPlayOutWindowData(containerId, 2, elapsedSmeltingTime)
+      online, new PacketPlayOutWindowData(containerId, 2, elapsedSmeltingTime)
     );
   }
 

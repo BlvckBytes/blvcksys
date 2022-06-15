@@ -339,24 +339,23 @@ public class HomeHandler implements IHomeHandler, IAutoConstructed, Listener {
       // Iterate all players within the cache
       for (Iterator<OfflinePlayer> playerI = cache.keySet().iterator(); playerI.hasNext();) {
         OfflinePlayer op = playerI.next();
+        Player online = op.getPlayer();
         Map<HomeModel, @Nullable Tuple<MultilineHologram, FakeArmorStand>> homes = cache.get(op);
 
         // Remove offline players from the cache and destroy all existing holograms
-        if (!op.isOnline()) {
+        if (online == null) {
           homes.values().forEach(this::destroyLaserHologram);
 
           playerI.remove();
           continue;
         }
 
-        Player p = (Player) op;
-
         // Update all k-v pairs for this player
         homes.entrySet().forEach(entry -> {
           HomeModel home = entry.getKey();
 
           // Doesn't want lasers rendered
-          if (!preferencesHandler.showHomeLasers(p)) {
+          if (!preferencesHandler.showHomeLasers(online)) {
             // Remove existing lasers, if applicable
             if (entry.getValue() != null) {
               destroyLaserHologram(entry.getValue());
@@ -367,19 +366,19 @@ public class HomeHandler implements IHomeHandler, IAutoConstructed, Listener {
           }
 
           double xzDist = (
-            Math.abs(home.getLoc().getX() - p.getLocation().getX()) +
-            Math.abs(home.getLoc().getZ() - p.getLocation().getZ())
+            Math.abs(home.getLoc().getX() - online.getLocation().getX()) +
+            Math.abs(home.getLoc().getZ() - online.getLocation().getZ())
           );
 
           // The laser is enabled if the distance is within the radius
           if (xzDist <= LASER_MAX_XZ_RAD) {
             if (entry.getValue() == null) {
               Location loc = home.getLoc().clone();
-              loc.setY(p.getEyeLocation().getY());
+              loc.setY(online.getEyeLocation().getY());
 
               // Create the hologram
               MultilineHologram mHolo = hologramHandler.createTemporary(
-                loc, List.of(p), buildLaserLines(home)
+                loc, List.of(online), buildLaserLines(home)
               );
 
               ArmorStandProperties props = new ArmorStandProperties();
@@ -388,7 +387,7 @@ public class HomeHandler implements IHomeHandler, IAutoConstructed, Listener {
 
               // Create the icon armor stand with it's basic properties
               FakeArmorStand as = armorStandHandler.createTemporary(
-                mHolo.getNextLocation(), List.of(p), props
+                mHolo.getNextLocation(), List.of(online), props
               );
 
               // Update the icon and store within cache
@@ -410,22 +409,22 @@ public class HomeHandler implements IHomeHandler, IAutoConstructed, Listener {
     // Loop all players and their homes in the cache
     cache.forEach((op, value) -> {
       // Not online anymore
-      if (!op.isOnline())
+      Player online = op.getPlayer();
+      if (online == null)
         return;
 
-      Player p = (Player) op;
       value.forEach((home, holo) -> {
         // Out of reach or disabled
         if (holo == null)
           return;
 
         // Holos should always be on the head height of the player
-        double dY = Math.abs(holo.a().getLoc().getY() - p.getEyeLocation().getY());
+        double dY = Math.abs(holo.a().getLoc().getY() - online.getEyeLocation().getY());
         Location loc = home.getLoc().clone();
 
         // Only move the hologram vertically if there's actually a noticable difference
         if (1.5 - dY <= 0.05) {
-          loc.setY(p.getEyeLocation().getY());
+          loc.setY(online.getEyeLocation().getY());
           holo.a().setLoc(loc);
           updateIcon(home, holo);
         }
@@ -437,7 +436,7 @@ public class HomeHandler implements IHomeHandler, IAutoConstructed, Listener {
 
         // Draw a full vertical laser
         for (double y = w.getMinHeight(); y <= w.getMaxHeight(); y += 0.1) {
-          p.spawnParticle(
+          online.spawnParticle(
             Particle.REDSTONE,
             new Location(w, loc.getX(), y, loc.getZ()), 1,
             new Particle.DustOptions(colorFromChatColor(home.getColor()), .8F)

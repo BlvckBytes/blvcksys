@@ -74,8 +74,9 @@ public class BanHandler implements IBanHandler, Listener {
     String banScreen = buildBanScreen(ban);
 
     // Kick the player if they're online
-    if (target.isOnline())
-      ((Player) target).kickPlayer(banScreen);
+    Player targetOnline = target.getPlayer();
+    if (targetOnline != null)
+      targetOnline.kickPlayer(banScreen);
 
     // Kick all other players running on the same address
     if (ipAddress != null) {

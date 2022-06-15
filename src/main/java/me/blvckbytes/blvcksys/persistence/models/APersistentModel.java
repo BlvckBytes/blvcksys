@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.persistence.models;
 
 import lombok.Getter;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
+import org.bukkit.OfflinePlayer;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -56,5 +57,15 @@ public abstract class APersistentModel {
    */
   public String getUpdatedAtStr(boolean shortFormat) {
     return updatedAt == null ? "/" : (shortFormat ? dfShort : df).format(updatedAt);
+  }
+
+  /**
+   * Compares two players for equality
+   * @param a Player A
+   * @param b Player B
+   * @return Equality state
+   */
+  public boolean comparePlayers(OfflinePlayer a, OfflinePlayer b) {
+    return a.getUniqueId().equals(b.getUniqueId());
   }
 }

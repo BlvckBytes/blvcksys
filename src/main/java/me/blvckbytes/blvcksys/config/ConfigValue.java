@@ -5,6 +5,7 @@ import org.bukkit.ChatColor;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -56,7 +57,7 @@ public class ConfigValue {
    * @param palette Color palette characters
    */
   public ConfigValue(List<String> lines, String prefix, String palette) {
-    this.lines = lines;
+    this.lines = new ArrayList<>(lines);
     this.prefix = prefix;
     this.palette = palette;
     this.prefixMode = 'N';
@@ -107,6 +108,24 @@ public class ConfigValue {
    */
   public Map<String, String> exportVariables() {
     return Collections.unmodifiableMap(this.vars);
+  }
+
+  /**
+   * Join this value with another value in place, by joining all lines and
+   * variables, where the variables of other may override entries of this.
+   * The prefix, the palette and the prefix mode are not updated and
+   * remain as they currently are.
+   * @param other Value to join with
+   * @param condition Contition which has to evaluate to true in order to perform the join
+   */
+  public ConfigValue joinWith(Supplier<ConfigValue> other, boolean condition) {
+    if (!condition)
+      return this;
+
+    ConfigValue cv = other.get();
+    this.vars.putAll(cv.exportVariables());
+    this.lines.addAll(cv.lines);
+    return this;
   }
 
   /**

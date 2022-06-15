@@ -9,14 +9,10 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
-import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Supplier;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -26,47 +22,8 @@ import java.util.function.Supplier;
 */
 public class ItemStackBuilder {
 
-  private final List<ItemFlag> flags;
-  private final Map<Enchantment, Integer> enchantments;
-  private final Material mat;
-  private final int amount;
-  private ConfigValue displayName;
-  private ConfigValue lore;
-  private GameProfile profile;
-  private ItemStack stack;
-  private ItemMeta meta;
-  private Color color;
-
-  /**
-   * Create a new builder for a player-head
-   * @param profile Profile to apply to the head
-   */
-  public ItemStackBuilder(GameProfile profile) {
-    this.mat = Material.PLAYER_HEAD;
-    this.amount = 1;
-    this.profile = profile;
-    this.enchantments = new HashMap<>();
-    this.flags = new ArrayList<>();
-  }
-
-  /**
-   * Create a new builder based on an existing item stack
-   * @param from Existing item stack to mimic
-   * @param amount Amount of items
-   */
-  public ItemStackBuilder(@Nullable ItemStack from, int amount) {
-    if (from == null)
-      this.mat = Material.BARRIER;
-    else {
-      this.mat = from.getType();
-      this.stack = from.clone();
-      this.meta = stack.getItemMeta();
-    }
-
-    this.flags = new ArrayList<>();
-    this.enchantments = new HashMap<>();
-    this.amount = amount;
-  }
+  private final ItemStack stack;
+  private final ItemMeta meta;
 
   /**
    * Create a new builder for a specific material
@@ -74,10 +31,28 @@ public class ItemStackBuilder {
    * @param amount Amount of items
    */
   public ItemStackBuilder(Material mat, int amount) {
-    this.enchantments = new HashMap<>();
-    this.flags = new ArrayList<>();
-    this.mat = mat;
-    this.amount = amount;
+    this.stack = new ItemStack(mat, amount);
+    this.meta = stack.getItemMeta();
+  }
+
+  /**
+   * Create a new builder for a player-head
+   * @param profile Profile to apply to the head
+   */
+  public ItemStackBuilder(GameProfile profile) {
+    this(Material.PLAYER_HEAD, 1);
+
+    // Is a player-head where textures should be applied
+    // and there has been a profile provided
+    if (profile != null) {
+      try {
+        Field profileField = meta.getClass().getDeclaredField("profile");
+        profileField.setAccessible(true);
+        profileField.set(meta, profile);
+      } catch (Exception e) {
+        e.printStackTrace();
+      }
+    }
   }
 
   /**
@@ -89,12 +64,24 @@ public class ItemStackBuilder {
   }
 
   /**
+   * Create a new builder based on an existing item stack
+   * @param from Existing item stack to mimic
+   * @param amount Amount of items
+   */
+  public ItemStackBuilder(ItemStack from, int amount) {
+    this.stack = from.clone();
+    this.stack.setAmount(amount);
+    this.meta = stack.getItemMeta();
+  }
+
+  /**
    * Add an enchantment with a specific level to this item
    * @param enchantment Enchantment to add
    * @param level Level to add the enchantment with
    */
   public ItemStackBuilder withEnchantment(Enchantment enchantment, int level) {
-    this.enchantments.put(enchantment, level);
+    if (this.meta != null)
+      this.meta.addEnchant(enchantment, level, true);
     return this;
   }
 
@@ -102,7 +89,8 @@ public class ItemStackBuilder {
    * Hides all attributes on this item
    */
   public ItemStackBuilder hideAttributes() {
-    this.flags.add(ItemFlag.HIDE_ATTRIBUTES);
+    if (this.meta != null)
+      this.meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
     return this;
   }
 
@@ -111,7 +99,8 @@ public class ItemStackBuilder {
    * @param color Color to add
    */
   public ItemStackBuilder withColor(Color color) {
-    this.color = color;
+    if (this.meta != null && this.meta instanceof LeatherArmorMeta lam)
+      lam.setColor(color);
     return this;
   }
 
@@ -120,8 +109,7 @@ public class ItemStackBuilder {
    * @param name Name to set
    */
   public ItemStackBuilder withName(ConfigValue name) {
-    this.displayName = name;
-    return this;
+    return withName(name, true);
   }
 
   /**
@@ -129,82 +117,31 @@ public class ItemStackBuilder {
    * @param name Name to set
    * @param condition Boolean which has to evaluate to true in order to apply the name
    */
-  public ItemStackBuilder withName(ConfigValue name, Supplier<Boolean> condition) {
-    if (condition.get())
-      this.displayName = name;
+  public ItemStackBuilder withName(ConfigValue name, boolean condition) {
+    if (condition && this.meta != null)
+      this.meta.setDisplayName(name.asScalar());
     return this;
   }
 
   /**
-   * Set a lore (lines of text when hovering)
+   * Add a lore to the existing lore
    * @param lore Lines to set
    */
   public ItemStackBuilder withLore(ConfigValue lore) {
-    this.lore = lore;
+    if (this.meta != null) {
+      List<String> lines = meta.getLore() == null ? new ArrayList<>() : meta.getLore();
+      lines.addAll(lore.asList());
+      meta.setLore(lines);
+    }
     return this;
   }
 
   /**
-   * Build this item without any additional template variables
+   * Build this item by applying the cached meta to the stack
    */
   public ItemStack build() {
-    return build(new HashMap<>());
-  }
-
-  /**
-   * Build this item with additional template variables
-   * @param variables Variables to apply
-   */
-  public ItemStack build(Map<String, String> variables) {
-    if (stack == null)
-      stack = new ItemStack(this.mat, this.amount);
-    else {
-      stack.setType(this.mat);
-      stack.setAmount(this.amount);
-    }
-
-    if (meta == null)
-      meta = stack.getItemMeta();
-
-    if (meta == null)
-      return stack;
-
-    if (displayName != null) {
-      meta.setDisplayName(
-        displayName
-          .withVariables(variables)
-          .asScalar()
-      );
-    }
-
-    // Extend the lore
-    List<String> existingLore = meta.getLore() == null ? new ArrayList<>() : meta.getLore();
-    if (lore != null)
-      existingLore.addAll(lore.withVariables(variables).asList());
-    meta.setLore(existingLore);
-
-    // Is a player-head where textures should be applied
-    if (mat == Material.PLAYER_HEAD && profile != null) {
-      try {
-        Field profileField = meta.getClass().getDeclaredField("profile");
-        profileField.setAccessible(true);
-        profileField.set(meta, profile);
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }
-
-    for (ItemFlag flag : this.flags)
-      meta.addItemFlags(flag);
-
-    if (color != null && meta instanceof LeatherArmorMeta lam)
-      lam.setColor(color);
-
-    for (Map.Entry<Enchantment, Integer> ench : enchantments.entrySet()) {
-      meta.addEnchant(ench.getKey(), ench.getValue(), true);
-    }
-
-    stack.setItemMeta(meta);
+    if (meta != null)
+      stack.setItemMeta(meta);
     return stack;
   }
 }

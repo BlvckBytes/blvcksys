@@ -2125,6 +2125,8 @@ public enum ConfigKey {
   GUI_CREATE_AH_START_PROMPT_INVALID("gui.ah_create.start.prompt.invalid", "$0Der Betrag von muss größer als $40 $0sein!"),
   GUI_CREATE_AH_START_PROMPT_SUCCESS("gui.ah_create.start.prompt.success", "$0Das $2Startgebot $0deiner Auktion wurde auf $2{{amount}} $0gesetzt."),
   GUI_CREATE_AH_ITEM_RETURNED("gui.ah_create.item.returned", "$0Dein $2Auktionsitem $0wurde dir aufgrund des Abbruches $2retourniert$0."),
+  GUI_CREATE_AH_ITEM_RETRIEVED("gui.ah_create.item.retrieved", "$0Du hast dein Auktionsitem $2wiedererhalten$0."),
+  GUI_CREATE_AH_MONEY_RETRIEVED("gui.ah_create.money.retrieved", "$0Der Verkaufspreis von $2{{money}} $0wurde dir gutgeschrieben."),
   GUI_CREATE_AH_ITEM_NAME("gui.ah_create.item.name", "$0» &cKein Item gewählt $0«"),
   GUI_CREATE_AH_ITEM_LORE_VACANT(
     "gui.ah_create.item.lore.vacant",

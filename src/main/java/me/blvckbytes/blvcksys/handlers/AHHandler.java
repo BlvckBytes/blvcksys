@@ -118,7 +118,6 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
 
   @Override
   public boolean deleteAuction(AHAuctionModel auction) {
-    // TODO: Notify bidding players of deletion, if online (how to handle offline players?)
     boolean res = pers.delete(auction);
     auctionCache.remove(auction);
     auctionDeltaInterests.forEach(Runnable::run);
@@ -145,6 +144,27 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
     target.setCanceller(executor);
     pers.store(target);
     auctionDeltaInterests.forEach(Runnable::run);
+    return TriResult.SUCC;
+  }
+
+  @Override
+  public TriResult retrieveAuctionMoney(OfflinePlayer executor, AHAuctionModel auction) {
+    AHAuctionModel target = getAuctionById(auction.getId()).orElse(null);
+
+    // Auction doesn't exist anymore
+    if (target == null)
+      return TriResult.EMPTY;
+
+    // Still active or has no bids
+    if (target.isActive() || lastBid(auction, null).b() == null)
+      return TriResult.EMPTY;
+
+    // Already payed out
+    if (target.isPayed())
+      return TriResult.ERR;
+
+    target.setPayed(true);
+    pers.store(target);
     return TriResult.SUCC;
   }
 
@@ -212,15 +232,19 @@ public class AHHandler implements IAHHandler, Listener, IAutoConstructed {
   }
 
   @Override
-  public List<AHAuctionModel> listCancellableOrRetrievableAuctions(OfflinePlayer creator) {
+  public List<AHAuctionModel> listPendingAuctions(OfflinePlayer creator) {
     return auctionCache.keySet().stream()
       .filter(auction -> {
         // Different creator
         if (!auction.comparePlayers(auction.getCreator(), creator))
           return false;
 
-        // Has already received the money of this auction, if it's sold
-        return !(auction.isSold() && auction.isPayed());
+        // Money already retrieved
+        if (auction.isPayed())
+          return false;
+
+        // Either active, retrievable, payable or cancellable
+        return true;
       })
       .collect(Collectors.toList());
   }

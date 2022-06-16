@@ -13,9 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.UUID;
 import java.util.function.BiConsumer;
-import java.util.function.Supplier;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -79,6 +77,14 @@ public interface IAHHandler {
   TriResult cancelAuction(OfflinePlayer executor, AHAuctionModel auction);
 
   /**
+   * Pay out the last bid of an expired, sold auction
+   * @param executor Executing player
+   * @param auction Auction to pay out
+   * @return SUCC on success, EMPTY if the auction is not payable and ERR if it has already been payed out
+   */
+  TriResult retrieveAuctionMoney(OfflinePlayer executor, AHAuctionModel auction);
+
+  /**
    * Create a new bid on an auction
    * @param executor Executing player
    * @param auction Auction to bid on
@@ -110,7 +116,7 @@ public interface IAHHandler {
    * List all auctions which the player either may still cancel or where money is still to be retrieved
    * @param creator Target player
    */
-  List<AHAuctionModel> listCancellableOrRetrievableAuctions(OfflinePlayer creator);
+  List<AHAuctionModel> listPendingAuctions(OfflinePlayer creator);
 
   /**
    * List all bids of an auction

@@ -42,10 +42,6 @@ public class AHAuctionModel extends APersistentModel {
   @ModelProperty(isNullable = true)
   private OfflinePlayer canceller;
 
-  // Whether the item has been sold (used for instant buy)
-  @ModelProperty
-  private boolean sold;
-
   // Whether the creator has been payed already
   @ModelProperty(migrationDefault = MigrationDefault.FALSE)
   private boolean payed;
@@ -54,7 +50,7 @@ public class AHAuctionModel extends APersistentModel {
    * Checks whether the auction is still active (can be bidden on)
    */
   public boolean isActive() {
-    return !sold && System.currentTimeMillis() < createdAt.getTime() + durationSeconds * 1000 && canceller == null;
+    return System.currentTimeMillis() < createdAt.getTime() + durationSeconds * 1000 && canceller == null;
   }
 
   public static AHAuctionModel makeDefault(
@@ -64,6 +60,6 @@ public class AHAuctionModel extends APersistentModel {
     int startBid,
     AuctionCategory category
   ) {
-    return new AHAuctionModel(creator, item, durationSeconds, startBid, category, null, false, false);
+    return new AHAuctionModel(creator, item, durationSeconds, startBid, category, null, false);
   }
 }

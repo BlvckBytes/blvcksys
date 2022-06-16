@@ -228,6 +228,8 @@ public class GuiInstance<T> {
     // after re-fetching the pages (results might have shrunken)
     if (currPage >= pages.size())
       currPage = pages.size() == 0 ? 0 : pages.size() - 1;
+
+    redrawPaging();
   }
 
   /**

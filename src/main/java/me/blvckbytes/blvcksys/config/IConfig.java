@@ -22,4 +22,17 @@ public interface IConfig {
    * @param key Key to identify the value
    */
   Optional<ConfigValue> get(String path, String key);
+
+  /**
+   * Get an advanced config reader for a given file
+   * @param path Path of the target config file (no leading slash, no .yml)
+   */
+  Optional<ConfigReader> reader(String path);
+
+  /**
+   * Checks if a non-scalar value exists at the provided path
+   * @param path Path to check
+   * @return True if the key points to a non-scalar value, false otherwise
+   */
+  boolean nonScalarExists(String path, String key);
 }

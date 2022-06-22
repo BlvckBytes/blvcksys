@@ -4,6 +4,7 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
+import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.util.Tuple;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -30,6 +31,7 @@ public class YamlConfig implements IConfig, IAutoConstructed {
 
   // Mapping config paths to a tuple of the in-memory config and it's underlying file
   private final Map<String, Tuple<YamlConfiguration, File>> configs;
+  private final Map<String, ConfigReader> readers;
   private final JavaPlugin plugin;
 
   @AutoInjectLate
@@ -45,6 +47,7 @@ public class YamlConfig implements IConfig, IAutoConstructed {
     @AutoInject JavaPlugin plugin
   ) {
     this.configs = new HashMap<>();
+    this.readers = new HashMap<>();
     this.plugin = plugin;
 
     // Build a fallback for the prefix
@@ -76,14 +79,30 @@ public class YamlConfig implements IConfig, IAutoConstructed {
     return retrieve(handle, key);
   }
 
-    // Is a list
-    Class<?> valC = val.getClass();
-    if (List.class.isAssignableFrom(valC))
-      return new ConfigValue((List<String>) val, prefix, palette);
+  @Override
+  public Optional<ConfigReader> reader(String path) {
+    Tuple<YamlConfiguration, File> handle = load(path).orElse(null);
 
-    // Is a scalar
-    else
-      return new ConfigValue(val.toString(), prefix, palette);
+    if (handle == null)
+      return Optional.empty();
+
+    // Cache readers to be re-used
+    if (readers.containsKey(path))
+      return Optional.of(readers.get(path));
+
+    ConfigReader reader = new ConfigReader(this, path, textureHandler);
+    readers.put(path, reader);
+    return Optional.of(reader);
+  }
+
+  @Override
+  public boolean nonScalarExists(String path, String key) {
+    Tuple<YamlConfiguration, File> handle = load(path).orElse(null);
+
+    if (handle == null)
+      return false;
+
+    return handle.a().isConfigurationSection(key);
   }
 
   @Override

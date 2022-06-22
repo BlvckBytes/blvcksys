@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.handlers.gui;
 
 import com.mojang.authlib.GameProfile;
 import me.blvckbytes.blvcksys.config.ConfigValue;
+import net.minecraft.util.Tuple;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
@@ -9,10 +10,12 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -44,15 +47,8 @@ public class ItemStackBuilder {
 
     // Is a player-head where textures should be applied
     // and there has been a profile provided
-    if (profile != null) {
-      try {
-        Field profileField = meta.getClass().getDeclaredField("profile");
-        profileField.setAccessible(true);
-        profileField.set(meta, profile);
-      } catch (Exception e) {
-        e.printStackTrace();
-      }
-    }
+    if (profile != null)
+      setHeadProfile(profile);
   }
 
   /**
@@ -86,6 +82,18 @@ public class ItemStackBuilder {
   }
 
   /**
+   * Add enchantments to the item
+   * @param enchantments Enchantments to add
+   * @param condition Boolean which has to evaluate to true in order to apply the enchantments
+   */
+  public ItemStackBuilder withEnchantments(Supplier<List<Tuple<Enchantment, Integer>>> enchantments, boolean condition) {
+    if (condition && this.meta != null) {
+      enchantments.get().forEach(ench -> withEnchantment(ench.a(), ench.b()));
+    }
+    return this;
+  }
+
+  /**
    * Hides all attributes on this item
    */
   public ItemStackBuilder hideAttributes() {
@@ -95,12 +103,21 @@ public class ItemStackBuilder {
   }
 
   /**
+   * Add a list of itemflags to this item
+   */
+  public ItemStackBuilder withFlags(Supplier<List<ItemFlag>> flags, boolean condition) {
+    if (condition && this.meta != null)
+      flags.get().forEach(this.meta::addItemFlags);
+    return this;
+  }
+
+  /**
    * Add a color to this item (only applicable to leather armor)
    * @param color Color to add
    */
-  public ItemStackBuilder withColor(Color color) {
-    if (this.meta != null && this.meta instanceof LeatherArmorMeta lam)
-      lam.setColor(color);
+  public ItemStackBuilder withColor(Supplier<Color> color, boolean condition) {
+    if (condition && this.meta != null && this.meta instanceof LeatherArmorMeta lam)
+      lam.setColor(color.get());
     return this;
   }
 
@@ -126,13 +143,33 @@ public class ItemStackBuilder {
   /**
    * Add a lore to the existing lore
    * @param lore Lines to set
+   * @param condition Boolean which has to evaluate to true in order to apply the lore
    */
-  public ItemStackBuilder withLore(ConfigValue lore) {
-    if (this.meta != null) {
+  public ItemStackBuilder withLore(ConfigValue lore, boolean condition) {
+    if (condition && this.meta != null) {
       List<String> lines = meta.getLore() == null ? new ArrayList<>() : meta.getLore();
       lines.addAll(lore.asList());
       meta.setLore(lines);
     }
+    return this;
+  }
+
+  /**
+   * Add a lore to the existing lore
+   * @param lore Lines to set
+   */
+  public ItemStackBuilder withLore(ConfigValue lore) {
+    return withLore(lore, true);
+  }
+
+  /**
+   * Set the head owner's profile of this item
+   * @param profile Profile to set
+   * @param condition Boolean which has to evaluate to true in order to apply the profile
+   */
+  public ItemStackBuilder withProfile(Supplier<GameProfile> profile, boolean condition) {
+    if (condition && this.meta != null)
+      setHeadProfile(profile.get());
     return this;
   }
 
@@ -143,5 +180,22 @@ public class ItemStackBuilder {
     if (meta != null)
       stack.setItemMeta(meta);
     return stack;
+  }
+
+  /**
+   * Sets the head game profile of the item-meta
+   * @param profile Game profile to set
+   */
+  private void setHeadProfile(GameProfile profile) {
+    if (this.meta == null || !(this.meta instanceof SkullMeta))
+      return;
+
+    try {
+      Field profileField = meta.getClass().getDeclaredField("profile");
+      profileField.setAccessible(true);
+      profileField.set(meta, profile);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 }

@@ -1265,7 +1265,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       slotReprs.add(new Tuple<>(
         color,
         new ItemStackBuilder(material.apply(color.b()))
-          .withColor(color.b())
+          .withColor(() -> color.b(), true)
           .withName(
             name
               .withVariable("color", formatConstant(color.a()))

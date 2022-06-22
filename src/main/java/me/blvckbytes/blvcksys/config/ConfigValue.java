@@ -24,8 +24,8 @@ import java.util.stream.Stream;
 */
 public class ConfigValue {
 
-  // Unmodified lines of text read from the config
-  private final List<String> lines;
+  // Unmodified lines read from the config
+  private final List<Object> lines;
 
   // Variable names and their values that need to be substituted
   // Names are translated to a pattern when added to the instance
@@ -41,13 +41,13 @@ public class ConfigValue {
   private char prefixMode;
 
   /**
-   * Create a new config value builder by a string value
-   * @param str String value
+   * Create a new config value builder by a value
+   * @param val Value
    * @param prefix Prefix for optional appending
    * @param palette Color palette characters
    */
-  public ConfigValue(String str, String prefix, String palette) {
-    this(List.of(str), prefix, palette);
+  public ConfigValue(Object val, String prefix, String palette) {
+    this(List.of(val), prefix, palette);
   }
 
   /**
@@ -56,7 +56,7 @@ public class ConfigValue {
    * @param prefix Prefix for optional appending
    * @param palette Color palette characters
    */
-  public ConfigValue(List<String> lines, String prefix, String palette) {
+  public ConfigValue(List<Object> lines, String prefix, String palette) {
     this.lines = new ArrayList<>(lines);
     this.prefix = prefix;
     this.palette = palette;
@@ -129,11 +129,31 @@ public class ConfigValue {
   }
 
   /**
-   * Build as a scalar value using newlines for line separation
+   * Build as a scalar by stringifying values and joining
+   * them using newlines for line separation
    * @return String value
    */
   public String asScalar() {
     return asScalar("\n");
+  }
+
+  /**
+   * Get the first available value from the list as a
+   * scalar of a specific type by trying to cast it or use
+   * the fallback if the local type is mismatching the request
+   * or there are no available items.
+   * @param type Required type
+   * @param fallback Fallback to use on type mismatches
+   * @return Cast type or fallback value
+   */
+  public<T> T asScalar(Class<T> type, T fallback) {
+    try {
+      if (lines.size() != 0)
+        return cast(lines.get(0), type).orElse(fallback);
+    } catch (ClassCastException e) {
+      e.printStackTrace();
+    }
+    return fallback;
   }
 
   /**
@@ -145,7 +165,7 @@ public class ConfigValue {
     StringBuilder result = new StringBuilder();
 
     for (int i = 0; i < lines.size(); i++) {
-      String line = lines.get(i);
+      String line = lines.get(i).toString();
 
       // Separate lines
       if (i != 0) {
@@ -189,12 +209,30 @@ public class ConfigValue {
    */
   public List<String> asList() {
     return lines.stream()
-      .map(this::transformLine)
+      .map(line -> this.transformLine(line.toString()))
       .map(line -> Arrays.asList(line.split("\n")))
       .reduce(new ArrayList<>(), (a, b) -> {
         a.addAll(b);
         return a;
       });
+  }
+
+  /**
+   * Get the local list by casting every element to the provided
+   * type, where mismatching entries are skipped
+   * @param type Required type
+   * @return List of casted values
+   */
+  public<T> List<T> asList(Class<T> type) {
+    List<T> buf = new ArrayList<>();
+
+    for (Object o : lines) {
+      try {
+        cast(o, type).ifPresent(buf::add);
+      } catch (ClassCastException ignored) {}
+    }
+
+    return buf;
   }
 
   /**
@@ -337,5 +375,30 @@ public class ConfigValue {
    */
   public static ConfigValue immediate(String value) {
     return new ConfigValue(value, "", "");
+  }
+
+  /**
+   * Tries to "cast" an object read from the config using get() into the
+   * required type and responds with an empty result if the conversion is impossible
+   * @param value Value to convert
+   * @param type Type to convert to
+   */
+  private<T> Optional<T> cast(Object value, Class<T> type) {
+    try {
+
+      // Automatic enum parsing
+      if (type.isEnum()) {
+        for (T ec : type.getEnumConstants()) {
+          if (((Enum<?>) ec).name().equalsIgnoreCase(value.toString().trim()))
+            return Optional.of(ec);
+        }
+
+        return Optional.empty();
+      }
+
+      return Optional.of(type.cast(value));
+    } catch (ClassCastException e) {
+      return Optional.empty();
+    }
   }
 }

@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.config;
 
+import lombok.Getter;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +26,7 @@ import java.util.stream.Stream;
 public class ConfigValue {
 
   // Unmodified lines read from the config
+  @Getter
   private final List<Object> lines;
 
   // Variable names and their values that need to be substituted

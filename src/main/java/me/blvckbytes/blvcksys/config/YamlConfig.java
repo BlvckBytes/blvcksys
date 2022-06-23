@@ -119,6 +119,69 @@ public class YamlConfig implements IConfig, IAutoConstructed {
   //                               Utilities                                 //
   //=========================================================================//
 
+  private Optional<ConfigValue> retrieveIndexed(Tuple<YamlConfiguration, File> handle, String key) {
+    // Object of the currently iterated level within the loop
+    Object obj = null;
+
+    // Iterate all key levels
+    String[] levels = key.split("\\.");
+    for (int j = 0; j < levels.length; j++) {
+      String level = levels[j];
+      Integer i = null;
+
+      // Indexed level, splice off the index notation and parse the requested level
+      if (level.matches("(.*)\\[\\d+\\]$")) {
+        // Get the requested index and splice off the index notation
+        String index = level.substring(level.indexOf('[') + 1, level.indexOf(']'));
+        level = level.substring(0, level.indexOf('['));
+
+        try {
+          i = Integer.parseInt(index);
+        }
+
+        // Invalid index provided
+        catch (NumberFormatException e) {
+          return Optional.empty();
+        }
+      }
+
+      // Get the initial value
+      if (j == 0)
+        obj = handle.a().get(level);
+
+      // Get the next level from the map
+      else {
+        if (!(obj instanceof Map<?, ?> m))
+          throw new IllegalStateException("Cannot get the next key from a non-map type: " + level + " (" + key + ")");
+        obj = m.get(level);
+      }
+
+      // Get the target index value from the current list
+      if (i != null) {
+        // Can only index when the result is a list
+        if (!(obj instanceof List<?> l))
+          throw new IllegalStateException("Tried to index a non-list value: " + level + "[" + i + "] (" + key + ")");
+
+        // Out of range
+        if (i < 0 || i >= l.size())
+          return Optional.empty();
+
+        // Retrieve the target list item
+        obj = l.get(i);
+      }
+
+      // Cannot resolve further
+      if (obj == null)
+        return Optional.empty();
+    }
+
+    // Didn't yield anything
+    if (obj == null)
+      return Optional.empty();
+
+    return Optional.of(new ConfigValue((obj instanceof List<?> l) ? l : obj, prefix, palette));
+  }
+
   /**
    * Retrieve a config value from a given handle by it's key
    * @param handle Config handle
@@ -130,6 +193,10 @@ public class YamlConfig implements IConfig, IAutoConstructed {
     // Config failed to load
     if (handle == null)
       return Optional.empty();
+
+    // Caller wants to index at least once, the path needs to be walked manually
+    if (key.matches("(.*)\\[\\d+\\](.*)"))
+      return retrieveIndexed(handle, key);
 
     // Key unknown
     Object val = handle.a().get(key);

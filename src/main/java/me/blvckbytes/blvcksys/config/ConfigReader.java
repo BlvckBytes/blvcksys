@@ -32,22 +32,23 @@ public class ConfigReader {
   /**
    * Read an item-stack by it's key
    * @param key Target config key
+   * @param variables Optional map of variables applied to internal config values
    * @return ItemStack on success, empty if the key was invalid
    */
-  public Optional<ItemStack> getItem(String key) {
+  public Optional<ItemStack> getItem(String key, @Nullable Map<String, String> variables) {
     // Not an object
     if (!cfg.nonScalarExists(path, key))
       return Optional.empty();
 
-    ConfigValue name = cfg.get(path, key + ".name").orElse(null);
-    ConfigValue lore = cfg.get(path, key + ".lore").orElse(null);
-    ConfigValue flags = cfg.get(path, key + ".flags").orElse(null);
-    ConfigValue color = cfg.get(path, key + ".color").orElse(null);
-    ConfigValue enchantments = cfg.get(path, key + ".enchantments").orElse(null);
-    ConfigValue textures = cfg.get(path, key + ".textures").orElse(null);
+    ConfigValue name = get(join(key, "name")).map(cv -> cv.withVariables(variables)).orElse(null);
+    ConfigValue lore = get(join(key, "lore")).map(cv -> cv.withVariables(variables)).orElse(null);
+    ConfigValue flags = get(join(key, "flags")).map(cv -> cv.withVariables(variables)).orElse(null);
+    ConfigValue color = get(join(key, "color")).map(cv -> cv.withVariables(variables)).orElse(null);
+    ConfigValue enchantments = get(join(key, "enchantments")).map(cv -> cv.withVariables(variables)).orElse(null);
+    ConfigValue textures = get(join(key, "textures")).map(cv -> cv.withVariables(variables)).orElse(null);
 
-    int amount = getScalar(key + ".amount", Integer.class, 1);
-    Material mat = getScalar(key + ".type", Material.class, Material.BARRIER);
+    int amount = getScalar(join(key, "amount"), Integer.class, 1);
+    Material mat = getScalar(join(key, "type"), Material.class, Material.BARRIER);
 
     return Optional.of(
       new ItemStackBuilder(mat, amount)
@@ -83,13 +84,21 @@ public class ConfigReader {
   }
 
   /**
+   * Get a config-value from the file of this reader
+   * @param key Key to retrieve
+   */
+  public Optional<ConfigValue> get(String key) {
+    return cfg.get(path, key);
+  }
+
+  /**
    * Get a scalar value or make use of a fallback
    * @param key Target key
    * @param type Type to cast to
    * @param fallback Fallback for error cases
    */
   private<T> T getScalar(String key, Class<T> type, T fallback) {
-    ConfigValue cv = cfg.get(path, key).orElse(null);
+    ConfigValue cv = get(key).orElse(null);
     if (cv == null)
       return fallback;
     return cv.asScalar(type, fallback);
@@ -165,5 +174,27 @@ public class ConfigReader {
     } catch (NumberFormatException e) {
       return Optional.empty();
     }
+  }
+
+  /**
+   * Join two keys with a separating dot and handle all cases
+   * @param keyA Key A of the result
+   * @param keyB Key B of the result
+   * @return A concatenated with B
+   */
+  private String join(String keyA, String keyB) {
+    if (keyA.isBlank())
+      return keyB;
+
+    if (keyB.isBlank())
+      return keyA;
+
+    if (keyA.endsWith(".") && keyB.startsWith("."))
+      return keyA + keyB.substring(1);
+
+    if (keyA.endsWith(".") || keyB.startsWith("."))
+      return keyA + keyB;
+
+    return keyA + "." + keyB;
   }
 }

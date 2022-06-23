@@ -26,7 +26,6 @@ import java.util.stream.Stream;
 public class ConfigValue {
 
   // Unmodified lines read from the config
-  @Getter
   private final List<Object> lines;
 
   // Variable names and their values that need to be substituted
@@ -362,6 +361,24 @@ public class ConfigValue {
   @Override
   public String toString() {
     return asScalar();
+  }
+
+  /**
+   * Get the total number of lines read from the config
+   */
+  public int getNumberOfLines() {
+    return lines.size();
+  }
+
+  /**
+   * Get a specific line by it's index
+   * @param index Target index
+   * @return Optional line, empty if the index is out of range
+   */
+  public Optional<Object> getLine(int index) {
+    if (index < 0 || index >= lines.size())
+      return Optional.empty();
+    return Optional.of(lines.get(index));
   }
 
   /**

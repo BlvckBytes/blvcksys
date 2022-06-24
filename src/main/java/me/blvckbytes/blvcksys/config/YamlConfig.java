@@ -90,7 +90,7 @@ public class YamlConfig implements IConfig, IAutoConstructed {
     if (readers.containsKey(path))
       return Optional.of(readers.get(path));
 
-    ConfigReader reader = new ConfigReader(this, path, textureHandler);
+    ConfigReader reader = new ConfigReader(this, path, textureHandler, logger);
     readers.put(path, reader);
     return Optional.of(reader);
   }

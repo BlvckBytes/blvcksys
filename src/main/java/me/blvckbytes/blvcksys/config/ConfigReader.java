@@ -1,8 +1,10 @@
 package me.blvckbytes.blvcksys.config;
 
+import com.google.common.primitives.Primitives;
 import lombok.RequiredArgsConstructor;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.handlers.gui.ItemStackBuilder;
+import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.util.Tuple;
 import org.bukkit.Color;
 import org.bukkit.Material;
@@ -11,6 +13,7 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.*;
@@ -28,6 +31,126 @@ public class ConfigReader {
   private final IConfig cfg;
   private final String path;
   private final @Nullable IPlayerTextureHandler textureHandler;
+  private final @Nullable ILogger logger;
+
+  @SuppressWarnings("unchecked")
+  public<T extends AConfigSection> Optional<T> parseValue(String key, Class<T> type) {
+    // Key does not exist
+    if (cfg.get(path, key).isEmpty())
+      return Optional.empty();
+
+    try {
+      T res = type.getConstructor().newInstance();
+
+      for (Field f : type.getDeclaredFields()) {
+        f.setAccessible(true);
+
+        String fName = f.getName();
+        Class<?> fType = Primitives.wrap(f.getType());
+
+        // Try to transform the type by letting the class decide at runtime
+        if (fType == Object.class)
+          fType = res.runtimeDecide(fName);
+
+        // Parse an item stack using the local utility
+        if (fType == ItemStack.class) {
+          Object v = getItem(join(key, fName), null).orElse(null);
+          if (v != null)
+            f.set(res, v);
+
+          continue;
+        }
+
+        boolean isConfigValue = AConfigSection.class.isAssignableFrom(fType);
+        boolean isEnum = (fType.isEnum() || (hasStaticSelfConstants(fType) && !isConfigValue));
+
+        // Is a value which can be retrieved immediately, doesn't need recursion
+        if (
+          Primitives.isWrapperType(fType) ||
+          fType == String.class ||
+          fType == ConfigValue.class ||
+          isEnum
+        ) {
+          ConfigValue cv = get(join(key, fName)).orElse(null);
+
+          if (cv != null) {
+            // Requested the vanilla config value as is
+            if (fType == ConfigValue.class)
+              f.set(res, cv);
+
+            // Try to parse an enum from the value's scalar string repr
+            else if (isEnum) {
+              Object v = parseEnum(fType, cv.asScalar()).orElse(null);
+              if (v != null)
+                f.set(res, v);
+            }
+
+            // Set the scalar value, only if it's type matches
+            else {
+              Object v = cv.asScalar(fType, null);
+              if (fType.isAssignableFrom(v.getClass()))
+                f.set(res, v);
+            }
+          }
+
+          continue;
+        }
+
+        // Is an array, multiple elements of the same type in a sequence
+        if (fType.isArray()) {
+          Class<?> arrType = f.getType().getComponentType();
+
+          // Unsupported array type
+          if (!AConfigSection.class.isAssignableFrom(arrType))
+            continue;
+
+          // Try to fetch as many values of the list as possible, until the end is reached
+          List<Object> items = new ArrayList<>();
+          for (int i = 0; i < Integer.MAX_VALUE; i++) {
+            Optional<?> v = parseValue(join(key, fName) + "[" + i + "]", (Class<? extends AConfigSection>) arrType);
+
+            // End of list reached, no more items available
+            if (v.isEmpty())
+              break;
+
+            items.add(v.get());
+          }
+
+          f.set(res, items.toArray((Object[]) Array.newInstance(arrType, 1)));
+          continue;
+        }
+
+        // Is another config value and thus needs recursion
+        if (isConfigValue) {
+          Object v = parseValue(join(key, fName), (Class<? extends AConfigSection>) fType).orElse(null);
+
+          if (v != null)
+            f.set(res, v);
+
+          continue;
+        }
+
+        // Invalid type encountered, leave at default
+      }
+
+      return Optional.of(res);
+    } catch (Exception e) {
+      if (logger == null)
+        e.printStackTrace();
+      else
+        logger.logError(e);
+    }
+
+    return Optional.empty();
+  }
+
+  /**
+   * Checks whether a class declares static constants of it's own type (enum-like)
+   * @param c Class to check
+   */
+  private boolean hasStaticSelfConstants(Class<?> c) {
+    return Arrays.stream(c.getDeclaredFields()).anyMatch(field -> field.getType().equals(c) && Modifier.isStatic(field.getModifiers()));
+  }
 
   /**
    * Read an item-stack by it's key
@@ -66,7 +189,7 @@ public class ConfigReader {
 
             // Try to parse the enchantment by it's constant name and the
             // integer level as a positive number
-            Enchantment e = parseEnchantment(data[0]).orElse(null);
+            Enchantment e = parseEnum(Enchantment.class, data[0]).orElse(null);
             Integer level = parseInt(data[1]).orElse(null);
 
             // Invalid values
@@ -110,19 +233,10 @@ public class ConfigReader {
    * @return Parsed color, empty on malformed inputs
    */
   private Optional<Color> parseColor(String value) {
-    // Get all available colors from the color class's list of constant fields
-    try {
-      List<Field> constants = Arrays.stream(Color.class.getDeclaredFields())
-        .filter(field -> field.getType().equals(Color.class) && Modifier.isStatic(field.getModifiers()))
-        .toList();
-
-      for (Field constant : constants) {
-        if (constant.getName().equalsIgnoreCase(value))
-          return Optional.of((Color) constant.get(null));
-      }
-    } catch (Exception ex) {
-      ex.printStackTrace();
-    }
+    // Try to parse the color by it's name
+    Optional<Color> byName = parseEnum(Color.class, value);
+    if (byName.isPresent())
+      return byName;
 
     // Assume it's RGB, formatted like: r g b
     String[] data = value.split(" ");
@@ -141,23 +255,38 @@ public class ConfigReader {
   }
 
   /**
-   * Parse a bukkit-enchantment based on it's internal constant names
-   * @param name Value to parse
-   * @return Parsed enchantment, empty if the input is not a known enchantment name
+   * Parses an "enum" from either true enum constants or static self-typed
+   * constant declarations within the specified class
+   * @param c Target class
+   * @param value String value to parse
+   * @return Optional constant, empty if there was no such constant
    */
-  private Optional<Enchantment> parseEnchantment(String name) {
-    // Get all available enchantments from the abstract enchantment class's list of constant fields
-    try {
-      List<Field> constants = Arrays.stream(Enchantment.class.getDeclaredFields())
-        .filter(field -> field.getType().equals(Enchantment.class) && Modifier.isStatic(field.getModifiers()))
-        .toList();
+  @SuppressWarnings("unchecked")
+  private<T> Optional<T> parseEnum(Class<T> c, String value) {
+    value = value.trim();
 
-      for (Field constant : constants) {
-        if (constant.getName().equalsIgnoreCase(name))
-          return Optional.of((Enchantment) constant.get(null));
+    // Parse enums
+    if (c.isEnum()) {
+      for (T ec : c.getEnumConstants()) {
+        if (((Enum<?>) ec).name().equalsIgnoreCase(value))
+          return Optional.of(ec);
       }
-    } catch (Exception ex) {
-      ex.printStackTrace();
+    }
+
+    // Parse classes with static constants
+    else {
+      try {
+        List<Field> constants = Arrays.stream(c.getDeclaredFields())
+          .filter(field -> field.getType().equals(c) && Modifier.isStatic(field.getModifiers()))
+          .toList();
+
+        for (Field constant : constants) {
+          if (constant.getName().equalsIgnoreCase(value))
+            return Optional.of((T) constant.get(null));
+        }
+      } catch (Exception ex) {
+        ex.printStackTrace();
+      }
     }
 
     return Optional.empty();

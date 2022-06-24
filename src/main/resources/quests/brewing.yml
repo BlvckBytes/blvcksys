@@ -1,0 +1,51 @@
+name: '&5Brauen'
+representitive:
+  name: '&5Brauer'
+  amount: 1
+  type: DIAMOND_PICKAXE
+  lore:
+    - '&cLine 1'
+    - '&bLine 2'
+    - '&dLine 3'
+  flags:
+    - HIDE_ATTRIBUTES
+  enchantments:
+    - DAMAGE_ALL:5
+stages:
+  -
+    name: '&5Brauer I'
+    representitive:
+      name: '&5Brauer I'
+      amount: 1
+      type: POTION
+      lore:
+        - '&7Braue 3 Regenerations- oder Heilungstränke'
+    tasks:
+      -
+        action: BREWING
+        count: 5
+        parameters:
+          anyOf: true
+          effects:
+            -
+              type: REGENERATION
+              amplifier: 2
+              duration: 12
+            -
+              type: HEAL
+              amplifier: 2
+  -
+    name: '&5Brauer II'
+    representitive:
+      name: '&5Brauer II'
+      amount: 1
+      type: POTION
+      lore:
+        - '&7Braue 5 Schadentränke'
+    tasksInOrder: true
+    tasks:
+      -
+        action: BREWING
+        count: 5
+        parameters:
+          effect: HARM

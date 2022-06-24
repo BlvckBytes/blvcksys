@@ -151,8 +151,9 @@ public class YamlConfig implements IConfig, IAutoConstructed {
 
       // Get the next level from the map
       else {
+        // Cannot get the next key from a non-map type
         if (!(obj instanceof Map<?, ?> m))
-          throw new IllegalStateException("Cannot get the next key from a non-map type: " + level + " (" + key + ")");
+          return Optional.empty();
         obj = m.get(level);
       }
 
@@ -160,7 +161,7 @@ public class YamlConfig implements IConfig, IAutoConstructed {
       if (i != null) {
         // Can only index when the result is a list
         if (!(obj instanceof List<?> l))
-          throw new IllegalStateException("Tried to index a non-list value: " + level + "[" + i + "] (" + key + ")");
+          return Optional.empty();
 
         // Out of range
         if (i < 0 || i >= l.size())

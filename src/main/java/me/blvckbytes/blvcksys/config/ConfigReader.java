@@ -159,8 +159,8 @@ public class ConfigReader {
    * @return ItemStack on success, empty if the key was invalid
    */
   public Optional<ItemStack> getItem(String key, @Nullable Map<String, String> variables) {
-    // Not an object
-    if (!cfg.nonScalarExists(path, key))
+    // Key does not exist
+    if (cfg.get(path, key).isEmpty())
       return Optional.empty();
 
     ConfigValue name = get(join(key, "name")).map(cv -> cv.withVariables(variables)).orElse(null);

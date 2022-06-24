@@ -96,16 +96,6 @@ public class YamlConfig implements IConfig, IAutoConstructed {
   }
 
   @Override
-  public boolean nonScalarExists(String path, String key) {
-    Tuple<YamlConfiguration, File> handle = load(path).orElse(null);
-
-    if (handle == null)
-      return false;
-
-    return handle.a().isConfigurationSection(key);
-  }
-
-  @Override
   public void cleanup() {
     // Nothing to do here (yet)
   }

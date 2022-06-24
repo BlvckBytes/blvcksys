@@ -61,6 +61,20 @@ public class ConfigReader {
           continue;
         }
 
+        // Parse a bukkit color using the local utility
+        if (fType == Color.class) {
+          ConfigValue cv = get(join(key, fName)).orElse(null);
+          if (cv == null)
+            continue;
+
+          // Parse the color from a scalar string value
+          Color color = parseColor(cv.asScalar()).orElse(null);
+          if (color != null)
+            f.set(res, color);
+
+          continue;
+        }
+
         boolean isConfigValue = AConfigSection.class.isAssignableFrom(fType);
         boolean isEnum = (fType.isEnum() || (hasStaticSelfConstants(fType) && !isConfigValue));
 

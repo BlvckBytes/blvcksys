@@ -98,8 +98,9 @@ public class ConfigValue {
    * Apply an external map of variables all at once
    * @param variables Map of variables
    */
-  public ConfigValue withVariables(Map<String, String> variables) {
-    this.vars.putAll(variables);
+  public ConfigValue withVariables(@Nullable Map<String, String> variables) {
+    if (variables != null)
+      this.vars.putAll(variables);
     return this;
   }
 

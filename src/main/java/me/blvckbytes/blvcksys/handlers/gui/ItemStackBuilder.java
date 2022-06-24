@@ -11,10 +11,12 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Supplier;
 
 /*
@@ -28,6 +30,11 @@ public class ItemStackBuilder {
   private final ItemStack stack;
   private final ItemMeta meta;
 
+  // Name and lore should only be evaluated at the build-step
+  // in order to allow for extra variable injection
+  private @Nullable ConfigValue name;
+  private final List<ConfigValue> lore;
+
   /**
    * Create a new builder for a specific material
    * @param mat Material to target
@@ -36,6 +43,7 @@ public class ItemStackBuilder {
   public ItemStackBuilder(Material mat, int amount) {
     this.stack = new ItemStack(mat, amount);
     this.meta = stack.getItemMeta();
+    this.lore = new ArrayList<>();
   }
 
   /**
@@ -68,6 +76,7 @@ public class ItemStackBuilder {
     this.stack = from.clone();
     this.stack.setAmount(amount);
     this.meta = stack.getItemMeta();
+    this.lore = new ArrayList<>();
   }
 
   /**
@@ -126,7 +135,7 @@ public class ItemStackBuilder {
    * @param name Name to set
    */
   public ItemStackBuilder withName(ConfigValue name) {
-    return withName(name, true);
+    return this.withName(name, true);
   }
 
   /**
@@ -135,22 +144,41 @@ public class ItemStackBuilder {
    * @param condition Boolean which has to evaluate to true in order to apply the name
    */
   public ItemStackBuilder withName(ConfigValue name, boolean condition) {
-    if (condition && this.meta != null)
-      this.meta.setDisplayName(name.asScalar());
+    if (condition)
+      this.name = name;
     return this;
   }
 
   /**
-   * Add a lore to the existing lore
+   * Set a display name conditionally
+   * @param name Name to set
+   * @param condition Boolean which has to evaluate to true in order to apply the name
+   */
+  public ItemStackBuilder withName(Supplier<ConfigValue> name, boolean condition) {
+    if (condition)
+      this.name = name.get();
+    return this;
+  }
+
+  /**
+   * Add a lore to the existing lore conditionally
    * @param lore Lines to set
    * @param condition Boolean which has to evaluate to true in order to apply the lore
    */
   public ItemStackBuilder withLore(ConfigValue lore, boolean condition) {
-    if (condition && this.meta != null) {
-      List<String> lines = meta.getLore() == null ? new ArrayList<>() : meta.getLore();
-      lines.addAll(lore.asList());
-      meta.setLore(lines);
-    }
+    if (condition)
+      this.lore.add(lore);
+    return this;
+  }
+
+  /**
+   * Add a lore to the existing lore conditionally
+   * @param lore Lines to set
+   * @param condition Boolean which has to evaluate to true in order to apply the lore
+   */
+  public ItemStackBuilder withLore(Supplier<ConfigValue> lore, boolean condition) {
+    if (condition)
+      this.lore.add(lore.get());
     return this;
   }
 
@@ -174,11 +202,42 @@ public class ItemStackBuilder {
   }
 
   /**
-   * Build this item by applying the cached meta to the stack
+   * Build this item by applying the cached metainfo to the stack
    */
   public ItemStack build() {
-    if (meta != null)
+    return this.build(null);
+  }
+
+  /**
+   * Build this item by applying the cached metainfo to the stack
+   * @param variables Optional variables to apply to the name and lore
+   */
+  public ItemStack build(@Nullable Map<String, String> variables) {
+    // There is a meta to manipulate
+    if (meta != null) {
+
+      // Name requested
+      if (name != null) {
+        if (variables != null)
+          name.withVariables(variables);
+        meta.setDisplayName(name.asScalar());
+      }
+
+      // Lore requested
+      if (lore.size() > 0) {
+        List<String> lines = meta.getLore() == null ? new ArrayList<>() : meta.getLore();
+        lines.addAll(
+          lore.stream().map(l -> {
+            l.withVariables(variables);
+            return l.asScalar();
+          }).toList()
+        );
+        meta.setLore(lines);
+      }
+
       stack.setItemMeta(meta);
+    }
+
     return stack;
   }
 

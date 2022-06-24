@@ -2,7 +2,7 @@ package me.blvckbytes.blvcksys.config.sections;
 
 import me.blvckbytes.blvcksys.config.AConfigSection;
 import me.blvckbytes.blvcksys.config.ConfigValue;
-import org.bukkit.inventory.ItemStack;
+import me.blvckbytes.blvcksys.handlers.gui.ItemStackBuilder;
 import org.jetbrains.annotations.Nullable;
 
 /*
@@ -19,7 +19,7 @@ public class QuestStageSection extends AConfigSection {
   private @Nullable ConfigValue name;
 
   // Representitive item for GUI views
-  private @Nullable ItemStack representitive;
+  private @Nullable ItemStackBuilder representitive;
 
   // List of tasks which need to be completed in order to complete this stage
   private @Nullable QuestTaskSection[] tasks;

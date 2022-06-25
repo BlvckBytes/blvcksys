@@ -53,8 +53,17 @@ public class ConfigReader {
   //                                   API                                   //
   //=========================================================================//
 
+  /**
+   * Parse a configuration section into a matching internal model by reviving
+   * known data-types and walking the whole data-structure recursively, if necessary
+   * @param key Key to start parsing from (inclusive), null means top level (full file)
+   * @param type Internal model to parse into
+   * @return Optional parsed model, if the key existed
+   */
   @SuppressWarnings("unchecked")
-  public<T extends AConfigSection> Optional<T> parseValue(String key, Class<T> type) {
+  public<T extends AConfigSection> Optional<T> parseValue(@Nullable String key, Class<T> type) {
+    if (key == null) key = "";
+
     // Key does not exist
     if (cfg.get(path, key).isEmpty())
       return Optional.empty();

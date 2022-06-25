@@ -225,10 +225,19 @@ public class YamlConfig implements IConfig, IAutoConstructed {
 
       File yf = new File(df.getAbsolutePath() + "/" + path + ".yml");
 
-      // Create file if absent
-      if (!yf.exists())
-        if (!yf.createNewFile())
-          throw new RuntimeException("Could not create config file");
+      // File does not exist
+      if (!yf.exists()) {
+
+        // Create file if absent for the main config
+        if (path.equals("config")) {
+          if (!yf.createNewFile())
+            throw new RuntimeException("Could not create config file");
+        }
+
+        // Skip missing files otherwise
+        else
+          return Optional.empty();
+      }
 
       // Load configuration from file
       YamlConfiguration cfg = YamlConfiguration.loadConfiguration(yf);

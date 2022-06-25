@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.config.sections;
 
+import lombok.Getter;
 import me.blvckbytes.blvcksys.config.AConfigSection;
 import org.bukkit.Color;
 import org.bukkit.potion.PotionEffectType;
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
 
   Represents the properties of a single potion effect.
 */
+@Getter
 public class PotionParameterEffectSection extends AConfigSection {
 
   // Type of the potion effect

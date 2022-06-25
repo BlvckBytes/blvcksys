@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.config.sections;
 
+import lombok.Getter;
 import me.blvckbytes.blvcksys.config.AConfigSection;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.handlers.gui.ItemStackBuilder;
@@ -13,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
   multiple tasks that need to be completed to complete that stage. If
   necessary, tasks may only be completed in order.
 */
+@Getter
 public class QuestStageSection extends AConfigSection {
 
   // Name of the stage for messages

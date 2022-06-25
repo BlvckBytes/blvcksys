@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.config.sections;
 
+import lombok.Getter;
 import me.blvckbytes.blvcksys.config.AConfigSection;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,6 +12,7 @@ import org.jetbrains.annotations.Nullable;
   of the player for a certain number of times and allows for granular
   selection by meta-information using the dedicated parameters model.
 */
+@Getter
 public class QuestTaskSection extends AConfigSection {
 
   private @Nullable QuestAction action;

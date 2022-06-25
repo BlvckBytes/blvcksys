@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.config.sections;
 
+import lombok.Getter;
 import me.blvckbytes.blvcksys.config.AConfigSection;
 import org.jetbrains.annotations.Nullable;
 
@@ -9,6 +10,7 @@ import org.jetbrains.annotations.Nullable;
 
   Provides parameters to the quest action named BREWING.
 */
+@Getter
 public class PotionParameterSection extends AConfigSection {
 
   // List of effects that the potion needs to have

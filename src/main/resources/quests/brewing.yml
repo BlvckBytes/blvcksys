@@ -1,24 +1,26 @@
 name: '&5Brauen'
 representitive:
-  name: '&5Brauer'
-  amount: 1
-  type: DIAMOND_PICKAXE
+  name: '&7» &5Brauer'
+  type: BREWING_STAND
   lore:
-    - '&cLine 1'
-    - '&bLine 2'
-    - '&dLine 3'
-  flags:
-    - HIDE_ATTRIBUTES
-  enchantments:
-    - DAMAGE_ALL:5
+    - ' '
+    - '&7Braue verschiedene Tränke mit'
+    - '&7Hilfe eines &dBraustandes&7.'
+    - ' '
+    - '&7Verfügbare Stufen: &d{{num_stages}}'
+    - '&7Aktuelle Stufe: &d{{curr_stage}}'
 stages:
   -
     name: '&5Brauer I'
     representitive:
-      name: '&5Brauer I'
-      amount: 1
+      name: '&7» &5Brauer I'
       type: POTION
+      color: 255 0 0
+      flags:
+        - HIDE_POTION_EFFECTS
+        - HIDE_ATTRIBUTES
       lore:
+        - ' '
         - '&7Braue 3 Regenerations- oder Heilungstränke'
     tasks:
       -
@@ -37,10 +39,15 @@ stages:
   -
     name: '&5Brauer II'
     representitive:
-      name: '&5Brauer II'
+      name: '&7» &5Brauer II'
       amount: 1
       type: POTION
+      color: 255 0 128
+      flags:
+        - HIDE_POTION_EFFECTS
+        - HIDE_ATTRIBUTES
       lore:
+        - ' '
         - '&7Braue 5 Schadentränke'
     tasksInOrder: true
     tasks:
@@ -54,10 +61,15 @@ stages:
   -
     name: '&5Brauer III'
     representitive:
-      name: '&5Brauer III'
+      name: '&7» &5Brauer III'
       amount: 1
       type: POTION
+      color: 0 255 0
+      flags:
+        - HIDE_POTION_EFFECTS
+        - HIDE_ATTRIBUTES
       lore:
+        - ' '
         - '&7Braue eine Awkward Potion'
     tasksInOrder: true
     tasks:

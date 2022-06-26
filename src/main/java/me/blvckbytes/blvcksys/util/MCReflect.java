@@ -546,7 +546,7 @@ public class MCReflect {
   }
 
   public Object invokeMethodByArgsOnly(Object o, @Nullable Class<?>[] args, Object... values) throws Exception {
-    return findMethodByArgsOnly(o.getClass(), args).invoke(o, values);
+    return findMethodByArgsOnly(o.getClass(), args).orElseThrow().invoke(o, values);
   }
 
   /**
@@ -556,7 +556,7 @@ public class MCReflect {
    * @return Optional method
    */
   public Method findMethodByArgsOnly(Object o, Class<?> ...args) throws Exception {
-    return findMethodByArgsOnly(o.getClass(), args);
+    return findMethodByReturnAndArgs(o.getClass(), null, null, args).orElseThrow();
   }
 
   /**
@@ -583,10 +583,30 @@ public class MCReflect {
    * @param args Arg types of target method
    * @return Optional method
    */
-  public Method findMethodByArgsOnly(Class<?> c, Class<?> ...args) throws Exception {
+  public Optional<Method> findMethodByArgsOnly(Class<?> c, Class<?> ...args) throws Exception {
+    return findMethodByReturnAndArgs(c, null, null, args);
+  }
+
+  /**
+   * Find a method by it's argument types and it's return type (as well as it's visibility)
+   * @param c Class to search in
+   * @param returnType Type the method should return (optional)
+   * @param pub Whether the method has to be public (optional)
+   * @param args Arg types of target method
+   * @return Optional method
+   */
+  public Optional<Method> findMethodByReturnAndArgs(Class<?> c, @Nullable Class<?> returnType, @Nullable Boolean pub, Class<?> ...args) throws Exception {
     return walkHierarchyToFind(c, (Class<?> cc) -> {
       for (Method m : cc.getDeclaredMethods()) {
         Class<?>[] paramTypes = m.getParameterTypes();
+
+        // Public modifier mismatch
+        if (pub != null && Modifier.isPublic(m.getModifiers()) != pub)
+          continue;
+
+        // Return type specified and mismatches
+        if (returnType != null && !compareTypes(m.getReturnType(), returnType, false))
+          continue;
 
         // Parameter count mismatch
         if (paramTypes.length != args.length)
@@ -607,12 +627,12 @@ public class MCReflect {
         // Args match, return this method
         if (matches) {
           m.setAccessible(true);
-          return m;
+          return Optional.of(m);
         }
       }
 
       // Nothing matched
-      return null;
+      return Optional.empty();
     });
   }
 

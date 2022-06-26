@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 /*
@@ -50,8 +51,8 @@ public class QuestHandler implements IQuestHandler, IAutoConstructed, Listener {
   private final Map<String, QuestTaskSection> tasks;
   private final Map<String, QuestStageSection> stages;
   private final Map<String, QuestSection> quests;
-
   private final Map<Player, QuestProfile> playerdata;
+  private final List<Consumer<Player>> progressInterests;
 
   private final JavaPlugin plugin;
   private final IConfig cfg;
@@ -73,6 +74,8 @@ public class QuestHandler implements IQuestHandler, IAutoConstructed, Listener {
     this.stages = new HashMap<>();
     this.tasks = new HashMap<>();
     this.playerdata = new HashMap<>();
+    this.progressInterests = new ArrayList<>();
+
     this.importQuestsFromConfig();
   }
 
@@ -105,6 +108,9 @@ public class QuestHandler implements IQuestHandler, IAutoConstructed, Listener {
 
     // Something changed, notify the player
     if (model != null) {
+      // Notify all interest registrations
+      progressInterests.forEach(c -> c.accept(p));
+
       // Find the sequence number of this task within it's parent
       int taskSeq;
       for (taskSeq = 0; taskSeq < stage.getTasks().length; taskSeq++) {
@@ -123,6 +129,16 @@ public class QuestHandler implements IQuestHandler, IAutoConstructed, Listener {
           .asScalar()
       );
     }
+  }
+
+  @Override
+  public void registerProgressInterest(Consumer<Player> target) {
+    this.progressInterests.add(target);
+  }
+
+  @Override
+  public List<QuestSection> getQuests() {
+    return new ArrayList<>(quests.values());
   }
 
   @Override

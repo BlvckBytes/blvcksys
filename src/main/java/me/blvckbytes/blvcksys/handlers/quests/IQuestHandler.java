@@ -5,8 +5,10 @@ import me.blvckbytes.blvcksys.config.sections.QuestStageSection;
 import me.blvckbytes.blvcksys.config.sections.QuestTaskSection;
 import org.bukkit.entity.Player;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -20,6 +22,11 @@ public interface IQuestHandler {
    * Get all existing tasks loaded from configs
    */
   Map<String, QuestTaskSection> getTasks();
+
+  /**
+   * Get all existing quests loaded from configs
+   */
+  List<QuestSection> getQuests();
 
   /**
    * Get the parent stage of a task
@@ -47,4 +54,9 @@ public interface IQuestHandler {
    */
   void fireTask(Player p, String token);
 
+  /**
+   * Register an interest for the progress being made on quests
+   * @param target Player that made progress
+   */
+  void registerProgressInterest(Consumer<Player> target);
 }

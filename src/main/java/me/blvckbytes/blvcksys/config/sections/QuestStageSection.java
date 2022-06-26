@@ -24,9 +24,13 @@ public class QuestStageSection extends AConfigSection {
   private @Nullable ItemStackBuilder representitive;
 
   // List of tasks which need to be completed in order to complete this stage
-  private @Nullable QuestTaskSection[] tasks;
+  private QuestTaskSection[] tasks;
 
   // Whether the tasks need to be completed in the specified sequence
   private boolean tasksInOrder;
 
+  public QuestStageSection() {
+    this.tasks = new QuestTaskSection[0];
+    this.tasksInOrder = true;
+  }
 }

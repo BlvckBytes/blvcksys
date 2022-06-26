@@ -24,6 +24,9 @@ public class QuestSection extends AConfigSection {
 
   // Stages of this quest, all stages are to be completed in
   // order to complete the whole quest
-  private @Nullable QuestStageSection[] stages;
+  private QuestStageSection[] stages;
 
+  public QuestSection() {
+    this.stages = new QuestStageSection[0];
+  }
 }

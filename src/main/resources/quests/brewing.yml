@@ -28,13 +28,12 @@ stages:
           anyOf: true
           effects:
             -
-              type: REGENERATION
-              amplifier: 2
-              duration: 12
-              color: 255 0 0
+              effectType: REGENERATION
+              amplifier: 1
+              duration: 450
             -
-              type: HEAL
-              amplifier: 2
+              effectType: HEAL
+              amplifier: 1
   -
     name: '&5Brauer II'
     representitive:
@@ -49,4 +48,23 @@ stages:
         action: BREWING
         count: 5
         parameters:
-          effect: HARM
+          effects:
+            -
+              effectType: HARM
+  -
+    name: '&5Brauer III'
+    representitive:
+      name: '&5Brauer III'
+      amount: 1
+      type: POTION
+      lore:
+        - '&7Braue eine Awkward Potion'
+    tasksInOrder: true
+    tasks:
+      -
+        action: BREWING
+        count: 1
+        parameters:
+          effects:
+            -
+              potionType: AWKWARD

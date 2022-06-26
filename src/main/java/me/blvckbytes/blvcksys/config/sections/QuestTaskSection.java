@@ -16,8 +16,12 @@ import org.jetbrains.annotations.Nullable;
 public class QuestTaskSection extends AConfigSection {
 
   private @Nullable QuestAction action;
-  private @Nullable Integer count;
+  private Integer count;
   private @Nullable Object parameters;
+
+  public QuestTaskSection() {
+    this.count = 1;
+  }
 
   @Override
   public Class<?> runtimeDecide(String field) {

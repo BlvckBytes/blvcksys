@@ -4,6 +4,7 @@ import lombok.Getter;
 import me.blvckbytes.blvcksys.config.AConfigSection;
 import org.bukkit.Color;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkit.potion.PotionType;
 import org.jetbrains.annotations.Nullable;
 
 /*
@@ -16,7 +17,10 @@ import org.jetbrains.annotations.Nullable;
 public class PotionParameterEffectSection extends AConfigSection {
 
   // Type of the potion effect
-  private @Nullable PotionEffectType type;
+  private @Nullable PotionEffectType effectType;
+
+  // Type of potion
+  private @Nullable PotionType potionType;
 
   // Custom color of the potion
   private @Nullable Color color;

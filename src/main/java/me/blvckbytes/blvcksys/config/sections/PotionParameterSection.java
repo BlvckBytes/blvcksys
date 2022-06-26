@@ -14,9 +14,13 @@ import org.jetbrains.annotations.Nullable;
 public class PotionParameterSection extends AConfigSection {
 
   // List of effects that the potion needs to have
-  private @Nullable PotionParameterEffectSection[] effects;
+  private PotionParameterEffectSection[] effects;
 
   // If true, any of the effects may match, if false, all have to be present
   private boolean anyOf;
 
+  public PotionParameterSection() {
+    this.effects = new PotionParameterEffectSection[0];
+    this.anyOf = true;
+  }
 }

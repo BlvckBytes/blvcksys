@@ -109,6 +109,7 @@ public class YamlConfig implements IConfig, IAutoConstructed {
   //                               Utilities                                 //
   //=========================================================================//
 
+  @SuppressWarnings("unchecked")
   private Optional<ConfigValue> retrieveIndexed(Tuple<YamlConfiguration, File> handle, String key) {
     // Object of the currently iterated level within the loop
     Object obj = null;
@@ -170,7 +171,12 @@ public class YamlConfig implements IConfig, IAutoConstructed {
     if (obj == null)
       return Optional.empty();
 
-    return Optional.of(new ConfigValue((obj instanceof List<?> l) ? l : obj, prefix, palette));
+    // Is a list, pass as a list
+    if (obj instanceof List<?> l)
+      return Optional.of(new ConfigValue((List<Object>) l, prefix, palette));
+
+    // Pass as an unknown blob
+    return Optional.of(new ConfigValue(obj, prefix, palette));
   }
 
   /**

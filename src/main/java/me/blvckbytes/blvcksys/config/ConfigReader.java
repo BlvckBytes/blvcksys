@@ -351,7 +351,7 @@ public class ConfigReader {
     ConfigValue name = get(join(key, "name")).orElse(null);
     ConfigValue lore = get(join(key, "lore")).orElse(null);
     ConfigValue flags = get(join(key, "flags")).orElse(null);
-    ConfigValue color = get(join(key, "color")).orElse(null);
+    Color color = parseColor(join(key, "color")).orElse(null);
     ConfigValue enchantments = get(join(key, "enchantments")).orElse(null);
     ConfigValue textures = get(join(key, "textures")).orElse(null);
 
@@ -385,7 +385,7 @@ public class ConfigReader {
             })
             .filter(Objects::nonNull).toList()
         ), enchantments != null)
-        .withColor(() -> parseColor(color.asScalar()).orElse(Color.BLACK), color != null)
+        .withColor(() -> color, color != null)
         .withProfile(() -> textureHandler.getProfileOrDefault(textures.asScalar()), textures != null && textureHandler != null)
     );
   }

@@ -17,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 public class QuestSection extends AConfigSection {
 
   // Name of the quest for messages
-  private @Nullable ConfigValue name;
+  private ConfigValue name;
 
   // Representitive item for GUI views
   private @Nullable ItemStackBuilder representitive;
@@ -28,5 +28,6 @@ public class QuestSection extends AConfigSection {
 
   public QuestSection() {
     this.stages = new QuestStageSection[0];
+    this.name = ConfigValue.immediate("undefined");
   }
 }

@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.handlers.quests;
 
 import lombok.Getter;
+import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.sections.QuestSection;
@@ -98,8 +99,23 @@ public class QuestHandler implements IQuestHandler, IAutoConstructed, Listener {
 
     // Something changed, notify the player
     if (model != null) {
-      // TODO: Notify the player
-      p.sendMessage("Fired task token=" + token + " (" + model.getCount() + "/" + task.getCount() + ")");
+      // Find the sequence number of this task within it's parent
+      int taskSeq;
+      for (taskSeq = 0; taskSeq < stage.getTasks().length; taskSeq++) {
+        if (stage.getTasks()[taskSeq].equals(task))
+          break;
+      }
+
+      p.sendMessage(
+        cfg.get(ConfigKey.QUESTS_TASK_FULFILLED)
+          .withPrefixes()
+          .withVariable("completed_count", model.getCount())
+          .withVariable("total_count", task.getCount())
+          .withVariable("stage_name", stage.getName().asScalar())
+          .withVariable("quest_name", quest.getName().asScalar())
+          .withVariable("task_number", taskSeq + 1)
+          .asScalar()
+      );
     }
   }
 

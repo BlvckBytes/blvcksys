@@ -45,6 +45,18 @@ public enum ConfigKey {
   CHATBUTTONS_DONE("chatbuttons.done", "$1[&aFertig$1]"),
 
   //=========================================================================//
+  //                                 Quests                                  //
+  //=========================================================================//
+
+  QUESTS_TASK_FULFILLED(
+    "quests.task_fulfilled",
+    " ",
+    "$0Du hast Fortschritt in der Quest $2{{quest_name}} $0erzielt!",
+    "$0Stufe $2{{stage_name}}$0, $2{{task_number}}. Aufgabe $0($2{{completed_count}}$0/$2{{total_count}}$0)",
+    " "
+  ),
+
+  //=========================================================================//
   //                                   AFK                                   //
   //=========================================================================//
 

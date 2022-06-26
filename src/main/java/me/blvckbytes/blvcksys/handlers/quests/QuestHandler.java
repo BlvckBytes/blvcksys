@@ -75,30 +75,19 @@ public class QuestHandler implements IQuestHandler, IAutoConstructed, Listener {
 
   @Override
   public void fireTask(Player p, String token) {
-    // TODO: Validate functionality
-    System.out.println("fireTask() " + token);
-    QuestProfile profile = playerdata.get(p);
-
     // Player not online (or not loaded)
+    QuestProfile profile = playerdata.get(p);
     if (profile == null)
       return;
 
-    System.out.println("passed profile");
-
-    QuestTaskSection task = tasks.get(token);
-
     // Task unknow
+    QuestTaskSection task = tasks.get(token);
     if (task == null)
       return;
 
-    System.out.println("passed task");
-
     String[] tokenData = token.split(TOKEN_SEP);
     QuestSection quest = quests.get(tokenData[0]);
-    QuestStageSection stage = stages.get(tokenData[1]);
-
-    System.out.println(quest == null);
-    System.out.println(stage == null);
+    QuestStageSection stage = stages.get(tokenData[0] + TOKEN_SEP + tokenData[1]);
 
     // Could not locate parents
     if (quest == null || stage == null)
@@ -109,7 +98,6 @@ public class QuestHandler implements IQuestHandler, IAutoConstructed, Listener {
 
     // Something changed, notify the player
     if (model != null) {
-      System.out.println("passed model");
       // TODO: Notify the player
       p.sendMessage("Fired task token=" + token + " (" + model.getCount() + "/" + task.getCount() + ")");
     }

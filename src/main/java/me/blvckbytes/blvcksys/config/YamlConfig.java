@@ -345,7 +345,7 @@ public class YamlConfig implements IConfig, IAutoConstructed {
             continue;
 
           // Create parent directories
-          if (f.getParentFile().mkdirs()) {
+          if (f.getParentFile().exists() || f.getParentFile().mkdirs()) {
             // Copy stream contents into the file
             FileOutputStream fos = new FileOutputStream(f);
             InputStream is = file.b();

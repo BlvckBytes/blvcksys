@@ -136,7 +136,10 @@ public class ConfigReader {
             items.add(v.get());
           }
 
-          f.set(res, items.toArray((Object[]) Array.newInstance(arrType, 1)));
+          // Only set if there are actually items available
+          if (items.size() > 0)
+            f.set(res, items.toArray((Object[]) Array.newInstance(arrType, 1)));
+
           continue;
         }
 

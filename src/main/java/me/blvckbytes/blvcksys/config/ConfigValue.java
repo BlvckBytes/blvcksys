@@ -176,8 +176,8 @@ public class ConfigValue {
         result.append(sep);
       }
 
-      // Add prefix based on previous selection
-      if (prefixMode == 'F' && i == 0 || prefixMode == 'A')
+      // Add prefix based on previous selection on non-empty strings
+      if (prefixMode == 'F' && i == 0 || prefixMode == 'A' && !line.isBlank())
         result.append(prefix);
 
       // Append the actual line after transformation

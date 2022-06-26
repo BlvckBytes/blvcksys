@@ -14,6 +14,7 @@ import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.QuestTaskModel;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
+import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.OfflinePlayer;
@@ -49,20 +50,25 @@ public class QuestHandler implements IQuestHandler, IAutoConstructed, Listener {
   private final Map<String, QuestTaskSection> tasks;
   private final Map<String, QuestStageSection> stages;
   private final Map<String, QuestSection> quests;
+
   private final Map<Player, QuestProfile> playerdata;
 
   private final JavaPlugin plugin;
   private final IConfig cfg;
   private final IPersistence pers;
+  private final ILogger logger;
 
   public QuestHandler(
     @AutoInject JavaPlugin plugin,
     @AutoInject IConfig cfg,
-    @AutoInject IPersistence pers
+    @AutoInject IPersistence pers,
+    @AutoInject ILogger logger
   ) {
     this.plugin = plugin;
     this.cfg = cfg;
     this.pers = pers;
+    this.logger = logger;
+
     this.quests = new HashMap<>();
     this.stages = new HashMap<>();
     this.tasks = new HashMap<>();
@@ -119,6 +125,46 @@ public class QuestHandler implements IQuestHandler, IAutoConstructed, Listener {
     }
   }
 
+  @Override
+  public Optional<QuestStageSection> getParentStage(QuestTaskSection task) {
+    String[] tData = task.getToken().split(TOKEN_SEP);
+
+    if (tData.length < 2)
+      return Optional.empty();
+
+    return stages.entrySet().stream()
+      .filter(e -> e.getKey().equals(tData[0] + TOKEN_SEP + tData[1]))
+      .map(Map.Entry::getValue)
+      .findFirst();
+  }
+
+  @Override
+  public Optional<QuestSection> getParentQuest(QuestStageSection stage) {
+    String[] tData = stage.getToken().split(TOKEN_SEP);
+
+    if (tData.length < 1)
+      return Optional.empty();
+
+    return quests.entrySet().stream()
+      .filter(e -> e.getKey().equals(tData[0]))
+      .map(Map.Entry::getValue)
+      .findFirst();
+  }
+
+  @Override
+  public String getTokenSeparator() {
+    return TOKEN_SEP;
+  }
+
+  @Override
+  public void initialize() {
+    for (Player t : Bukkit.getOnlinePlayers())
+      loadPlayerData(t);
+  }
+
+  @Override
+  public void cleanup() {}
+
   //=========================================================================//
   //                                 Listener                                //
   //=========================================================================//
@@ -132,15 +178,6 @@ public class QuestHandler implements IQuestHandler, IAutoConstructed, Listener {
   public void onQuit(PlayerQuitEvent e) {
     playerdata.remove(e.getPlayer());
   }
-
-  @Override
-  public void initialize() {
-    for (Player t : Bukkit.getOnlinePlayers())
-      loadPlayerData(t);
-  }
-
-  @Override
-  public void cleanup() {}
 
   //=========================================================================//
   //                                Utilities                                //
@@ -184,8 +221,8 @@ public class QuestHandler implements IQuestHandler, IAutoConstructed, Listener {
           if (q.getName() == null)
             return;
 
-          String questName = normalizeName(q.getName());
-          quests.put(questName, q);
+          q.setToken(normalizeName(q.getName()));
+          quests.put(q.getToken(), q);
 
           // This quest has no stages defined yet
           if (q.getStages() == null)
@@ -198,11 +235,22 @@ public class QuestHandler implements IQuestHandler, IAutoConstructed, Listener {
             if (stage.getName() == null)
               continue;
 
-            stages.put(buildToken(q.getName(), stage.getName(), null), stage);
+            stage.setToken(buildToken(q.getName(), stage.getName(), null));
+            stages.put(stage.getToken(), stage);
 
             // Loop all tasks and pre-compute their full token
-            for (int i = 0; i < stage.getTasks().length; i++)
-              tasks.put(buildToken(q.getName(), stage.getName(), i), stage.getTasks()[i]);
+            for (int i = 0; i < stage.getTasks().length; i++) {
+              QuestTaskSection qs = stage.getTasks()[i];
+              qs.setToken(buildToken(q.getName(), stage.getName(), i));
+
+              // Duplicate token encountered, skip and notify the console
+              if (tasks.containsKey(qs.getToken())) {
+                logger.logError("Skipping duplicate token quest task '" + qs.getToken() + "', please choose unique names!");
+                continue;
+              }
+
+              tasks.put(qs.getToken(), qs);
+            }
           }
         });
     }

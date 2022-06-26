@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.config.sections;
 
 import lombok.Getter;
+import lombok.Setter;
 import me.blvckbytes.blvcksys.config.AConfigSection;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.handlers.gui.ItemStackBuilder;
@@ -26,8 +27,13 @@ public class QuestSection extends AConfigSection {
   // order to complete the whole quest
   private QuestStageSection[] stages;
 
+  // Token used for internal identification, will be overridden
+  @Setter
+  private String token;
+
   public QuestSection() {
     this.stages = new QuestStageSection[0];
     this.name = ConfigValue.immediate("undefined");
+    this.token = "undefined";
   }
 }

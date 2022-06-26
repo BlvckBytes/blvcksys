@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.config.sections;
 
 import lombok.Getter;
+import lombok.Setter;
 import me.blvckbytes.blvcksys.config.AConfigSection;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.handlers.gui.ItemStackBuilder;
@@ -29,9 +30,14 @@ public class QuestStageSection extends AConfigSection {
   // Whether the tasks need to be completed in the specified sequence
   private boolean tasksInOrder;
 
+  // Token used for internal identification, will be overridden
+  @Setter
+  private String token;
+
   public QuestStageSection() {
     this.tasks = new QuestTaskSection[0];
     this.tasksInOrder = true;
     this.name = ConfigValue.immediate("undefined");
+    this.token = "undefined";
   }
 }

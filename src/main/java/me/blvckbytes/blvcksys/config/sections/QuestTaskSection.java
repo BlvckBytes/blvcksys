@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.config.sections;
 
 import lombok.Getter;
+import lombok.Setter;
 import me.blvckbytes.blvcksys.config.AConfigSection;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,8 +20,13 @@ public class QuestTaskSection extends AConfigSection {
   private Integer count;
   private @Nullable Object parameters;
 
+  // Token used for internal identification, will be overridden
+  @Setter
+  private String token;
+
   public QuestTaskSection() {
     this.count = 1;
+    this.token = "undefined";
   }
 
   @Override

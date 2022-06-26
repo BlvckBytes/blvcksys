@@ -10,6 +10,7 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
+import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.jetbrains.annotations.Nullable;
 
@@ -121,12 +122,19 @@ public class ItemStackBuilder {
   }
 
   /**
-   * Add a color to this item (only applicable to leather armor)
+   * Add a color to this item (only applicable to leather armor or potions)
    * @param color Color to add
    */
   public ItemStackBuilder withColor(Supplier<Color> color, boolean condition) {
-    if (condition && this.meta != null && this.meta instanceof LeatherArmorMeta lam)
+    if (!condition)
+      return this;
+
+    if (this.meta instanceof LeatherArmorMeta lam)
       lam.setColor(color.get());
+
+    else if (this.meta instanceof PotionMeta pm)
+      pm.setColor(color.get());
+
     return this;
   }
 
@@ -216,26 +224,28 @@ public class ItemStackBuilder {
     // There is a meta to manipulate
     if (meta != null) {
 
+      // Clone the item meta to leave the state of this builder untouched
+      ItemMeta buildMeta = meta.clone();
+
       // Name requested
       if (name != null) {
         if (variables != null)
           name.withVariables(variables);
-        meta.setDisplayName(name.asScalar());
+        buildMeta.setDisplayName(name.asScalar());
       }
 
       // Lore requested
       if (lore.size() > 0) {
-        List<String> lines = meta.getLore() == null ? new ArrayList<>() : meta.getLore();
-        lines.addAll(
-          lore.stream().map(l -> {
-            l.withVariables(variables);
-            return l.asScalar();
-          }).toList()
-        );
-        meta.setLore(lines);
+        List<String> lines = buildMeta.getLore() == null ? new ArrayList<>() : buildMeta.getLore();
+        lore.forEach(line -> lines.addAll(
+          line
+            .withVariables(variables)
+            .asList()
+        ));
+        buildMeta.setLore(lines);
       }
 
-      stack.setItemMeta(meta);
+      stack.setItemMeta(buildMeta);
     }
 
     return stack;

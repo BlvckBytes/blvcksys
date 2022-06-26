@@ -101,7 +101,7 @@ public class QuestHandler implements IQuestHandler, IAutoConstructed, Listener {
       return;
 
     // Relay handling to the profile
-    QuestTaskModel model = profile.fireTask(token, task).orElse(null);
+    QuestTaskModel model = profile.fireTask(task).orElse(null);
 
     // Something changed, notify the player
     if (model != null) {
@@ -190,7 +190,7 @@ public class QuestHandler implements IQuestHandler, IAutoConstructed, Listener {
   private void loadPlayerData(Player p) {
     Map<String, QuestTaskModel> data = pers.find(buildQuery(p)).stream()
       .collect(Collectors.toMap(QuestTaskModel::getToken, task -> task));
-    playerdata.put(p, new QuestProfile(p, pers, data));
+    playerdata.put(p, new QuestProfile(p, pers, this, data));
   }
 
   /**

@@ -1,12 +1,13 @@
 package me.blvckbytes.blvcksys.handlers.quests;
 
+import me.blvckbytes.blvcksys.config.sections.QuestSection;
+import me.blvckbytes.blvcksys.config.sections.QuestStageSection;
 import me.blvckbytes.blvcksys.config.sections.QuestTaskSection;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.QuestTaskModel;
 import org.bukkit.entity.Player;
 
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -19,49 +20,148 @@ public class QuestProfile {
 
   private final Player player;
   private final IPersistence pers;
+  private final IQuestHandler qh;
+
+  // Local data cache, as stored in persistence
   private final Map<String, QuestTaskModel> data;
 
+  // Cache for stage completion computation
+  private final Set<QuestStageSection> completedStages;
+
   public QuestProfile(
-    Player player, IPersistence pers,
+    Player player,
+    IPersistence pers,
+    IQuestHandler qh,
     Map<String, QuestTaskModel> data
   ) {
     this.player = player;
     this.pers = pers;
     this.data = data;
+    this.qh = qh;
+    this.completedStages = new HashSet<>();
   }
 
   /**
    * Fire a task which the player just completed and check if it still
    * has counts left. If so, advance the state persistently.
-   * @param token Target token used for persistence
    * @param task Target task
    * @return The new persistent task data model on delta, empty if this task is not fireable for this player
    */
-  public Optional<QuestTaskModel> fireTask(String token, QuestTaskSection task) {
-    QuestTaskModel model = data.get(token);
-    boolean delta = false;
+  public Optional<QuestTaskModel> fireTask(QuestTaskSection task) {
+    QuestTaskModel model = data.get(task.getToken());
+
+    // This task is not applicable to this player (anymore)
+    if (hasCompletedTask(task) || !canReach(task))
+      return Optional.empty();
 
     // Has never fired this task before, create initial model
     if (model == null) {
-      model = new QuestTaskModel(player, token, 1);
-      data.put(token, model);
-      delta = true;
+      model = new QuestTaskModel(player, task.getToken(), 1);
+      data.put(task.getToken(), model);
     }
 
     // Has been fired before, model exists
-    else {
-      // If this task can be fired again, increase count
-      if (model.getCount() < task.getCount()) {
-        model.setCount(model.getCount() + 1);
-        delta = true;
+    else
+      model.setCount(model.getCount() + 1);
+
+    pers.store(model);
+    return Optional.of(model);
+  }
+
+  /**
+   * Checks whether the player can reach a certain task, which means that the
+   * task's parent stage is reachable (all previous stages have been completed)
+   * and that either the task order doesn't matter, or all tasks before that
+   * task have been completed as well.
+   * @param task Target task
+   * @return True if the player can reach this task, false if there's still progress missing
+   */
+  private boolean canReach(QuestTaskSection task) {
+    // Could not resolve parent stage
+    QuestStageSection stage = qh.getParentStage(task).orElse(null);
+    if (stage == null)
+      return false;
+
+    // Could not resolve parent quest
+    QuestSection quest = qh.getParentQuest(stage).orElse(null);
+    if (quest == null)
+      return false;
+
+    // Find the last quest that the player has progress on
+    QuestStageSection last = null;
+    for (QuestStageSection qs : quest.getStages()) {
+      // The player has no progress on the current stage, stop looping
+      if (data.keySet().stream().noneMatch(dToken -> dToken.startsWith(qs.getToken() + qh.getTokenSeparator()))) {
+
+        // Has no progress at all yet, so the last stage is the first one
+        if (last == null)
+          last = qs;
+
+        break;
+      }
+
+      last = qs;
+    }
+
+    // Could not locate the last stage
+    if (last == null)
+      return false;
+
+    // The last stage is not yet complete and the task in question
+    // is not within that stage, so it's either in the past or unreachable
+    if (!isStageComplete(last) && Arrays.stream(last.getTasks()).noneMatch(lTask -> lTask.equals(task)))
+      return false;
+
+    // Need to check whether all previous tasks have been completed
+    if (stage.isTasksInOrder()) {
+      for (int i = 0; i < stage.getTasks().length; i++) {
+        QuestTaskSection qt = stage.getTasks()[i];
+
+        // Target task reached
+        if (qt.equals(task))
+          break;
+
+        // Has not yet completed a previous task
+        if (!hasCompletedTask(qt))
+          return false;
       }
     }
 
-    if (delta) {
-      pers.store(model);
-      return Optional.of(model);
-    }
+    // All checks passed, this task is reachable
+    return true;
+  }
 
-    return Optional.empty();
+  /**
+   * Checks whether the player has completed a full stage of tasks
+   * @param stage Target stage
+   * @return True on completion, false if there's still progress to be made
+   */
+  private boolean isStageComplete(QuestStageSection stage) {
+    if (completedStages.contains(stage))
+      return true;
+
+    // The stage is complete if all of it's tasks are complete
+    boolean complete = Arrays.stream(stage.getTasks()).allMatch(this::hasCompletedTask);
+
+    // Store answer in cache to save on computation
+    if (complete)
+      completedStages.add(stage);
+
+    return complete;
+  }
+
+  /**
+   * Checks whether the player has completed a certain task
+   * @param task Target task
+   * @return True on completion, false if there's still progress to be made
+   */
+  private boolean hasCompletedTask(QuestTaskSection task) {
+    QuestTaskModel model = data.get(task.getToken());
+
+    // Not even started this task
+    if (model == null)
+      return false;
+
+    return model.getCount() >= task.getCount();
   }
 }

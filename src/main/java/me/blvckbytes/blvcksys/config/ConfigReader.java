@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.config;
 
 import com.google.common.primitives.Primitives;
+import me.blvckbytes.blvcksys.config.sections.ConfigSectionIgnore;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.handlers.gui.ItemStackBuilder;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
@@ -62,9 +63,11 @@ public class ConfigReader {
    */
   @SuppressWarnings("unchecked")
   public<T extends AConfigSection> Optional<T> parseValue(@Nullable String key, Class<T> type) {
-    if (key == null) key = "";
+    // Null keys mean root level scope
+    if (key == null)
+      key = "";
 
-    // Key does not exist
+    // Key does not exist, don't create a new empty object to return
     if (cfg.get(path, key).isEmpty())
       return Optional.empty();
 
@@ -82,7 +85,13 @@ public class ConfigReader {
         .toList();
 
       for (Field f : fields) {
+
+        // Ignore fields marked for ignore
+        if (f.getAnnotation(ConfigSectionIgnore.class) != null)
+          continue;
+
         f.setAccessible(true);
+
         String fName = f.getName();
         Class<?> fType = f.getType();
         String fKey = join(key, fName);

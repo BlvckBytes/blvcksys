@@ -116,6 +116,18 @@ public class QuestProfile {
     return Math.round((float) completedCount / (float) totalCount * 100F * 100F) / 100F;
   }
 
+  /**
+   * Get the number of completed counts on a task
+   * @param task Target task
+   * @return Number of completed counts
+   */
+  public int getTaskCompletedCount(QuestTaskSection task) {
+    QuestTaskModel model = data.get(task.getToken());
+    if (model != null)
+      return Math.min(model.getCount(), task.getCount());
+    return 0;
+  }
+
   //=========================================================================//
   //                                Utilities                                //
   //=========================================================================//

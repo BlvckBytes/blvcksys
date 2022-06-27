@@ -77,4 +77,13 @@ public interface IQuestHandler {
    * @return Percentage value rounded to two decimals between 0 and 100
    */
   double getQuestProgress(Player p, QuestSection quest);
+
+  /**
+   * Get the number of completed counts on a task
+   * @param p Target player
+   * @param task Target task
+   * @return Number of completed counts
+   */
+  int getTaskCompletedCount(Player p, QuestTaskSection task);
+
 }

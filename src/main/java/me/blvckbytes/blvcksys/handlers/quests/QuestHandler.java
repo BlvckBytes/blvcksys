@@ -153,6 +153,14 @@ public class QuestHandler implements IQuestHandler, IAutoConstructed, Listener {
   }
 
   @Override
+  public int getTaskCompletedCount(Player p, QuestTaskSection task) {
+    QuestProfile profile = playerdata.get(p);
+    if (profile == null)
+      return 0;
+    return profile.getTaskCompletedCount(task);
+  }
+
+  @Override
   public List<QuestSection> getQuests() {
     return new ArrayList<>(quests.values());
   }

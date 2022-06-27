@@ -83,7 +83,7 @@ public class QuestsGui extends AGui<Object> {
   public String buildProgressBar(double progress) {
     // These parameters should later be stored in a config
     char c = '▎';
-    int len = 15;
+    int len = 16;
 
     int activeBars = (int) Math.floor(progress / 100D * len);
 

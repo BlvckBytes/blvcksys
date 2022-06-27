@@ -9,6 +9,7 @@ representitive:
     - ' '
     - '&7Verfügbare Stufen: &d{{num_stages}}'
     - '&7Aktuelle Stufe: &d{{curr_stage}}'
+    - '&7Fortschritt: &d{{progress}}'
 stages:
   -
     name: '&5Brauer I'

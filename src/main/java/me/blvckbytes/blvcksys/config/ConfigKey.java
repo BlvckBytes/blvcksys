@@ -2338,6 +2338,8 @@ public enum ConfigKey {
   //=========================================================================//
 
   GUI_QUESTS_TITLE("gui.quests.title", "$0Questmenu von $2{{viewer}}"),
+  GUI_QUESTS_NOT_STARTED("gui.quests.not_started", "$4nicht begonnen"),
+  GUI_QUESTS_FINISHED("gui.quests.finished", "&aabgeschlossen"),
 
   //=========================================================================//
   //                            Quest Stages GUI                             //

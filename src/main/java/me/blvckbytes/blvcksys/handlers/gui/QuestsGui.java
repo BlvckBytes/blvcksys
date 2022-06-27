@@ -109,10 +109,26 @@ public class QuestsGui extends AGui<Object> {
    */
   private Map<String, String> buildQuestVariables(Player p, QuestSection quest) {
     Map<String, String> vars = new HashMap<>();
+    Optional<Integer> activeStage = quests.getActiveQuestStage(p, quest);
+    double progress = quests.getQuestProgress(p, quest);
 
-    // TODO: Implement getting the current stage from the quest-profile
+    // Progress made on the whole quest, including all tasks
+    vars.put(
+      "progress",
+      progress == 0 ? cfg.get(ConfigKey.GUI_QUESTS_NOT_STARTED).asScalar() : (
+        progress < 100 ? progress + "%" : cfg.get(ConfigKey.GUI_QUESTS_FINISHED).asScalar()
+      )
+    );
+
+    // Number of stages available
     vars.put("num_stages", String.valueOf(quest.getStages().length));
-    vars.put("curr_stage", "SOON");
+
+    // Currently active stage
+    vars.put(
+      "curr_stage",
+      activeStage.map(integer -> String.valueOf(integer + 1))
+        .orElseGet(() -> cfg.get(ConfigKey.GUI_QUESTS_NOT_STARTED).asScalar())
+    );
 
     return vars;
   }

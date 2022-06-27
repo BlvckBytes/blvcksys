@@ -12,6 +12,8 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.potion.PotionData;
+import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
@@ -134,6 +136,36 @@ public class ItemStackBuilder {
 
     else if (this.meta instanceof PotionMeta pm)
       pm.setColor(color.get());
+
+    return this;
+  }
+
+  /**
+   * Set the base effect of this item (only applicable to potions)
+   * @param data Base effect to set
+   * @param condition Boolean which has to evaluate to true in order to apply the effect
+   */
+  public ItemStackBuilder withBaseEffect(Supplier<PotionData> data, boolean condition) {
+    if (!condition)
+      return this;
+
+    if (this.meta instanceof PotionMeta pm)
+      pm.setBasePotionData(data.get());
+
+    return this;
+  }
+
+  /**
+   * Add custom effects to this item (only applicable to potions)
+   * @param effects Custom effects to add
+   * @param condition Boolean which has to evaluate to true in order to apply the effects
+   */
+  public ItemStackBuilder withCustomEffects(Supplier<List<PotionEffect>> effects, boolean condition) {
+    if (!condition)
+      return this;
+
+    if (this.meta instanceof PotionMeta pm)
+      effects.get().forEach(effect -> pm.addCustomEffect(effect, true));
 
     return this;
   }

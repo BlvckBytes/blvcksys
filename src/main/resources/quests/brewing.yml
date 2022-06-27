@@ -9,7 +9,7 @@ representitive:
     - ' '
     - '&7Verfügbare Stufen: &d{{num_stages}}'
     - '&7Aktuelle Stufe: &d{{curr_stage}}'
-    - '&7Fortschritt: &d{{progress}}'
+    - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
 stages:
   -
     name: '&5Brauer I'
@@ -22,6 +22,7 @@ stages:
       lore:
         - ' '
         - '&7Braue &d{{task_0_completed}}&7/&d{{task_0_total}} &7Regeneration II oder Heilung II'
+        - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
     tasks:
       -
         action: BREWING
@@ -48,6 +49,7 @@ stages:
       lore:
         - ' '
         - '&7Braue &d{{task_0_completed}}&7/&d{{task_0_total}} &7Schadentränke'
+        - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
     tasksInOrder: true
     tasks:
       -
@@ -69,6 +71,7 @@ stages:
       lore:
         - ' '
         - '&7Braue &d{{task_0_completed}}&7/&d{{task_0_total}} &7komische Tränke'
+        - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
     tasksInOrder: true
     tasks:
       -

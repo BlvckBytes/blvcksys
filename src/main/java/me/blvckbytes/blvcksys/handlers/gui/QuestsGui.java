@@ -8,6 +8,7 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.handlers.quests.IQuestHandler;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -75,6 +76,24 @@ public class QuestsGui extends AGui<Object> {
   }
 
   /**
+   * Builds a standardized progress bar to be displayed as text using UTF-8
+   * @param progress Progress value between 0 and 100
+   * @return Progress bar to display
+   */
+  public String buildProgressBar(double progress) {
+    // These parameters should later be stored in a config
+    char c = '▎';
+    int len = 15;
+
+    int activeBars = (int) Math.floor(progress / 100D * len);
+
+    return (
+      ChatColor.GREEN + String.valueOf(c).repeat(activeBars) +
+      ChatColor.GRAY + String.valueOf(c).repeat(len - activeBars)
+    );
+  }
+
+  /**
    * Build a representitive item for a quest to be displayed on the main screen
    * @param p Target player to fill in details for
    * @param quest Target quest to display
@@ -113,12 +132,10 @@ public class QuestsGui extends AGui<Object> {
     double progress = quests.getQuestProgress(p, quest);
 
     // Progress made on the whole quest, including all tasks
-    vars.put(
-      "progress",
-      progress == 0 ? cfg.get(ConfigKey.GUI_QUESTS_NOT_STARTED).asScalar() : (
-        progress < 100 ? progress + "%" : cfg.get(ConfigKey.GUI_QUESTS_FINISHED).asScalar()
-      )
-    );
+    vars.put("progress", progress + "%");
+
+    // Progress number as a bar
+    vars.put("progress_bar", buildProgressBar(progress));
 
     // Number of stages available
     vars.put("num_stages", String.valueOf(quest.getStages().length));

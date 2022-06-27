@@ -1,8 +1,8 @@
 package me.blvckbytes.blvcksys.handlers.quests.actions;
 
 import com.google.common.collect.ImmutableList;
-import me.blvckbytes.blvcksys.config.sections.PotionParameterEffectSection;
-import me.blvckbytes.blvcksys.config.sections.PotionParameterSection;
+import me.blvckbytes.blvcksys.config.sections.QuestPotionParameterEffectSection;
+import me.blvckbytes.blvcksys.config.sections.QuestPotionParameterSection;
 import me.blvckbytes.blvcksys.config.sections.QuestAction;
 import me.blvckbytes.blvcksys.config.sections.QuestTaskSection;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
@@ -177,7 +177,7 @@ public class BrewingAction extends AQuestAction {
     for (Map.Entry<String, QuestTaskSection> task : tasks.entrySet()) {
 
       // Not a valid potion task
-      if (!(task.getValue().getParameters() instanceof PotionParameterSection pp))
+      if (!(task.getValue().getParameters() instanceof QuestPotionParameterSection pp))
         continue;
 
       // Not matching this task's parameter requirements
@@ -196,9 +196,16 @@ public class BrewingAction extends AQuestAction {
    * @param pp Task parameters
    * @return True on match, false on mismatch
    */
-  private boolean compareResult(ItemStack item, PotionParameterSection pp) {
+  private boolean compareResult(ItemStack item, QuestPotionParameterSection pp) {
     // Not a valid potion
     if (!(item.getItemMeta() instanceof PotionMeta pm))
+      return false;
+
+    // Potion type mismatch
+    if (
+      pp.getSplash() && item.getType() != Material.SPLASH_POTION ||
+      pp.getLingering() && item.getType() != Material.LINGERING_POTION
+    )
       return false;
 
     // No effects to compare yet
@@ -206,11 +213,11 @@ public class BrewingAction extends AQuestAction {
       return false;
 
     boolean allMatched = true;
-    for (PotionParameterEffectSection effect : pp.getEffects()) {
+    for (QuestPotionParameterEffectSection effect : pp.getEffects()) {
 
       if (compareEffectSection(item, pm, effect)) {
         // One match is enough to succeed
-        if (pp.isAnyOf())
+        if (pp.getAnyOf())
           return true;
 
         // Check other entries too
@@ -220,7 +227,7 @@ public class BrewingAction extends AQuestAction {
       allMatched = false;
 
       // One mismatch broke the result
-      if (!pp.isAnyOf())
+      if (!pp.getAnyOf())
         break;
     }
 
@@ -233,7 +240,7 @@ public class BrewingAction extends AQuestAction {
    * @param effect Target effect
    * @return True on match, false on mismatch
    */
-  private boolean compareEffectSection(ItemStack item, PotionMeta pm, PotionParameterEffectSection effect) {
+  private boolean compareEffectSection(ItemStack item, PotionMeta pm, QuestPotionParameterEffectSection effect) {
     // Color specified and mismatching
     if (effect.getColor() != null && !effect.getColor().equals(pm.getColor()))
       return false;
@@ -274,7 +281,7 @@ public class BrewingAction extends AQuestAction {
     @Nullable PotionEffectType potionEffect,
     @Nullable Integer amplifier,
     @Nullable Integer duration,
-    PotionParameterEffectSection effect
+    QuestPotionParameterEffectSection effect
   ) {
     if (effect.getPotionType() != null && !effect.getPotionType().equals(type))
       return false;

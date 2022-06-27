@@ -10,16 +10,21 @@ import me.blvckbytes.blvcksys.config.AConfigSection;
   Provides parameters to the quest action named BREWING.
 */
 @Getter
-public class PotionParameterSection extends AConfigSection {
+public class QuestPotionParameterSection extends AConfigSection {
 
   // List of effects that the potion needs to have
   private QuestPotionParameterEffectSection[] effects;
 
-  // If true, any of the effects may match, if false, all have to be present
-  private boolean anyOf;
+  // Type of the potion
+  private Boolean splash, lingering;
 
-  public PotionParameterSection() {
+  // If true, any of the effects may match, if false, all have to be present
+  private Boolean anyOf;
+
+  public QuestPotionParameterSection() {
     this.effects = new QuestPotionParameterEffectSection[0];
     this.anyOf = true;
+    this.splash = false;
+    this.lingering = false;
   }
 }

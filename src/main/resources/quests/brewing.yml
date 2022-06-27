@@ -16,12 +16,14 @@ stages:
     representitive:
       name: '&7» &5Brauer I'
       type: POTION
-      color: 255 0 0
+      baseEffect:
+        type: REGEN
       flags:
         - HIDE_POTION_EFFECTS
       lore:
         - ' '
-        - '&7Braue &d{{task_0_completed}}&7/&d{{task_0_total}} &7Regeneration II oder Heilung II'
+        - '&7Braue &d{{task_0_completed}}&7/&d{{task_0_total}} &7Regeneration II'
+        - '&7oder Heilung II und trinke diese &d{{task_1_completed}}&7/&d{{task_1_total}}&7.'
         - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
     tasks:
       -
@@ -37,13 +39,22 @@ stages:
             -
               effectType: HEAL
               amplifier: 1
+      -
+        action: CONSUME
+        count: 5
+        parameters:
+          # TODO: Add potion effects to itemstack parsing
+          items:
+            -
+              type: POTION
   -
     name: '&5Brauer II'
     representitive:
       name: '&7» &5Brauer II'
       amount: 1
-      type: POTION
-      color: 255 0 128
+      type: SPLASH_POTION
+      baseEffect:
+        type: INSTANT_DAMAGE
       flags:
         - HIDE_POTION_EFFECTS
       lore:
@@ -56,6 +67,7 @@ stages:
         action: BREWING
         count: 5
         parameters:
+          splash: true
           effects:
             -
               effectType: HARM
@@ -65,7 +77,8 @@ stages:
       name: '&7» &5Brauer III'
       amount: 1
       type: POTION
-      color: 0 255 0
+      baseEffect:
+        type: AWKWARD
       flags:
         - HIDE_POTION_EFFECTS
       lore:

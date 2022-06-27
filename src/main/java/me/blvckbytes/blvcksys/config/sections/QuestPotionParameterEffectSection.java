@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
   Represents the properties of a single potion effect.
 */
 @Getter
-public class PotionParameterEffectSection extends AConfigSection {
+public class QuestPotionParameterEffectSection extends AConfigSection {
 
   // Type of the potion effect
   private @Nullable PotionEffectType effectType;

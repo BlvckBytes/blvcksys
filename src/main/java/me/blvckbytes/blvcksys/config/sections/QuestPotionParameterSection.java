@@ -2,7 +2,6 @@ package me.blvckbytes.blvcksys.config.sections;
 
 import lombok.Getter;
 import me.blvckbytes.blvcksys.config.AConfigSection;
-import org.jetbrains.annotations.Nullable;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -14,13 +13,13 @@ import org.jetbrains.annotations.Nullable;
 public class PotionParameterSection extends AConfigSection {
 
   // List of effects that the potion needs to have
-  private PotionParameterEffectSection[] effects;
+  private QuestPotionParameterEffectSection[] effects;
 
   // If true, any of the effects may match, if false, all have to be present
   private boolean anyOf;
 
   public PotionParameterSection() {
-    this.effects = new PotionParameterEffectSection[0];
+    this.effects = new QuestPotionParameterEffectSection[0];
     this.anyOf = true;
   }
 }

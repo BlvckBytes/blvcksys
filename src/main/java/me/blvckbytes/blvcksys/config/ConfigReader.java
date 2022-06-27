@@ -1,15 +1,13 @@
 package me.blvckbytes.blvcksys.config;
 
 import com.google.common.primitives.Primitives;
+import com.mojang.authlib.GameProfile;
 import me.blvckbytes.blvcksys.config.sections.ConfigSectionIgnore;
+import me.blvckbytes.blvcksys.config.sections.ItemStackSection;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.handlers.gui.ItemStackBuilder;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
-import net.minecraft.util.Tuple;
 import org.bukkit.Color;
-import org.bukkit.Material;
-import org.bukkit.enchantments.Enchantment;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
@@ -308,6 +306,7 @@ public class ConfigReader {
     typeParsers.put(ItemStack.class, key -> this.getItem(key).map(ItemStackBuilder::build));
     typeParsers.put(String.class, key -> get(key).map(ConfigValue::asScalar));
     typeParsers.put(ConfigValue.class, this::get);
+    typeParsers.put(GameProfile.class, this::getProfile);
   }
 
   /**
@@ -353,49 +352,23 @@ public class ConfigReader {
    * @return ItemStack on success, empty if the key was invalid
    */
   private Optional<ItemStackBuilder> getItem(String key) {
-    // Key does not exist
-    if (cfg.get(path, key).isEmpty())
+    ItemStackSection is = parseValue(key, ItemStackSection.class).orElse(null);
+    return is == null ? Optional.empty() : Optional.of(is.asItem());
+  }
+
+  /**
+   * Get the game profile of a player by their name, returns a default steve
+   * game profile if the name couldn't be resolved
+   * @param key Target config key
+   * @return GameProfile on success, empty if the key was invalid
+   */
+  private Optional<GameProfile> getProfile(String key) {
+    // Cannot resolve textures due to missing dependency
+    if (textureHandler == null)
       return Optional.empty();
 
-    ConfigValue name = get(join(key, "name")).orElse(null);
-    ConfigValue lore = get(join(key, "lore")).orElse(null);
-    ConfigValue flags = get(join(key, "flags")).orElse(null);
-    Color color = parseColor(join(key, "color")).orElse(null);
-    ConfigValue enchantments = get(join(key, "enchantments")).orElse(null);
-    ConfigValue textures = get(join(key, "textures")).orElse(null);
-
-    int amount = getScalar(join(key, "amount"), Integer.class, 1);
-    Material mat = getScalar(join(key, "type"), Material.class, Material.BARRIER);
-
-    return Optional.of(
-      new ItemStackBuilder(mat, amount)
-        .withName(name, name != null)
-        .withLore(lore, lore != null)
-        .withFlags(() -> flags.asList(ItemFlag.class), flags != null)
-        .withEnchantments(() -> (
-          // Try to parse each line using the format <enchantment>:<level>
-          enchantments.asList().stream().map(line -> {
-              String[] data = line.split(":");
-
-              // Invalid format specified
-              if (data.length != 2)
-                return null;
-
-              // Try to parse the enchantment by it's constant name and the
-              // integer level as a positive number
-              Enchantment e = parseEnum(Enchantment.class, data[0]).orElse(null);
-              Integer level = parseInt(data[1]).orElse(null);
-
-              // Invalid values
-              if (e == null || level == null || level <= 0)
-                return null;
-
-              return new Tuple<>(e, level);
-            })
-            .filter(Objects::nonNull).toList()
-        ), enchantments != null)
-        .withColor(() -> color, color != null)
-        .withProfile(() -> textureHandler.getProfileOrDefault(textures.asScalar()), textures != null && textureHandler != null)
-    );
+    return get(key)
+      .map(ConfigValue::asScalar)
+      .map(textureHandler::getProfileOrDefault);
   }
 }

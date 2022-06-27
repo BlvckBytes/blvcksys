@@ -7,6 +7,7 @@ import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.util.Tuple;
+import org.bukkit.configuration.MemorySection;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -142,10 +143,17 @@ public class YamlConfig implements IConfig, IAutoConstructed {
 
       // Get the next level from the map
       else {
-        // Cannot get the next key from a non-map type
-        if (!(obj instanceof Map<?, ?> m))
+        // Maps are usually encountered when indexing into memory sections
+        if (obj instanceof Map<?, ?> m)
+          obj = m.get(level);
+
+        // Memory sections are usually encountered at top level scope
+        else if (obj instanceof MemorySection ms)
+          obj = ms.get(level);
+
+        // Unknown data-structure, cannot get the key
+        else
           return Optional.empty();
-        obj = m.get(level);
       }
 
       // Get the target index value from the current list

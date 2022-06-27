@@ -41,6 +41,10 @@ public class QuestProfile {
     this.completedStages = new HashSet<>();
   }
 
+  //=========================================================================//
+  //                                   API                                   //
+  //=========================================================================//
+
   /**
    * Fire a task which the player just completed and check if it still
    * has counts left. If so, advance the state persistently.
@@ -67,6 +71,54 @@ public class QuestProfile {
     pers.store(model);
     return Optional.of(model);
   }
+
+  /**
+   * Get the zero-based index of the currently active stage
+   * within a quest's list of stages
+   * @param quest Target quest
+   * @return Index, empty if the player has no progress on this quest yet
+   */
+  public Optional<Integer> getActiveQuestStage(QuestSection quest) {
+    // Has no data for this quest, thus it's not started yet
+    if (data.keySet().stream().noneMatch(tk -> tk.startsWith(quest.getToken() + qh.getTokenSeparator())))
+      return Optional.empty();
+
+    // Find the first incomplete stage
+    for (int i = 0; i < quest.getStages().length; i++) {
+      // Found an incomplete stage or at the last possible stage
+      if (!isStageComplete(quest.getStages()[i]) || i == quest.getStages().length - 1)
+        return Optional.of(i);
+    }
+
+    return Optional.empty();
+  }
+
+  /**
+   * Get the total quest progress in percent, based on how far
+   * each of the tasks has been completed
+   * @param quest Target quest
+   * @return Percentage value rounded to two decimals between 0 and 100
+   */
+  public double getQuestProgress(QuestSection quest) {
+    // Sum all available task counts as well as all completed counts
+    int totalCount = 0, completedCount = 0;
+    for (QuestStageSection stage : quest.getStages()) {
+      for (QuestTaskSection task : stage.getTasks()) {
+        totalCount += task.getCount();
+
+        // Add to the completed count, if progress is available
+        QuestTaskModel model = data.get(task.getToken());
+        if (model != null)
+          completedCount += Math.min(task.getCount(), model.getCount());
+      }
+    }
+
+    return Math.round((float) completedCount / (float) totalCount * 100F * 100F) / 100F;
+  }
+
+  //=========================================================================//
+  //                                Utilities                                //
+  //=========================================================================//
 
   /**
    * Checks whether the player can reach a certain task, which means that the

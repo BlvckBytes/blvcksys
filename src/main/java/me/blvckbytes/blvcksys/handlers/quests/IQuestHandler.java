@@ -59,4 +59,22 @@ public interface IQuestHandler {
    * @param target Player that made progress
    */
   void registerProgressInterest(Consumer<Player> target);
+
+  /**
+   * Get the zero-based index of the currently active stage
+   * within a quest's list of stages
+   * @param p Target player
+   * @param quest Target quest
+   * @return Index, empty if the player has no progress on this quest yet
+   */
+  Optional<Integer> getActiveQuestStage(Player p, QuestSection quest);
+
+  /**
+   * Get the total quest progress in percent, based on how far
+   * each of the tasks has been completed
+   * @param p Target player
+   * @param quest Target quest
+   * @return Percentage value rounded to two decimals between 0 and 100
+   */
+  double getQuestProgress(Player p, QuestSection quest);
 }

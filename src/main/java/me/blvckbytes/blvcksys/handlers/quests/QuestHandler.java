@@ -137,6 +137,22 @@ public class QuestHandler implements IQuestHandler, IAutoConstructed, Listener {
   }
 
   @Override
+  public Optional<Integer> getActiveQuestStage(Player p, QuestSection quest) {
+    QuestProfile profile = playerdata.get(p);
+    if (profile == null)
+      return Optional.empty();
+    return profile.getActiveQuestStage(quest);
+  }
+
+  @Override
+  public double getQuestProgress(Player p, QuestSection quest) {
+    QuestProfile profile = playerdata.get(p);
+    if (profile == null)
+      return 0;
+    return profile.getQuestProgress(quest);
+  }
+
+  @Override
   public List<QuestSection> getQuests() {
     return new ArrayList<>(quests.values());
   }

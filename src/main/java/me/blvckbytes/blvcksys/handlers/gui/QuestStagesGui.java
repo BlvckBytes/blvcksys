@@ -5,6 +5,7 @@ import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.sections.QuestSection;
 import me.blvckbytes.blvcksys.config.sections.QuestStageSection;
+import me.blvckbytes.blvcksys.config.sections.QuestTaskSection;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
@@ -111,7 +112,12 @@ public class QuestStagesGui extends AGui<QuestSection> {
   private Map<String, String> buildQuestVariables(Player p, QuestStageSection stage) {
     Map<String, String> vars = new HashMap<>();
 
-    // TODO: Implement
+    // Add custom variables for each task, identified by it's sequence ID
+    for (int i = 0; i < stage.getTasks().length; i++) {
+      QuestTaskSection task = stage.getTasks()[i];
+      vars.put("task_" + i + "_completed", String.valueOf(quests.getTaskCompletedCount(p, task)));
+      vars.put("task_" + i + "_total", String.valueOf(task.getCount()));
+    }
 
     return vars;
   }

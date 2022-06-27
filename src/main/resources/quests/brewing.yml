@@ -19,10 +19,9 @@ stages:
       color: 255 0 0
       flags:
         - HIDE_POTION_EFFECTS
-        - HIDE_ATTRIBUTES
       lore:
         - ' '
-        - '&7Braue 3 Regenerations- oder Heilungstränke'
+        - '&7Braue &d{{task_0_completed}}&7/&d{{task_0_total}} &7Regeneration II oder Heilung II'
     tasks:
       -
         action: BREWING
@@ -46,10 +45,9 @@ stages:
       color: 255 0 128
       flags:
         - HIDE_POTION_EFFECTS
-        - HIDE_ATTRIBUTES
       lore:
         - ' '
-        - '&7Braue 5 Schadentränke'
+        - '&7Braue &d{{task_0_completed}}&7/&d{{task_0_total}} &7Schadentränke'
     tasksInOrder: true
     tasks:
       -
@@ -68,10 +66,9 @@ stages:
       color: 0 255 0
       flags:
         - HIDE_POTION_EFFECTS
-        - HIDE_ATTRIBUTES
       lore:
         - ' '
-        - '&7Braue eine Awkward Potion'
+        - '&7Braue &d{{task_0_completed}}&7/&d{{task_0_total}} &7komische Tränke'
     tasksInOrder: true
     tasks:
       -

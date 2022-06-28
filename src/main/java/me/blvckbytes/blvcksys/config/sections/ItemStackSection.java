@@ -9,12 +9,18 @@ import me.blvckbytes.blvcksys.handlers.gui.ItemStackBuilder;
 import net.minecraft.util.Tuple;
 import org.bukkit.Color;
 import org.bukkit.Material;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.LeatherArmorMeta;
+import org.bukkit.inventory.meta.PotionMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.Function;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -25,9 +31,9 @@ import java.util.Objects;
 @Getter
 public class ItemStackSection extends AConfigSection {
 
-  private @Nullable ConfigValue name;
   private int amount;
   private Material type;
+  private @Nullable ConfigValue name;
   private @Nullable ConfigValue lore;
   private @Nullable ConfigValue flags;
   private @Nullable Color color;
@@ -92,9 +98,106 @@ public class ItemStackSection extends AConfigSection {
     if (item.getAmount() != amount)
       return false;
 
-    // TODO: Implement all remaining properties...
+    // Compare displayname
+    if (!checkMeta(item, name, meta -> name.asScalar().equals(meta.getDisplayName())))
+      return false;
+
+    // Compare lore lines for equality (and order)
+    if (!checkMeta(item, lore, meta -> lore.asList().equals(meta.getLore())))
+      return false;
+
+    // Compare flag entries for equality (ignoring order)
+    if (!checkMeta(item, flags, meta -> flags.asSet(ItemFlag.class).equals(meta.getItemFlags())))
+      return false;
+
+    // Compare either potion color or leather color
+    if (!checkMeta(item, color, meta -> {
+      if (meta instanceof PotionMeta pm)
+        return color.equals(pm.getColor());
+
+      if (meta instanceof LeatherArmorMeta lam)
+        return color.equals(lam.getColor());
+
+      // Not colorable
+      return false;
+    }))
+      return false;
+
+    // Check for the presence of all enchantments at the right levels (ignoring order)
+    if (!checkMeta(item, enchantments, meta -> {
+      for (ItemStackEnchantmentSection ench : enchantments) {
+        if (!(
+          // Contains this enchantment at any levej
+          meta.hasEnchant(ench.getEnchantment()) &&
+          // Contains at a matching level
+          meta.getEnchantLevel(ench.getEnchantment()) == ench.getLevel()
+        ))
+          return false;
+      }
+      // All enchantments matched
+      return true;
+    }))
+      return false;
+
+    // Compare for head textures
+    if (!checkMeta(item, textures, meta -> {
+      // Not a skull
+      if (!(meta instanceof SkullMeta sm))
+        return false;
+
+      OfflinePlayer owner = sm.getOwningPlayer();
+
+      // Has no head owner
+      if (owner == null)
+        return null;
+
+      return textures.getId().equals(owner.getUniqueId());
+    }))
+      return false;
+
+    // Compare the base potion effect
+    if (!(checkMeta(item, baseEffect, meta -> {
+      // Not a potion
+      if (!(meta instanceof PotionMeta pm))
+        return false;
+      return baseEffect.equals(pm.getBasePotionData());
+    })))
+      return false;
+
+    // Check for the presence of all custom effects (ignoring order)
+    if (!(checkMeta(item, customEffects, meta -> {
+      if (!(meta instanceof PotionMeta pm))
+        return false;
+
+      for (ItemStackCustomEffectSection eff : customEffects) {
+        // Current custom effect is not represented within the custom effects of the potion
+        if (pm.getCustomEffects().stream().anyMatch(eff::describesEffect))
+          return false;
+      }
+
+      // All effects present
+      return true;
+    })))
+      return false;
 
     // All checks passed
     return true;
+  }
+
+  /**
+   * Check a local parameter against the item's metadata. Whenever the
+   * local value is null, this function returns true, and if it's present
+   * but there's no metadata or the metadata property mismatches, it returns false
+   * @param item Item to check the meta of
+   * @param value Local parameter to use
+   * @param checker Checker function
+   */
+  private boolean checkMeta(ItemStack item, @Nullable Object value, Function<ItemMeta, Boolean> checker) {
+    // Value not present, basically a wildcard
+    if (value == null)
+      return true;
+
+    // Fails if there is either no meta to compare against at all or if the checker failed
+    return item.getItemMeta() != null && checker.apply(item.getItemMeta());
   }
 }

@@ -16,7 +16,9 @@ public enum QuestAction {
   // Brewing potions in a brewing stand
   BREWING(QuestPotionParameterSection.class),
   // Consuming any consumable items
-  CONSUME(QuestItemParameterSection.class)
+  CONSUME(QuestItemParameterSection.class),
+  // Break blocks
+  BREAK(QuestBreakParameterSecton.class)
   ;
 
   private final Class<? extends AConfigSection> parameterType;

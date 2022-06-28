@@ -1,0 +1,49 @@
+name: '&5Miner'
+representitive:
+  name: '&7» &5Miner'
+  type: IRON_PICKAXE
+  lore:
+    - ' '
+    - '&7Baue Erze mit verschiedenen'
+    - '&7Werkzeugen ab.'
+    - ' '
+    - '&7Verfügbare Stufen: &d{{num_stages}}'
+    - '&7Aktuelle Stufe: &d{{curr_stage}}'
+    - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
+stages:
+  -
+    name: '&5Miner I'
+    representitive:
+      name: '&7» &5Miner I'
+      type: COAL_ORE
+      lore:
+        - ' '
+        - '&7Baue &d10 &7Kohleblöcke ab.'
+        - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
+    tasks:
+      -
+        action: BREAK
+        count: 10
+        parameters:
+          block:
+            type: COAL_ORE
+  -
+    name: '&5Miner II'
+    representitive:
+      name: '&7» &5Miner II'
+      type: REDSTONE_ORE
+      lore:
+        - ' '
+        - '&7Baue &d10 &7Redstoneblöcke mit &dGlück &7ab.'
+        - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
+    tasks:
+      -
+        action: BREAK
+        count: 10
+        parameters:
+          block:
+            type: REDSTONE_ORE
+          hand:
+            enchantments:
+              -
+                enchantment: LOOT_BONUS_BLOCKS

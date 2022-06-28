@@ -6,6 +6,7 @@ import me.blvckbytes.blvcksys.config.sections.QuestAction;
 import me.blvckbytes.blvcksys.config.sections.QuestTaskSection;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.handlers.TriResult;
 import me.blvckbytes.blvcksys.handlers.quests.IQuestHandler;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.player.PlayerItemConsumeEvent;
@@ -43,9 +44,9 @@ public class ConsumeAction extends AQuestAction {
       if (!compareItems(e.getItem(), isp))
         continue;
 
-      // Fire this task
-      questHandler.fireTask(e.getPlayer(), task.getKey());
-      break;
+      // Fire this task and only stop looping if it was successful
+      if (questHandler.fireTask(e.getPlayer(), task.getKey()) == TriResult.SUCC)
+        break;
     }
   }
 
@@ -57,6 +58,10 @@ public class ConsumeAction extends AQuestAction {
    * @return True if any entry matches the item, false otherwise
    */
   private boolean compareItems(ItemStack item, QuestItemParameterSection isp) {
+    // Consumed items will always be consumed one at a time
+    item = item.clone();
+    item.setAmount(1);
+
     for (ItemStackSection paramItem : isp.getItems()) {
       // Check if this section describes the item in question
       if (paramItem.describesItem(item))

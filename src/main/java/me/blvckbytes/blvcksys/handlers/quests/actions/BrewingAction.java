@@ -9,6 +9,7 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.events.InventoryManipulationEvent;
 import me.blvckbytes.blvcksys.events.ManipulationAction;
+import me.blvckbytes.blvcksys.handlers.TriResult;
 import me.blvckbytes.blvcksys.handlers.quests.IQuestHandler;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import net.minecraft.nbt.NBTTagCompound;
@@ -184,9 +185,9 @@ public class BrewingAction extends AQuestAction {
       if (!compareResult(item, pp))
         continue;
 
-      // Fire this task
-      questHandler.fireTask(p, task.getKey());
-      break;
+      // Fire this task and only stop looping if it was successful
+      if (questHandler.fireTask(p, task.getKey()) == TriResult.SUCC)
+        break;
     }
   }
 

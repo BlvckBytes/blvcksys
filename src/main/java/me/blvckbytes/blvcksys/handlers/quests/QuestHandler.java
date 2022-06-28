@@ -10,6 +10,7 @@ import me.blvckbytes.blvcksys.config.sections.QuestTaskSection;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
+import me.blvckbytes.blvcksys.handlers.TriResult;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.QuestTaskModel;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
@@ -71,8 +72,8 @@ public class QuestHandler implements IQuestHandler, IAutoConstructed, Listener {
     this.logger = logger;
 
     this.quests = new HashMap<>();
-    this.stages = new HashMap<>();
-    this.tasks = new HashMap<>();
+    this.stages = new LinkedHashMap<>();
+    this.tasks = new LinkedHashMap<>();
     this.playerdata = new HashMap<>();
     this.progressInterests = new ArrayList<>();
 
@@ -84,16 +85,16 @@ public class QuestHandler implements IQuestHandler, IAutoConstructed, Listener {
   //=========================================================================//
 
   @Override
-  public void fireTask(Player p, String token) {
+  public TriResult fireTask(Player p, String token) {
     // Player not online (or not loaded)
     QuestProfile profile = playerdata.get(p);
     if (profile == null)
-      return;
+      return TriResult.EMPTY;
 
     // Task unknow
     QuestTaskSection task = tasks.get(token);
     if (task == null)
-      return;
+      return TriResult.EMPTY;
 
     String[] tokenData = token.split(TOKEN_SEP);
     QuestSection quest = quests.get(tokenData[0]);
@@ -101,7 +102,7 @@ public class QuestHandler implements IQuestHandler, IAutoConstructed, Listener {
 
     // Could not locate parents
     if (quest == null || stage == null)
-      return;
+      return TriResult.EMPTY;
 
     // Relay handling to the profile
     QuestTaskModel model = profile.fireTask(task).orElse(null);
@@ -128,7 +129,14 @@ public class QuestHandler implements IQuestHandler, IAutoConstructed, Listener {
           .withVariable("task_number", taskSeq + 1)
           .asScalar()
       );
+
+      // Successfully fired
+      return TriResult.SUCC;
     }
+
+    // Nothing happened, couldn't reach that task (either
+    // already completed or not yet reachable)
+    return TriResult.ERR;
   }
 
   @Override

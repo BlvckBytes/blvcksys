@@ -8,6 +8,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 /*
@@ -25,9 +26,9 @@ public abstract class AQuestAction implements Listener, IAutoConstructed {
   protected AQuestAction(IQuestHandler questHandler, JavaPlugin plugin, QuestAction action) {
     this.questHandler = questHandler;
     this.plugin = plugin;
-    this.tasks = new HashMap<>();
 
     // Only cache tasks which match this handler's action to reduce time complexity
+    this.tasks = new LinkedHashMap<>();
     for (Map.Entry<String, QuestTaskSection> taskE : questHandler.getTasks().entrySet()) {
       if (taskE.getValue().getAction() == action)
         this.tasks.put(taskE.getKey(), taskE.getValue());

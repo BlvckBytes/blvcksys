@@ -3,6 +3,7 @@ package me.blvckbytes.blvcksys.handlers.quests;
 import me.blvckbytes.blvcksys.config.sections.QuestSection;
 import me.blvckbytes.blvcksys.config.sections.QuestStageSection;
 import me.blvckbytes.blvcksys.config.sections.QuestTaskSection;
+import me.blvckbytes.blvcksys.handlers.TriResult;
 import org.bukkit.entity.Player;
 
 import java.util.List;
@@ -51,8 +52,10 @@ public interface IQuestHandler {
    * Fire an existing task due to a given player's action
    * @param p Target player
    * @param token Task token to fire
+   * @return SUCC on successful firing, ERR if the player couldn't reach this task
+   * and EMPTY if there was no task with that token or the player was unloaded
    */
-  void fireTask(Player p, String token);
+  TriResult fireTask(Player p, String token);
 
   /**
    * Register an interest for the progress being made on quests

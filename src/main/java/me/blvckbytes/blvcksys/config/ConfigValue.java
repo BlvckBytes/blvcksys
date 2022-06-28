@@ -238,6 +238,24 @@ public class ConfigValue {
   }
 
   /**
+   * Get the local list as a set by casting every element to the provided
+   * type, where mismatching entries are skipped
+   * @param type Required type
+   * @return Set of casted values
+   */
+  public<T> Set<T> asSet(Class<T> type) {
+    Set<T> buf = new HashSet<>();
+
+    for (Object o : lines) {
+      try {
+        cast(o, type).ifPresent(buf::add);
+      } catch (ClassCastException ignored) {}
+    }
+
+    return buf;
+  }
+
+  /**
    * Shorthand for {@link #asList()}, just in the format of a stream
    * @return List of strings
    */

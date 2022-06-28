@@ -43,10 +43,17 @@ stages:
         action: CONSUME
         count: 5
         parameters:
-          # TODO: Add potion effects to itemstack parsing
           items:
             -
               type: POTION
+              baseEffect:
+                type: INSTANT_HEAL
+                upgraded: true
+            -
+              type: POTION
+              baseEffect:
+                type: REGEN
+                upgraded: true
   -
     name: '&5Brauer II'
     representitive:

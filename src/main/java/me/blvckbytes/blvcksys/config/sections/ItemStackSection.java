@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.config.sections;
 
 import com.mojang.authlib.GameProfile;
+import lombok.AccessLevel;
 import lombok.Getter;
 import me.blvckbytes.blvcksys.config.AConfigSection;
 import me.blvckbytes.blvcksys.config.ConfigValue;
@@ -9,6 +10,7 @@ import net.minecraft.util.Tuple;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemFlag;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -36,6 +38,7 @@ public class ItemStackSection extends AConfigSection {
 
   // Builder cache, as instances will be reusable
   @ConfigSectionIgnore
+  @Getter(AccessLevel.PRIVATE)
   private ItemStackBuilder item = null;
 
   public ItemStackSection() {
@@ -72,5 +75,26 @@ public class ItemStackSection extends AConfigSection {
     }
 
     return item;
+  }
+
+  /**
+   * Compares all available values of this section against the
+   * provided item and checks if they match
+   * @param item Target item
+   */
+  public boolean describesItem(@Nullable ItemStack item) {
+    if (item == null)
+      return false;
+
+    if (item.getType() != type)
+      return false;
+
+    if (item.getAmount() != amount)
+      return false;
+
+    // TODO: Implement all remaining properties...
+
+    // All checks passed
+    return true;
   }
 }

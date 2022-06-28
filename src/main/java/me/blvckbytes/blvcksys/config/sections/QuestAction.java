@@ -14,7 +14,9 @@ import me.blvckbytes.blvcksys.config.AConfigSection;
 @AllArgsConstructor
 public enum QuestAction {
   // Brewing potions in a brewing stand
-  BREWING(PotionParameterSection.class)
+  BREWING(QuestPotionParameterSection.class),
+  // Consuming any consumable items
+  CONSUME(QuestItemParameterSection.class)
   ;
 
   private final Class<? extends AConfigSection> parameterType;

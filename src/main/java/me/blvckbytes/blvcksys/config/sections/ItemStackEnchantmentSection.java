@@ -15,9 +15,6 @@ import org.jetbrains.annotations.Nullable;
 public class ItemStackEnchantmentSection extends AConfigSection {
 
   private @Nullable Enchantment enchantment;
-  private Integer level;
+  private @Nullable Integer level;
 
-  public ItemStackEnchantmentSection() {
-    this.level = 1;
-  }
 }

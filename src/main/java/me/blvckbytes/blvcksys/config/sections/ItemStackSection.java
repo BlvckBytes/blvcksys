@@ -31,8 +31,8 @@ import java.util.function.Function;
 @Getter
 public class ItemStackSection extends AConfigSection {
 
-  private int amount;
-  private Material type;
+  private @Nullable Integer amount;
+  private @Nullable Material type;
   private @Nullable ConfigValue name;
   private @Nullable ConfigValue lore;
   private @Nullable ConfigValue flags;
@@ -47,24 +47,22 @@ public class ItemStackSection extends AConfigSection {
   @Getter(AccessLevel.PRIVATE)
   private ItemStackBuilder item = null;
 
-  public ItemStackSection() {
-    this.amount = 1;
-    this.type = Material.BARRIER;
-  }
-
   /**
    * Create an item stack builder from the parameters of this section
    */
   public ItemStackBuilder asItem() {
     // Cache the builder instance
     if (item == null) {
-      item = new ItemStackBuilder(type, amount)
+      item = new ItemStackBuilder(
+        type == null ? Material.BARRIER : type,
+        amount == null ? 1 : amount
+      )
         .withName(name, name != null)
         .withLore(lore, lore != null)
         .withFlags(() -> flags.asList(ItemFlag.class), flags != null)
         .withEnchantments(() -> (
           Arrays.stream(enchantments)
-            .map(es -> new Tuple<>(es.getEnchantment(), es.getLevel()))
+            .map(es -> new Tuple<>(es.getEnchantment(), es.getLevel() == null ? 1 : es.getLevel()))
             .toList()
         ), enchantments != null)
         .withColor(() -> color, color != null)
@@ -90,10 +88,10 @@ public class ItemStackSection extends AConfigSection {
     if (item == null)
       return false;
 
-    if (item.getType() != type)
+    if (type != null && item.getType() != type)
       return false;
 
-    if (item.getAmount() != amount)
+    if (amount != null && item.getAmount() != amount)
       return false;
 
     // Compare displayname
@@ -127,8 +125,8 @@ public class ItemStackSection extends AConfigSection {
         if (!(
           // Contains this enchantment at any levej
           meta.hasEnchant(ench.getEnchantment()) &&
-          // Contains at a matching level
-          meta.getEnchantLevel(ench.getEnchantment()) == ench.getLevel()
+          // Contains at a matching level, if required
+          (ench.getLevel() == null || meta.getEnchantLevel(ench.getEnchantment()) == ench.getLevel())
         ))
           return false;
       }

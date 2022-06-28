@@ -1,0 +1,46 @@
+name: '&5Gappler'
+representitive:
+  name: '&7» &5Gappler'
+  type: GOLDEN_APPLE
+  lore:
+    - ' '
+    - '&7Iss eine Vielzahl an goldenen Äpfeln.'
+    - ' '
+    - '&7Verfügbare Stufen: &d{{num_stages}}'
+    - '&7Aktuelle Stufe: &d{{curr_stage}}'
+    - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
+stages:
+  -
+    name: '&5Gappler I'
+    representitive:
+      name: '&7» &5Gappler I'
+      type: GOLDEN_APPLE
+      lore:
+        - ' '
+        - '&7Iss &d5 &7goldene Äpfel.'
+        - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
+    tasks:
+      -
+        action: CONSUME
+        count: 5
+        parameters:
+          items:
+            -
+              type: GOLDEN_APPLE
+  -
+    name: '&5Gappler II'
+    representitive:
+      name: '&7» &5Gappler II'
+      type: GOLDEN_APPLE
+      lore:
+        - ' '
+        - '&7Iss &d10 &7goldene Äpfel.'
+        - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
+    tasks:
+      -
+        action: CONSUME
+        count: 10
+        parameters:
+          items:
+            -
+              type: GOLDEN_APPLE

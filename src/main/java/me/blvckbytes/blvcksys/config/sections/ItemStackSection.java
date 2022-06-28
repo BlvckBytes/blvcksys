@@ -156,16 +156,16 @@ public class ItemStackSection extends AConfigSection {
       return false;
 
     // Compare the base potion effect
-    if (!(checkMeta(item, baseEffect, meta -> {
+    if (!checkMeta(item, baseEffect, meta -> {
       // Not a potion
       if (!(meta instanceof PotionMeta pm))
         return false;
-      return baseEffect.equals(pm.getBasePotionData());
-    })))
+      return baseEffect.describesData(pm.getBasePotionData());
+    }))
       return false;
 
     // Check for the presence of all custom effects (ignoring order)
-    if (!(checkMeta(item, customEffects, meta -> {
+    if (!checkMeta(item, customEffects, meta -> {
       if (!(meta instanceof PotionMeta pm))
         return false;
 
@@ -177,7 +177,7 @@ public class ItemStackSection extends AConfigSection {
 
       // All effects present
       return true;
-    })))
+    }))
       return false;
 
     // All checks passed

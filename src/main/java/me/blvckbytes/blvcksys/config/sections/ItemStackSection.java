@@ -37,10 +37,10 @@ public class ItemStackSection extends AConfigSection {
   private @Nullable ConfigValue lore;
   private @Nullable ConfigValue flags;
   private @Nullable Color color;
-  private ItemStackEnchantmentSection[] enchantments;
+  private @Nullable ItemStackEnchantmentSection[] enchantments;
   private @Nullable GameProfile textures;
   private @Nullable ItemStackBaseEffectSection baseEffect;
-  private ItemStackCustomEffectSection[] customEffects;
+  private @Nullable ItemStackCustomEffectSection[] customEffects;
 
   // Builder cache, as instances will be reusable
   @ConfigSectionIgnore
@@ -50,8 +50,6 @@ public class ItemStackSection extends AConfigSection {
   public ItemStackSection() {
     this.amount = 1;
     this.type = Material.BARRIER;
-    this.enchantments = new ItemStackEnchantmentSection[0];
-    this.customEffects = new ItemStackCustomEffectSection[0];
   }
 
   /**
@@ -77,7 +75,7 @@ public class ItemStackSection extends AConfigSection {
             .map(effect -> effect.asEffect().orElse(null))
             .filter(Objects::nonNull)
             .toList()
-        ), true);
+        ), customEffects != null);
     }
 
     return item;

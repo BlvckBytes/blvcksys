@@ -1,6 +1,8 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import com.mojang.authlib.GameProfile;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import net.minecraft.util.Tuple;
 import org.bukkit.Color;
@@ -28,6 +30,7 @@ import java.util.function.Supplier;
 
   Build dynamic items by making use of the config value templating system.
 */
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ItemStackBuilder {
 
   private final ItemStack stack;
@@ -298,5 +301,14 @@ public class ItemStackBuilder {
     } catch (Exception e) {
       e.printStackTrace();
     }
+  }
+
+  /**
+   * Create a carbon copy of this instance
+   */
+  public ItemStackBuilder copy() {
+    return new ItemStackBuilder(
+      stack.clone(), meta.clone(), name, new ArrayList<>(lore)
+    );
   }
 }

@@ -169,6 +169,14 @@ public class QuestHandler implements IQuestHandler, IAutoConstructed, Listener {
   }
 
   @Override
+  public boolean isStageComplete(Player p, QuestStageSection stage) {
+    QuestProfile profile = playerdata.get(p);
+    if (profile == null)
+      return false;
+    return profile.isStageComplete(stage);
+  }
+
+  @Override
   public List<QuestSection> getQuests() {
     return new ArrayList<>(quests.values());
   }

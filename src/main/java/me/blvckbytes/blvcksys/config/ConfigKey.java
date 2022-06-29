@@ -2346,6 +2346,13 @@ public enum ConfigKey {
   //=========================================================================//
 
   GUI_QUEST_STAGES_TITLE("gui.quest_stages.title", "$0Quest $2{{quest}}"),
+  GUI_QUEST_STAGES_LOCKED(
+    "gui.quest_stages.locked",
+    " ",
+    "&cUm diese Stufe freizuschalten,",
+    "&cmüssen zuerst alle vorherigen",
+    "&cStufen abgeschlossen werden."
+  ),
 
   //=========================================================================//
   //                                Kits GUI                                 //

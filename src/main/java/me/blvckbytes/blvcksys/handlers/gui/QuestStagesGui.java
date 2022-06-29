@@ -11,6 +11,7 @@ import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.handlers.quests.IQuestHandler;
+import net.minecraft.util.Tuple;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -64,14 +65,24 @@ public class QuestStagesGui extends AGui<QuestSection> {
     inst.addPagination(38, 40, 42);
     inst.addBack(36, questsGui, null, AnimationType.SLIDE_RIGHT);
 
-    inst.setPageContents(() -> (
-      Arrays.stream(inst.getArg().getStages()).map(stage -> (
-        new GuiItem(
-          s -> buildStageItem(p, stage),
+    inst.setPageContents(() -> {
+      List<GuiItem> contents = new ArrayList<>();
+
+      for (int i = 0; i < inst.getArg().getStages().length; i++) {
+        QuestStageSection stage = inst.getArg().getStages()[i];
+
+        int fI = i;
+        contents.add(new GuiItem(
+          s -> buildStageItem(
+            p, stage,
+            fI == 0 || quests.isStageComplete(p, inst.getArg().getStages()[fI - 1])
+          ),
           null, null
-        )
-      )).toList()
-    ));
+        ));
+      }
+
+      return contents;
+    });
     
     return true;
   }
@@ -80,16 +91,20 @@ public class QuestStagesGui extends AGui<QuestSection> {
    * Build a representitive item for a stage to be displayed
    * @param p Target player to fill in details for
    * @param stage Target stage to display
+   * @param reachable Whether this stage is reachable
    * @return Item to be displayed
    */
-  private ItemStack buildStageItem(Player p, QuestStageSection stage) {
-    // TODO: Display "unreachable" if the previous stage isn't complete yed
+  private ItemStack buildStageItem(Player p, QuestStageSection stage, boolean reachable) {
+    Tuple<Map<String, String>, Boolean> variables = buildQuestVariables(p, stage);
+
     return (
       stage.getRepresentitive() == null ?
         buildFallbackStageItem(stage) :
-        stage.getRepresentitive()
+        stage.getRepresentitive().copy()
     )
-      .build(buildQuestVariables(p, stage));
+      // Only display locked messages when the quest is not already completed anyways
+      .withLore(cfg.get(ConfigKey.GUI_QUEST_STAGES_LOCKED), !reachable && !variables.b())
+      .build(variables.a());
   }
 
   /**
@@ -108,9 +123,9 @@ public class QuestStagesGui extends AGui<QuestSection> {
    * Build a map of variables available for the stage display item
    * @param p Target player to fill in details for
    * @param stage Target stage to display
-   * @return Variables to apply
+   * @return Variables to apply and if that stage is complete
    */
-  private Map<String, String> buildQuestVariables(Player p, QuestStageSection stage) {
+  private Tuple<Map<String, String>, Boolean> buildQuestVariables(Player p, QuestStageSection stage) {
     ConfigValue cv = ConfigValue.makeEmpty();
     int tasksTotal = 0, tasksCompleted = 0;
 
@@ -134,6 +149,6 @@ public class QuestStagesGui extends AGui<QuestSection> {
     // Progress number as a bar
     cv.withVariable("progress_bar", questsGui.buildProgressBar(progress));
 
-    return cv.exportVariables();
+    return new Tuple<>(cv.exportVariables(), progress >= 100);
   }
 }

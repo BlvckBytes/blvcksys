@@ -200,7 +200,7 @@ public class QuestProfile {
    * @param stage Target stage
    * @return True on completion, false if there's still progress to be made
    */
-  private boolean isStageComplete(QuestStageSection stage) {
+  public boolean isStageComplete(QuestStageSection stage) {
     if (completedStages.contains(stage))
       return true;
 

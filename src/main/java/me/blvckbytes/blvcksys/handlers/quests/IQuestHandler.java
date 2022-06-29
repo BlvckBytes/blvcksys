@@ -89,4 +89,11 @@ public interface IQuestHandler {
    */
   int getTaskCompletedCount(Player p, QuestTaskSection task);
 
+  /**
+   * Checks whether the player has completed a full stage of tasks
+   * @param p Target player
+   * @param stage Target stage
+   * @return True on completion, false if there's still progress to be made
+   */
+  boolean isStageComplete(Player p, QuestStageSection stage);
 }

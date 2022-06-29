@@ -1,0 +1,57 @@
+name: '&5Erfahrener'
+representitive:
+  name: '&7» &5Erfahrener'
+  type: EXPERIENCE_BOTTLE
+  lore:
+    - ' '
+    - '&7Sammle Erfahrungslevel.'
+    - ' '
+    - '&7Verfügbare Stufen: &d{{num_stages}}'
+    - '&7Aktuelle Stufe: &d{{curr_stage}}'
+    - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
+stages:
+  -
+    name: '&5Erfahrener I'
+    representitive:
+      name: '&7» &5Erfahrener I'
+      type: EXPERIENCE_BOTTLE
+      lore:
+        - ' '
+        - '&7Erreiche das Erfahrungslevel &d10&7.'
+        - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
+    tasks:
+      -
+        action: EXP
+        count: 1
+        parameters:
+          maxLevel: 10
+  -
+    name: '&5Erfahrener II'
+    representitive:
+      name: '&7» &5Erfahrener II'
+      type: EXPERIENCE_BOTTLE
+      lore:
+        - ' '
+        - '&7Erreiche das Erfahrungslevel &d20&7.'
+        - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
+    tasks:
+      -
+        action: EXP
+        count: 1
+        parameters:
+          maxLevel: 20
+  -
+    name: '&5Erfahrener III'
+    representitive:
+      name: '&7» &5Erfahrener III'
+      type: EXPERIENCE_BOTTLE
+      lore:
+        - ' '
+        - '&7Erreiche das Erfahrungslevel &d30&7.'
+        - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
+    tasks:
+      -
+        action: EXP
+        count: 1
+        parameters:
+          maxLevel: 30

@@ -18,6 +18,7 @@ public enum QuestAction {
   BREAK(QuestBreakParameterSecton.class),
   PLACE(QuestPlaceParameterSecton.class),
   KILL(QuestKillParameterSecton.class),
+  EXP(QuestExpParameterSecton.class),
   ;
 
   private final Class<? extends AConfigSection> parameterType;

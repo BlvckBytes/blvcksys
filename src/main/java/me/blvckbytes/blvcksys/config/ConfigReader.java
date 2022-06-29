@@ -60,128 +60,130 @@ public class ConfigReader {
    * @return Optional parsed model, if the key existed
    */
   @SuppressWarnings("unchecked")
-  public<T extends AConfigSection> Optional<T> parseValue(@Nullable String key, Class<T> type) {
+  public<T extends Object> Optional<T> parseValue(@Nullable String key, Class<T> type) {
     // Null keys mean root level scope
     if (key == null)
       key = "";
 
-    // Key does not exist, don't create a new empty object to return
+    // Key does not exist
     if (cfg.get(path, key).isEmpty())
       return Optional.empty();
 
-    try {
-      T res = type.getConstructor().newInstance();
+    // Since ConfigValue scalars always work with boxed types, box at this point
+    type = Primitives.wrap(type);
 
-      List<Field> fields = Arrays.stream(type.getDeclaredFields())
-        .sorted((a, b) -> {
-          if (a.getType() == Object.class && b.getType() == Object.class)
-            return 0;
+    // Is a wrapper type, which is a scalar value
+    if (Primitives.isWrapperType(type)) {
+      ConfigValue cv = get(key).orElse(null);
 
-          // Objects are "greater", so they'll be last when sorting ASC
-          return a.getType() == Object.class ? 1 : -1;
-        })
-        .toList();
-
-      for (Field f : fields) {
-
-        // Ignore fields marked for ignore
-        if (f.getAnnotation(ConfigSectionIgnore.class) != null)
-          continue;
-
-        f.setAccessible(true);
-
-        String fName = f.getName();
-        Class<?> fType = f.getType();
-        String fKey = join(key, fName);
-
-        // Try to transform the type by letting the class decide at runtime
-        if (fType == Object.class)
-          fType = res.runtimeDecide(fName);
-
-        // Is another config section and thus needs recursion
-        if (AConfigSection.class.isAssignableFrom(fType)) {
-          Object v = parseValue(fKey, (Class<? extends AConfigSection>) fType).orElse(null);
-          if (v != null)
-            f.set(res, v);
-          continue;
-        }
-
-        // Since ConfigValue scalars always work with boxed types, box at this point
-        fType = Primitives.wrap(f.getType());
-
-        // Is a wrapper type, which is a scalar value
-        if (Primitives.isWrapperType(fType)) {
-          ConfigValue cv = get(fKey).orElse(null);
-
-          if (cv != null) {
-            // Set the scalar value, only if it's type matches
-            Object v = cv.asScalar(fType, null);
-            if (fType.isAssignableFrom(v.getClass()))
-              f.set(res, v);
-          }
-
-          continue;
-        }
-
-        // Is an array, multiple elements of the same type in a sequence
-        if (fType.isArray()) {
-          Class<?> arrType = f.getType().getComponentType();
-
-          // Unsupported array type
-          if (!AConfigSection.class.isAssignableFrom(arrType))
-            continue;
-
-          // Try to fetch as many values of the list as possible, until the end is reached
-          List<Object> items = new ArrayList<>();
-          for (int i = 0; i < Integer.MAX_VALUE; i++) {
-            Optional<?> v = parseValue(fKey + "[" + i + "]", (Class<? extends AConfigSection>) arrType);
-
-            // End of list reached, no more items available
-            if (v.isEmpty())
-              break;
-
-            items.add(v.get());
-          }
-
-          // Only set if there are actually items available
-          if (items.size() > 0)
-            f.set(res, items.toArray((Object[]) Array.newInstance(arrType, 1)));
-
-          continue;
-        }
-
-        // Try to find a known parser for the field's type
-        Function<String, Optional<?>> parser = typeParsers.get(fType);
-        if (parser != null) {
-          Object v = parser.apply(fKey).orElse(null);
-          if (v != null)
-            f.set(res, v);
-          continue;
-        }
-
-        // Is either a true java enum type or has a static self-type constant list
-        if (fType.isEnum() || hasStaticSelfConstants(fType)) {
-          ConfigValue cv = get(fKey).orElse(null);
-
-          if (cv != null) {
-            // Try to parse an enum from the value's scalar string repr
-            Object v = parseEnum(fType, cv.asScalar()).orElse(null);
-            if (v != null)
-              f.set(res, v);
-          }
-
-          continue;
-        }
-
-        // Invalid type encountered, leave at default
+      if (cv != null) {
+        // Set the scalar value, only if it's type matches
+        Object v = cv.asScalar(type, null);
+        if (type.isAssignableFrom(v.getClass()))
+          return Optional.of(type.cast(v));
       }
 
-      return Optional.of(res);
-    } catch (Exception e) {
-      if (logger == null)
-        e.printStackTrace();
-      else
-        logger.logError(e);
+      return Optional.empty();
+    }
+
+    // Is an array, multiple elements of the same type in a sequence
+    if (type.isArray()) {
+      Class<?> arrType = type.getComponentType();
+
+      // Try to fetch as many values of the list as possible, until the end is reached
+      List<Object> items = new ArrayList<>();
+      for (int i = 0; i < Integer.MAX_VALUE; i++) {
+        Optional<?> v = parseValue(key + "[" + i + "]", (Class<? extends AConfigSection>) arrType);
+
+        // End of list reached, no more items available
+        if (v.isEmpty())
+          break;
+
+        items.add(v.get());
+      }
+
+      // Only set if there are actually items available
+      if (items.size() > 0)
+        return Optional.of(type.cast(items.toArray((Object[]) Array.newInstance(arrType, 1))));
+
+      return Optional.empty();
+    }
+
+    // Try to find a known parser for the field's type
+    Function<String, Optional<?>> parser = typeParsers.get(type);
+    if (parser != null) {
+      Object v = parser.apply(key).orElse(null);
+      if (v != null)
+        return Optional.of(type.cast(v));
+
+      return Optional.empty();
+    }
+
+    // Is either a true java enum type or has a static self-type constant list
+    if (type.isEnum() || hasStaticSelfConstants(type)) {
+      ConfigValue cv = get(key).orElse(null);
+
+      if (cv != null) {
+        // Try to parse an enum from the value's scalar string repr
+        T v = parseEnum(type, cv.asScalar()).orElse(null);
+        if (v != null)
+          return Optional.of(v);
+      }
+
+      return Optional.empty();
+    }
+
+    // Is a configuration section, which means each field will be parsed
+    // separately, supporting for recursion
+    if (AConfigSection.class.isAssignableFrom(type)) {
+      try {
+        AConfigSection res = (AConfigSection) type.getConstructor().newInstance();
+
+        List<Field> fields = Arrays.stream(type.getDeclaredFields())
+          .sorted((a, b) -> {
+            if (a.getType() == Object.class && b.getType() == Object.class)
+              return 0;
+
+            // Objects are "greater", so they'll be last when sorting ASC
+            return a.getType() == Object.class ? 1 : -1;
+          })
+          .toList();
+
+        for (Field f : fields) {
+          // Ignore fields marked for ignore
+          if (f.getAnnotation(ConfigSectionIgnore.class) != null)
+            continue;
+
+          f.setAccessible(true);
+
+          String fName = f.getName();
+          Class<?> fType = f.getType();
+          String fKey = join(key, fName);
+
+          // Try to transform the type by letting the class decide at runtime
+          if (fType == Object.class)
+            fType = res.runtimeDecide(fName);
+
+          // Is another config section and thus needs recursion
+          if (AConfigSection.class.isAssignableFrom(fType)) {
+            Object v = parseValue(fKey, (Class<? extends AConfigSection>) fType).orElse(null);
+            if (v != null)
+              f.set(res, v);
+            continue;
+          }
+
+          Object v = parseValue(fKey, fType).orElse(null);
+          if (v != null)
+            f.set(res, v);
+        }
+
+        return Optional.of(type.cast(res));
+      } catch (Exception e) {
+        if (logger == null)
+          e.printStackTrace();
+        else
+          logger.logError(e);
+      }
     }
 
     return Optional.empty();
@@ -205,19 +207,6 @@ public class ConfigReader {
    */
   private boolean hasStaticSelfConstants(Class<?> c) {
     return Arrays.stream(c.getDeclaredFields()).anyMatch(field -> field.getType().equals(c) && Modifier.isStatic(field.getModifiers()));
-  }
-
-  /**
-   * Get a scalar value or make use of a fallback
-   * @param key Target key
-   * @param type Type to cast to
-   * @param fallback Fallback for error cases
-   */
-  private<T> T getScalar(String key, Class<T> type, T fallback) {
-    ConfigValue cv = get(key).orElse(null);
-    if (cv == null)
-      return fallback;
-    return cv.asScalar(type, fallback);
   }
 
   /**

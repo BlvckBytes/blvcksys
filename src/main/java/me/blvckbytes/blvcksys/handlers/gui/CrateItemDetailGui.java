@@ -109,7 +109,7 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
                 cfg.get(res ? ConfigKey.COMMAND_CRATE_ITEM_UPDATED_PROBABILITY : ConfigKey.COMMAND_CRATE_ITEM_DISAPPEARED)
                   .withPrefix()
                   .withVariable("item", crateContentGui.getItemName(item))
-                  .withVariable("probability", Math.round(probability * 100F) / 100F)
+                  .withVariable("probability", probability)
                   .asScalar()
               );
             }

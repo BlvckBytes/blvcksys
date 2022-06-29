@@ -273,7 +273,7 @@ public class SurveyCommand extends APlayerCommand implements ISurveyCommand, IAu
           .withPrefixes()
           .withVariable("answer", vote.getKey())
           .withVariable("votes", numVotes.get(vote.getKey()))
-          .withVariable("percent", Math.round((double) vote.getValue().get() / votesTotal * 100D * 100D) / 100D)
+          .withVariable("percent", (vote.getValue().get() * 100D) / votesTotal)
           .asScalar()
       );
     }

@@ -113,7 +113,7 @@ public class QuestProfile {
       }
     }
 
-    return Math.round((float) completedCount / (float) totalCount * 100F * 100F) / 100F;
+    return (completedCount * 100D) / totalCount;
   }
 
   /**

@@ -126,7 +126,7 @@ public class CrateContentGui extends AGui<Tuple<CrateModel, Boolean>> {
       .withLore(
         cfg.get(ConfigKey.GUI_CRATE_CONTENT_CONTENT_LORE)
           .withVariable("name", crate.getName())
-          .withVariable("probability", Math.round(content.getProbability() * 100F) / 100F)
+          .withVariable("probability", content.getProbability())
       )
       .build();
   }

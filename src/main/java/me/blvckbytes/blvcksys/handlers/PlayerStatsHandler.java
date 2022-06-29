@@ -165,14 +165,13 @@ public class PlayerStatsHandler implements IPlayerStatsHandler, IAutoConstructed
   @Override
   public double calculateKD(OfflinePlayer p) {
     PlayerStatsModel stats = getStats(p);
-    double deaths = stats.getDeaths();
-    double kills = stats.getKills();
+    int deaths = stats.getDeaths();
+    int kills = stats.getKills();
 
     if (deaths == 0)
       return kills;
 
-    double kd = kills / deaths;
-    return Math.round(kd * 100) / 100D;
+    return (double) kills / deaths;
   }
 
   ///////////////////////////////// MONEY ////////////////////////////////////

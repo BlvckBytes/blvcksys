@@ -110,7 +110,7 @@ public class QuestStagesGui extends AGui<QuestSection> {
    * @return Variables to apply
    */
   private Map<String, String> buildQuestVariables(Player p, QuestStageSection stage) {
-    Map<String, String> vars = new HashMap<>();
+    ConfigValue cv = ConfigValue.makeEmpty();
     int tasksTotal = 0, tasksCompleted = 0;
 
     // Add custom variables for each task, identified by it's sequence ID
@@ -121,18 +121,18 @@ public class QuestStagesGui extends AGui<QuestSection> {
       tasksCompleted += completed;
       tasksTotal += task.getCount();
 
-      vars.put("task_" + i + "_completed", String.valueOf(completed));
-      vars.put("task_" + i + "_total", String.valueOf(task.getCount()));
+      cv.withVariable("task_" + i + "_completed", String.valueOf(completed));
+      cv.withVariable("task_" + i + "_total", String.valueOf(task.getCount()));
     }
 
-    double progress = Math.round((double) tasksCompleted / (double) tasksTotal * 100D * 100D) / 100D;
+    double progress = (tasksCompleted * 100D) / tasksTotal;
 
     // Progress made on the whole quest, including all tasks
-    vars.put("progress", progress + "%");
+    cv.withVariable("progress", progress, "%");
 
     // Progress number as a bar
-    vars.put("progress_bar", questsGui.buildProgressBar(progress));
+    cv.withVariable("progress_bar", questsGui.buildProgressBar(progress));
 
-    return vars;
+    return cv.exportVariables();
   }
 }

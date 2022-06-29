@@ -245,7 +245,7 @@ public class PlayerDamageListener implements Listener {
     MultilineHologram holo = holos.createTemporary(
       victim.getLocation().add(0, LOCATION_YOFF, 0), null,
       cfg.get(isCriticallyDamaging(damager) ? ConfigKey.DAMAGE_INDICATORS_CRITICAL : ConfigKey.DAMAGE_INDICATORS_NORMAL)
-        .withVariable("damage", Math.round(damage * 100.0) / 100.0)
+        .withVariable("damage", damage)
         .asList()
     );
     holo.setVelocity(getNextHoloVector(), null, true, true, null, () -> holos.destroyTemporary(holo));

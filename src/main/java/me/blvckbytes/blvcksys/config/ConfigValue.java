@@ -1,10 +1,11 @@
 package me.blvckbytes.blvcksys.config;
 
-import lombok.Getter;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 import java.util.*;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -24,6 +25,14 @@ import java.util.stream.Stream;
   palette can be accessed in templates by $0...$9
 */
 public class ConfigValue {
+
+  // Decimal format used when encountering double variables
+  private static final DecimalFormat DECIMAL_FORMAT;
+
+  static {
+    DECIMAL_FORMAT = (DecimalFormat) NumberFormat.getInstance(Locale.US);
+    DECIMAL_FORMAT.applyPattern("0.00");
+  }
 
   // Unmodified lines read from the config
   private final List<Object> lines;
@@ -89,7 +98,21 @@ public class ConfigValue {
   public ConfigValue withVariable(String name, @Nullable Object value) {
     this.vars.put(
       name.toLowerCase(),
-      value == null ? "null" : value.toString()
+      value == null ? "null" : stringifyVariable(value)
+    );
+    return this;
+  }
+
+  /**
+   * Add a variable to the template of this value
+   * @param name Name of the variable
+   * @param value Value of the variable
+   * @param suffix Suffix to add to the value
+   */
+  public ConfigValue withVariable(String name, @Nullable Object value, String suffix) {
+    this.vars.put(
+      name.toLowerCase(),
+      value == null ? "null" : (stringifyVariable(value) + suffix)
     );
     return this;
   }
@@ -383,24 +406,6 @@ public class ConfigValue {
   }
 
   /**
-   * Get the total number of lines read from the config
-   */
-  public int getNumberOfLines() {
-    return lines.size();
-  }
-
-  /**
-   * Get a specific line by it's index
-   * @param index Target index
-   * @return Optional line, empty if the index is out of range
-   */
-  public Optional<Object> getLine(int index) {
-    if (index < 0 || index >= lines.size())
-      return Optional.empty();
-    return Optional.of(lines.get(index));
-  }
-
-  /**
    * Make a new empty instance
    */
   public static ConfigValue makeEmpty() {
@@ -438,5 +443,17 @@ public class ConfigValue {
     } catch (ClassCastException e) {
       return Optional.empty();
     }
+  }
+
+  /**
+   * Turn a variable's value into it's string representation
+   * @param value Value to stringify
+   */
+  private String stringifyVariable(Object value) {
+    // Doubles should always have two decimal digits
+    if (value instanceof Double d)
+      return d == 0 ? "0" : DECIMAL_FORMAT.format(d);
+
+    return value.toString();
   }
 }

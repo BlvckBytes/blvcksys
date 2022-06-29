@@ -1,0 +1,50 @@
+name: '&5Hunter'
+representitive:
+  name: '&7» &5Hunter'
+  type: BOW
+  lore:
+    - ' '
+    - '&7Erlege Monster, Tiere sowie Spieler.'
+    - ' '
+    - '&7Verfügbare Stufen: &d{{num_stages}}'
+    - '&7Aktuelle Stufe: &d{{curr_stage}}'
+    - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
+stages:
+  -
+    name: '&5Hunter I'
+    representitive:
+      name: '&7» &5Hunter I'
+      type: SHEEP_SPAWN_EGG
+      lore:
+        - ' '
+        - '&7Erlege &d10 &7Schafe.'
+        - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
+    tasks:
+      -
+        action: KILL
+        count: 10
+        parameters:
+          entities:
+            -
+              type: SHEEP
+  -
+    name: '&5Hunter II'
+    representitive:
+      name: '&7» &5Hunter II'
+      type: SKELETON_SKULL
+      lore:
+        - ' '
+        - '&7Erlege &d10 &7Skelette mit &dPlünderung&7.'
+        - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
+    tasks:
+      -
+        action: KILL
+        count: 10
+        parameters:
+          entities:
+            -
+              type: SKELETON
+          hand:
+            enchantments:
+              -
+                enchantment: LOOT_BONUS_MOBS

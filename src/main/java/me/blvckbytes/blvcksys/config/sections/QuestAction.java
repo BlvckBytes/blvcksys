@@ -17,6 +17,7 @@ public enum QuestAction {
   CONSUME(QuestItemParameterSection.class),
   BREAK(QuestBreakParameterSecton.class),
   PLACE(QuestPlaceParameterSecton.class),
+  KILL(QuestKillParameterSecton.class),
   ;
 
   private final Class<? extends AConfigSection> parameterType;

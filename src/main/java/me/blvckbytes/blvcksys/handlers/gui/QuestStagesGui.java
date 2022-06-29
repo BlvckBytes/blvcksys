@@ -83,6 +83,7 @@ public class QuestStagesGui extends AGui<QuestSection> {
    * @return Item to be displayed
    */
   private ItemStack buildStageItem(Player p, QuestStageSection stage) {
+    // TODO: Display "unreachable" if the previous stage isn't complete yed
     return (
       stage.getRepresentitive() == null ?
         buildFallbackStageItem(stage) :

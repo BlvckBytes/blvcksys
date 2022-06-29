@@ -1,0 +1,47 @@
+name: '&5Builder'
+representitive:
+  name: '&7» &5Builder'
+  type: QUARTZ_STAIRS
+  lore:
+    - ' '
+    - '&7Verbaue verschiedene Blöcke.'
+    - ' '
+    - '&7Verfügbare Stufen: &d{{num_stages}}'
+    - '&7Aktuelle Stufe: &d{{curr_stage}}'
+    - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
+stages:
+  -
+    name: '&5Builder I'
+    representitive:
+      name: '&7» &5Builder I'
+      type: STONE
+      lore:
+        - ' '
+        - '&7Verbaue &d32 &7Steinblöcke.'
+        - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
+    tasks:
+      -
+        action: PLACE
+        count: 32
+        parameters:
+          block:
+            type: STONE
+  -
+    name: '&5Builder II'
+    representitive:
+      name: '&7» &5Builder II'
+      type: QUARTZ_BLOCK
+      lore:
+        - ' '
+        - '&7Verbaue &d64 &7Quartzblöcke.'
+        - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
+    tasks:
+      -
+        action: PLACE
+        count: 64
+        parameters:
+          block:
+            type: QUARTZ_BLOCK
+          hand:
+            lore:
+              - '&6activated'

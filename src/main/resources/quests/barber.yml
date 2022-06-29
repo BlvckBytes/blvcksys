@@ -1,0 +1,45 @@
+name: '&5Friseur'
+representitive:
+  name: '&7» &5Friseur'
+  type: WHITE_WOOL
+  lore:
+    - ' '
+    - '&7Verschaffe Schafen eine neue Frisur,'
+    - '&7in dem du sie scherst.'
+    - ' '
+    - '&7Verfügbare Stufen: &d{{num_stages}}'
+    - '&7Aktuelle Stufe: &d{{curr_stage}}'
+    - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
+stages:
+  -
+    name: '&5Friseur I'
+    representitive:
+      name: '&7» &5Friseur I'
+      type: WHITE_WOOL
+      lore:
+        - ' '
+        - '&7Schere &d{{task_0_completed}}&7/&d{{task_0_total}} &fweiße &7Schafe.'
+        - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
+    tasks:
+      -
+        action: SHEAR
+        count: 5
+        parameters:
+          colors:
+            - WHITE
+  -
+    name: '&5Friseur II'
+    representitive:
+      name: '&7» &5Friseur II'
+      type: RED_WOOL
+      lore:
+        - ' '
+        - '&7Schere &d{{task_0_completed}}&7/&d{{task_0_total}} &crote &7Schafe.'
+        - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
+    tasks:
+      -
+        action: SHEAR
+        count: 5
+        parameters:
+          colors:
+            - RED

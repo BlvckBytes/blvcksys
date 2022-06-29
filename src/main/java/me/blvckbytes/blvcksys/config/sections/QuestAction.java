@@ -19,6 +19,7 @@ public enum QuestAction {
   PLACE(QuestPlaceParameterSecton.class),
   KILL(QuestKillParameterSecton.class),
   EXP(QuestExpParameterSecton.class),
+  SHEAR(QuestShearParameterSecton.class),
   ;
 
   private final Class<? extends AConfigSection> parameterType;

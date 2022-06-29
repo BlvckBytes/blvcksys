@@ -14,6 +14,7 @@ import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.Arrays;
 import java.util.Map;
 
 /*
@@ -65,8 +66,8 @@ public class PlaceAction extends AQuestAction {
     if (pps.getHand() != null && !pps.getHand().describesItem(hand))
       return false;
 
-    // Validate that the placed block itself matches
-    if (pps.getBlock() != null && !pps.getBlock().describesBlock(block))
+    // Validate that the placed block itself matches any of the described blocks
+    if (pps.getBlocks().length > 0 && Arrays.stream(pps.getBlocks()).noneMatch(b -> b.describesBlock(block)))
       return false;
 
     // All checks passed

@@ -16,7 +16,10 @@ public class QuestPlaceParameterSecton extends AConfigSection {
   // Item held in the main hand by the player while placing the block
   private @Nullable ItemStackSection hand;
 
-  // Target block to be broken
-  private @Nullable BlockSection block;
+  // Target block to be placed, any of
+  private BlockSection[] blocks;
 
+  public QuestPlaceParameterSecton() {
+    this.blocks = new BlockSection[0];
+  }
 }

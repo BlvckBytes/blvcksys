@@ -25,8 +25,9 @@ stages:
         action: BREAK
         count: 10
         parameters:
-          block:
-            type: COAL_ORE
+          blocks:
+            -
+              type: COAL_ORE
   -
     name: '&5Miner II'
     representitive:
@@ -41,8 +42,9 @@ stages:
         action: BREAK
         count: 10
         parameters:
-          block:
-            type: REDSTONE_ORE
+          blocks:
+            -
+              type: REDSTONE_ORE
           hand:
             enchantments:
               -

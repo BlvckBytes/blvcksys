@@ -24,8 +24,9 @@ stages:
         action: PLACE
         count: 32
         parameters:
-          block:
-            type: STONE
+          blocks:
+            -
+              type: STONE
   -
     name: '&5Builder II'
     representitive:
@@ -40,8 +41,9 @@ stages:
         action: PLACE
         count: 64
         parameters:
-          block:
-            type: QUARTZ_BLOCK
+          blocks:
+            -
+              type: QUARTZ_BLOCK
           hand:
             lore:
               - '&6activated'

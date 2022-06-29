@@ -19,10 +19,11 @@ public class QuestBreakParameterSecton extends AConfigSection {
   // Items dropped when breaking that block
   private ItemStackSection[] yield;
 
-  // Target block to be broken
-  private @Nullable BlockSection block;
+  // Target block to be broken, any of
+  private BlockSection[] blocks;
 
   public QuestBreakParameterSecton() {
     this.yield = new ItemStackSection[0];
+    this.blocks = new BlockSection[0];
   }
 }

@@ -17,7 +17,7 @@ stages:
       type: STONE
       lore:
         - ' '
-        - '&7Verbaue &d32 &7Steinblöcke.'
+        - '&7Verbaue &d{{task_0_completed}}&7/&d{{task_0_total}} &7Steinblöcke.'
         - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
     tasks:
       -
@@ -34,7 +34,7 @@ stages:
       type: QUARTZ_BLOCK
       lore:
         - ' '
-        - '&7Verbaue &d64 &7Quartzblöcke.'
+        - '&7Verbaue &d{{task_0_completed}}&7/&d{{task_0_total}} &7Quartzblöcke.'
         - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
     tasks:
       -

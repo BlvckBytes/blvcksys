@@ -18,7 +18,7 @@ stages:
       type: COAL_ORE
       lore:
         - ' '
-        - '&7Baue &d10 &7Kohleblöcke ab.'
+        - '&7Baue &d{{task_0_completed}}&7/&d{{task_0_total}} &7Kohleblöcke ab.'
         - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
     tasks:
       -
@@ -35,7 +35,7 @@ stages:
       type: REDSTONE_ORE
       lore:
         - ' '
-        - '&7Baue &d10 &7Redstoneblöcke mit &dGlück &7ab.'
+        - '&7Baue &d{{task_0_completed}}&7/&d{{task_0_total}} &7Redstoneblöcke mit &dGlück &7ab.'
         - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
     tasks:
       -

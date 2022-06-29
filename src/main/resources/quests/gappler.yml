@@ -17,7 +17,7 @@ stages:
       type: GOLDEN_APPLE
       lore:
         - ' '
-        - '&7Iss &d5 &7goldene Äpfel.'
+        - '&7Iss &d{{task_0_completed}}&7/&d{{task_0_total}} &7goldene Äpfel.'
         - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
     tasks:
       -
@@ -34,7 +34,7 @@ stages:
       type: GOLDEN_APPLE
       lore:
         - ' '
-        - '&7Iss &d10 &7goldene Äpfel.'
+        - '&7Iss &d{{task_0_completed}}&7/&d{{task_0_total}} &7goldene Äpfel.'
         - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
     tasks:
       -

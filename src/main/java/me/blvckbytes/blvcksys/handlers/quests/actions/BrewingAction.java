@@ -4,7 +4,6 @@ import com.google.common.collect.ImmutableList;
 import me.blvckbytes.blvcksys.config.sections.QuestPotionParameterEffectSection;
 import me.blvckbytes.blvcksys.config.sections.QuestPotionParameterSection;
 import me.blvckbytes.blvcksys.config.sections.QuestAction;
-import me.blvckbytes.blvcksys.config.sections.QuestTaskSection;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.events.InventoryManipulationEvent;
@@ -43,7 +42,7 @@ import java.util.*;
   analyzed and compared against all available brewing tasks. If a task matches, it's fired.
  */
 @AutoConstruct
-public class BrewingAction extends AQuestAction {
+public class BrewingAction extends AQuestAction<QuestPotionParameterSection> {
 
   // All brewing stand potions the player initialized, as only those count
   private final Map<Player, List<ItemStack>> initializedItems;
@@ -175,14 +174,9 @@ public class BrewingAction extends AQuestAction {
    * @param item Brewed item
    */
   private void playerBrewed(Player p, ItemStack item) {
-    for (Map.Entry<String, QuestTaskSection> task : tasks.entrySet()) {
-
-      // Not a valid potion task
-      if (!(task.getValue().getParameters() instanceof QuestPotionParameterSection pp))
-        continue;
-
+    for (Map.Entry<String, QuestPotionParameterSection> task : tasks.entrySet()) {
       // Not matching this task's parameter requirements
-      if (!compareResult(item, pp))
+      if (!compareResult(item, task.getValue()))
         continue;
 
       // Fire this task and only stop looping if it was successful

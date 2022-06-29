@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.handlers.quests.actions;
 
+import me.blvckbytes.blvcksys.config.AConfigSection;
 import me.blvckbytes.blvcksys.config.sections.QuestAction;
 import me.blvckbytes.blvcksys.config.sections.QuestTaskSection;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
@@ -17,12 +18,13 @@ import java.util.Map;
 
   Implements basic functionality of all quest action listeners
  */
-public abstract class AQuestAction implements Listener, IAutoConstructed {
+public abstract class AQuestAction<T extends AConfigSection> implements Listener, IAutoConstructed {
 
   protected final IQuestHandler questHandler;
   protected final JavaPlugin plugin;
-  protected final Map<String, QuestTaskSection> tasks;
+  protected final Map<String, T> tasks;
 
+  @SuppressWarnings("unchecked")
   protected AQuestAction(IQuestHandler questHandler, JavaPlugin plugin, QuestAction action) {
     this.questHandler = questHandler;
     this.plugin = plugin;
@@ -30,8 +32,19 @@ public abstract class AQuestAction implements Listener, IAutoConstructed {
     // Only cache tasks which match this handler's action to reduce time complexity
     this.tasks = new LinkedHashMap<>();
     for (Map.Entry<String, QuestTaskSection> taskE : questHandler.getTasks().entrySet()) {
-      if (taskE.getValue().getAction() == action)
-        this.tasks.put(taskE.getKey(), taskE.getValue());
+      QuestTaskSection task = taskE.getValue();
+      if (
+        // Has the action handled by this class
+        task.getAction() == action &&
+        // Has parsed the proper runtime parameter
+        action.getParameterType().isInstance(task.getParameters())
+      ) {
+        // Cast the parameter now, as it's safe to assume it matches in type
+        this.tasks.put(
+          taskE.getKey(),
+          (T) action.getParameterType().cast(task.getParameters())
+        );
+      }
     }
   }
 

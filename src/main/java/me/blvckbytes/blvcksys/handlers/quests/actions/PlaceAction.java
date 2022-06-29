@@ -2,7 +2,6 @@ package me.blvckbytes.blvcksys.handlers.quests.actions;
 
 import me.blvckbytes.blvcksys.config.sections.QuestAction;
 import me.blvckbytes.blvcksys.config.sections.QuestPlaceParameterSecton;
-import me.blvckbytes.blvcksys.config.sections.QuestTaskSection;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.TriResult;
@@ -25,7 +24,7 @@ import java.util.Map;
   tasks to fire on items which match all requirements.
  */
 @AutoConstruct
-public class PlaceAction extends AQuestAction {
+public class PlaceAction extends AQuestAction<QuestPlaceParameterSecton> {
 
   public PlaceAction(
     @AutoInject IQuestHandler questHandler,
@@ -36,14 +35,9 @@ public class PlaceAction extends AQuestAction {
 
   @EventHandler
   public void onPlace(BlockPlaceEvent e) {
-    for (Map.Entry<String, QuestTaskSection> task : tasks.entrySet()) {
-
-      // Not a valid place task
-      if (!(task.getValue().getParameters() instanceof QuestPlaceParameterSecton pps))
-        continue;
-
+    for (Map.Entry<String, QuestPlaceParameterSecton> task : tasks.entrySet()) {
       // Not matching this task's parameter requirements
-      if (!comparePlace(e.getPlayer(), e.getBlockPlaced(), pps))
+      if (!comparePlace(e.getPlayer(), e.getBlockPlaced(), task.getValue()))
         continue;
 
       // Fire this task and only stop looping if it was successful

@@ -2,7 +2,6 @@ package me.blvckbytes.blvcksys.handlers.quests.actions;
 
 import me.blvckbytes.blvcksys.config.sections.QuestAction;
 import me.blvckbytes.blvcksys.config.sections.QuestExpParameterSecton;
-import me.blvckbytes.blvcksys.config.sections.QuestTaskSection;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.TriResult;
@@ -23,7 +22,7 @@ import java.util.Map;
   tasks to fire on events which match all requirements.
  */
 @AutoConstruct
-public class ExpAction extends AQuestAction {
+public class ExpAction extends AQuestAction<QuestExpParameterSecton> {
 
   public ExpAction(
     @AutoInject IQuestHandler questHandler,
@@ -42,14 +41,10 @@ public class ExpAction extends AQuestAction {
    * @param p Target player
    */
   private void experienceChanged(Player p) {
-    for (Map.Entry<String, QuestTaskSection> task : tasks.entrySet()) {
-
-      // Not a valid exp task
-      if (!(task.getValue().getParameters() instanceof QuestExpParameterSecton eps))
-        continue;
+    for (Map.Entry<String, QuestExpParameterSecton> task : tasks.entrySet()) {
 
       // Not enough level for this task yet
-      if (p.getLevel() < eps.getMaxLevel())
+      if (p.getLevel() < task.getValue().getMaxLevel())
         continue;
 
       // Fire this task and only stop looping if it was successful

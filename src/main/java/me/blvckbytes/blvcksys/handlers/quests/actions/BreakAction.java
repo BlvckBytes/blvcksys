@@ -24,7 +24,7 @@ import java.util.Map;
   tasks to fire on items which match all requirements.
  */
 @AutoConstruct
-public class BreakAction extends AQuestAction {
+public class BreakAction extends AQuestAction<QuestBreakParameterSecton> {
 
   public BreakAction(
     @AutoInject IQuestHandler questHandler,
@@ -35,14 +35,9 @@ public class BreakAction extends AQuestAction {
 
   @EventHandler
   public void onBreak(BlockBreakEvent e) {
-    for (Map.Entry<String, QuestTaskSection> task : tasks.entrySet()) {
-
-      // Not a valid break task
-      if (!(task.getValue().getParameters() instanceof QuestBreakParameterSecton bps))
-        continue;
-
+    for (Map.Entry<String, QuestBreakParameterSecton> task : tasks.entrySet()) {
       // Not matching this task's parameter requirements
-      if (!compareBreak(e.getPlayer(), e.getBlock(), bps))
+      if (!compareBreak(e.getPlayer(), e.getBlock(), task.getValue()))
         continue;
 
       // Fire this task and only stop looping if it was successful

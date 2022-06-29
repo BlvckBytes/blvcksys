@@ -23,7 +23,7 @@ import java.util.Map;
   tasks to fire on entities which match all requirements.
  */
 @AutoConstruct
-public class KillAction extends AQuestAction {
+public class KillAction extends AQuestAction<QuestKillParameterSecton> {
 
   public KillAction(
     @AutoInject IQuestHandler questHandler,
@@ -55,14 +55,9 @@ public class KillAction extends AQuestAction {
    * @param victim Killed entity
    */
   private void playerHasKilled(Player p, LivingEntity victim) {
-    for (Map.Entry<String, QuestTaskSection> task : tasks.entrySet()) {
-
-      // Not a valid kill task
-      if (!(task.getValue().getParameters() instanceof QuestKillParameterSecton kps))
-        continue;
-
+    for (Map.Entry<String, QuestKillParameterSecton> task : tasks.entrySet()) {
       // Not matching this task's parameter requirements
-      if (!compareKill(p, victim, kps))
+      if (!compareKill(p, victim, task.getValue()))
         continue;
 
       // Fire this task and only stop looping if it was successful

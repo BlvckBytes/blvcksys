@@ -1763,6 +1763,20 @@ public enum ConfigKey {
   GUI_ITEMEDITOR_BOOK_PAGE_REMOVED("gui.itemeditor.book.page_removed", "$0Die $2Seite {{page_number}} $0wurde aus dem Buch entfernt."),
   GUI_ITEMEDITOR_BOOK_PAGES_EDITED("gui.itemeditor.book.pages_edited", "$0Die Änderungen der Buchseiten wurden gespeichert."),
   GUI_ITEMEDITOR_BOOK_PAGES_EDIT_PROMPT("gui.itemeditor.book.pages_edit_prompt", "$0Öffne das Buch in deiner Hand und signiere dieses, wenn du fertig bist."),
+  GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_NAME("gui.itemeditor.custom_model_data.name", "$0» $2CustomModelData $0«"),
+  GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_LORE(
+    "gui.itemeditor.custom_model_data.lore",
+    " ",
+    "$0Ändere die $2CustomModelData $0dieses Items.",
+    "$0Aktueller Wert: $2{{custom_model_data}}",
+    " ",
+    "$0[$21$0]: $2Wert setzen",
+    "$0[$22$0]: $2Wert entfernen"
+  ),
+  GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_PROMPT("gui.itemeditor.custom_model_data.prompt", "$0Gib einen Wert für die $2CustomModelData $0in den Chat ein."),
+  GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_SET("gui.itemeditor.custom_model_data.set", "$0Die $2CustomModelData $0wurde auf $2{{custom_model_data}} $0gesetzt."),
+  GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_NOT_SET("gui.itemeditor.custom_model_data.not_set", "$0Dieses Item besitzt noch keine $2CustomModelData$0."),
+  GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_RESET("gui.itemeditor.custom_model_data.reset", "$0Die $2CustomModelData $0des Items wurde $2zurückgesetzt$0."),
 
   //=========================================================================//
   //                             AnvilSearch GUI                             //

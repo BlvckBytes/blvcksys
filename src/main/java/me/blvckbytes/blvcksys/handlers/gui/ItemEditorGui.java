@@ -128,6 +128,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     ///////////////////////////////// Increase Amount //////////////////////////////////
 
+
     inst.fixedItem(10, () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_UP.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_AMOUNT_INCREASE_NAME))
@@ -201,6 +202,73 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withVariable("amount", amount)
           .asScalar()
       );
+    });
+
+    //////////////////////////////// Custom Model Data //////////////////////////////////
+
+    inst.fixedItem(27, () -> (
+      new ItemStackBuilder(Material.ITEM_FRAME)
+        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_NAME))
+        .withLore(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_LORE)
+            .withVariable("custom_model_data", meta.hasCustomModelData() ? meta.getCustomModelData() : "/")
+        )
+        .build()
+    ), e -> {
+      Integer key = e.getHotbarKey().orElse(null);
+      if (key == null)
+        return;
+
+      // Set the custom model data
+      if (key == 1) {
+        new UserInputChain(inst, values -> {
+          int data = (int) values.get("data");
+
+          meta.setCustomModelData(data);
+          item.setItemMeta(meta);
+          inst.redraw("13,27");
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_SET)
+              .withPrefix()
+              .withVariable("custom_model_data", data)
+              .asScalar()
+          );
+        }, singleChoiceGui, chatUtil)
+          .withPrompt(
+            "data",
+            values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_PROMPT).withPrefix(),
+            Integer::parseInt,
+            input -> cfg.get(ConfigKey.ERR_INTPARSE).withVariable("number", input).withPrefix(),
+            null
+          )
+          .start();
+        return;
+      }
+
+      // Remove the custom model data
+      if (key == 2) {
+        if (!meta.hasCustomModelData()) {
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_NOT_SET)
+              .withPrefix()
+              .asScalar()
+          );
+          return;
+        }
+
+        meta.setCustomModelData(null);
+        item.setItemMeta(meta);
+        inst.redraw("13,27");
+
+        p.sendMessage(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_RESET)
+            .withPrefix()
+            .asScalar()
+        );
+
+        return;
+      }
     });
 
     ///////////////////////////////////// Material /////////////////////////////////////
@@ -327,7 +395,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             .withVariable("enchantment", formatConstant(((Enchantment) values.get("enchantment")).getKey().getKey()))
             .withPrefix(),
           Integer::parseInt,
-          input -> cfg.get(ConfigKey.ERR_INTPARSE).withVariable("number", input),
+          input -> cfg.get(ConfigKey.ERR_INTPARSE).withVariable("number", input).withPrefix(),
           values -> meta.hasEnchant((Enchantment) values.get("enchantment"))
         )
         .start();
@@ -976,7 +1044,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_DURATION_PROMPT)
               .withPrefix(),
             Integer::parseInt,
-            input -> cfg.get(ConfigKey.ERR_INTPARSE).withVariable("number", input),
+            input -> cfg.get(ConfigKey.ERR_INTPARSE).withVariable("number", input).withPrefix(),
             null
           )
           .withPrompt(
@@ -984,7 +1052,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_AMPLIFIER_PROMPT)
               .withPrefix(),
             Integer::parseInt,
-            input -> cfg.get(ConfigKey.ERR_INTPARSE).withVariable("number", input),
+            input -> cfg.get(ConfigKey.ERR_INTPARSE).withVariable("number", input).withPrefix(),
             null
           )
           .start();

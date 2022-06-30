@@ -1774,9 +1774,25 @@ public enum ConfigKey {
     "$0[$22$0]: $2Wert entfernen"
   ),
   GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_PROMPT("gui.itemeditor.custom_model_data.prompt", "$0Gib einen Wert für die $2CustomModelData $0in den Chat ein."),
-  GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_SET("gui.itemeditor.custom_model_data.set", "$0Die $2CustomModelData $0wurde auf $2{{custom_model_data}} $0gesetzt."),
+  GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_SET("gui.itemeditor.custom_model_data.set", "$0Die $2CustomModelData $0des Items wurde auf $2{{custom_model_data}} $0gesetzt."),
   GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_NOT_SET("gui.itemeditor.custom_model_data.not_set", "$0Dieses Item besitzt noch keine $2CustomModelData$0."),
   GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_RESET("gui.itemeditor.custom_model_data.reset", "$0Die $2CustomModelData $0des Items wurde $2zurückgesetzt$0."),
+  GUI_ITEMEDITOR_FIREWORK_NAME("gui.itemeditor.firework.name", "$0» $2Feuerwerk $0«"),
+  GUI_ITEMEDITOR_FIREWORK_LORE(
+    "gui.itemeditor.firework.lore",
+    " ",
+    "$0Bearbeite $2Feuerwerkskörper$0.",
+    "$0Aktuelle Power: $2{{power}}",
+    " ",
+    "$0[$21$0]: $2Power setzen",
+    "$0[$22$0]: $2Effekt hinzufügen",
+    "$0[$23$0]: $2Effekt entfernen",
+    "$0[$24$0]: $2Effekte leeren"
+  ),
+  GUI_ITEMEDITOR_FIREWORK_POWER_PROMPT("gui.itemeditor.firework.power.prompt", "$0Gib einen Wert für die $2Power $0in den Chat ein."),
+  GUI_ITEMEDITOR_FIREWORK_POWER_SET("gui.itemeditor.firework.power.set", "$0Die $2Power $0des Feuerwerks wurde auf $2{{power}} $0gesetzt."),
+  GUI_ITEMEDITOR_FIREWORK_EFFECTS_NONE("gui.itemeditor.firework.effects.none", "$0Dieses Feuerwerk besitzt $4keine Effekte$0!"),
+  GUI_ITEMEDITOR_FIREWORK_EFFECTS_RESET("gui.itemeditor.firework.effects.reset", "$0Die Effekte des Feuerwerks wurden $2zurückgesetzt."),
 
   //=========================================================================//
   //                             AnvilSearch GUI                             //

@@ -831,6 +831,87 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       }
     });
 
+    ////////////////////////////////////// Fireworks //////////////////////////////////////
+
+    inst.fixedItem(35, () -> {
+      FireworkMeta fMeta = meta instanceof FireworkMeta fm ? fm : null;
+      return new ItemStackBuilder(fMeta != null ? Material.FIREWORK_ROCKET : Material.BARRIER)
+        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_FIREWORK_NAME))
+        .withLore(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_FIREWORK_LORE)
+            .withVariable("power", fMeta == null ? "/" : fMeta.getPower())
+        )
+        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_NOT_APPLICABLE_LORE), fMeta == null)
+        .build();
+    }, e -> {
+      if (!(meta instanceof FireworkMeta fm))
+        return;
+
+      Integer key = e.getHotbarKey().orElse(null);
+      if (key == null)
+        return;
+
+      // Set the firework's power
+      if (key == 1) {
+        new UserInputChain(inst, values -> {
+          int power = (int) values.get("power");
+
+          fm.setPower(power);
+          item.setItemMeta(meta);
+          inst.redraw("13,35");
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_FIREWORK_POWER_SET)
+              .withPrefix()
+              .withVariable("power", power)
+              .asScalar()
+          );
+        }, singleChoiceGui, chatUtil)
+          .withPrompt(
+            "power",
+            values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_FIREWORK_POWER_PROMPT).withPrefix(),
+            Integer::parseInt,
+            input -> cfg.get(ConfigKey.ERR_INTPARSE).withVariable("number", input).withPrefix(),
+            null
+          )
+          .start();
+        return;
+      }
+
+      // Add a new effect
+      if (key == 2) {
+        return;
+      }
+
+      // Remove an existing effect
+      if (key == 3) {
+        return;
+      }
+
+      // Remove all effects
+      if (key == 4) {
+        if (fm.getEffects().size() == 0) {
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_FIREWORK_EFFECTS_NONE)
+              .withPrefix()
+              .asScalar()
+          );
+          return;
+        }
+
+        fm.clearEffects();
+        item.setItemMeta(fm);
+        inst.redraw("13,35");
+
+        p.sendMessage(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_FIREWORK_EFFECTS_RESET)
+            .withPrefix()
+            .asScalar()
+        );
+        return;
+      }
+    });
+
     ///////////////////////////////////// Skull Owner /////////////////////////////////////
 
     inst.fixedItem(38, () -> {

@@ -1646,24 +1646,15 @@ public enum ConfigKey {
   ),
   GUI_ITEMEDITOR_SKULLOWNER_PROMPT("gui.itemeditor.skullowner.prompt", "$0Bitte gib den gewünschten $2Kopfbesitzer $0in den $2Chat $0ein."),
   GUI_ITEMEDITOR_SKULLOWNER_NOT_LOADABLE("gui.itemeditor.skullowner.not_loadable", "$0Der Skin von $4{{owner}} $0konnte nicht geladen werden!"),
-  GUI_ITEMEDITOR_LEATHERCOLOR_CHANGED("gui.itemeditor.leathercolor.changed", "$0Die $2Lederfarbe $0dieses Items wurde auf $2{{color}} $0geändert."),
   GUI_ITEMEDITOR_LEATHERCOLOR_NAME("gui.itemeditor.leathercolor.name", "$0» $2Lederfarbe $0«"),
   GUI_ITEMEDITOR_LEATHERCOLOR_LORE(
     "gui.itemeditor.leathercolor.lore",
     " ",
     "$0Ändere die $2Farbe $0dieses $2Lederteils$0.",
     " ",
-    "$0Linksklick: $2Farbwert aus Liste",
-    "$0Rechtsklick: $2RGB Farbwert"
-  ),
-  GUI_ITEMEDITOR_COLOR_PROMPT("gui.itemeditor.leathercolor.prompt", "$0Bitte gib den gewünschten $2Farbwert $0in den $2Chat $0ein (r g b)."),
-  GUI_ITEMEDITOR_COLOR_INVALID_FORMAT("gui.itemeditor.leathercolor.invalid_format", "$0Die Farbeingabe von $4{{input}} $0ist ungültig!"),
-  GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_TITLE("gui.itemeditor.choice.leathercolor.title", "$2Lederfarbe"),
-  GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_NAME("gui.itemeditor.choice.leathercolor.name", "$2{{color}}"),
-  GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_LORE(
-    "gui.itemeditor.choice.leathercolor.lore",
-    " ",
-    "$0Klicke um diese Farbe zu wählen."
+    "$0[$21$0]: $2Farbwert aus Liste",
+    "$0[$22$0]: $2RGB Farbwert",
+    "$0[$23$0]: $2Farbe zurücksetzen"
   ),
   GUI_ITEMEDITOR_POTIONEFFECTS_NAME("gui.itemeditor.potioneffects.name", "$0» $2Trankeffekte $0«"),
   GUI_ITEMEDITOR_POTIONEFFECTS_LORE(
@@ -1703,16 +1694,28 @@ public enum ConfigKey {
   GUI_ITEMEDITOR_POTIONEFFECTS_ADDED("gui.itemeditor.potioneffects.added", "$0Der Effekt $2{{effect}} $0wurde auf &dStufe {{level}} &7mit &d{{duration}} Sekunden &7hinzugefügt."),
   GUI_ITEMEDITOR_POTIONEFFECTS_DURATION_PROMPT("gui.itemeditor.potioneffects.duration_prompt", "$0Bitte gib die gewünschte $2Dauer in Sekunden &7in den $2Chat $0ein."),
   GUI_ITEMEDITOR_POTIONEFFECTS_AMPLIFIER_PROMPT("gui.itemeditor.potioneffects.amplifier_prompt", "$0Bitte gib die gewünschte $2Stufe &7in den $2Chat $0ein."),
-  GUI_ITEMEDITOR_CHOICE_POTIONCOLOR_TITLE("gui.itemeditor.choice.potioncolor.title", "$2Trankfarbe"),
-  GUI_ITEMEDITOR_CHOICE_POTIONCOLOR_NAME("gui.itemeditor.choice.potioncolor.name", "$2{{color}}"),
-  GUI_ITEMEDITOR_CHOICE_POTIONCOLOR_LORE(
+  GUI_ITEMEDITOR_MAP_NAME("gui.itemeditor.map.name", "$0» $2Karten $0«"),
+  GUI_ITEMEDITOR_MAP_LORE(
+    "gui.itemeditor.map.lore",
+    " ",
+    "$0Ändere die $2Eigenschaften $0dieser $2Karte$0.",
+    " ",
+    "$0[$21$0]: $2Farbwert aus Liste",
+    "$0[$22$0]: $2RGB Farbwert",
+    "$0[$23$0]: $2Farbe zurücksetzen"
+  ),
+  GUI_ITEMEDITOR_COLOR_CHANGED("gui.itemeditor.color.changed", "$0Die $2Farbe $0dieses Items wurde auf $2{{color}} $0geändert."),
+  GUI_ITEMEDITOR_COLOR_RESET("gui.itemeditor.color.reset", "$0Die Farbe wurde $2zurückgesetzt$0."),
+  GUI_ITEMEDITOR_COLOR_NONE("gui.itemeditor.color.none", "$0Dieses Item besitzt noch keine &cgewählte Farbe$0!"),
+  GUI_ITEMEDITOR_COLOR_PROMPT("gui.itemeditor.color.prompt", "$0Bitte gib den gewünschten $2Farbwert $0in den $2Chat $0ein (r g b)."),
+  GUI_ITEMEDITOR_COLOR_INVALID_FORMAT("gui.itemeditor.color.invalid_format", "$0Die Farbeingabe von $4{{input}} $0ist ungültig!"),
+  GUI_ITEMEDITOR_CHOICE_COLOR_TITLE("gui.itemeditor.choice.potioncolor.title", "$2Farbe"),
+  GUI_ITEMEDITOR_CHOICE_COLOR_NAME("gui.itemeditor.choice.potioncolor.name", "$2{{color}}"),
+  GUI_ITEMEDITOR_CHOICE_COLOR_LORE(
     "gui.itemeditor.choice.potioncolor.lore",
     " ",
     "$0Klicke um diese Farbe zu wählen."
   ),
-  GUI_ITEMEDITOR_POTIONCOLOR_CHANGED("gui.itemeditor.potioncolor.changed", "$0Die $2Trankfarbe $0dieses Items wurde auf $2{{color}} $0geändert."),
-  GUI_ITEMEDITOR_POTIONCOLOR_RESET("gui.itemeditor.potioncolor.reset", "$0Die Farbe des Tranks wurde $2zurückgesetzt$0."),
-  GUI_ITEMEDITOR_POTIONCOLOR_NONE("gui.itemeditor.potioncolor.none", "$0Dieser Trank besitzt noch keine &cgewählte Farbe$0!"),
 
   //=========================================================================//
   //                             AnvilSearch GUI                             //

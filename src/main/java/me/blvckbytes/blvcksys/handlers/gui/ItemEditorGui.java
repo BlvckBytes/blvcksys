@@ -10,6 +10,7 @@ import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.persistence.models.PlayerTextureModel;
 import me.blvckbytes.blvcksys.util.ChatUtil;
+import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.SymbolicHead;
 import me.blvckbytes.blvcksys.util.Triple;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
@@ -53,6 +54,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
   private final SingleChoiceGui singleChoiceGui;
   private final ILogger logger;
   private final ChatUtil chatUtil;
+  private final MCReflect refl;
 
   public ItemEditorGui(
     @AutoInject IConfig cfg,
@@ -60,7 +62,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject SingleChoiceGui singleChoiceGui,
     @AutoInject ILogger logger,
-    @AutoInject ChatUtil chatUtil
+    @AutoInject ChatUtil chatUtil,
+    @AutoInject MCReflect refl
   ) {
     super(6, "", i -> (
       cfg.get(ConfigKey.GUI_ITEMEDITOR_TITLE)
@@ -70,6 +73,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     this.singleChoiceGui = singleChoiceGui;
     this.logger = logger;
     this.chatUtil = chatUtil;
+    this.refl = refl;
   }
 
   @Override
@@ -806,80 +810,18 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       if (!(meta instanceof LeatherArmorMeta armorMeta))
         return;
 
-      ClickType click = e.getClick();
+      Integer key = e.getHotbarKey().orElse(null);
+      if (key == null)
+        return;
 
-      // Set to an RGB value
-      if (click.isRightClick()) {
-
-        new UserInputChain(inst, values -> {
-          @SuppressWarnings("unchecked")
-          Tuple<Color, String> color = (Tuple<Color, String>) values.get("color");
-          armorMeta.setColor((color.a()) );
-          item.setItemMeta(armorMeta);
-
-          p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_CHANGED)
-              .withPrefix()
-              .withVariable("color", color.b())
-              .asScalar()
-          );
-        }, singleChoiceGui, chatUtil)
-          .withPrompt(
-            "color",
-            values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_COLOR_PROMPT)
-              .withPrefix(),
-            s -> {
-              String[] data = s.split(" ");
-              return new Tuple<>(
-                Color.fromRGB(
-                  Integer.parseInt(data[0]),
-                  Integer.parseInt(data[1]),
-                  Integer.parseInt(data[2])
-                ),
-                s
-              );
-            },
-            input -> (
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_COLOR_INVALID_FORMAT)
-                .withPrefix()
-                .withVariable("input", input)
-            ),
-            null
-          )
-          .start();
-
+      if (key == 1 || key == 2) {
+        promptForColor(inst, key == 2, item, meta);
         return;
       }
 
-      // Set to a predefined value
-      if (click.isLeftClick()) {
-
-        new UserInputChain(inst, values -> {
-          @SuppressWarnings("unchecked")
-          Tuple<String, Color> colorData = (Tuple<String, Color>) values.get("color");
-
-          armorMeta.setColor(colorData.b());
-          item.setItemMeta(armorMeta);
-
-          p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_CHANGED)
-              .withPrefix()
-              .withVariable("color", formatConstant(colorData.a()))
-              .asScalar()
-          );
-        }, singleChoiceGui, chatUtil)
-          .withChoice(
-            "color",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_TITLE),
-            () -> generateColorReprs(
-              c -> item.getType(),
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_NAME),
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_LORE)
-            ),
-            null
-          )
-          .start();
-
+      if (key == 3) {
+        resetColor(inst, item, meta);
+        return;
       }
     });
 
@@ -1022,6 +964,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             null
           )
           .start();
+
+        return;
       }
 
       // Remove a secondary effect
@@ -1057,105 +1001,179 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             null
           )
           .start();
+
+        return;
       }
 
-      // Set to a predefined value
-      if (key == 6) {
-        new UserInputChain(inst, values -> {
-          @SuppressWarnings("unchecked")
-          Tuple<String, Color> colorData = (Tuple<String, Color>) values.get("color");
-
-          potionMeta.setColor(colorData.b());
-          item.setItemMeta(potionMeta);
-
-          p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONCOLOR_CHANGED)
-              .withPrefix()
-              .withVariable("color", formatConstant(colorData.a()))
-              .asScalar()
-          );
-        }, singleChoiceGui, chatUtil)
-          .withChoice(
-            "color",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_POTIONCOLOR_TITLE),
-            () -> generateColorReprs(
-              c -> item.getType(),
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_POTIONCOLOR_NAME),
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_POTIONCOLOR_LORE)
-            ),
-            null
-          )
-          .start();
-
-      }
-
-      // Set to a custom RGB color
-      if (key == 7) {
-        new UserInputChain(inst, values -> {
-          @SuppressWarnings("unchecked")
-          Tuple<Color, String> color = (Tuple<Color, String>) values.get("color");
-          potionMeta.setColor((color.a()) );
-          item.setItemMeta(potionMeta);
-
-          p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONCOLOR_CHANGED)
-              .withPrefix()
-              .withVariable("color", color.b())
-              .asScalar()
-          );
-        }, singleChoiceGui, chatUtil)
-          .withPrompt(
-            "color",
-            values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_COLOR_PROMPT)
-              .withPrefix(),
-            s -> {
-              String[] data = s.split(" ");
-              return new Tuple<>(
-                Color.fromRGB(
-                  Integer.parseInt(data[0]),
-                  Integer.parseInt(data[1]),
-                  Integer.parseInt(data[2])
-                ),
-                s
-              );
-            },
-            input -> (
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_COLOR_INVALID_FORMAT)
-                .withPrefix()
-                .withVariable("input", input)
-            ),
-            null
-          )
-          .start();
-
+      // Change color
+      if (key == 6 || key == 7) {
+        promptForColor(inst, key == 7, item, meta);
         return;
       }
 
       // Reset color
       if (key == 8) {
-        if (potionMeta.getColor() == null) {
-          p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONCOLOR_NONE)
-              .withPrefix()
-              .asScalar()
-          );
-          return;
-        }
+        resetColor(inst, item, meta);
+        return;
+      }
+    });
 
-        potionMeta.setColor(null);
-        item.setItemMeta(potionMeta);
-        inst.redraw("13");
+    //////////////////////////////////////// Maps ////////////////////////////////////////
 
-        p.sendMessage(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONCOLOR_RESET)
-            .withPrefix()
-            .asScalar()
-        );
+    inst.fixedItem(42, () -> {
+      boolean applicable = meta instanceof MapMeta;
+      return new ItemStackBuilder(applicable ? Material.FILLED_MAP : Material.BARRIER)
+        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_MAP_NAME))
+        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_MAP_LORE))
+        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_NOT_APPLICABLE_LORE), !applicable)
+        .build();
+    }, e -> {
+      // Not an item which will have map meta
+      if (!(meta instanceof MapMeta mapMeta))
+        return;
+
+      Integer key = e.getHotbarKey().orElse(null);
+      if (key == null)
+        return;
+
+      // Change color
+      if (key == 1 || key == 2) {
+        promptForColor(inst, key == 2, item, meta);
+        return;
       }
 
+      // Reset color
+      if (key == 3) {
+        resetColor(inst, item, meta);
+        return;
+      }
     });
 
     return true;
+  }
+
+  /**
+   * Tries to set the color of an item, does nothing if it's uncolorable,
+   * notifies the player internally
+   * @param inst GUI instance
+   * @param item Target item
+   * @param meta Target item's meta
+   * @param color Color to set
+   */
+  private void setColor(GuiInstance<?> inst, ItemStack item, ItemMeta meta, Tuple<Color, String> color) {
+    try {
+      refl.invokeMethodByName(meta, "setColor", new Class[]{ Color.class }, color == null ? null : color.a());
+      item.setItemMeta(meta);
+      inst.redraw("13");
+
+      if (color == null) {
+        inst.getViewer().sendMessage(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_COLOR_RESET)
+            .withPrefix()
+            .asScalar()
+        );
+
+        return;
+      }
+
+      inst.getViewer().sendMessage(
+        cfg.get(ConfigKey.GUI_ITEMEDITOR_COLOR_CHANGED)
+          .withPrefix()
+          .withVariable("color", formatConstant(color.b()))
+          .asScalar()
+      );
+    }
+
+    // Cannot change the color of this item, do nothing
+    catch (Exception ignored) {}
+  }
+
+  /**
+   * Tries to reset the color of an item, does nothing if it's uncolorable,
+   * re-sets the color if one is set, notifies the player internally
+   * @param inst GUI instance
+   * @param item Target item
+   * @param meta Target item's meta
+   */
+  private void resetColor(GuiInstance<?> inst, ItemStack item, ItemMeta meta) {
+    try {
+      Color color = (Color) refl.invokeMethodByName(meta, "getColor", new Class<?>[]{});
+
+      // Has no color applied yet (leather always has a color - brown)
+      if (color == null || (meta instanceof LeatherArmorMeta && color.equals(Color.fromRGB(0xA06540)))) {
+        inst.getViewer().sendMessage(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_COLOR_NONE)
+            .withPrefix()
+            .asScalar()
+        );
+        return;
+      }
+
+      // Reset the color
+      setColor(inst, item, meta, null);
+    }
+
+    // Cannot change the color of this item, do nothing
+    catch (Exception ignored) {}
+  }
+
+  /**
+   * Prompts the user for a color by either offering a choice within a
+   * pre-defined list or by prompting for RGB values using the chat and then
+   * applies that received color to the item, notifies the player internally
+   * @param inst GUI instance
+   * @param custom Whether to prompt for RGB
+   * @param item Target item
+   * @param meta Target item's meta
+   */
+  @SuppressWarnings("unchecked")
+  private void promptForColor(GuiInstance<?> inst, boolean custom, ItemStack item, ItemMeta meta) {
+    UserInputChain chain = new UserInputChain(inst, values -> {
+      Tuple<Color, String> color = (Tuple<Color, String>) values.get("color");
+      setColor(inst, item, meta, color);
+    }, singleChoiceGui, chatUtil);
+
+    // Custom RGB color input by prompt
+    if (custom) {
+      chain.withPrompt(
+        "color",
+        values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_COLOR_PROMPT)
+          .withPrefix(),
+        s -> {
+          String[] data = s.split(" ");
+          return new Tuple<>(
+            Color.fromRGB(
+              Integer.parseInt(data[0]),
+              Integer.parseInt(data[1]),
+              Integer.parseInt(data[2])
+            ),
+            s
+          );
+        },
+        input -> (
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_COLOR_INVALID_FORMAT)
+            .withPrefix()
+            .withVariable("input", input)
+        ),
+        null
+      );
+    }
+
+    // Select from a list of predefined colors
+    else {
+      chain.withChoice(
+        "color",
+        cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_COLOR_TITLE),
+        () -> generateColorReprs(
+          c -> item.getType(),
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_COLOR_NAME),
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_COLOR_LORE)
+        ),
+        null
+      );
+    }
+
+    chain.start();
   }
 
   /**
@@ -1565,7 +1583,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
    * @param lore Item lore value
    */
   public List<Tuple<Object, ItemStack>> generateColorReprs(Function<Color, Material> material, ConfigValue name, ConfigValue lore) {
-    List<Tuple<String, Color>> colors = new ArrayList<>();
+    List<Tuple<Color, String>> colors = new ArrayList<>();
 
     // Get all available colors from the class's list of constant fields
     try {
@@ -1573,22 +1591,28 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         .filter(field -> field.getType().equals(Color.class) && Modifier.isStatic(field.getModifiers()))
         .toList();
 
-      for (Field constant : constants)
-        colors.add(new Tuple<>(constant.getName(), (Color) constant.get(null)));
+      for (Field constant : constants) {
+        Color color = (Color) constant.get(null);
+
+        if (color == null)
+          continue;
+
+        colors.add(new Tuple<>(color, constant.getName()));
+      }
     } catch (Exception ex) {
       logger.logError(ex);
     }
 
     // Create a list of all available slots
     List<Tuple<Object, ItemStack>> slotReprs = new ArrayList<>();
-    for (Tuple<String, Color> color : colors) {
+    for (Tuple<Color, String> color : colors) {
       slotReprs.add(new Tuple<>(
         color,
-        new ItemStackBuilder(material.apply(color.b()))
-          .withColor(color::b, true)
+        new ItemStackBuilder(material.apply(color.a()))
+          .withColor(color::a, true)
           .withName(
             name
-              .withVariable("color", formatConstant(color.a()))
+              .withVariable("color", formatConstant(color.b()))
           )
           .withLore(lore)
           .build()

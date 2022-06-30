@@ -757,7 +757,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     ///////////////////////////////////// Skull Owner /////////////////////////////////////
 
-    inst.fixedItem(39, () -> {
+    inst.fixedItem(38, () -> {
       boolean applicable = meta instanceof SkullMeta;
       return new ItemStackBuilder(applicable ? Material.SKELETON_SKULL : Material.BARRIER)
         .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_NAME))
@@ -814,7 +814,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     ///////////////////////////////////// Leather Color /////////////////////////////////////
 
-    inst.fixedItem(40, () -> {
+    inst.fixedItem(39, () -> {
       boolean applicable = meta instanceof LeatherArmorMeta;
       return new ItemStackBuilder(applicable ? Material.LEATHER : Material.BARRIER)
         .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_NAME))
@@ -843,7 +843,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     ///////////////////////////////////// Potion Effects /////////////////////////////////////
 
-    inst.fixedItem(41, () -> {
+    inst.fixedItem(40, () -> {
       boolean applicable = meta instanceof PotionMeta;
       return new ItemStackBuilder(applicable ? Material.BREWING_STAND : Material.BARRIER)
         .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_NAME))
@@ -1057,7 +1057,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     //////////////////////////////////////// Maps ////////////////////////////////////////
 
-    inst.fixedItem(42, () -> {
+    inst.fixedItem(41, () -> {
       boolean applicable = meta instanceof MapMeta;
       return new ItemStackBuilder(applicable ? Material.FILLED_MAP : Material.BARRIER)
         .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_MAP_NAME))
@@ -1086,7 +1086,189 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       }
     });
 
+    //////////////////////////////////////// Books ////////////////////////////////////////
+
+    inst.fixedItem(42, () -> {
+      boolean applicable = meta instanceof BookMeta;
+      return new ItemStackBuilder(applicable ? Material.BOOK : Material.BARRIER)
+        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_NAME))
+        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_LORE))
+        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_NOT_APPLICABLE_LORE), !applicable)
+        .build();
+    }, e -> {
+      // Not an item which will have book meta
+      if (!(meta instanceof BookMeta bookMeta))
+        return;
+
+      Integer key = e.getHotbarKey().orElse(null);
+      if (key == null)
+        return;
+
+      // Set title
+      if (key == 1 || key == 2) {
+        // Reset
+        if (key == 2) {
+          if (bookMeta.getTitle() == null) {
+            p.sendMessage(
+              cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_TITLE_NOT_SET)
+                .withPrefix()
+                .asScalar()
+            );
+            return;
+          }
+
+          bookMeta.setTitle(null);
+          item.setItemMeta(bookMeta);
+          inst.redraw("13");
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_TITLE_RESET)
+              .withPrefix()
+              .asScalar()
+          );
+
+          return;
+        }
+
+        promptPlainText(inst, cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_TITLE_PROMPT), title -> {
+          bookMeta.setTitle(title);
+          item.setItemMeta(bookMeta);
+          inst.redraw("13");
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_TITLE_SET)
+              .withPrefix()
+              .withVariable("title", title)
+              .asScalar()
+          );
+        });
+        return;
+      }
+
+      // Set author
+      if (key == 3 || key == 4) {
+        // Reset
+        if (key == 4) {
+          if (bookMeta.getAuthor() == null) {
+            p.sendMessage(
+              cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_AUTHOR_NOT_SET)
+                .withPrefix()
+                .asScalar()
+            );
+            return;
+          }
+
+          bookMeta.setAuthor(null);
+          item.setItemMeta(bookMeta);
+          inst.redraw("13");
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_AUTHOR_RESET)
+              .withPrefix()
+              .asScalar()
+          );
+
+          return;
+        }
+
+        promptPlainText(inst, cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_AUTHOR_PROMPT), author -> {
+          bookMeta.setAuthor(author);
+          item.setItemMeta(bookMeta);
+          inst.redraw("13");
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_AUTHOR_SET)
+              .withPrefix()
+              .withVariable("author", author)
+              .asScalar()
+          );
+        });
+        return;
+      }
+
+      // Set generation
+      if (key == 5 || key == 6) {
+        // Reset
+        if (key == 6) {
+          if (bookMeta.getGeneration() == null) {
+            p.sendMessage(
+              cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_GENERATION_NOT_SET)
+                .withPrefix()
+                .asScalar()
+            );
+            return;
+          }
+
+          bookMeta.setGeneration(null);
+          item.setItemMeta(bookMeta);
+          inst.redraw("13");
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_GENERATION_RESET)
+              .withPrefix()
+              .asScalar()
+          );
+
+          return;
+        }
+
+        new UserInputChain(inst, values -> {
+          BookMeta.Generation gen = (BookMeta.Generation) values.get("generation");
+
+          bookMeta.setGeneration(gen);
+          item.setItemMeta(bookMeta);
+          inst.redraw("13");
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_GENERATION_SET)
+              .withPrefix()
+              .withVariable("generation", formatConstant(gen.name()))
+              .asScalar()
+          );
+        }, singleChoiceGui, chatUtil)
+          .withChoice(
+            "generation",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_GENERATION_TITLE),
+            this::buildGenerationRepresentitives,
+            null
+          )
+          .start();
+        return;
+      }
+
+      // Add new page
+      if (key == 7) {
+        return;
+      }
+
+      // Edit existing page
+      if (key == 8) {
+        return;
+      }
+
+      // Remove existing page
+      if (key == 9) {
+        return;
+      }
+    });
+
     return true;
+  }
+
+  /**
+   * Promts the user for a plain text input without any validation
+   * @param inst GUI instance
+   * @param prompt Prompt message
+   * @param value Value input callback
+   */
+  private void promptPlainText(GuiInstance<?> inst, ConfigValue prompt, Consumer<String> value) {
+    new UserInputChain(inst, values -> value.accept((String) values.get("value")), singleChoiceGui, chatUtil)
+      .withPrompt(
+        "value",
+        values -> prompt,
+        s -> ChatColor.translateAlternateColorCodes('&', s), null, null
+      )
+      .start();
   }
 
   /**
@@ -1211,6 +1393,29 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     }
 
     chain.start();
+  }
+
+  /**
+   * Builds a list of representitives for all available book generations
+   */
+  private List<Tuple<Object, ItemStack>> buildGenerationRepresentitives() {
+    // Create representitive items for each generation
+    List<Tuple<Object, ItemStack>> representitives = new ArrayList<>();
+
+    for (BookMeta.Generation generation : BookMeta.Generation.values()) {
+      representitives.add(new Tuple<>(
+        generation,
+        new ItemStackBuilder(Material.BOOK)
+          .withName(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_GENERATION_NAME)
+              .withVariable("generation", formatConstant(generation.name()))
+          )
+          .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_GENERATION_LORE))
+          .build()
+      ));
+    }
+
+    return representitives;
   }
 
   /**

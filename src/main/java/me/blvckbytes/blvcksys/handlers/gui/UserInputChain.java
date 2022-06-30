@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -235,6 +236,24 @@ public class UserInputChain {
     Supplier<List<Tuple<Object, ItemStack>>> representitives,
     @Nullable Function<Map<String, Object>, Boolean> skip
   ) {
+    return withChoice(null, field, type, representitives, skip);
+  }
+
+  /**
+   * Add a new single choice stage
+   * @param multipleChoiceGui Multiple choice GUI ref, leave at null for single choices
+   * @param field Name of the field
+   * @param type Type of choice (part of the screen title)
+   * @param representitives List of representitive items and their values
+   * @param skip Optional skip predicate
+   */
+  public UserInputChain withChoice(
+    @Nullable MultipleChoiceGui multipleChoiceGui,
+    String field,
+    ConfigValue type,
+    Supplier<List<Tuple<Object, ItemStack>>> representitives,
+    @Nullable Function<Map<String, Object>, Boolean> skip
+  ) {
     stages.add(isBack -> {
 
       if (skip != null && skip.apply(values)) {
@@ -242,45 +261,64 @@ public class UserInputChain {
         return;
       }
 
-      SingleChoiceParam param = new SingleChoiceParam(
-        type.asScalar(), representitives.get(), null,
+      // Closed
+      Consumer<GuiInstance<?>> closed = selectionInst -> {
+        if (isCancelled) return;
 
-        // Has chosen
-        (selection, selectionInst) -> {
-          if (isCancelled) return;
+        // Reopen the main GUI and cancel the whole chain
+        isCancelled = true;
+        main.reopen(AnimationType.SLIDE_UP);
+      };
 
-          values.put(field, selection);
+      // Back button, reopen the last stage
+      Consumer<GuiInstance<?>> back = selectionInst -> {
+        if (isCancelled) return;
+        lastScreen = selectionInst;
+        lastWasGui = true;
+        previousStage();
+      };
 
-          lastScreen = selectionInst;
-          lastWasGui = true;
-          nextStage();
-        },
+      BiConsumer<Object, GuiInstance<?>> selected = (selection, selectionInst) -> {
+        if (isCancelled) return;
 
-        // Closed
-        selectionInst -> {
-          if (isCancelled) return;
+        values.put(field, selection);
 
-          // Reopen the main GUI and cancel the whole chain
-          isCancelled = true;
-          main.reopen(AnimationType.SLIDE_UP);
-        },
+        lastScreen = selectionInst;
+        lastWasGui = true;
+        nextStage();
+      };
 
-        // Back button, reopen the last stage
-        selectionInst -> {
-          if (isCancelled) return;
-          lastScreen = selectionInst;
-          lastWasGui = true;
-          previousStage();
-        }
-      );
+      // Multiple choice
+      if (multipleChoiceGui != null) {
+        MultipleChoiceParam param = new MultipleChoiceParam(
+          type.asScalar(), representitives.get(), null,
+          selected::accept, closed::accept, back::accept
+        );
 
-      // Animate between last and current
-      if (lastWasGui)
-        lastScreen.switchTo(isBack ? AnimationType.SLIDE_RIGHT : AnimationType.SLIDE_LEFT, singleChoiceGui, param);
+        // Animate between last and current
+        if (lastWasGui)
+          lastScreen.switchTo(isBack ? AnimationType.SLIDE_RIGHT : AnimationType.SLIDE_LEFT, multipleChoiceGui, param);
 
-      // Just shift up the current GUI
-      else
-        singleChoiceGui.show(main.getViewer(), param, AnimationType.SLIDE_UP);
+          // Just shift up the current GUI
+        else
+          multipleChoiceGui.show(main.getViewer(), param, AnimationType.SLIDE_UP);
+      }
+
+      // Single choice
+      else {
+        SingleChoiceParam param = new SingleChoiceParam(
+          type.asScalar(), representitives.get(), null,
+          selected::accept, closed::accept, back::accept
+        );
+
+        // Animate between last and current
+        if (lastWasGui)
+          lastScreen.switchTo(isBack ? AnimationType.SLIDE_RIGHT : AnimationType.SLIDE_LEFT, singleChoiceGui, param);
+
+          // Just shift up the current GUI
+        else
+          singleChoiceGui.show(main.getViewer(), param, AnimationType.SLIDE_UP);
+      }
     });
 
     return this;

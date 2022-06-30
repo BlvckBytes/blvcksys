@@ -1435,6 +1435,29 @@ public enum ConfigKey {
   ),
 
   //=========================================================================//
+  //                           MultipleChoice GUI                            //
+  //=========================================================================//
+
+  GUI_MULTIPLECHOICE_TITLE("gui.multiplechoice.title", "$0Auswahl $2{{type}}"),
+  GUI_MULTIPLECHOICE_SELECTED_LORE(
+    "gui.multiplechoice.selected.lore",
+    " ",
+    "$0Klicke, um diese Auswahl wieder zu entfernen."
+  ),
+  GUI_MULTIPLECHOICE_ADD_NAME("gui.multiplechoice.add.name", "$0» &aWeitere Auswahl $0«"),
+  GUI_MULTIPLECHOICE_ADD_LORE(
+    "gui.multiplechoice.add.lore",
+    " ",
+    "$0Füge eine weitere Auswahl hinzu."
+  ),
+  GUI_MULTIPLECHOICE_SUBMIT_NAME("gui.multiplechoice.submit.name", "$0» &aWeiter $0«"),
+  GUI_MULTIPLECHOICE_SUBMIT_LORE(
+    "gui.multiplechoice.submit.lore",
+    " ",
+    "$0Schließe die Auswahl ab."
+  ),
+
+  //=========================================================================//
   //                            SingleChoice GUI                             //
   //=========================================================================//
 
@@ -1800,19 +1823,21 @@ public enum ConfigKey {
     " ",
     "$0Klicke um diesen Typ zu wählen."
   ),
-  GUI_ITEMEDITOR_CHOICE_FIREWORK_COLOR_TITLE("gui.itemeditor.choice.firework_color.title", "$2Effektfarbe"),
-  GUI_ITEMEDITOR_CHOICE_FIREWORK_FADE_TITLE("gui.itemeditor.choice.firework_fade.title", "$2Glimmfarbe"),
-  GUI_ITEMEDITOR_FIREWORK_EFFECTS_ADDED("gui.itemeditor.firework.effects.added", "$0Der Effekt $2{{type}} $0mit der Farbe $2{{color}}$0, der Glimmfarbe $2{{fade}}$0, dem Flickern $2{{flicker}} $0sowie den Spuren $2{{trail}} $0wurde erstellt."),
+  GUI_ITEMEDITOR_CHOICE_FIREWORK_COLOR_TITLE("gui.itemeditor.choice.firework_color.title", "$2Effektfarben"),
+  GUI_ITEMEDITOR_CHOICE_FIREWORK_FADE_TITLE("gui.itemeditor.choice.firework_fade.title", "$2Glimmfarben"),
+  GUI_ITEMEDITOR_FIREWORK_EFFECTS_ADDED("gui.itemeditor.firework.effects.added", "$0Der Effekt $2{{type}} $0mit den Farbe(n) $2{{colors}}$0, der Glimmfarbe(n) $2{{fades}}$0, dem Flackern $2{{flicker}} $0sowie den Spuren $2{{trail}} $0wurde erstellt."),
+  GUI_ITEMEDITOR_FIREWORK_EFFECTS_REMOVED("gui.itemeditor.firework.effects.removed", "$0Der Effekt $2Nr. {{index}} $0wurde $2entfernt$0."),
+  GUI_ITEMEDITOR_FIREWORK_EFFECTS_SEPARATOR("gui.itemeditor.firework.effects.separator", "$0, $2"),
   GUI_ITEMEDITOR_YESNO_FLICKER_TITLE("gui.itemeditor.yesno.flicker.title", "$2Flackern"),
   GUI_ITEMEDITOR_YESNO_FLICKER_LORE_YES(
     "gui.itemeditor.yesno.flicker.lore.yes",
     " ",
-    "$0Flickern für diesen Effekt &aaktivieren&7."
+    "$0Flackern für diesen Effekt &aaktivieren&7."
   ),
   GUI_ITEMEDITOR_YESNO_FLICKER_LORE_NO(
     "gui.itemeditor.yesno.flicker.lore.no",
     " ",
-    "$0Flickern für diesen Effekt &cdeaktivieren&7."
+    "$0Flackern für diesen Effekt &cdeaktivieren&7."
   ),
   GUI_ITEMEDITOR_YESNO_TRAIL_TITLE("gui.itemeditor.yesno.trail.title", "$2Spuren"),
   GUI_ITEMEDITOR_YESNO_TRAIL_LORE_YES(
@@ -1824,6 +1849,19 @@ public enum ConfigKey {
     "gui.itemeditor.yesno.trail.lore.no",
     " ",
     "$0Spuren für diesen Effekt &cdeaktivieren&7."
+  ),
+  GUI_ITEMEDITOR_CHOICE_EFFECT_TITLE("gui.itemeditor.choice.effect.title", "$2Effekt"),
+  GUI_ITEMEDITOR_CHOICE_EFFECT_NAME("gui.itemeditor.choice.effect.name", "$0Effekt $2Nr. {{index}}"),
+  GUI_ITEMEDITOR_CHOICE_EFFECT_LORE(
+    "gui.itemeditor.choice.effect.lore",
+    " ",
+    "&7Typ: &d{{type}}",
+    "&7Effektfarbe(n): &d{{colors}}",
+    "&7Glimmfarbe(n): &d{{fades}}",
+    "&7Flackern: &d{{flicker}}",
+    "&7Spuren: &d{{trail}}",
+    " ",
+    "$0Klicke um diesen Effekt zu entfernen."
   ),
 
   //=========================================================================//

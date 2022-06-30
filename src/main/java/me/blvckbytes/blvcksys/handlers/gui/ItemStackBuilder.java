@@ -36,6 +36,7 @@ public class ItemStackBuilder {
   // Name and lore should only be evaluated at the build-step
   // in order to allow for extra variable injection
   private @Nullable ConfigValue name;
+  private boolean loreOverride;
   private final List<ConfigValue> lore;
 
   /**
@@ -234,6 +235,17 @@ public class ItemStackBuilder {
   }
 
   /**
+   * Override all lore lines with the provided lore
+   * @param lore Lines to set
+   */
+  public ItemStackBuilder setLore(ConfigValue lore) {
+    this.lore.clear();
+    this.lore.add(lore);
+    this.loreOverride = true;
+    return this;
+  }
+
+  /**
    * Set the head owner's profile of this item
    * @param profile Profile to set
    * @param condition Boolean which has to evaluate to true in order to apply the profile
@@ -271,7 +283,7 @@ public class ItemStackBuilder {
 
       // Lore requested
       if (lore.size() > 0) {
-        List<String> lines = buildMeta.getLore() == null ? new ArrayList<>() : buildMeta.getLore();
+        List<String> lines = (buildMeta.getLore() == null || loreOverride) ? new ArrayList<>() : buildMeta.getLore();
         lore.forEach(line -> lines.addAll(
           line
             .withVariables(variables)
@@ -308,7 +320,7 @@ public class ItemStackBuilder {
    */
   public ItemStackBuilder copy() {
     return new ItemStackBuilder(
-      stack.clone(), meta.clone(), name, new ArrayList<>(lore)
+      stack.clone(), meta.clone(), name, loreOverride, new ArrayList<>(lore)
     );
   }
 }

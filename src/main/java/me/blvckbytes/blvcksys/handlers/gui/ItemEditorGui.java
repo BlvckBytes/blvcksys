@@ -16,10 +16,7 @@ import me.blvckbytes.blvcksys.util.SymbolicHead;
 import me.blvckbytes.blvcksys.util.Triple;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.util.Tuple;
-import org.bukkit.ChatColor;
-import org.bukkit.Color;
-import org.bukkit.FireworkEffect;
-import org.bukkit.Material;
+import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.enchantments.Enchantment;
@@ -1029,6 +1026,70 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
         p.sendMessage(
           cfg.get(ConfigKey.GUI_ITEMEDITOR_FIREWORK_EFFECTS_RESET)
+            .withPrefix()
+            .asScalar()
+        );
+        return;
+      }
+    });
+
+    ////////////////////////////////////// Compasses //////////////////////////////////////
+
+    inst.fixedItem(37, () -> {
+      CompassMeta cm = meta instanceof CompassMeta x ? x : null;
+      return new ItemStackBuilder(cm != null ? Material.COMPASS : Material.BARRIER)
+        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_COMPASS_NAME))
+        .withLore(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_COMPASS_LORE)
+            .withVariable(
+              "location",
+              (cm != null && cm.getLodestone() != null) ?
+                stringifyLocation(cm.getLodestone()) :
+                "/"
+            )
+        )
+        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_NOT_APPLICABLE_LORE), cm == null)
+        .build();
+    }, e -> {
+      if (!(meta instanceof CompassMeta cm))
+        return;
+
+      Integer key = e.getHotbarKey().orElse(null);
+      if (key == null)
+        return;
+
+      // Set the target location
+      if (key == 1) {
+        cm.setLodestone(p.getLocation());
+        item.setItemMeta(meta);
+        inst.redraw("13,37");
+
+        p.sendMessage(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_COMPASS_LOCATION_SET)
+            .withPrefix()
+            .withVariable("location", stringifyLocation(p.getLocation()))
+            .asScalar()
+        );
+        return;
+      }
+
+      // Remove the target location
+      if (key == 2) {
+        if (!cm.hasLodestone()) {
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_COMPASS_LOCATION_NONE)
+              .withPrefix()
+              .asScalar()
+          );
+          return;
+        }
+
+        cm.setLodestone(null);
+        item.setItemMeta(meta);
+        inst.redraw("13,37");
+
+        p.sendMessage(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_COMPASS_LOCATION_RESET)
             .withPrefix()
             .asScalar()
         );
@@ -2340,6 +2401,19 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
    */
   public List<Tuple<Object, ItemStack>> generateColorReprs(Function<Color, Material> material, ConfigValue name, ConfigValue lore) {
     return generateColorReprs(material, name, lore, false);
+  }
+
+  /**
+   * Stringifies a location to be human readable
+   * @param loc Location to stringify
+   */
+  private String stringifyLocation(Location loc) {
+    return ConfigValue.immediate("{{x}}, {{y}}, {{z}}, {{world}}")
+      .withVariable("x", loc.getX())
+      .withVariable("y", loc.getY())
+      .withVariable("z", loc.getZ())
+      .withVariable("world", loc.getWorld() == null ? "?" : loc.getWorld().getName())
+      .asScalar();
   }
 
   /**

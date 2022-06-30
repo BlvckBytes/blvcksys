@@ -1863,6 +1863,19 @@ public enum ConfigKey {
     " ",
     "$0Klicke um diesen Effekt zu entfernen."
   ),
+  GUI_ITEMEDITOR_COMPASS_NAME("gui.itemeditor.compass.name", "$0» $2Kompass $0«"),
+  GUI_ITEMEDITOR_COMPASS_LORE(
+    "gui.itemeditor.compass.lore",
+    " ",
+    "$0Ändere das $2Ziel $0dieses Kompasses.",
+    "$0Aktuelles Ziel: $2{{location}}",
+    " ",
+    "$0[$21$0]: $2Ziel setzen",
+    "$0[$22$0]: $2Ziel entfernen"
+  ),
+  GUI_ITEMEDITOR_COMPASS_LOCATION_SET("gui.itemeditor.compass.location.set", "$0Das Ziel des Kompasses wurde auf $2{{location}} $0gesetzt."),
+  GUI_ITEMEDITOR_COMPASS_LOCATION_RESET("gui.itemeditor.compass.location.reset", "$0Das Ziel des Kompasses wurde $2zurückgesetzt$0."),
+  GUI_ITEMEDITOR_COMPASS_LOCATION_NONE("gui.itemeditor.compass.location.none", "$0Dieser Kompass hat noch $4kein Ziel$0!"),
 
   //=========================================================================//
   //                             AnvilSearch GUI                             //

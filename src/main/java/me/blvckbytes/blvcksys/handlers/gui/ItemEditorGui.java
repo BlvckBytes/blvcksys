@@ -23,14 +23,14 @@ import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.EquipmentSlot;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.Damageable;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.LeatherArmorMeta;
-import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.inventory.meta.*;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.potion.PotionData;
+import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
+import org.bukkit.potion.PotionType;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
@@ -62,7 +62,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     @AutoInject ILogger logger,
     @AutoInject ChatUtil chatUtil
   ) {
-    super(5, "", i -> (
+    super(6, "", i -> (
       cfg.get(ConfigKey.GUI_ITEMEDITOR_TITLE)
         .withVariable("item_type", i.getArg().a().getType().name())
     ), plugin, cfg, textures);
@@ -99,7 +99,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     // Only render the back button if a callback has been provided
     Consumer<GuiInstance<?>> back = inst.getArg().c();
     if (back != null) {
-      inst.addBack(36, e -> back.accept(inst));
+      inst.addBack(45, e -> back.accept(inst));
     }
 
     ///////////////////////////////////// Preview //////////////////////////////////////
@@ -476,7 +476,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       int currDur = item.getType().getMaxDurability() - ((meta instanceof Damageable d) ? d.getDamage() : -1);
       int maxDur = item.getType().getMaxDurability();
 
-      return new ItemStackBuilder(Material.ANVIL)
+      return new ItemStackBuilder(isDamageable ? Material.ANVIL : Material.BARRIER)
         .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_NAME))
         .withLore(
           cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_LORE)
@@ -492,6 +492,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
                 .asScalar()
             )
         )
+        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_NOT_APPLICABLE_LORE), !isDamageable)
         .build();
     }, e -> {
 
@@ -736,21 +737,17 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     ///////////////////////////////////// Skull Owner /////////////////////////////////////
 
-    inst.fixedItem(27, () -> (
-      new ItemStackBuilder(Material.SKELETON_SKULL)
+    inst.fixedItem(39, () -> {
+      boolean applicable = meta instanceof SkullMeta;
+      return new ItemStackBuilder(applicable ? Material.SKELETON_SKULL : Material.BARRIER)
         .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_NAME))
         .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_LORE))
-        .build()
-    ), e -> {
+        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_NOT_APPLICABLE_LORE), !applicable)
+        .build();
+    }, e -> {
       // Not an item which will have skull meta
-      if (!(meta instanceof SkullMeta skullMeta)) {
-        p.sendMessage(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_NO_SKULL)
-            .withPrefix()
-            .asScalar()
-        );
+      if (!(meta instanceof SkullMeta skullMeta))
         return;
-      }
 
       new UserInputChain(inst, values -> {
         String owner = (String) values.get("owner");
@@ -797,21 +794,17 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     ///////////////////////////////////// Leather Color /////////////////////////////////////
 
-    inst.fixedItem(35, () -> (
-      new ItemStackBuilder(Material.LEATHER)
+    inst.fixedItem(40, () -> {
+      boolean applicable = meta instanceof SkullMeta;
+      return new ItemStackBuilder(applicable ? Material.LEATHER : Material.BARRIER)
         .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_NAME))
         .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_LORE))
-        .build()
-    ), e -> {
+        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_NOT_APPLICABLE_LORE), !applicable)
+        .build();
+    }, e -> {
       // Not an item which will have leather armor meta
-      if (!(meta instanceof LeatherArmorMeta armorMeta)) {
-        p.sendMessage(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_NO_LEATHER)
-            .withPrefix()
-            .asScalar()
-        );
+      if (!(meta instanceof LeatherArmorMeta armorMeta))
         return;
-      }
 
       ClickType click = e.getClick();
 
@@ -890,7 +883,216 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       }
     });
 
+    ///////////////////////////////////// Potion Effects /////////////////////////////////////
+
+    inst.fixedItem(41, () -> {
+      boolean applicable = meta instanceof PotionMeta;
+      return new ItemStackBuilder(applicable ? Material.BREWING_STAND : Material.BARRIER)
+        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_NAME))
+        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_LORE))
+        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_NOT_APPLICABLE_LORE), !applicable)
+        .build();
+    }, e -> {
+      // Not an item which will have potion meta
+      if (!(meta instanceof PotionMeta potionMeta))
+        return;
+
+      Integer key = e.getHotbarKey().orElse(null);
+      if (key == null)
+        return;
+
+      // Change main effect type
+      if (key == 1) {
+        new UserInputChain(inst, values -> {
+          PotionType type = (PotionType) values.get("type");
+          PotionData data = potionMeta.getBasePotionData();
+          potionMeta.setBasePotionData(new PotionData(type, type.isExtendable() && data.isExtended(), type.isUpgradeable() && data.isUpgraded()));
+          item.setItemMeta(potionMeta);
+        }, singleChoiceGui, chatUtil)
+          .withChoice(
+            "type",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_POTION_TYPE_TITLE),
+            () -> generatePotionTypeReprs(
+              cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_POTION_TYPE_NAME),
+              cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_POTION_TYPE_LORE)
+            ),
+            null
+          )
+          .start();
+
+        return;
+      }
+
+      // Upgrade main effect duration
+      if (key == 2) {
+        PotionData data = potionMeta.getBasePotionData();
+
+        if (!data.getType().isExtendable()) {
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_NOT_EXTENDABLE)
+              .withPrefixes()
+              .asScalar()
+          );
+          return;
+        }
+
+        potionMeta.setBasePotionData(new PotionData(data.getType(), true, false));
+        item.setItemMeta(potionMeta);
+        inst.redraw("13");
+
+        p.sendMessage(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_DURATION_EXTENDED)
+            .withPrefixes()
+            .asScalar()
+        );
+
+        return;
+      }
+
+      // Upgrade main effect level
+      if (key == 3) {
+        PotionData data = potionMeta.getBasePotionData();
+
+        if (!data.getType().isUpgradeable()) {
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_NOT_UPGRADABLE)
+              .withPrefixes()
+              .asScalar()
+          );
+          return;
+        }
+
+        potionMeta.setBasePotionData(new PotionData(data.getType(), false, true));
+        item.setItemMeta(potionMeta);
+        inst.redraw("13");
+
+        p.sendMessage(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_LEVEL_UPGRADED)
+            .withPrefixes()
+            .asScalar()
+        );
+
+        return;
+      }
+
+      // Add secondary effect
+      if (key == 4) {
+        new UserInputChain(inst, values -> {
+          PotionEffectType type = ((PotionEffect) values.get("type")).getType();
+          int duration = (int) values.get("duration");
+          int amplifier = (int) values.get("amplifier");
+
+          // Duration is in ticks
+          duration = Math.max(1, duration) * 20;
+          // Amplifiers start at zero
+          amplifier = Math.max(0, amplifier - 1);
+
+          potionMeta.addCustomEffect(new PotionEffect(type, duration, amplifier), true);
+          item.setItemMeta(meta);
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_ADDED)
+              .withPrefix()
+              .withVariable("effect", formatConstant(type.getName()))
+              .withVariable("duration", duration / 20)
+              .withVariable("level", amplifier + 1)
+              .asScalar()
+          );
+        }, singleChoiceGui, chatUtil)
+          .withChoice(
+            "type",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_POTION_EFFECT_TITLE),
+            () -> buildPotionEffectRepresentitives(null),
+            null
+          )
+          .withPrompt(
+            "duration",
+            values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_DURATION_PROMPT)
+              .withPrefix(),
+            Integer::parseInt,
+            input -> cfg.get(ConfigKey.ERR_INTPARSE).withVariable("number", input),
+            null
+          )
+          .withPrompt(
+            "amplifier",
+            values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_AMPLIFIER_PROMPT)
+              .withPrefix(),
+            Integer::parseInt,
+            input -> cfg.get(ConfigKey.ERR_INTPARSE).withVariable("number", input),
+            null
+          )
+          .start();
+      }
+
+      // Remove a secondary effect
+      if (key == 5) {
+        List<PotionEffect> secondaries = potionMeta.getCustomEffects();
+
+        if (secondaries.size() == 0) {
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_NO_SECONDARY)
+              .withPrefixes()
+              .asScalar()
+          );
+          return;
+        }
+
+        new UserInputChain(inst, values -> {
+          PotionEffect effect = (PotionEffect) values.get("effect");
+
+          potionMeta.removeCustomEffect(effect.getType());
+          item.setItemMeta(meta);
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_REMOVED)
+              .withPrefix()
+              .withVariable("effect", formatConstant(effect.getType().getName()))
+              .asScalar()
+          );
+        }, singleChoiceGui, chatUtil)
+          .withChoice(
+            "effect",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_POTION_EFFECT_TITLE),
+            () -> buildPotionEffectRepresentitives(potionMeta.getCustomEffects()),
+            null
+          )
+          .start();
+      }
+    });
+
     return true;
+  }
+
+  /**
+   * Build a list of representitives for all available potion effects
+   * @param effects List of existing effects, leave null to build all available effects
+   */
+  private List<Tuple<Object, ItemStack>> buildPotionEffectRepresentitives(@Nullable List<PotionEffect> effects) {
+    // Create representitive items for each effect
+    List<Tuple<Object, ItemStack>> representitives = new ArrayList<>();
+
+    // When no effects have been provided, use all enum values
+    if (effects == null) {
+      effects = Arrays.stream(PotionEffectType.values())
+        .map(type -> new PotionEffect(type, 20 * 60, 0))
+        .toList();
+    }
+
+    for (PotionEffect effect : effects) {
+      representitives.add(new Tuple<>(
+        effect,
+        new ItemStackBuilder(Material.POTION)
+          .withName(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_POTION_EFFECT_NAME)
+              .withVariable("effect", formatConstant(effect.getType().getName()))
+          )
+          .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_POTION_EFFECT_LORE))
+          .withCustomEffects(() -> List.of(effect), true)
+          .build()
+      ));
+    }
+
+    return representitives;
   }
 
   /**
@@ -959,7 +1161,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     return Arrays.stream(Material.values())
       .filter(m -> !(
         m.isAir() ||
-          m.isLegacy()
+        m.isLegacy()
       ))
       .map(m -> (
           new Tuple<>((Object) m, (
@@ -1239,6 +1441,29 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
   }
 
   /**
+   * Generate a list of potion type representations from bukkit's potion type enum to be used with a choice GUI
+   * @param name Item name value
+   * @param lore Item lore value
+   */
+  public List<Tuple<Object, ItemStack>> generatePotionTypeReprs(ConfigValue name, ConfigValue lore) {
+    // Create a list of all available types
+    List<Tuple<Object, ItemStack>> typeReprs = new ArrayList<>();
+    for (PotionType type : PotionType.values()) {
+      typeReprs.add(new Tuple<>(
+        type,
+        new ItemStackBuilder(Material.POTION)
+          .withName(name.withVariable("type", formatConstant(type.name())))
+          .withLore(lore)
+          .withBaseEffect(() -> new PotionData(type, false, false), true)
+          .build()
+      ));
+    }
+
+    return typeReprs;
+  }
+
+
+  /**
    * Generate a list of color representations from bukkit's color class to be used with a choice GUI
    * @param material Material resolver function
    * @param name Item name value
@@ -1265,7 +1490,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       slotReprs.add(new Tuple<>(
         color,
         new ItemStackBuilder(material.apply(color.b()))
-          .withColor(() -> color.b(), true)
+          .withColor(color::b, true)
           .withName(
             name
               .withVariable("color", formatConstant(color.a()))

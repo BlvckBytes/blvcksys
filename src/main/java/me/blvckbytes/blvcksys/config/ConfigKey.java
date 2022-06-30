@@ -1452,6 +1452,12 @@ public enum ConfigKey {
 
   GUI_ITEMEDITOR_TITLE("gui.itemeditor.title", "$0Itemeditor $2{{item_type}}"),
   GUI_ITEMEDITOR_META_UNAVAILABLE("gui.itemeditor.meta_unavailable", "$0Auf die ItemMeta dieses Items konnte $4nicht $0zugegriffen werden!"),
+  GUI_ITEMEDITOR_NOT_APPLICABLE_LORE(
+    "gui.itemeditor.not_applicable",
+    " ",
+    "&cDiese Konfiguration ist nicht auf",
+    "&cdas aktuell gewählte Item anwendbar."
+  ),
   GUI_ITEMEDITOR_AMOUNT_CHANGED("gui.itemeditor.amount.changed", "$0Du hast die Anzahl auf $2{{amount}} $0gesetzt."),
   GUI_ITEMEDITOR_AMOUNT_INCREASE_NAME("gui.itemeditor.amount.increase.name", "$0» $2Anzahl erhöhen $0«"),
   GUI_ITEMEDITOR_AMOUNT_INCREASE_LORE(
@@ -1631,7 +1637,6 @@ public enum ConfigKey {
     " ",
     "$0Klicke um diese Operation zu wählen."
   ),
-  GUI_ITEMEDITOR_SKULLOWNER_NO_SKULL("gui.itemeditor.skullowner.no_skull", "$0Dieses Item ist $4kein Kopf$0!"),
   GUI_ITEMEDITOR_SKULLOWNER_CHANGED("gui.itemeditor.skullowner.changed", "$0Der $2Kopfbesitzer $0dieses Items wurde auf $2{{owner}} $0geändert."),
   GUI_ITEMEDITOR_SKULLOWNER_NAME("gui.itemeditor.skullowner.name", "$0» $2Kopfbesitzer $0«"),
   GUI_ITEMEDITOR_SKULLOWNER_LORE(
@@ -1641,7 +1646,6 @@ public enum ConfigKey {
   ),
   GUI_ITEMEDITOR_SKULLOWNER_PROMPT("gui.itemeditor.skullowner.prompt", "$0Bitte gib den gewünschten $2Kopfbesitzer $0in den $2Chat $0ein."),
   GUI_ITEMEDITOR_SKULLOWNER_NOT_LOADABLE("gui.itemeditor.skullowner.not_loadable", "$0Der Skin von $4{{owner}} $0konnte nicht geladen werden!"),
-  GUI_ITEMEDITOR_LEATHERCOLOR_NO_LEATHER("gui.itemeditor.leathercolor.no_leather", "$0Dieses Item ist $4keine Lederrüstung$0!"),
   GUI_ITEMEDITOR_LEATHERCOLOR_CHANGED("gui.itemeditor.leathercolor.changed", "$0Die $2Lederfarbe $0dieses Items wurde auf $2{{color}} $0geändert."),
   GUI_ITEMEDITOR_LEATHERCOLOR_NAME("gui.itemeditor.leathercolor.name", "$0» $2Lederfarbe $0«"),
   GUI_ITEMEDITOR_LEATHERCOLOR_LORE(
@@ -1661,6 +1665,41 @@ public enum ConfigKey {
     " ",
     "$0Klicke um diese Farbe zu wählen."
   ),
+  GUI_ITEMEDITOR_POTIONEFFECTS_NAME("gui.itemeditor.potioneffects.name", "$0» $2Trankeffekte $0«"),
+  GUI_ITEMEDITOR_POTIONEFFECTS_LORE(
+    "gui.itemeditor.potioneffects.lore",
+    " ",
+    "$0Ändere die $2Effekte $0dieses $2Tranks$0.",
+    " ",
+    "$0[$21$0]: $2Haupteffekt ändern",
+    "$0[$22$0]: $2Verbesserte Dauer",
+    "$0[$23$0]: $2Verbesserte Stufe",
+    "$0[$24$0]: $2Sekundäreffekt hinzufügen",
+    "$0[$25$0]: $2Sekundäreffekt entfernen"
+  ),
+  GUI_ITEMEDITOR_POTIONEFFECTS_DURATION_EXTENDED("gui.itemeditor.potioneffects.duration_extended", "&7Du hast die $2Dauer $0dieses Tranks verbessert."),
+  GUI_ITEMEDITOR_POTIONEFFECTS_NOT_EXTENDABLE("gui.itemeditor.potioneffects.not_extendable", "&7Dieser Trank unterstützt keine &cverbesserte Dauer&7!"),
+  GUI_ITEMEDITOR_POTIONEFFECTS_LEVEL_UPGRADED("gui.itemeditor.potioneffects.level_upgraded", "&7Du hast die $2Stufe $0dieses Tranks verbessert."),
+  GUI_ITEMEDITOR_POTIONEFFECTS_NOT_UPGRADABLE("gui.itemeditor.potioneffects.not_upgradable", "&7Dieser Trank unterstützt keine &cverbesserte Stufe&7!"),
+  GUI_ITEMEDITOR_CHOICE_POTION_TYPE_TITLE("gui.itemeditor.choice.potion_type.title", "$2Tranktyp"),
+  GUI_ITEMEDITOR_CHOICE_POTION_TYPE_NAME("gui.itemeditor.choice.potion_type.name", "$2{{type}}"),
+  GUI_ITEMEDITOR_CHOICE_POTION_TYPE_LORE(
+    "gui.itemeditor.choice.potion_type.lore",
+    " ",
+    "$0Klicke um diesen Typ zu wählen."
+  ),
+  GUI_ITEMEDITOR_POTIONEFFECTS_NO_SECONDARY("gui.itemeditor.potioneffects.no_secondary", "$0Dieses Item hat noch $4keine $0Sekundäreffekte!"),
+  GUI_ITEMEDITOR_CHOICE_POTION_EFFECT_TITLE("gui.itemeditor.choice.potion_effect.title", "$2Trankeffect"),
+  GUI_ITEMEDITOR_CHOICE_POTION_EFFECT_NAME("gui.itemeditor.choice.potion_effect.name", "$2{{effect}}"),
+  GUI_ITEMEDITOR_CHOICE_POTION_EFFECT_LORE(
+    "gui.itemeditor.choice.potion_effect.lore",
+    " ",
+    "$0Klicke um diesen Effekt zu wählen."
+  ),
+  GUI_ITEMEDITOR_POTIONEFFECTS_REMOVED("gui.itemeditor.potioneffects.removed", "$0Der Effekt $2{{effect}} $0wurde entfernt."),
+  GUI_ITEMEDITOR_POTIONEFFECTS_ADDED("gui.itemeditor.potioneffects.added", "$0Der Effekt $2{{effect}} $0wurde auf &dStufe {{level}} &7mit &d{{duration}} Sekunden &7hinzugefügt."),
+  GUI_ITEMEDITOR_POTIONEFFECTS_DURATION_PROMPT("gui.itemeditor.potioneffects.duration_prompt", "$0Bitte gib die gewünschte $2Dauer in Sekunden &7in den $2Chat $0ein."),
+  GUI_ITEMEDITOR_POTIONEFFECTS_AMPLIFIER_PROMPT("gui.itemeditor.potioneffects.amplifier_prompt", "$0Bitte gib die gewünschte $2Stufe &7in den $2Chat $0ein."),
 
   //=========================================================================//
   //                             AnvilSearch GUI                             //

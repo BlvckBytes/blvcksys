@@ -10,10 +10,7 @@ import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.inventory.meta.LeatherArmorMeta;
-import org.bukkit.inventory.meta.PotionMeta;
-import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.inventory.meta.*;
 import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.Nullable;
@@ -139,6 +136,9 @@ public class ItemStackBuilder {
 
     else if (this.meta instanceof PotionMeta pm)
       pm.setColor(color.get());
+
+    else if (this.meta instanceof MapMeta mm)
+      mm.setColor(color.get());
 
     return this;
   }

@@ -1463,19 +1463,19 @@ public enum ConfigKey {
   GUI_ITEMEDITOR_AMOUNT_INCREASE_LORE(
     "gui.itemeditor.amount.increase.lore",
     " ",
-    "$0Linksklick: $2+1",
-    "$0Shift + Linksklick: $2+64",
-    "$0Rechtsklick: $2+8",
-    "$0Shift + Rechtsklick: $2=64"
+    "$0[$21$0]: Anzahl $2+1",
+    "$0[$22$0]: Anzahl $2+64",
+    "$0[$23$0]: Anzahl $2+8",
+    "$0[$24$0]: Anzahl $2=64"
   ),
   GUI_ITEMEDITOR_AMOUNT_DECREASE_NAME("gui.itemeditor.amount.decrease.name", "$0» $2Anzahl verringern $0«"),
   GUI_ITEMEDITOR_AMOUNT_DECREASE_LORE(
     "gui.itemeditor.amount.decrease.lore",
     " ",
-    "$0Linksklick: $2-1",
-    "$0Shift + Linksklick: $2-64",
-    "$0Rechtsklick: $2-8",
-    "$0Shift + Rechtsklick: $2=1"
+    "$0[$21$0]: Anzahl $2-1",
+    "$0[$22$0]: Anzahl $2-64",
+    "$0[$23$0]: Anzahl $2-8",
+    "$0[$24$0]: Anzahl $2=1"
   ),
   GUI_ITEMEDITOR_MATERIAL_NAME("gui.itemeditor.material.name", "$0» $2Material $0«"),
   GUI_ITEMEDITOR_MATERIAL_LORE(
@@ -1552,10 +1552,10 @@ public enum ConfigKey {
     " ",
     "$0Ändere die $2Zeilen $0der $2Lore$0.",
     " ",
-    "$0Linksklick: $2Zeile einfügen",
-    "$0Shift + Linksklick: $2Zeile anfügen",
-    "$0Rechtsklick: $2Zeile wählen und entfernen",
-    "$0Shift + Rechtsklick: $2Lore leeren"
+    "$0[$21$0]: $2Zeile einfügen",
+    "$0[$22$0]: $2Zeile anfügen",
+    "$0[$23$0]: $2Zeile wählen und entfernen",
+    "$0[$24$0]: $2Lore leeren"
   ),
   GUI_ITEMEDITOR_LORE_RESET("gui.itemeditor.lore.reset", "$0Du hast die Lore $2zurückgesetzt$0."),
   GUI_ITEMEDITOR_LORE_LINE_REMOVED("gui.itemeditor.lore.line_removed", "$0Die Zeile $2{{line_number}} $0($2{{line_content}}$0) wurde entfernt."),
@@ -1580,10 +1580,10 @@ public enum ConfigKey {
     " ",
     "$0Haltbarkeit: $2{{durability}}",
     " ",
-    "$0Linksklick: $2Haltbarkeit erhöhen",
-    "$0Shift + Linksklick: $2Unzerstörbar setzen",
-    "$0Rechtsklick: $2Haltbarkeit verringern",
-    "$0Shift + Rechtsklick: $2Unzerstörbarkeit entfernen"
+    "$0[$21$0]: $2Haltbarkeit erhöhen",
+    "$0[$22$0]: $2Unzerstörbar setzen",
+    "$0[$23$0]: $2Haltbarkeit verringern",
+    "$0[$24$0]: $2Unzerstörbarkeit entfernen"
   ),
   GUI_ITEMEDITOR_DURABILITY_NOT_BREAKABLE("gui.itemeditor.durability.not_breakable", "$0Dieses Item ist $4nicht beschädigbar$0!"),
   GUI_ITEMEDITOR_DURABILITY_CHANGED("gui.itemeditor.durability.changed", "$0Die Haltbarkeit dieses Items wurde auf $2{{current_durability}}$0/$2{{max_durability}} $0gesetzt."),
@@ -1598,9 +1598,9 @@ public enum ConfigKey {
     "$0Füge Attribute $2hinzu $0oder",
     "$2entferne $0bestehende Attribute.",
     " ",
-    "$0Linksklick: $2Attribut hinzufügen",
-    "$0Rechtsklick: $2Attribut wählen und entfernen",
-    "$0Shift + Rechtsklick: $2Attribute leeren"
+    "$0[$21$0]: $2Attribut hinzufügen",
+    "$0[$22$0]: $2Attribut wählen und entfernen",
+    "$0[$23$0]: $2Attribute leeren"
   ),
   GUI_ITEMEDITOR_ATTRIBUTES_HAS_NONE("gui.itemeditor.attributes.has_none", "$0Dieses Item besitzt $4keine Attribute$0!"),
   GUI_ITEMEDITOR_ATTRIBUTES_CLEARED("gui.itemeditor.attributes.cleared", "$0Alle Attribute dieses Items wurden $2entfernt$0."),

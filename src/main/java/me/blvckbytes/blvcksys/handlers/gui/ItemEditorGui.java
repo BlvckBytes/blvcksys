@@ -126,22 +126,23 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_AMOUNT_INCREASE_LORE))
         .build()
     ), e -> {
-      ClickType click = e.getClick();
+      Integer key = e.getHotbarKey().orElse(null);
+      if (key == null)
+        return;
+
       int amount = item.getAmount();
 
-      if (click.isLeftClick()) {
-        if (click.isShiftClick())
-          amount = item.getAmount() + 64;
-        else
-          amount = item.getAmount() + 1;
-      }
+      if (key == 1)
+        amount += 1;
 
-      else if (click.isRightClick()) {
-        if (click.isShiftClick())
-          amount = 64;
-        else
-          amount = item.getAmount() + 8;
-      }
+      if (key == 2)
+        amount += 64;
+
+      if (key == 3)
+        amount += 8;
+
+      if (key == 4)
+        amount = 64;
 
       // Set the amount and redraw the display
       item.setAmount(amount);
@@ -163,22 +164,23 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_AMOUNT_DECREASE_LORE))
         .build()
     ), e -> {
-      ClickType click = e.getClick();
+      Integer key = e.getHotbarKey().orElse(null);
+      if (key == null)
+        return;
+
       int amount = item.getAmount();
 
-      if (click.isLeftClick()) {
-        if (click.isShiftClick())
-          amount = item.getAmount() - 64;
-        else
-          amount = item.getAmount() - 1;
-      }
+      if (key == 1)
+        amount -= 1;
 
-      else if (click.isRightClick()) {
-        if (click.isShiftClick())
-          amount = 1;
-        else
-          amount = item.getAmount() - 8;
-      }
+      if (key == 2)
+        amount -= 64;
+
+      if (key == 3)
+        amount -= 8;
+
+      if (key == 4)
+        amount = 1;
 
       // Set the amount and redraw the display
       amount = Math.max(1, amount);
@@ -364,68 +366,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_LORE))
         .build()
     ), e -> {
-      ClickType click = e.getClick();
-
-      if (click.isRightClick()) {
-        // Reset the lore
-        if (click.isShiftClick()) {
-
-          // Set the lore and redraw the display
-          meta.setLore(null);
-          item.setItemMeta(meta);
-          inst.redraw("13");
-
-          p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_RESET)
-              .withPrefix()
-              .asScalar()
-          );
-
-          return;
-        }
-
-        // Remove specific line by choice
-        List<String> lines = meta.getLore();
-
-        // Has no lore yet
-        if (lines == null) {
-          p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_NO_LORE)
-              .withPrefix()
-              .asScalar()
-          );
-          return;
-        }
-
-        new UserInputChain(inst, values -> {
-          int index = (int) values.get("index");
-
-          String content = lines.remove(index);
-          meta.setLore(lines);
-          item.setItemMeta(meta);
-
-          p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_LINE_REMOVED)
-              .withPrefix()
-              .withVariable("line_number", index + 1)
-              .withVariable("line_content", content)
-              .asScalar()
-          );
-        }, singleChoiceGui, chatUtil)
-          .withChoice(
-            "index",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LORE_TITLE),
-            () -> buildLoreRepresentitives(lines),
-            null
-          )
-          .start();
-
+      Integer key = e.getHotbarKey().orElse(null);
+      if (key == null)
         return;
-      }
 
       // Add a new line
-      if (click.isLeftClick()) {
-
+      if (key == 1 || key == 2) {
         List<String> lines = meta.getLore() == null ? new ArrayList<>() : meta.getLore();
 
         new UserInputChain(inst, values -> {
@@ -464,12 +410,79 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "index",
             cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LORE_TITLE),
             () -> buildLoreRepresentitives(lines),
-            // Shift means push back, no index required
+            // Key 2 means push back, no index required
             // Also, if there are no lines yet, just push back too
-            values -> click.isShiftClick() || lines.size() == 0
+            values -> key == 2 || lines.size() == 0
+          )
+          .start();
+        return;
+      }
+
+      // Remove specific line by choice
+      if (key == 3) {
+        List<String> lines = meta.getLore();
+
+        // Has no lore yet
+        if (lines == null) {
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_NO_LORE)
+              .withPrefix()
+              .asScalar()
+          );
+          return;
+        }
+
+        new UserInputChain(inst, values -> {
+          int index = (int) values.get("index");
+
+          String content = lines.remove(index);
+          meta.setLore(lines);
+          item.setItemMeta(meta);
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_LINE_REMOVED)
+              .withPrefix()
+              .withVariable("line_number", index + 1)
+              .withVariable("line_content", content)
+              .asScalar()
+          );
+        }, singleChoiceGui, chatUtil)
+          .withChoice(
+            "index",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LORE_TITLE),
+            () -> buildLoreRepresentitives(lines),
+            null
           )
           .start();
 
+        return;
+      }
+
+      // Reset the lore
+      if (key == 4) {
+
+        // Has no lore yet
+        if (meta.getLore() == null || meta.getLore().size() == 0) {
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_NO_LORE)
+              .withPrefix()
+              .asScalar()
+          );
+          return;
+        }
+
+        // Set the lore and redraw the display
+        meta.setLore(null);
+        item.setItemMeta(meta);
+        inst.redraw("13");
+
+        p.sendMessage(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_RESET)
+            .withPrefix()
+            .asScalar()
+        );
+
+        return;
       }
     });
 
@@ -515,36 +528,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       // Decide on the step size, 16 steps should get you all the way down/up
       int stepSize = maxDur / 16;
 
-      ClickType click = e.getClick();
+      Integer key = e.getHotbarKey().orElse(null);
+      if (key == null)
+        return;
 
-      if (click.isLeftClick()) {
-        // Set unbreakable
-        if (click.isShiftClick()) {
-          if (meta.isUnbreakable()) {
-            p.sendMessage(
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_NOT_INACTIVE)
-                .withPrefix()
-                .asScalar()
-            );
-            return;
-          }
-
-          meta.setUnbreakable(true);
-          item.setItemMeta(meta);
-
-          // Redraw the display and the durability icon
-          inst.redraw("13," + e.getTargetSlot());
-
-          p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_ACTIVE)
-              .withPrefix()
-              .asScalar()
-          );
-          return;
-        }
-
-        // Increase durability
-
+      // Increase durability
+      if (key == 1) {
         // Apply the constrained damage
         int damage = Math.max(d.getDamage() - stepSize, 0);
         d.setDamage(damage);
@@ -563,34 +552,33 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         return;
       }
 
-      if (click.isRightClick()) {
-        // Remove unbreakability
-        if (click.isShiftClick()) {
-          if (!meta.isUnbreakable()) {
-            p.sendMessage(
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_NOT_ACTIVE)
-                .withPrefix()
-                .asScalar()
-            );
-            return;
-          }
-
-          meta.setUnbreakable(false);
-          item.setItemMeta(meta);
-
-          // Redraw the display and the durability icon
-          inst.redraw("13," + e.getTargetSlot());
-
+      // Set unbreakable
+      if (key == 2) {
+        if (meta.isUnbreakable()) {
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_INACTIVE)
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_NOT_INACTIVE)
               .withPrefix()
               .asScalar()
           );
           return;
         }
 
-        // Decrease durability
+        meta.setUnbreakable(true);
+        item.setItemMeta(meta);
 
+        // Redraw the display and the durability icon
+        inst.redraw("13," + e.getTargetSlot());
+
+        p.sendMessage(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_ACTIVE)
+            .withPrefix()
+            .asScalar()
+        );
+        return;
+      }
+
+      // Decrease durability
+      if (key == 3) {
         // Apply the constrained damage
         int damage = Math.min(d.getDamage() + stepSize, maxDur - 1);
         d.setDamage(damage);
@@ -606,6 +594,32 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             .withVariable("max_durability", maxDur)
             .asScalar()
         );
+        return;
+      }
+
+      // Remove unbreakability
+      if (key == 4) {
+        if (!meta.isUnbreakable()) {
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_NOT_ACTIVE)
+              .withPrefix()
+              .asScalar()
+          );
+          return;
+        }
+
+        meta.setUnbreakable(false);
+        item.setItemMeta(meta);
+
+        // Redraw the display and the durability icon
+        inst.redraw("13," + e.getTargetSlot());
+
+        p.sendMessage(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_INACTIVE)
+            .withPrefix()
+            .asScalar()
+        );
+        return;
       }
     });
 
@@ -618,64 +632,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         .build()
     ), e -> {
 
-      ClickType click = e.getClick();
-
-      if (click.isRightClick()) {
-        Multimap<Attribute, AttributeModifier> attrs = meta.getAttributeModifiers();
-        if (attrs == null) {
-          p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_HAS_NONE)
-              .withPrefix()
-              .asScalar()
-          );
-          return;
-        }
-
-        // Remove all available attributes
-        if (click.isShiftClick()) {
-          for (Map.Entry<Attribute, AttributeModifier> entry : attrs.entries())
-            meta.removeAttributeModifier(entry.getKey(), entry.getValue());
-
-          // Set and redraw the item
-          item.setItemMeta(meta);
-          inst.redraw("13");
-
-          p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_CLEARED)
-              .withPrefix()
-              .asScalar()
-          );
-          return;
-        }
-
-        new UserInputChain(inst, values -> {
-          @SuppressWarnings("unchecked")
-          Tuple<Attribute, AttributeModifier> attr = (Tuple<Attribute, AttributeModifier>) values.get("attribute");
-
-          // Remove the chosen attribute
-          meta.removeAttributeModifier(attr.a(), attr.b());
-          item.setItemMeta(meta);
-
-          p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_REMOVED)
-              .withPrefix()
-              .withVariable("attribute", formatConstant(attr.a().getKey().getKey()))
-              .asScalar()
-          );
-        }, singleChoiceGui, chatUtil)
-          .withChoice(
-            "attribute",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ATTR_TITLE),
-            () -> buildAttributeRepresentitives(attrs, true),
-            null
-          )
-          .start();
-
+      Integer key = e.getHotbarKey().orElse(null);
+      if (key == null)
         return;
-      }
 
-      if (click.isLeftClick()) {
-
+      // Add an attribute
+      if (key == 1) {
         new UserInputChain(inst, values -> {
           @SuppressWarnings("unchecked")
           Tuple<Attribute, AttributeModifier> attr = (Tuple<Attribute, AttributeModifier>) values.get("attribute");
@@ -693,9 +655,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
           p.sendMessage(
             cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_ADDED)
-            .withPrefix()
-            .withVariable("attribute", formatConstant(attr.a().name()))
-            .asScalar()
+              .withPrefix()
+              .withVariable("attribute", formatConstant(attr.a().name()))
+              .asScalar()
           );
         }, singleChoiceGui, chatUtil)
           .withChoice(
@@ -735,7 +697,61 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             null
           )
           .start();
+        return;
+      }
 
+      if (key == 2 || key == 3) {
+        Multimap<Attribute, AttributeModifier> attrs = meta.getAttributeModifiers();
+        if (attrs == null) {
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_HAS_NONE)
+              .withPrefix()
+              .asScalar()
+          );
+          return;
+        }
+
+        // Remove all available attributes
+        if (key == 3) {
+          for (Map.Entry<Attribute, AttributeModifier> entry : attrs.entries())
+            meta.removeAttributeModifier(entry.getKey(), entry.getValue());
+
+          // Set and redraw the item
+          item.setItemMeta(meta);
+          inst.redraw("13");
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_CLEARED)
+              .withPrefix()
+              .asScalar()
+          );
+          return;
+        }
+
+        new UserInputChain(inst, values -> {
+          @SuppressWarnings("unchecked")
+          Tuple<Attribute, AttributeModifier> attr = (Tuple<Attribute, AttributeModifier>) values.get("attribute");
+
+          // Remove the chosen attribute
+          meta.removeAttributeModifier(attr.a(), attr.b());
+          item.setItemMeta(meta);
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_REMOVED)
+              .withPrefix()
+              .withVariable("attribute", formatConstant(attr.a().getKey().getKey()))
+              .asScalar()
+          );
+        }, singleChoiceGui, chatUtil)
+          .withChoice(
+            "attribute",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ATTR_TITLE),
+            () -> buildAttributeRepresentitives(attrs, true),
+            null
+          )
+          .start();
+
+        return;
       }
     });
 

@@ -1667,9 +1667,10 @@ public enum ConfigKey {
     "$0[$23$0]: $2Verbesserte Stufe",
     "$0[$24$0]: $2Sekundäreffekt hinzufügen",
     "$0[$25$0]: $2Sekundäreffekt entfernen",
-    "$0[$26$0]: $2Farbwert aus Liste",
-    "$0[$27$0]: $2RGB Farbwert",
-    "$0[$28$0]: $2Farbe zurücksetzen"
+    "$0[$26$0]: $2Sekundäreffekte leeren",
+    "$0[$27$0]: $2Farbwert aus Liste",
+    "$0[$28$0]: $2RGB Farbwert",
+    "$0[$29$0]: $2Farbe zurücksetzen"
   ),
   GUI_ITEMEDITOR_POTIONEFFECTS_DURATION_EXTENDED("gui.itemeditor.potioneffects.duration_extended", "&7Du hast die $2Dauer $0dieses Tranks verbessert."),
   GUI_ITEMEDITOR_POTIONEFFECTS_NOT_EXTENDABLE("gui.itemeditor.potioneffects.not_extendable", "&7Dieser Trank unterstützt keine &cverbesserte Dauer&7!"),
@@ -1683,6 +1684,7 @@ public enum ConfigKey {
     "$0Klicke um diesen Typ zu wählen."
   ),
   GUI_ITEMEDITOR_POTIONEFFECTS_NO_SECONDARY("gui.itemeditor.potioneffects.no_secondary", "$0Dieses Item hat noch $4keine $0Sekundäreffekte!"),
+  GUI_ITEMEDITOR_POTIONEFFECTS_SECONDARIES_CLEARED("gui.itemeditor.potioneffects.secondaries_cleared", "$0Alle $2Sekundäreffekte $0dieses Items wurden gelöscht."),
   GUI_ITEMEDITOR_CHOICE_POTION_EFFECT_TITLE("gui.itemeditor.choice.potion_effect.title", "$2Trankeffect"),
   GUI_ITEMEDITOR_CHOICE_POTION_EFFECT_NAME("gui.itemeditor.choice.potion_effect.name", "$2{{effect}}"),
   GUI_ITEMEDITOR_CHOICE_POTION_EFFECT_LORE(

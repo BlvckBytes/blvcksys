@@ -1021,14 +1021,35 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         return;
       }
 
+      // Clear all secondary effects
+      if (key == 6) {
+        if (!potionMeta.clearCustomEffects()) {
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_NO_SECONDARY)
+              .withPrefix()
+              .asScalar()
+          );
+          return;
+        }
+
+        item.setItemMeta(meta);
+        inst.redraw("13");
+
+        p.sendMessage(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_SECONDARIES_CLEARED)
+            .withPrefix()
+            .asScalar()
+        );
+      }
+
       // Change color
-      if (key == 6 || key == 7) {
-        promptForColor(inst, key == 7, item, meta);
+      if (key == 7 || key == 8) {
+        promptForColor(inst, key == 8, item, meta);
         return;
       }
 
       // Reset color
-      if (key == 8) {
+      if (key == 9) {
         resetColor(inst, item, meta);
         return;
       }

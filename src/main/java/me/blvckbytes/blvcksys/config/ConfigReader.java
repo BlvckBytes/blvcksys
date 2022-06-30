@@ -59,14 +59,24 @@ public class ConfigReader {
    * @param type Internal model to parse into
    * @return Optional parsed model, if the key existed
    */
-  @SuppressWarnings("unchecked")
   public<T extends Object> Optional<T> parseValue(@Nullable String key, Class<T> type) {
+    return parseValueSub(key, type, false);
+  }
+
+  /**
+   * Recursive sub-routine with extra parameters
+   */
+  @SuppressWarnings("unchecked")
+  private<T extends Object> Optional<T> parseValueSub(@Nullable String key, Class<T> type, boolean withinArray) {
+    boolean isSection = AConfigSection.class.isAssignableFrom(type);
+
     // Null keys mean root level scope
     if (key == null)
       key = "";
 
-    // Key does not exist
-    if (cfg.get(path, key).isEmpty())
+    // If the type is not within an array (as emptyness is used to find list-ends) and
+    // the type is not just a scalar value, skip this check, as empty leaf objects should always be initialized
+    if (cfg.get(path, key).isEmpty() && (!isSection || withinArray))
       return Optional.empty();
 
     // Since ConfigValue scalars always work with boxed types, box at this point
@@ -93,7 +103,7 @@ public class ConfigReader {
       // Try to fetch as many values of the list as possible, until the end is reached
       List<Object> items = new ArrayList<>();
       for (int i = 0; i < Integer.MAX_VALUE; i++) {
-        Optional<?> v = parseValue(key + "[" + i + "]", (Class<? extends AConfigSection>) arrType);
+        Optional<?> v = parseValueSub(key + "[" + i + "]", (Class<? extends AConfigSection>) arrType, true);
 
         // End of list reached, no more items available
         if (v.isEmpty())
@@ -135,7 +145,7 @@ public class ConfigReader {
 
     // Is a configuration section, which means each field will be parsed
     // separately, supporting for recursion
-    if (AConfigSection.class.isAssignableFrom(type)) {
+    if (isSection) {
       try {
         AConfigSection res = (AConfigSection) type.getConstructor().newInstance();
 

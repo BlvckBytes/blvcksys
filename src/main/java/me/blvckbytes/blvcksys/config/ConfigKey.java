@@ -1752,6 +1752,16 @@ public enum ConfigKey {
     " ",
     "$0Klicke um diese Generation zu wählen."
   ),
+  GUI_ITEMEDITOR_BOOK_PAGES_SINGLE("gui.itemeditor.book.pages_single", "$0Dieses Buch besitzt nur mehr $4eine Seite$0!"),
+  GUI_ITEMEDITOR_CHOICE_PAGE_TITLE("gui.itemeditor.choice.page.title", "$2Seiten"),
+  GUI_ITEMEDITOR_CHOICE_PAGE_NAME("gui.itemeditor.choice.page.name", "$2Seite {{page_number}}"),
+  GUI_ITEMEDITOR_CHOICE_PAGE_LORE(
+    "gui.itemeditor.choice.page.lore",
+    " ",
+    "$0Inhalt: ",
+    "$2{{page_content}}"
+  ),
+  GUI_ITEMEDITOR_BOOK_PAGE_REMOVED("gui.itemeditor.book.page_removed", "$0Die $2Seite {{page_number}} $0wurde aus dem Buch entfernt."),
 
   //=========================================================================//
   //                             AnvilSearch GUI                             //

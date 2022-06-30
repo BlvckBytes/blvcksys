@@ -1248,11 +1248,72 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
       // Remove existing page
       if (key == 9) {
+        List<String> pages = new ArrayList<>(bookMeta.getPages());
+
+        // Cannot remove the only page
+        if (pages.size() == 1) {
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_PAGES_SINGLE)
+              .withPrefixes()
+              .asScalar()
+          );
+          return;
+        }
+
+        new UserInputChain(inst, values -> {
+          int index = (int) values.get("index");
+
+          pages.remove(index);
+          bookMeta.setPages(pages);
+          item.setItemMeta(meta);
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_PAGE_REMOVED)
+              .withPrefix()
+              .withVariable("page_number", index + 1)
+              .asScalar()
+          );
+        }, singleChoiceGui, chatUtil)
+          .withChoice(
+            "index",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_PAGE_TITLE),
+            () -> buildPageRepresentitives(bookMeta.getPages()),
+            null
+          )
+          .start();
         return;
       }
     });
 
     return true;
+  }
+
+  /**
+   * Wraps a given text on multiple lines by counting the chars per line
+   * @param text Text to wrap in length
+   * @param charsPerLine How many chars to display per line
+   * @return Wrapped text
+   */
+  private String wrapText(String text, int charsPerLine) {
+    StringBuilder res = new StringBuilder();
+    int remChPerLine = charsPerLine;
+    boolean isFirstLine = true;
+
+    for (String word : text.split(" ")) {
+      int wlen = word.length();
+
+      if ((isFirstLine && wlen > remChPerLine / 2) || wlen > remChPerLine) {
+        isFirstLine = false;
+        res.append("\n").append(word).append(" ");
+        remChPerLine = charsPerLine;
+        continue;
+      }
+
+      res.append(word).append(" ");
+      remChPerLine -= wlen + 1;
+    }
+
+    return res.toString();
   }
 
   /**
@@ -1447,6 +1508,32 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       ));
     }
 
+    return representitives;
+  }
+
+  /**
+   * Build a list of representitives for all available pages within a book
+   * @param pages List of book pages
+   */
+  private List<Tuple<Object, ItemStack>> buildPageRepresentitives(List<String> pages) {
+    // Create representitive items for each page
+    List<Tuple<Object, ItemStack>> representitives = new ArrayList<>();
+    for (int i = 0; i < pages.size(); i++) {
+      String page = pages.get(i);
+      representitives.add(new Tuple<>(
+        i,
+        new ItemStackBuilder(Material.PAPER)
+          .withName(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_PAGE_NAME)
+              .withVariable("page_number", i + 1)
+          )
+          .withLore(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_PAGE_LORE)
+              .withVariable("page_content", wrapText(page, 35))
+          )
+          .build()
+      ));
+    }
     return representitives;
   }
 

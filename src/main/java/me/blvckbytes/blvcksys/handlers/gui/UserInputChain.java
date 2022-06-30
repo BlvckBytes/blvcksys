@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import me.blvckbytes.blvcksys.config.ConfigValue;
+import me.blvckbytes.blvcksys.packets.communicators.bookeditor.IBookEditorCommunicator;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.UnsafeFunction;
 import net.minecraft.util.Tuple;
@@ -29,6 +30,7 @@ import java.util.function.Supplier;
 public class UserInputChain {
 
   private final SingleChoiceGui singleChoiceGui;
+  private final IBookEditorCommunicator bookEditor;
   private final ChatUtil chatUtil;
 
   private final List<Consumer<Boolean>> stages;
@@ -56,12 +58,32 @@ public class UserInputChain {
     SingleChoiceGui singleChoiceGui,
     ChatUtil chatUtil
   ) {
+    this(main, completion, singleChoiceGui, chatUtil, null);
+  }
+
+  /**
+   * Create a new user input chain which will collect
+   * all stage's values into a map
+   * @param main Main screen which initiated this chain
+   * @param completion Completion callback, providing all collected values
+   * @param singleChoiceGui Single choice gui ref
+   * @param chatUtil Chat utility ref
+   * @param bookEditor Book editor utility ref
+   */
+  public UserInputChain(
+    GuiInstance<?> main,
+    Consumer<Map<String, Object>> completion,
+    SingleChoiceGui singleChoiceGui,
+    ChatUtil chatUtil,
+    IBookEditorCommunicator bookEditor
+  ) {
     this.values = new HashMap<>();
     this.stages = new ArrayList<>();
 
     this.main = main;
     this.completion = completion;
     this.chatUtil = chatUtil;
+    this.bookEditor = bookEditor;
     this.lastScreen = main;
     this.lastWasGui = true;
     this.singleChoiceGui = singleChoiceGui;
@@ -207,6 +229,48 @@ public class UserInputChain {
       // Just shift up the current GUI
       else
         singleChoiceGui.show(main.getViewer(), param, AnimationType.SLIDE_UP);
+    });
+
+    return this;
+  }
+
+  /**
+   * Add a new book editor stage (List I/O)
+   * @param field Name of the field
+   * @param prompt Prompt to display when handing out the book
+   * @param content Initial content of the book
+   */
+  public UserInputChain withBookEditor(
+    String field,
+    Function<Map<String, Object>, ConfigValue> prompt,
+    Function<Map<String, Object>, List<String>> content
+  ) {
+    stages.add(isBack -> {
+      lastWasGui = false;
+
+      // Close the current inventory to be able to interact with the book
+      if (lastScreen != null)
+        lastScreen.close();
+
+      bookEditor.initBookEditor(main.getViewer(), content.apply(values), submit -> {
+        if (isCancelled) return;
+
+        // Cancelled
+        if (submit == null) {
+          if (isCancelled) return;
+
+          // Reopen the main GUI and cancel the whole chain
+          isCancelled = true;
+          main.reopen(AnimationType.SLIDE_UP);
+          return;
+        }
+
+        values.put(field, submit);
+        nextStage();
+      });
+
+      // Send the prompt
+      main.getViewer().sendMessage(prompt.apply(values).asScalar());
     });
 
     return this;

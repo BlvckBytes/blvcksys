@@ -8,6 +8,7 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
+import me.blvckbytes.blvcksys.packets.communicators.bookeditor.IBookEditorCommunicator;
 import me.blvckbytes.blvcksys.persistence.models.PlayerTextureModel;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.MCReflect;
@@ -22,7 +23,6 @@ import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
-import org.bukkit.event.inventory.ClickType;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -52,6 +52,7 @@ import java.util.function.Function;
 public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<GuiInstance<?>>>> {
 
   private final SingleChoiceGui singleChoiceGui;
+  private final IBookEditorCommunicator bookEditor;
   private final ILogger logger;
   private final ChatUtil chatUtil;
   private final MCReflect refl;
@@ -63,7 +64,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     @AutoInject SingleChoiceGui singleChoiceGui,
     @AutoInject ILogger logger,
     @AutoInject ChatUtil chatUtil,
-    @AutoInject MCReflect refl
+    @AutoInject MCReflect refl,
+    @AutoInject IBookEditorCommunicator bookEditor
   ) {
     super(6, "", i -> (
       cfg.get(ConfigKey.GUI_ITEMEDITOR_TITLE)
@@ -74,6 +76,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     this.logger = logger;
     this.chatUtil = chatUtil;
     this.refl = refl;
+    this.bookEditor = bookEditor;
   }
 
   @Override
@@ -109,7 +112,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     ///////////////////////////////////// Preview //////////////////////////////////////
 
     inst.fixedItem("12,14", () -> new ItemStackBuilder(Material.PURPLE_STAINED_GLASS_PANE).build(), null);
-    inst.fixedItem(13, () -> item, null);
+
+    // Always keep the edited item in sync with the player's inventory
+    inst.fixedItem(13, () -> {
+      p.getInventory().setItemInMainHand(item);
+      return item;
+    }, null);
 
     // Fire the item update callback whenever the preview slot changes
     inst.onRedrawing(13, () -> {
@@ -1236,18 +1244,33 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         return;
       }
 
-      // Add new page
+      // Edit pages
       if (key == 7) {
-        return;
-      }
+        new UserInputChain(inst, values -> {
+          @SuppressWarnings("unchecked")
+          List<String> result = (List<String>) values.get("result");
 
-      // Edit existing page
-      if (key == 8) {
+          bookMeta.setPages(result);
+          item.setItemMeta(meta);
+          inst.redraw("13");
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_PAGES_EDITED)
+              .withPrefix()
+              .asScalar()
+          );
+        }, singleChoiceGui, chatUtil, bookEditor)
+          .withBookEditor(
+            "result",
+            values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_PAGES_EDIT_PROMPT).withPrefix(),
+            values -> bookMeta.getPages()
+          )
+          .start();
         return;
       }
 
       // Remove existing page
-      if (key == 9) {
+      if (key == 8) {
         List<String> pages = new ArrayList<>(bookMeta.getPages());
 
         // Cannot remove the only page

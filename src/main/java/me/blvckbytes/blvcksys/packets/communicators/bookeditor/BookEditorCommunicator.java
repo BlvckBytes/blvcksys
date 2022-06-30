@@ -26,7 +26,6 @@ import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.BookMeta;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -87,7 +86,7 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
   @Override
   public boolean initBookEditor(Player p, List<String> pages, Consumer<List<String>> submit) {
     // Cancel any previous requests
-    undoFakeHand(p, true);
+    undoFakeHand(p, false);
 
     // Create a new book to set at the player's selected slot
     ItemStack book = new ItemStack(Material.WRITABLE_BOOK, 1);
@@ -103,8 +102,7 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
 
     // Set the book as a fake slot item
     int slot = p.getInventory().getHeldItemSlot();
-    if (!fakeItem.setFakeSlot(p, book, slot + 36))
-      return false;
+    Bukkit.getScheduler().runTaskLater(plugin, () -> fakeItem.setFakeSlot(p, book, (slot + 36) % 36), 1);
 
     // Register the request
     this.bookeditRequests.put(p, new BookEditRequest(book, slot, submit));
@@ -153,7 +151,7 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
     // Re-set the slot back to the fake item after the gameloop ticked
     // as the client will now have noticed and changed it back
     Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
-      fakeItem.setFakeSlot(e.getPlayer(), req.fakeItem, req.fakeSlot + 36);
+      fakeItem.setFakeSlot(e.getPlayer(), req.fakeItem, (req.fakeSlot + 36) % 36);
     }, 1);
   }
 
@@ -244,63 +242,11 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
       return incoming;
 
     try {
-      List<String> pages = refl.getGenericFieldByType(bookEdit, List.class, String.class, 0);
-      // Check if the slot isn't vacant and it's a book.
-      // If it's not a book, the player couldn't have possible written it
-      // without the fake item placed in their inv by this communicator.
-      ItemStack iu = p.getInventory().getItem(EquipmentSlot.HAND);
-      if (iu != null && (iu.getType() == Material.WRITABLE_BOOK || iu.getType() == Material.WRITTEN_BOOK)) {
-
-        // Otherwise, check if this book has been overlayed by the fake book
-        // after a short delay to allow the packet to take effect
-        Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
-          ItemStack hand = p.getInventory().getItem(EquipmentSlot.HAND);
-
-          // Seems to have dropped it
-          if (hand == null)
-            return;
-
-          BookMeta bm = (BookMeta) hand.getItemMeta();
-
-          // Seems to have swapped it
-          if (bm == null)
-            return;
-
-          // Get the hand's book's pages
-          List<String> handPages = bm.getPages();
-
-          // Not what was received, so not a direct edit to a real item
-          if (handPages.size() != pages.size()) {
-            bookEditReceived(p, handPages);
-            return;
-          }
-
-          // Compare the two lists
-          boolean equal = true;
-          for (int i = 0; i < pages.size(); i++) {
-            if (pages.get(i).equals(handPages.get(i)))
-              continue;
-
-            equal = false;
-            break;
-          }
-
-          // This real book has been edited
-          if (equal)
-            return;
-
-          // Has to be a fake book packet
-          bookEditReceived(p, handPages);
-        }, 5);
-
-        return incoming;
-      }
-
-      // Has to be a fake book packet
-      bookEditReceived(p, pages);
+      bookEditReceived(p, refl.getGenericFieldByType(bookEdit, List.class, String.class, 0));
     } catch (Exception e) {
       logger.logError(e);
     }
+
     return incoming;
   }
 
@@ -318,7 +264,7 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
    * @param p Target player
    * @param pages Typed out pages
    */
-  private void bookEditReceived(Player p, List<String> pages) {
+  private void bookEditReceived(Player p, @Nullable List<String> pages) {
     BookEditRequest request = bookeditRequests.remove(p);
 
     // No request!

@@ -1730,9 +1730,8 @@ public enum ConfigKey {
     "$0[$24$0]: $2Author entfernen",
     "$0[$25$0]: $2Generation setzen",
     "$0[$26$0]: $2Generation entfernen",
-    "$0[$27$0]: $2Seite hinzufügen",
-    "$0[$28$0]: $2Seite editieren",
-    "$0[$29$0]: $2Seite entfernen"
+    "$0[$27$0]: $2Seiten editieren",
+    "$0[$28$0]: $2Seite entfernen"
   ),
   GUI_ITEMEDITOR_BOOK_TITLE_SET("gui.itemeditor.book.title_set", "$0Der Titel des Buches wurde auf \"$2{{title}}$0\" gesetzt."),
   GUI_ITEMEDITOR_BOOK_TITLE_NOT_SET("gui.itemeditor.book.title_not_set", "$0Dieses Buch besitzt noch keinen $4Titel$0."),
@@ -1762,6 +1761,8 @@ public enum ConfigKey {
     "$2{{page_content}}"
   ),
   GUI_ITEMEDITOR_BOOK_PAGE_REMOVED("gui.itemeditor.book.page_removed", "$0Die $2Seite {{page_number}} $0wurde aus dem Buch entfernt."),
+  GUI_ITEMEDITOR_BOOK_PAGES_EDITED("gui.itemeditor.book.pages_edited", "$0Die Änderungen der Buchseiten wurden gespeichert."),
+  GUI_ITEMEDITOR_BOOK_PAGES_EDIT_PROMPT("gui.itemeditor.book.pages_edit_prompt", "$0Öffne das Buch in deiner Hand und signiere dieses, wenn du fertig bist."),
 
   //=========================================================================//
   //                             AnvilSearch GUI                             //

@@ -1876,6 +1876,44 @@ public enum ConfigKey {
   GUI_ITEMEDITOR_COMPASS_LOCATION_SET("gui.itemeditor.compass.location.set", "$0Das Ziel des Kompasses wurde auf $2{{location}} $0gesetzt."),
   GUI_ITEMEDITOR_COMPASS_LOCATION_RESET("gui.itemeditor.compass.location.reset", "$0Das Ziel des Kompasses wurde $2zurückgesetzt$0."),
   GUI_ITEMEDITOR_COMPASS_LOCATION_NONE("gui.itemeditor.compass.location.none", "$0Dieser Kompass hat noch $4kein Ziel$0!"),
+  GUI_ITEMEDITOR_BANNER_NAME("gui.itemeditor.banner.name", "$0» $2Banner $0«"),
+  GUI_ITEMEDITOR_BANNER_LORE(
+    "gui.itemeditor.banner.lore",
+    " ",
+    "$0Ändere die $2Muster $0dieses $2Banners$0.",
+    " ",
+    "$0[$21$0]: $2Muster hinzufügen",
+    "$0[$22$0]: $2Muster entfernen",
+    "$0[$23$0]: $2Muster leeren"
+  ),
+  GUI_ITEMEDITOR_BANNER_PATTERNS_NONE("gui.itemeditor.banner.patterns.none", "$0Dieser Banner hat noch $4keine Muster$0!"),
+  GUI_ITEMEDITOR_BANNER_PATTERNS_REMOVED("gui.itemeditor.banner.patterns.removed", "$0Das Muster $2Nr. {{index}} $0wurde von dem Banner entfernt."),
+  GUI_ITEMEDITOR_BANNER_PATTERNS_CLEARED("gui.itemeditor.banner.patterns.cleared", "$0Alle Muster wurden von diesem Banner $2entfernt$0."),
+  GUI_ITEMEDITOR_BANNER_PATTERNS_ADDED("gui.itemeditor.banner.patterns.added", "$0Das Muster $2{{type}} $0mit der Farbe $2{{color}} $0wurde dem Banner hinzugefügt."),
+  GUI_ITEMEDITOR_CHOICE_PATTERNS_TITLE("gui.itemeditor.choice.patterns.title", "$2Muster"),
+  GUI_ITEMEDITOR_CHOICE_PATTERNS_NAME("gui.itemeditor.choice.patterns.name", "$0Muster $2Nr. {{index}}"),
+  GUI_ITEMEDITOR_CHOICE_PATTERNS_LORE(
+    "gui.itemeditor.choice.patterns.lore",
+    " ",
+    "&7Typ: &d{{type}}",
+    "&7Farbe: &d{{color}}",
+    " ",
+    "$0Klicke um dieses Muster zu entfernen."
+  ),
+  GUI_ITEMEDITOR_CHOICE_PATTERN_TYPE_TITLE("gui.itemeditor.choice.pattern_type.title", "$2Mustertyp"),
+  GUI_ITEMEDITOR_CHOICE_PATTERN_TYPE_NAME("gui.itemeditor.choice.pattern_type.name", "$2{{type}}"),
+  GUI_ITEMEDITOR_CHOICE_PATTERN_TYPE_LORE(
+    "gui.itemeditor.choice.pattern_type.lore",
+    " ",
+    "$0Klicke um dieses Muster zu wählen."
+  ),
+  GUI_ITEMEDITOR_CHOICE_DYE_COLOR_TITLE("gui.itemeditor.choice.dye_color.title", "$2Farbe"),
+  GUI_ITEMEDITOR_CHOICE_DYE_COLOR_NAME("gui.itemeditor.choice.dye_color.name", "$2{{color}}"),
+  GUI_ITEMEDITOR_CHOICE_DYE_COLOR_LORE(
+    "gui.itemeditor.choice.dye_color.lore",
+    " ",
+    "$0Klicke um diese Farbe zu wählen."
+  ),
 
   //=========================================================================//
   //                             AnvilSearch GUI                             //

@@ -6,7 +6,10 @@ import lombok.AllArgsConstructor;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import net.minecraft.util.Tuple;
 import org.bukkit.Color;
+import org.bukkit.DyeColor;
 import org.bukkit.Material;
+import org.bukkit.block.banner.Pattern;
+import org.bukkit.block.banner.PatternType;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -253,6 +256,17 @@ public class ItemStackBuilder {
   public ItemStackBuilder withProfile(Supplier<GameProfile> profile, boolean condition) {
     if (condition && this.meta != null)
       setHeadProfile(profile.get());
+    return this;
+  }
+
+  /**
+   * Set a new pattern on this banner
+   * @param type Type of pattern to add
+   * @param color Color of the pattern to add
+   */
+  public ItemStackBuilder setPattern(PatternType type, DyeColor color) {
+    if (meta instanceof BannerMeta bm)
+      bm.setPatterns(List.of(new Pattern(color, type)));
     return this;
   }
 

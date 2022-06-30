@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
+import com.mojang.datafixers.types.Func;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.handlers.TriResult;
 import me.blvckbytes.blvcksys.packets.communicators.bookeditor.IBookEditorCommunicator;
@@ -233,10 +234,26 @@ public class UserInputChain {
   public UserInputChain withChoice(
     String field,
     ConfigValue type,
-    Supplier<List<Tuple<Object, ItemStack>>> representitives,
+    Function<Map<String, Object>, List<Tuple<Object, ItemStack>>> representitives,
     @Nullable Function<Map<String, Object>, Boolean> skip
   ) {
     return withChoice(null, field, type, representitives, skip);
+  }
+
+  /**
+   * Add a new single choice stage
+   * @param field Name of the field
+   * @param type Type of choice (part of the screen title)
+   * @param representitives List of representitive items and their values
+   * @param skip Optional skip predicate
+   */
+  public UserInputChain withChoice(
+    String field,
+    ConfigValue type,
+    Supplier<List<Tuple<Object, ItemStack>>> representitives,
+    @Nullable Function<Map<String, Object>, Boolean> skip
+  ) {
+    return withChoice(null, field, type, v -> representitives.get(), skip);
   }
 
   /**
@@ -251,7 +268,7 @@ public class UserInputChain {
     @Nullable MultipleChoiceGui multipleChoiceGui,
     String field,
     ConfigValue type,
-    Supplier<List<Tuple<Object, ItemStack>>> representitives,
+    Function<Map<String, Object>, List<Tuple<Object, ItemStack>>> representitives,
     @Nullable Function<Map<String, Object>, Boolean> skip
   ) {
     stages.add(isBack -> {
@@ -291,7 +308,7 @@ public class UserInputChain {
       // Multiple choice
       if (multipleChoiceGui != null) {
         MultipleChoiceParam param = new MultipleChoiceParam(
-          type.asScalar(), representitives.get(), null,
+          type.asScalar(), representitives.apply(values), null,
           selected::accept, closed::accept, back::accept
         );
 
@@ -307,7 +324,7 @@ public class UserInputChain {
       // Single choice
       else {
         SingleChoiceParam param = new SingleChoiceParam(
-          type.asScalar(), representitives.get(), null,
+          type.asScalar(), representitives.apply(values), null,
           selected::accept, closed::accept, back::accept
         );
 

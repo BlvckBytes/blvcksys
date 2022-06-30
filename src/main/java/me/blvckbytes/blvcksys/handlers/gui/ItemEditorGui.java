@@ -19,6 +19,8 @@ import net.minecraft.util.Tuple;
 import org.bukkit.*;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
+import org.bukkit.block.banner.Pattern;
+import org.bukkit.block.banner.PatternType;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.EquipmentSlot;
@@ -937,7 +939,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             multipleChoiceGui,
             "color",
             cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FIREWORK_COLOR_TITLE),
-            () -> generateColorReprs(
+            v -> generateColorReprs(
               this::colorToMaterial,
               cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_COLOR_NAME),
               cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_COLOR_LORE)
@@ -948,7 +950,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             multipleChoiceGui,
             "fade",
             cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FIREWORK_FADE_TITLE),
-            () -> generateColorReprs(
+            v -> generateColorReprs(
               this::colorToMaterial,
               cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_COLOR_NAME),
               cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_COLOR_LORE),
@@ -1642,6 +1644,119 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       }
     });
 
+    //////////////////////////////////////// Banners ////////////////////////////////////////
+
+    inst.fixedItem(43, () -> {
+      boolean applicable = meta instanceof BannerMeta;
+      return new ItemStackBuilder(applicable ? Material.WHITE_BANNER : Material.BARRIER)
+        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_BANNER_NAME))
+        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_BANNER_LORE))
+        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_NOT_APPLICABLE_LORE), !applicable)
+        .build();
+    }, e -> {
+      if (!(meta instanceof BannerMeta bm))
+        return;
+
+      Integer key = e.getHotbarKey().orElse(null);
+      if (key == null)
+        return;
+
+      // Add a new pattern
+      if (key == 1) {
+        new UserInputChain(inst, values -> {
+          PatternType type = (PatternType) values.get("type");
+          DyeColor color = (DyeColor) values.get("color");
+
+          bm.addPattern(new Pattern(color, type));
+          item.setItemMeta(meta);
+          inst.redraw("13");
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_BANNER_PATTERNS_ADDED)
+              .withPrefix()
+              .withVariable("type", formatConstant(type.name()))
+              .withVariable("color", formatConstant(color.name()))
+              .asScalar()
+          );
+        }, singleChoiceGui, chatUtil)
+          .withChoice(
+            "type",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_PATTERN_TYPE_TITLE),
+            () -> buildBannerPatternTypeRepresentitives(item.getType()),
+            null
+          )
+          .withChoice(
+            "color",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_DYE_COLOR_TITLE),
+            v -> buildBannerDyeColorRepresentitives(item.getType(), (PatternType) v.get("type")),
+            null
+          )
+          .start();
+        return;
+      }
+
+      // Delete a pattern
+      if (key == 2) {
+        List<Pattern> patterns = new ArrayList<>(bm.getPatterns());
+
+        if (patterns.size() == 0) {
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_BANNER_PATTERNS_NONE)
+              .withPrefixes()
+              .asScalar()
+          );
+          return;
+        }
+
+        new UserInputChain(inst, values -> {
+          int index = (int) values.get("index");
+
+          patterns.remove(index);
+          bm.setPatterns(patterns);
+          item.setItemMeta(meta);
+          inst.redraw("13");
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_BANNER_PATTERNS_REMOVED)
+              .withPrefix()
+              .withVariable("index", index + 1)
+              .asScalar()
+          );
+        }, singleChoiceGui, chatUtil)
+          .withChoice(
+            "index",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_PATTERNS_TITLE),
+            () -> buildBannerPatternRepresentitives(item.getType(), patterns),
+            null
+          )
+          .start();
+        return;
+      }
+
+      // Delete all pattern
+      if (key == 3) {
+        if (bm.getPatterns().size() == 0) {
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_BANNER_PATTERNS_NONE)
+              .withPrefixes()
+              .asScalar()
+          );
+          return;
+        }
+
+        bm.setPatterns(new ArrayList<>());
+        item.setItemMeta(meta);
+        inst.redraw("13");
+
+        p.sendMessage(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_BANNER_PATTERNS_CLEARED)
+            .withPrefix()
+            .asScalar()
+        );
+        return;
+      }
+    });
+
     return true;
   }
 
@@ -1865,6 +1980,79 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       return Material.ORANGE_TERRACOTTA;
 
     return Material.LIGHT_GRAY_TERRACOTTA;
+  }
+
+  /**
+   * Builds a list of representitives for all available banner pattern types
+   * @param base Base material to lay patterns onto for representitives
+   */
+  private List<Tuple<Object, ItemStack>> buildBannerPatternTypeRepresentitives(Material base) {
+    return Arrays.stream(PatternType.values()).map(type -> (
+      new Tuple<>(
+        (Object) type,
+        new ItemStackBuilder(base, 1)
+          .setPattern(
+            // Check the banner color to at least avoid horrible contrasts
+            type, (
+              base == Material.WHITE_BANNER ||
+              base == Material.GRAY_BANNER ||
+              base == Material.LIGHT_GRAY_BANNER
+            ) ? DyeColor.BLACK : DyeColor.WHITE
+          )
+          .withName(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_PATTERN_TYPE_NAME)
+              .withVariable("type", formatConstant(type.name()))
+          )
+          .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_PATTERN_TYPE_LORE))
+          .build()
+      )
+    )).toList();
+  }
+
+  /**
+   * Builds a list of representitives for all available dye colors
+   * @param base Base material to use for the icon
+   * @param type Pattern type to show in different colors
+   */
+  private List<Tuple<Object, ItemStack>> buildBannerDyeColorRepresentitives(Material base, PatternType type) {
+    return Arrays.stream(DyeColor.values()).map(color -> (
+      new Tuple<>(
+        (Object) color,
+        new ItemStackBuilder(base, 1)
+          .setPattern(type, color)
+          .withName(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_DYE_COLOR_NAME)
+              .withVariable("color", formatConstant(color.name()))
+          )
+          .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_DYE_COLOR_LORE))
+          .build()
+      )
+    )).toList();
+  }
+
+  /**
+   * Builds a list of representitives for all provided banner patterns
+   * @param base Base material to lay patterns onto for representitives
+   * @param patterns Patterns to build for
+   */
+  private List<Tuple<Object, ItemStack>> buildBannerPatternRepresentitives(Material base, List<Pattern> patterns) {
+    return patterns.stream().map(pattern -> (
+      new Tuple<>(
+        (Object) patterns.indexOf(pattern),
+        new ItemStackBuilder(base, 1)
+          .setPattern(pattern.getPattern(), pattern.getColor())
+          .withName(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_PATTERNS_NAME)
+              .withVariable("index", patterns.indexOf(pattern) + 1)
+          )
+          .withLore(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_PATTERNS_LORE)
+              .withVariable("type", formatConstant(pattern.getPattern().name()))
+              .withVariable("color", formatConstant(pattern.getColor().name()))
+          )
+          .build()
+      )
+    )).toList();
   }
 
   /**

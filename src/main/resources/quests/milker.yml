@@ -1,0 +1,40 @@
+name: '&5Melker'
+representitive:
+  name: '&7» &5Melker'
+  type: MILK_BUCKET
+  lore:
+    - ' '
+    - '&7Melke Kühe mittels Eimern.'
+    - ' '
+    - '&7Verfügbare Stufen: &d{{num_stages}}'
+    - '&7Aktuelle Stufe: &d{{curr_stage}}'
+    - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
+stages:
+  -
+    name: '&5Melker I'
+    representitive:
+      name: '&7» &5Melker I'
+      type: MILK_BUCKET
+      lore:
+        - ' '
+        - '&7Melke &d{{task_0_completed}}&7/&d{{task_0_total}} &7Kühe.'
+        - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
+    tasks:
+      -
+        action: MILK
+        count: 5
+        parameters:
+  -
+    name: '&5Melker II'
+    representitive:
+      name: '&7» &5Melker II'
+      type: MILK_BUCKET
+      lore:
+        - ' '
+        - '&7Melke &d{{task_0_completed}}&7/&d{{task_0_total}} &7Kühe.'
+        - '&7Fortschritt: {{progress_bar}} &7(&a{{progress}}&7)'
+    tasks:
+      -
+        action: MILK
+        count: 10
+        parameters:

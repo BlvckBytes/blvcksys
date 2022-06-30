@@ -795,7 +795,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     ///////////////////////////////////// Leather Color /////////////////////////////////////
 
     inst.fixedItem(40, () -> {
-      boolean applicable = meta instanceof SkullMeta;
+      boolean applicable = meta instanceof LeatherArmorMeta;
       return new ItemStackBuilder(applicable ? Material.LEATHER : Material.BARRIER)
         .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_NAME))
         .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_LORE))
@@ -826,7 +826,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         }, singleChoiceGui, chatUtil)
           .withPrompt(
             "color",
-            values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_PROMPT)
+            values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_COLOR_PROMPT)
               .withPrefix(),
             s -> {
               String[] data = s.split(" ");
@@ -840,7 +840,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
               );
             },
             input -> (
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_INVALID_FORMAT)
+              cfg.get(ConfigKey.GUI_ITEMEDITOR_COLOR_INVALID_FORMAT)
                 .withPrefix()
                 .withVariable("input", input)
             ),
@@ -1058,6 +1058,101 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           )
           .start();
       }
+
+      // Set to a predefined value
+      if (key == 6) {
+        new UserInputChain(inst, values -> {
+          @SuppressWarnings("unchecked")
+          Tuple<String, Color> colorData = (Tuple<String, Color>) values.get("color");
+
+          potionMeta.setColor(colorData.b());
+          item.setItemMeta(potionMeta);
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONCOLOR_CHANGED)
+              .withPrefix()
+              .withVariable("color", formatConstant(colorData.a()))
+              .asScalar()
+          );
+        }, singleChoiceGui, chatUtil)
+          .withChoice(
+            "color",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_POTIONCOLOR_TITLE),
+            () -> generateColorReprs(
+              c -> item.getType(),
+              cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_POTIONCOLOR_NAME),
+              cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_POTIONCOLOR_LORE)
+            ),
+            null
+          )
+          .start();
+
+      }
+
+      // Set to a custom RGB color
+      if (key == 7) {
+        new UserInputChain(inst, values -> {
+          @SuppressWarnings("unchecked")
+          Tuple<Color, String> color = (Tuple<Color, String>) values.get("color");
+          potionMeta.setColor((color.a()) );
+          item.setItemMeta(potionMeta);
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONCOLOR_CHANGED)
+              .withPrefix()
+              .withVariable("color", color.b())
+              .asScalar()
+          );
+        }, singleChoiceGui, chatUtil)
+          .withPrompt(
+            "color",
+            values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_COLOR_PROMPT)
+              .withPrefix(),
+            s -> {
+              String[] data = s.split(" ");
+              return new Tuple<>(
+                Color.fromRGB(
+                  Integer.parseInt(data[0]),
+                  Integer.parseInt(data[1]),
+                  Integer.parseInt(data[2])
+                ),
+                s
+              );
+            },
+            input -> (
+              cfg.get(ConfigKey.GUI_ITEMEDITOR_COLOR_INVALID_FORMAT)
+                .withPrefix()
+                .withVariable("input", input)
+            ),
+            null
+          )
+          .start();
+
+        return;
+      }
+
+      // Reset color
+      if (key == 8) {
+        if (potionMeta.getColor() == null) {
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONCOLOR_NONE)
+              .withPrefix()
+              .asScalar()
+          );
+          return;
+        }
+
+        potionMeta.setColor(null);
+        item.setItemMeta(potionMeta);
+        inst.redraw("13");
+
+        p.sendMessage(
+          cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONCOLOR_RESET)
+            .withPrefix()
+            .asScalar()
+        );
+      }
+
     });
 
     return true;

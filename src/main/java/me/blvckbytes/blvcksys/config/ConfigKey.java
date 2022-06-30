@@ -1656,8 +1656,8 @@ public enum ConfigKey {
     "$0Linksklick: $2Farbwert aus Liste",
     "$0Rechtsklick: $2RGB Farbwert"
   ),
-  GUI_ITEMEDITOR_LEATHERCOLOR_PROMPT("gui.itemeditor.leathercolor.prompt", "$0Bitte gib den gewünschten $2Farbwert $0in den $2Chat $0ein (r g b)."),
-  GUI_ITEMEDITOR_LEATHERCOLOR_INVALID_FORMAT("gui.itemeditor.leathercolor.invalid_format", "$0Die Farbeingabe von $4{{input}} $0ist ungültig!"),
+  GUI_ITEMEDITOR_COLOR_PROMPT("gui.itemeditor.leathercolor.prompt", "$0Bitte gib den gewünschten $2Farbwert $0in den $2Chat $0ein (r g b)."),
+  GUI_ITEMEDITOR_COLOR_INVALID_FORMAT("gui.itemeditor.leathercolor.invalid_format", "$0Die Farbeingabe von $4{{input}} $0ist ungültig!"),
   GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_TITLE("gui.itemeditor.choice.leathercolor.title", "$2Lederfarbe"),
   GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_NAME("gui.itemeditor.choice.leathercolor.name", "$2{{color}}"),
   GUI_ITEMEDITOR_CHOICE_LEATHERCOLOR_LORE(
@@ -1675,7 +1675,10 @@ public enum ConfigKey {
     "$0[$22$0]: $2Verbesserte Dauer",
     "$0[$23$0]: $2Verbesserte Stufe",
     "$0[$24$0]: $2Sekundäreffekt hinzufügen",
-    "$0[$25$0]: $2Sekundäreffekt entfernen"
+    "$0[$25$0]: $2Sekundäreffekt entfernen",
+    "$0[$26$0]: $2Farbwert aus Liste",
+    "$0[$27$0]: $2RGB Farbwert",
+    "$0[$28$0]: $2Farbe zurücksetzen"
   ),
   GUI_ITEMEDITOR_POTIONEFFECTS_DURATION_EXTENDED("gui.itemeditor.potioneffects.duration_extended", "&7Du hast die $2Dauer $0dieses Tranks verbessert."),
   GUI_ITEMEDITOR_POTIONEFFECTS_NOT_EXTENDABLE("gui.itemeditor.potioneffects.not_extendable", "&7Dieser Trank unterstützt keine &cverbesserte Dauer&7!"),
@@ -1700,6 +1703,16 @@ public enum ConfigKey {
   GUI_ITEMEDITOR_POTIONEFFECTS_ADDED("gui.itemeditor.potioneffects.added", "$0Der Effekt $2{{effect}} $0wurde auf &dStufe {{level}} &7mit &d{{duration}} Sekunden &7hinzugefügt."),
   GUI_ITEMEDITOR_POTIONEFFECTS_DURATION_PROMPT("gui.itemeditor.potioneffects.duration_prompt", "$0Bitte gib die gewünschte $2Dauer in Sekunden &7in den $2Chat $0ein."),
   GUI_ITEMEDITOR_POTIONEFFECTS_AMPLIFIER_PROMPT("gui.itemeditor.potioneffects.amplifier_prompt", "$0Bitte gib die gewünschte $2Stufe &7in den $2Chat $0ein."),
+  GUI_ITEMEDITOR_CHOICE_POTIONCOLOR_TITLE("gui.itemeditor.choice.potioncolor.title", "$2Trankfarbe"),
+  GUI_ITEMEDITOR_CHOICE_POTIONCOLOR_NAME("gui.itemeditor.choice.potioncolor.name", "$2{{color}}"),
+  GUI_ITEMEDITOR_CHOICE_POTIONCOLOR_LORE(
+    "gui.itemeditor.choice.potioncolor.lore",
+    " ",
+    "$0Klicke um diese Farbe zu wählen."
+  ),
+  GUI_ITEMEDITOR_POTIONCOLOR_CHANGED("gui.itemeditor.potioncolor.changed", "$0Die $2Trankfarbe $0dieses Items wurde auf $2{{color}} $0geändert."),
+  GUI_ITEMEDITOR_POTIONCOLOR_RESET("gui.itemeditor.potioncolor.reset", "$0Die Farbe des Tranks wurde $2zurückgesetzt$0."),
+  GUI_ITEMEDITOR_POTIONCOLOR_NONE("gui.itemeditor.potioncolor.none", "$0Dieser Trank besitzt noch keine &cgewählte Farbe$0!"),
 
   //=========================================================================//
   //                             AnvilSearch GUI                             //

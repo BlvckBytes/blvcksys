@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import me.blvckbytes.blvcksys.config.ConfigValue;
+import me.blvckbytes.blvcksys.handlers.TriResult;
 import me.blvckbytes.blvcksys.packets.communicators.bookeditor.IBookEditorCommunicator;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.UnsafeFunction;
@@ -30,7 +31,6 @@ import java.util.function.Supplier;
 public class UserInputChain {
 
   private final SingleChoiceGui singleChoiceGui;
-  private final IBookEditorCommunicator bookEditor;
   private final ChatUtil chatUtil;
 
   private final List<Consumer<Boolean>> stages;
@@ -58,32 +58,12 @@ public class UserInputChain {
     SingleChoiceGui singleChoiceGui,
     ChatUtil chatUtil
   ) {
-    this(main, completion, singleChoiceGui, chatUtil, null);
-  }
-
-  /**
-   * Create a new user input chain which will collect
-   * all stage's values into a map
-   * @param main Main screen which initiated this chain
-   * @param completion Completion callback, providing all collected values
-   * @param singleChoiceGui Single choice gui ref
-   * @param chatUtil Chat utility ref
-   * @param bookEditor Book editor utility ref
-   */
-  public UserInputChain(
-    GuiInstance<?> main,
-    Consumer<Map<String, Object>> completion,
-    SingleChoiceGui singleChoiceGui,
-    ChatUtil chatUtil,
-    IBookEditorCommunicator bookEditor
-  ) {
     this.values = new HashMap<>();
     this.stages = new ArrayList<>();
 
     this.main = main;
     this.completion = completion;
     this.chatUtil = chatUtil;
-    this.bookEditor = bookEditor;
     this.lastScreen = main;
     this.lastWasGui = true;
     this.singleChoiceGui = singleChoiceGui;
@@ -172,6 +152,78 @@ public class UserInputChain {
 
   /**
    * Add a new single choice stage
+   * @param gui GUI ref
+   * @param field Name of the field
+   * @param type Type of choice (part of the screen title)
+   * @param yesLore Lore of the yes button
+   * @param noLore Lore of the no button
+   * @param skip Optional skip predicate
+   */
+  public UserInputChain withYesNo(
+    YesNoGui gui,
+    String field,
+    ConfigValue type,
+    ConfigValue yesLore,
+    ConfigValue noLore,
+    @Nullable Function<Map<String, Object>, Boolean> skip
+  ) {
+    stages.add(isBack -> {
+
+      if (skip != null && skip.apply(values)) {
+        nextStage();
+        return;
+      }
+
+      YesNoParam param = new YesNoParam(
+        type.asScalar(),
+
+        // Has chosen
+        (selection, selectionInst) -> {
+          if (isCancelled) return;
+
+          // Closed the inventory, cancel
+          if (selection == TriResult.EMPTY) {
+            if (isCancelled) return;
+
+            // Reopen the main GUI and cancel the whole chain
+            isCancelled = true;
+            main.reopen(AnimationType.SLIDE_UP);
+            return;
+          }
+
+          // Store a boolean value
+          values.put(field, selection == TriResult.SUCC);
+
+          lastScreen = selectionInst;
+          lastWasGui = true;
+          nextStage();
+        },
+
+        yesLore, noLore,
+
+        // Back button, reopen the last stage
+        selectionInst -> {
+          if (isCancelled) return;
+          lastScreen = selectionInst;
+          lastWasGui = true;
+          previousStage();
+        }
+      );
+
+      // Animate between last and current
+      if (lastWasGui)
+        lastScreen.switchTo(isBack ? AnimationType.SLIDE_RIGHT : AnimationType.SLIDE_LEFT, gui, param);
+
+      // Just shift up the current GUI
+      else
+        gui.show(main.getViewer(), param, AnimationType.SLIDE_UP);
+    });
+
+    return this;
+  }
+
+  /**
+   * Add a new single choice stage
    * @param field Name of the field
    * @param type Type of choice (part of the screen title)
    * @param representitives List of representitive items and their values
@@ -236,11 +288,13 @@ public class UserInputChain {
 
   /**
    * Add a new book editor stage (List I/O)
+   * @param bookEditor Book editor ref
    * @param field Name of the field
    * @param prompt Prompt to display when handing out the book
    * @param content Initial content of the book
    */
   public UserInputChain withBookEditor(
+    IBookEditorCommunicator bookEditor,
     String field,
     Function<Map<String, Object>, ConfigValue> prompt,
     Function<Map<String, Object>, List<String>> content

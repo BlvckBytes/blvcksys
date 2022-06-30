@@ -18,6 +18,7 @@ import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.util.Tuple;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
+import org.bukkit.FireworkEffect;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
@@ -56,6 +57,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
   private final ILogger logger;
   private final ChatUtil chatUtil;
   private final MCReflect refl;
+  private final YesNoGui yesNoGui;
 
   public ItemEditorGui(
     @AutoInject IConfig cfg,
@@ -65,7 +67,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     @AutoInject ILogger logger,
     @AutoInject ChatUtil chatUtil,
     @AutoInject MCReflect refl,
-    @AutoInject IBookEditorCommunicator bookEditor
+    @AutoInject IBookEditorCommunicator bookEditor,
+    @AutoInject YesNoGui yesNoGui
   ) {
     super(6, "", i -> (
       cfg.get(ConfigKey.GUI_ITEMEDITOR_TITLE)
@@ -77,6 +80,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     this.chatUtil = chatUtil;
     this.refl = refl;
     this.bookEditor = bookEditor;
+    this.yesNoGui = yesNoGui;
   }
 
   @Override
@@ -880,6 +884,82 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
       // Add a new effect
       if (key == 2) {
+        new UserInputChain(inst, values ->  {
+          FireworkEffect.Type type = (FireworkEffect.Type) values.get("type");
+          @SuppressWarnings("unchecked")
+          Tuple<Color, String> color = (Tuple<Color, String>) values.get("color");
+          @SuppressWarnings("unchecked")
+          Tuple<@Nullable Color, String> fade = (Tuple<Color, String>) values.get("fade");
+          boolean flicker = (boolean) values.get("flicker");
+          boolean trail = (boolean) values.get("trail");
+
+          FireworkEffect.Builder b = FireworkEffect.builder()
+            .with(type)
+            .withColor(color.a())
+            .flicker(flicker)
+            .trail(trail);
+
+          Color fadeColor = fade.a();
+          if (fadeColor != null)
+            b.withFade(fadeColor);
+
+          fm.addEffect(b.build());
+          item.setItemMeta(fm);
+          inst.redraw("13");
+
+          p.sendMessage(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_FIREWORK_EFFECTS_ADDED)
+              .withPrefix()
+              .withVariable("type", formatConstant(type.name()))
+              .withVariable("color", formatConstant(color.b()))
+              .withVariable("fade", formatConstant(fade.b()))
+              .withVariable("flicker", formatConstant(String.valueOf(flicker)))
+              .withVariable("trail", formatConstant(String.valueOf(trail)))
+              .asScalar()
+          );
+        }, singleChoiceGui, chatUtil)
+          .withChoice(
+            "type",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FIREWORK_TYPE_TITLE),
+            this::buildFireworkTypeRepresentitives,
+            null
+          )
+          .withChoice(
+            "color",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FIREWORK_COLOR_TITLE),
+            () -> generateColorReprs(
+              c -> item.getType(),
+              cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_COLOR_NAME),
+              cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_COLOR_LORE)
+            ),
+            null
+          )
+          .withChoice(
+            "fade",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FIREWORK_FADE_TITLE),
+            () -> generateColorReprs(
+              c -> item.getType(),
+              cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_COLOR_NAME),
+              cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_COLOR_LORE),
+              true
+            ),
+            null
+          )
+          .withYesNo(
+            yesNoGui, "flicker",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_YESNO_FLICKER_TITLE),
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_YESNO_FLICKER_LORE_YES),
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_YESNO_FLICKER_LORE_NO),
+            null
+          )
+          .withYesNo(
+            yesNoGui, "trail",
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_YESNO_TRAIL_TITLE),
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_YESNO_TRAIL_LORE_YES),
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_YESNO_TRAIL_LORE_NO),
+            null
+          )
+          .start();
         return;
       }
 
@@ -1408,9 +1488,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
               .withPrefix()
               .asScalar()
           );
-        }, singleChoiceGui, chatUtil, bookEditor)
+        }, singleChoiceGui, chatUtil)
           .withBookEditor(
-            "result",
+            bookEditor, "result",
             values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_PAGES_EDIT_PROMPT).withPrefix(),
             values -> bookMeta.getPages()
           )
@@ -1626,6 +1706,29 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     }
 
     chain.start();
+  }
+
+  /**
+   * Builds a list of representitives for all available firework types
+   */
+  private List<Tuple<Object, ItemStack>> buildFireworkTypeRepresentitives() {
+    // Create representitive items for each firework type
+    List<Tuple<Object, ItemStack>> representitives = new ArrayList<>();
+
+    for (FireworkEffect.Type type : FireworkEffect.Type.values()) {
+      representitives.add(new Tuple<>(
+        type,
+        new ItemStackBuilder(Material.FIREWORK_STAR)
+          .withName(
+            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FIREWORK_TYPE_NAME)
+              .withVariable("type", formatConstant(type.name()))
+          )
+          .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FIREWORK_TYPE_LORE))
+          .build()
+      ));
+    }
+
+    return representitives;
   }
 
   /**
@@ -2076,7 +2179,6 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     return typeReprs;
   }
 
-
   /**
    * Generate a list of color representations from bukkit's color class to be used with a choice GUI
    * @param material Material resolver function
@@ -2084,6 +2186,17 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
    * @param lore Item lore value
    */
   public List<Tuple<Object, ItemStack>> generateColorReprs(Function<Color, Material> material, ConfigValue name, ConfigValue lore) {
+    return generateColorReprs(material, name, lore, false);
+  }
+
+  /**
+   * Generate a list of color representations from bukkit's color class to be used with a choice GUI
+   * @param material Material resolver function
+   * @param name Item name value
+   * @param lore Item lore value
+   * @param withTransparent Whether to offer a choice of a transparent color, which will return null
+   */
+  public List<Tuple<Object, ItemStack>> generateColorReprs(Function<Color, Material> material, ConfigValue name, ConfigValue lore, boolean withTransparent) {
     List<Tuple<Color, String>> colors = new ArrayList<>();
 
     // Get all available colors from the class's list of constant fields
@@ -2114,6 +2227,20 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withName(
             name
               .withVariable("color", formatConstant(color.b()))
+          )
+          .withLore(lore)
+          .build()
+      ));
+    }
+
+    // Offer a transparent choice (represents null-color)
+    if (withTransparent) {
+      slotReprs.add(new Tuple<>(
+        new Tuple<Color, String>(null, "Transparent"),
+        new ItemStackBuilder(Material.GLASS)
+          .withName(
+            name
+              .withVariable("color", formatConstant("Transparent"))
           )
           .withLore(lore)
           .build()

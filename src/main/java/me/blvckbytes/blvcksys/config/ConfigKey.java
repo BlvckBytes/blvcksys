@@ -1793,6 +1793,38 @@ public enum ConfigKey {
   GUI_ITEMEDITOR_FIREWORK_POWER_SET("gui.itemeditor.firework.power.set", "$0Die $2Power $0des Feuerwerks wurde auf $2{{power}} $0gesetzt."),
   GUI_ITEMEDITOR_FIREWORK_EFFECTS_NONE("gui.itemeditor.firework.effects.none", "$0Dieses Feuerwerk besitzt $4keine Effekte$0!"),
   GUI_ITEMEDITOR_FIREWORK_EFFECTS_RESET("gui.itemeditor.firework.effects.reset", "$0Die Effekte des Feuerwerks wurden $2zurückgesetzt."),
+  GUI_ITEMEDITOR_CHOICE_FIREWORK_TYPE_TITLE("gui.itemeditor.choice.firework_type.title", "$2Effekttyp"),
+  GUI_ITEMEDITOR_CHOICE_FIREWORK_TYPE_NAME("gui.itemeditor.choice.firework_type.name", "$2{{type}}"),
+  GUI_ITEMEDITOR_CHOICE_FIREWORK_TYPE_LORE(
+    "gui.itemeditor.choice.firework_type.lore",
+    " ",
+    "$0Klicke um diesen Typ zu wählen."
+  ),
+  GUI_ITEMEDITOR_CHOICE_FIREWORK_COLOR_TITLE("gui.itemeditor.choice.firework_color.title", "$2Effektfarbe"),
+  GUI_ITEMEDITOR_CHOICE_FIREWORK_FADE_TITLE("gui.itemeditor.choice.firework_fade.title", "$2Glimmfarbe"),
+  GUI_ITEMEDITOR_FIREWORK_EFFECTS_ADDED("gui.itemeditor.firework.effects.added", "$0Der Effekt $2{{type}} $0mit der Farbe $2{{color}}$0, der Glimmfarbe $2{{fade}}$0, dem Flickern $2{{flicker}} $0sowie den Spuren $2{{trail}} $0wurde erstellt."),
+  GUI_ITEMEDITOR_YESNO_FLICKER_TITLE("gui.itemeditor.yesno.flicker.title", "$2Flackern"),
+  GUI_ITEMEDITOR_YESNO_FLICKER_LORE_YES(
+    "gui.itemeditor.yesno.flicker.lore.yes",
+    " ",
+    "$0Flickern für diesen Effekt &aaktivieren&7."
+  ),
+  GUI_ITEMEDITOR_YESNO_FLICKER_LORE_NO(
+    "gui.itemeditor.yesno.flicker.lore.no",
+    " ",
+    "$0Flickern für diesen Effekt &cdeaktivieren&7."
+  ),
+  GUI_ITEMEDITOR_YESNO_TRAIL_TITLE("gui.itemeditor.yesno.trail.title", "$2Spuren"),
+  GUI_ITEMEDITOR_YESNO_TRAIL_LORE_YES(
+    "gui.itemeditor.yesno.trail.lore.yes",
+    " ",
+    "$0Spuren für diesen Effekt &aaktivieren&7."
+  ),
+  GUI_ITEMEDITOR_YESNO_TRAIL_LORE_NO(
+    "gui.itemeditor.yesno.trail.lore.no",
+    " ",
+    "$0Spuren für diesen Effekt &cdeaktivieren&7."
+  ),
 
   //=========================================================================//
   //                             AnvilSearch GUI                             //
@@ -2526,6 +2558,14 @@ public enum ConfigKey {
     " ",
     "$0Bricht diese Aktion ab."
   ),
+
+  //=========================================================================//
+  //                               Yes/No GUI                                //
+  //=========================================================================//
+
+  GUI_YESNO_TITLE("gui.yesno.title", "$0Auswahl $2{{type}}"),
+  GUI_YESNO_YES_NAME("gui.yesno.yes.name", "$0» &aJa"),
+  GUI_YESNO_NO_NAME("gui.yesno.no.name", "$0» &cNein"),
 
   //=========================================================================//
   //                            Generic Messages                             //

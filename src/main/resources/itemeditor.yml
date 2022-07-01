@@ -8,6 +8,7 @@
 
 messages:
   metaUnavailable: '&7Auf die ItemMeta dieses Items konnte &cnicht &7zugegriffen werden!'
+  missingPermission: '&cDu hast für diese Aktion keine Rechte.'
 
 titles:
   home: '&8IE &5{{item_type}}'
@@ -44,6 +45,14 @@ items:
     displayMarker:
       type: PURPLE_STAINED_GLASS_PANE
       name: ' '
+
+    # If a category is locked due to missing permissions, it's item will be
+    # patched with the properties of this item (lore is extended)
+    missingPermission:
+      type: BARRIER
+      lore:
+        - ' '
+        - '&cDu hast für diese Kategorie keine Rechte.'
 
     # If a category is not applicable, it's item will be
     # patched with the properties of this item (lore is extended)

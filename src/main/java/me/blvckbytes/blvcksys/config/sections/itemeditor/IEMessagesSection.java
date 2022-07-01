@@ -14,6 +14,7 @@ import me.blvckbytes.blvcksys.config.ConfigValue;
 public class IEMessagesSection extends AConfigSection {
 
   private ConfigValue metaUnavailable;
+  private ConfigValue missingPermission;
 
   @Override
   public Object defaultFor(Class<?> type, String field) {

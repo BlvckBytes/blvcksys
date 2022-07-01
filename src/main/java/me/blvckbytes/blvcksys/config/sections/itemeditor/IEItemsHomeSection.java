@@ -20,6 +20,9 @@ public class IEItemsHomeSection extends AConfigSection {
   @CSAlways
   private ItemStackSection notApplicable;
 
+  @CSAlways
+  private ItemStackSection missingPermission;
+
   private ItemStackBuilder increase;
   private ItemStackBuilder decrease;
   private ItemStackBuilder displayMarker;

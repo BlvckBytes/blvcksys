@@ -5,6 +5,7 @@ import com.google.common.collect.Multimap;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.config.sections.itemeditor.IEPerm;
 import me.blvckbytes.blvcksys.config.sections.itemeditor.IESection;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -148,8 +149,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     inst.fixedItem(10, () -> (
       ies.getItems().getHome().getIncrease()
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.INCREASE.has(p))
         .build()
     ), e -> {
+      if (!checkPermission(IEPerm.INCREASE, p))
+        return;
+
       Integer key = e.getHotbarKey().orElse(null);
       if (key == null)
         return;
@@ -184,8 +189,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     inst.fixedItem(16, () -> (
       ies.getItems().getHome().getDecrease()
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.DECREASE.has(p))
         .build()
     ), e -> {
+      if (!checkPermission(IEPerm.DECREASE, p))
+        return;
+
       Integer key = e.getHotbarKey().orElse(null);
       if (key == null)
         return;
@@ -221,12 +230,16 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     inst.fixedItem(27, () -> (
       ies.getItems().getHome().getCustomModelData()
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.CUSTOMMODELDATA.has(p))
         .build(
           ConfigValue.makeEmpty()
             .withVariable("custom_model_data", meta.hasCustomModelData() ? meta.getCustomModelData() : "/")
             .exportVariables()
         )
     ), e -> {
+      if (!checkPermission(IEPerm.CUSTOMMODELDATA, p))
+        return;
+
       Integer key = e.getHotbarKey().orElse(null);
       if (key == null)
         return;
@@ -287,8 +300,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     inst.fixedItem(28, () -> (
       ies.getItems().getHome().getMaterial()
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.MATERIAL.has(p))
         .build()
     ), e -> {
+      if (!checkPermission(IEPerm.MATERIAL, p))
+        return;
+
       new UserInputChain(inst, values -> {
         Material mat = (Material) values.get("material");
         item.setType(mat);
@@ -313,12 +330,16 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     inst.fixedItem(29, () -> (
       ies.getItems().getHome().getFlags()
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.FLAGS.has(p))
         .build(
           ConfigValue.makeEmpty()
             .withVariable("count", meta.getItemFlags().size())
             .exportVariables()
         )
     ), e -> {
+      if (!checkPermission(IEPerm.FLAGS, p))
+        return;
+
       new UserInputChain(inst, values -> {
         ItemFlag flag = (ItemFlag) values.get("flag");
 
@@ -356,12 +377,16 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     inst.fixedItem(30, () -> (
       ies.getItems().getHome().getEnchantments()
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.ENCHANTMENTS.has(p))
         .build(
           ConfigValue.makeEmpty()
             .withVariable("count", meta.getEnchants().size())
             .exportVariables()
         )
     ), e -> {
+      if (!checkPermission(IEPerm.ENCHANTMENTS, p))
+        return;
+
       new UserInputChain(inst, values -> {
         Enchantment enchantment = (Enchantment) values.get("enchantment");
         boolean has = meta.hasEnchant(enchantment);
@@ -419,8 +444,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     inst.fixedItem(31, () -> (
       ies.getItems().getHome().getDisplayname()
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.DISPLAYNAME.has(p))
         .build()
     ), e -> {
+      if (!checkPermission(IEPerm.DISPLAYNAME, p))
+        return;
+
       new UserInputChain(inst, values -> {
         String name = (String) values.get("name");
 
@@ -450,8 +479,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     inst.fixedItem(32, () -> (
       ies.getItems().getHome().getLore()
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.LORE.has(p))
         .build()
     ), e -> {
+      if (!checkPermission(IEPerm.LORE, p))
+        return;
+
       Integer key = e.getHotbarKey().orElse(null);
       if (key == null)
         return;
@@ -581,6 +614,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
       return ies.getItems().getHome().getDurability()
         .patch(ies.getItems().getHome().getNotApplicable(), !isDamageable)
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.DURABILITY.has(p))
         .build(
           ConfigValue.makeEmpty()
             .withVariable(
@@ -613,6 +647,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
       // Increase durability
       if (key == 1) {
+        if (!checkPermission(IEPerm.DURABILITY_CHANGE, p))
+          return;
+
         // Apply the constrained damage
         int damage = Math.max(d.getDamage() - stepSize, 0);
         d.setDamage(damage);
@@ -633,6 +670,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
       // Set unbreakable
       if (key == 2) {
+        if (!checkPermission(IEPerm.DURABILITY_UNBREAKABLE, p))
+          return;
+
         if (meta.isUnbreakable()) {
           p.sendMessage(
             cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_NOT_INACTIVE)
@@ -658,6 +698,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
       // Decrease durability
       if (key == 3) {
+        if (!checkPermission(IEPerm.DURABILITY_CHANGE, p))
+          return;
+
         // Apply the constrained damage
         int damage = Math.min(d.getDamage() + stepSize, maxDur - 1);
         d.setDamage(damage);
@@ -678,6 +721,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
       // Remove unbreakability
       if (key == 4) {
+        if (!checkPermission(IEPerm.DURABILITY_UNBREAKABLE, p))
+          return;
+
         if (!meta.isUnbreakable()) {
           p.sendMessage(
             cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_NOT_ACTIVE)
@@ -706,8 +752,11 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     inst.fixedItem(34, () -> (
       ies.getItems().getHome().getAttributes()
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.ATTRIBUTES.has(p))
         .build()
     ), e -> {
+      if (!checkPermission(IEPerm.ATTRIBUTES, p))
+        return;
 
       Integer key = e.getHotbarKey().orElse(null);
       if (key == null)
@@ -838,12 +887,16 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       FireworkMeta fMeta = meta instanceof FireworkMeta fm ? fm : null;
       return ies.getItems().getHome().getFireworks()
         .patch(ies.getItems().getHome().getNotApplicable(), fMeta == null)
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.FIREWORKS.has(p))
         .build(
           ConfigValue.makeEmpty()
             .withVariable("power", fMeta == null ? "/" : fMeta.getPower())
             .exportVariables()
         );
     }, e -> {
+      if (!checkPermission(IEPerm.FIREWORKS, p))
+        return;
+
       if (!(meta instanceof FireworkMeta fm))
         return;
 
@@ -1035,6 +1088,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       CompassMeta cm = meta instanceof CompassMeta x ? x : null;
       return ies.getItems().getHome().getCompass()
         .patch(ies.getItems().getHome().getNotApplicable(), cm == null)
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.COMPASS.has(p))
         .build(
           ConfigValue.makeEmpty()
             .withVariable(
@@ -1046,6 +1100,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             .exportVariables()
         );
     }, e -> {
+      if (!checkPermission(IEPerm.COMPASS, p))
+        return;
+
       if (!(meta instanceof CompassMeta cm))
         return;
 
@@ -1098,12 +1155,16 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       SkullMeta sm = meta instanceof SkullMeta x ? x : null;
       return ies.getItems().getHome().getHeadOwner()
         .patch(ies.getItems().getHome().getNotApplicable(), sm == null)
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.HEAD_OWNER.has(p))
         .build(
           ConfigValue.makeEmpty()
             .withVariable("owner", (sm == null || sm.getOwnerProfile() == null) ? "/" : sm.getOwnerProfile().getName())
             .exportVariables()
         );
     }, e -> {
+      if (!checkPermission(IEPerm.HEAD_OWNER, p))
+        return;
+
       // Not an item which will have skull meta
       if (!(meta instanceof SkullMeta skullMeta))
         return;
@@ -1157,12 +1218,16 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       LeatherArmorMeta lam = meta instanceof LeatherArmorMeta x ? x : null;
       return ies.getItems().getHome().getLeatherColor()
         .patch(ies.getItems().getHome().getNotApplicable(), lam == null)
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.LEATHER_COLOR.has(p))
         .build(
           ConfigValue.makeEmpty()
             .withVariable("color", lam == null ? "/" : stringifyColor(lam.getColor()))
             .exportVariables()
         );
     }, e -> {
+      if (!checkPermission(IEPerm.LEATHER_COLOR, p))
+        return;
+
       // Not an item which will have leather armor meta
       if (!(meta instanceof LeatherArmorMeta))
         return;
@@ -1187,8 +1252,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     inst.fixedItem(40, () -> (
       ies.getItems().getHome().getPotionEffects()
         .patch(ies.getItems().getHome().getNotApplicable(), !(meta instanceof PotionMeta))
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.POTION_EFFECTS.has(p))
         .build()
     ), e -> {
+      if (!checkPermission(IEPerm.POTION_EFFECTS, p))
+        return;
+
       // Not an item which will have potion meta
       if (!(meta instanceof PotionMeta potionMeta))
         return;
@@ -1398,8 +1467,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     inst.fixedItem(41, () -> (
       ies.getItems().getHome().getMaps()
         .patch(ies.getItems().getHome().getNotApplicable(), !(meta instanceof MapMeta))
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.MAPS.has(p))
         .build()
     ), e -> {
+      if (!checkPermission(IEPerm.MAPS, p))
+        return;
+
       // Not an item which will have map meta
       if (!(meta instanceof MapMeta mapMeta))
         return;
@@ -1426,8 +1499,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     inst.fixedItem(42, () -> (
       ies.getItems().getHome().getBooks()
         .patch(ies.getItems().getHome().getNotApplicable(), !(meta instanceof BookMeta))
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.BOOKS.has(p))
         .build()
     ), e -> {
+      if (!checkPermission(IEPerm.BOOKS, p))
+        return;
+
       // Not an item which will have book meta
       if (!(meta instanceof BookMeta bookMeta))
         return;
@@ -1637,8 +1714,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     inst.fixedItem(43, () -> (
       ies.getItems().getHome().getBanners()
         .patch(ies.getItems().getHome().getNotApplicable(), !(meta instanceof BannerMeta))
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.BANNERS.has(p))
         .build()
     ), e -> {
+      if (!checkPermission(IEPerm.BANNERS, p))
+        return;
+
       if (!(meta instanceof BannerMeta bm))
         return;
 
@@ -2673,5 +2754,24 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     }
 
     return slotReprs;
+  }
+
+  /**
+   * Check if a player has a required permission and notify otherwise
+   * @param perm Permission to check for
+   * @param p Target player
+   * @return True if has, false otherwise
+   */
+  private boolean checkPermission(IEPerm perm, Player p) {
+    if (perm.has(p))
+      return true;
+
+    p.sendMessage(
+      ies.getMessages().getMissingPermission()
+        .withVariable("permission", perm)
+        .asScalar()
+    );
+
+    return false;
   }
 }

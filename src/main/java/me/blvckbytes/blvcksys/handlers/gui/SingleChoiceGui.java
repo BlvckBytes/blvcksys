@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -36,8 +37,7 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
     @AutoInject AnvilSearchGui searchGui
   ) {
     super(5, "10-16,19-25,28-34", i -> (
-      cfg.get(ConfigKey.GUI_SINGLECHOICE_TITLE)
-        .withVariable("type", i.getArg().type())
+      ConfigValue.immediate(i.getArg().type())
     ), plugin, cfg, textures);
 
     this.haveChosen = new HashSet<>();

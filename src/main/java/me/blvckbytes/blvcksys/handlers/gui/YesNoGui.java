@@ -32,8 +32,7 @@ public class YesNoGui extends AGui<YesNoParam> {
     @AutoInject IPlayerTextureHandler textures
   ) {
     super(3, "", i -> (
-      cfg.get(ConfigKey.GUI_YESNO_TITLE)
-        .withVariable("type", i.getArg().type())
+      ConfigValue.immediate(i.getArg().type())
     ), plugin, cfg, textures);
 
     this.madeSelection = new HashSet<>();

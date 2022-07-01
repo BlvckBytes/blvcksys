@@ -9,6 +9,7 @@
 messages:
   metaUnavailable: '&7Auf die ItemMeta dieses Items konnte &cnicht &7zugegriffen werden.'
   missingPermission: '&cDu hast für diese Aktion keine Rechte.'
+  amountChanged: '&7Die &2Anzahl &7des Items wurde auf &2{{amount}} &7gesetzt.'
   materialChanged: '&7Das Material des Items wurde von &d{{previous}} &7auf &d{{current}} &7geändert.'
   flagChanged: '&7Der Flag &d{{flag}} &7des Items wurde auf &d{{state}} &7geändert.'
   enchantmentAdded: '&7Die Verzauberung &d{{enchantment}} &7auf Level &d{{level}} &7wurde dem Item &dhinzugefügt&7.'
@@ -23,9 +24,95 @@ messages:
   loreNone: '&7Dieses Item besitzt noch &ckeine &7Lore.'
   loreLinePrompt: '&7Gib die &dLore-Zeile &7in den &dChat &7ein.'
   loreAdded: '&7Die Lore-Zeile &7"&d{{content}}&7" &7wurde dem Item &dhinzugefügt&7.'
+  durabilityNone: '&7Dieses Item ist &cnicht &7beschädigbar.'
+  durabilityChanged: '&7Die Haltbarkeit dieses Items wurde auf &d{{current_durability}}&7/&d{{max_durability}} &7gesetzt.'
+  durabilityUnbreakableSet: '&7Dieses Item ist nun &dunzerstörbar&7.'
+  durabilityUnbreakableReset: '&7Dieses Item ist &dnicht mehr &7unzerstörbar.'
+  durabilityUnbreakableNone: '&7Dieses Item ist &cnicht &7unzerstörbar.'
+  durabilityUnbreakableAlready: '&7Dieses Item ist &cbereits &7unzerstörbar.'
+  attributesNone: '&7Dieses Item besitzt noch &ckeine &7Attribute.'
+  attributesReset: '&7Alle Attribute dieses Items wurden &dentfernt&7.'
+  attributeRemoved: '&7Das Attribut &d{{attribute}} &7wurde von diesem Item &dentfernt&7.'
+  attributeAdded: '&7Das Attribut &d{{attribute}} &7wurde dem Item &dhinzugefügt&7.'
+  attributeAmountPrompt: '&7Gib den &dBetrag &7in den &dChat &7ein.'
+  skullownerSet: '&7Der &dKopfbesitzer &7dieses Items wurde auf &d{{owner}} &7gesetzt.'
+  skullownerNotLoadable: '&7Der Kopf von &c{{owner}} &7konnte &cnicht &7geladen werden.'
+  skullownerPrompt: '&7Gib den &dKopfbesitzer &7in den &dChat &7ein.'
+  potioneffectExtended: '&7Die &dDauer &7dieses Trankes wurde &dverbessert&7.'
+  potioneffectExtendedAlready: '&7Dieser Trank ist &cbereits &7verlängert.'
+  potioneffectUpgraded: '&7Die &dStufe &7dieses Trankes wurde &dverbessert&7.'
+  potioneffectUpgradedAlready: '&7Dieser Trank ist &cbereits &7hochgestuft.'
+  potioneffectEnhancementUnsupported: '&7Dieser Trank kann &cnicht &7verbessert werden.'
+  potioneffectEnhancementNone: '&7Dieser Trank ist noch &cnicht &7verbessert.'
+  potioneffectEnhancementRemove: '&7Die &dVerbesserungen &7des Trankes wurden &dentfernt&7.'
+  potioneffectCustomRemove: '&7Der Effekt &d{{effect}} &7wurde vom Trank &dentfernt&7.'
+  potioneffectCustomAdded: '&7Der Effekt &d{{effect}} &7wurde auf &dStufe {{level}} &7mit &d{{duration}}s &7hinzugefügt.'
+  potioneffectDurationPrompt: '&7Gib die &dDauer in Sekunden &7in den &dChat &7ein.'
+  potioneffectAmplifierPrompt: '&7Gib die &dStufe &7in den &dChat &7ein.'
+  potioneffectCustomNone: '&7Dieser Trank hat &ckeine &7Sekundäreffekte.'
+  potioneffectCustomReset: '&7Die &dSekundäreffekte &7dieses Tranks wurden &dzurückgesetzt&7.'
+  colorSet: '&7Die &dFarbe &7dieses Items wurde auf &d{{color}} &7gesetzt.'
+  colorReset: '&7Die &dFarbe &7dieses Items wurde &dzurückgesetzt&7.'
+  colorNone: '&7Dieses Item besitzt &ckeine Farbe.'
+  colorPrompt: '&7Gib den &dFarbwert &7"&dR G B&7" in den &dChat ein.'
+  colorInvalid: '&7Die Farbe &c{{input}} &7ist &cungültig&7.'
+  bookTitleSet: '&7Der &dTitel &7des Buches wurde auf "&d{{title}} &7gesetzt.'
+  bookTitleNone: '&7Dieses Buch besitzt noch &ckeinen Titel&7.'
+  bookTitleReset: '&7Der &dTitel &7des Buches wurde &dzurückgesetzt&7.'
+  bookTitlePrompt: '&7Gib den &dTitel &7in den &dChat &7ein.'
+  bookAuthorSet: '&7Der &dAuthor &7des Buches wurde auf "&d{{author}} &7gesetzt.'
+  bookAuthorNone: '&7Dieses Buch besitzt noch &ckeinen Author&7.'
+  bookAuthorReset: '&7Der &dAuthor &7des Buches wurde &dzurückgesetzt&7.'
+  bookAuthorPrompt: '&7Gib den &dAuthor &7in den &dChat &7ein.'
+  bookGenerationSet: '&7Die &dGeneration &7des Buches wurde auf "&d{{generation}} &7gesetzt.'
+  bookGenerationNone: '&7Dieses Buch besitzt noch &ckeine Generation&7.'
+  bookGenerationReset: '&7Die &dGeneration &7des Buches wurde &dzurückgesetzt&7.'
+  bookPageSingle: '&7Dieses Buch besitzt nur mehr &ceine Seite&7.'
+  bookPageRemoved: '&7Die &dSeite {{page_number}} &7wurde aus dem Buch &dentfernt&7.'
+  bookEdited: '&7Die Änderung des &dBuchinhaltes &7wurden gespeichert.'
+  bookEditPrompt: '&7Editiere das &dBuch &7in deiner Hand und &dsigniere &7es danach, um zu speichern.'
+  customModelDataSet: '&7Die &dCustom Model Data &7des Items wurde auf &d{{custom_model_data}} &7gesetzt.'
+  customModelDataReset: '&7Die &dCustom Model Data &7des Items wurde &dzurückgesetzt&7.'
+  customModelDataNone: '&7Dieses Item besitzt noch &ckeine Custom Model Data&7.'
+  customModelDataPrompt: '&7Gib einen Wert für die &dCustom Model Data &7in den &dChat &7ein.'
+  fireworkPowerPrompt: '&7Gib einen Wert für die &dPower &7in den &dChat &7ein.'
+  fireworkPowerSet: '&7Die &dPower &7des Feuerwerks wurde auf &d{{power}} &7gesetzt.'
+  fireworkEffectsNone: '&7Dieses Feuerwerk besitzt &ckeine Effekte&7.'
+  fireworkEffectsReset: '&7Die &dEffekte &7dieses Feuerwerks wurden &dzurückgesetzt&7.'
+  fireworkEffectsAdded: '&7Der Effekt &d{{type}} &7mit den Farbe(n) &d{{colors}}&7, der Glimmfarbe(n) &d{{fades}}&7, dem Flackern &d{{flicker}} &7sowie den Spuren &d{{trail}} &7wurde hinzugefügt.'
+  fireworkEffectsRemoved: '&7Der Effekt &dNr. {{index}} &7mit dem Typ &d{{type}} &7wurde entfernt.'
+  fireworkEffectsSeparator: '&7, &d'
+  compassLocationSet: '&7Das &dZiel &7des Kompasses wurde auf &d{{location}} &7gesetzt.'
+  compassLocationReset: '&7Das &dZiel &7des Kompasses wurde &dzurückgesetzt&7.'
+  compassLocationNone: '&7Dieser Kompass hat noch &ckein Ziel&7.'
+  bannerPatternsAdded: '&7Das Muster &2{{type}} &7mit der Farbe &2{{color}} &7wurde dem Banner hinzugefügt.'
+  bannerPatternsRemoved: '&7Das Muster &2Nr. {{index}} &7mit dem Typ &2{{type}} &7wurde entfernt.'
+  bannerPatternsNone: '&7Dieser Banner hat noch &ckeine Muster&7.'
+  bannerPatternsCleared: '&7Alle &2Muster &7dieses Banners wurden &dentfernt.'
 
 titles:
   home: '&8IE &5{{item_type}}'
+  materialChoice: '&8Auswahl &5Material'
+  flagChoice: '&8Auswahl &5Flag'
+  enchantmentChoice: '&8Auswahl &5Verzauberung'
+  loreChoice: '&8Auswahl &5Lore'
+  attributeChoice: '&8Auswahl &5Attribut'
+  equipmentChoice: '&8Auswahl &5Equipment'
+  operationChoice: '&8Auswahl &5Operator'
+  potionTypeChoice: '&8Auswahl &5Tranktyp'
+  potionEffectChoice: '&8Auswahl &5Trankeffekt'
+  colorChoice: '&8Auswahl &5Farbe'
+  generationChoice: '&8Auswahl &5Generation'
+  pageChoice: '&8Auswahl &5Seiten'
+  fireworkTypeChoice: '&8Auswahl &5Feuerwerkstyp'
+  fireworkEffectColorChoice: '&8Auswahl &5Effektfarben'
+  fireworkFadeColorChoice: '&8Auswahl &5Glimmfarben'
+  fireworkFlickerYesNo: '&8Auswahl &5Flackern'
+  fireworkTrailYesNo: '&8Auswahl &5Spuren'
+  fireworkEffectChoice: '&8Auswahl &5Feuerwerkseffekt'
+  bannerPatternChoice: '&8Auswahl &5Muster'
+  bannerPatternTypeChoice: '&8Auswahl &5Mustertyp'
+  bannerDyeColorChoice: '&8Auswahl &5Musterfarbe'
 
 items:
   generic:
@@ -219,8 +306,8 @@ items:
         - '&7Ändere die &dEffekte &7dieses &dTranks&7.'
         - ' '
         - '&7[&d1&7]: &dHaupteffekt ändern'
-        - '&7[&d2&7]: &dVerbesserte Dauer'
-        - '&7[&d3&7]: &dVerbesserte Stufe'
+        - '&7[&d2&7]: &dVerbesserte Dauer/Stufe'
+        - '&7[&d3&7]: &dVerbesserung entfernen'
         - '&7[&d4&7]: &dSekundäreffekt hinzufügen'
         - '&7[&d5&7]: &dSekundäreffekt entfernen'
         - '&7[&d6&7]: &dSekundäreffekte leeren'
@@ -252,7 +339,7 @@ items:
         - '&7[&d4&7]: &dAuthor entfernen'
         - '&7[&d5&7]: &dGeneration setzen'
         - '&7[&d6&7]: &dGeneration entfernen'
-        - '&7[&d7&7]: &dSeiten editieren'
+        - '&7[&d7&7]: &dInhalt editieren'
         - '&7[&d8&7]: &dSeite entfernen'
 
     banners:
@@ -265,3 +352,51 @@ items:
         - '&7[&d1&7]: &dMuster hinzufügen'
         - '&7[&d2&7]: &dMuster entfernen'
         - '&7[&d3&7]: &dMuster leeren'
+
+  choices:
+
+    material:
+      type: '{{material}}'
+      name: '&d{{material_hr}}'
+      lore:
+        - ' '
+        - '&7Klicke, um dieses Material zu wählen.'
+
+    enchantmentActive:
+      type: '{{icon}}'
+      name: '&d{{enchantment_hr}}'
+      lore:
+        - ' '
+        - '&7Aktueller Zustand: &d{{state}}'
+        - '&7Angewandter Level: &d{{level}}'
+        - ' '
+        - '&7Klicke um die Verzauberung zu &centfernen&7.'
+      enchantments:
+        -
+          enchantment: '{{enchantment}}'
+          level: 1
+      flags:
+        - HIDE_ATTRIBUTES
+        - HIDE_DESTROYS
+        - HIDE_DYE
+        - HIDE_PLACED_ON
+        - HIDE_POTION_EFFECTS
+
+    enchantmentInactive:
+      type: '{{icon}}'
+      name: '&d{{enchantment_hr}}'
+      lore:
+        - ' '
+        - '&7Aktueller Zustand: &d{{state}}'
+        - ' '
+        - '&7Klicke um die Verzauberung &ahinzuzufügen&7.'
+      enchantments:
+        -
+          enchantment: '{{enchantment}}'
+          level: 1
+      flags:
+        - HIDE_ATTRIBUTES
+        - HIDE_DESTROYS
+        - HIDE_DYE
+        - HIDE_PLACED_ON
+        - HIDE_POTION_EFFECTS

@@ -52,6 +52,8 @@ import java.util.function.Function;
 @AutoConstruct
 public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<GuiInstance<?>>>> {
 
+  // TODO: Cache static representitives
+
   private final SingleChoiceGui singleChoiceGui;
   private final IBookEditorCommunicator bookEditor;
   private final ILogger logger;
@@ -178,7 +180,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       inst.redraw("13");
 
       p.sendMessage(
-        cfg.get(ConfigKey.GUI_ITEMEDITOR_AMOUNT_CHANGED)
+        ies.getMessages().getAmountChanged()
           .withPrefix()
           .withVariable("amount", amount)
           .asScalar()
@@ -219,7 +221,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       inst.redraw("13");
 
       p.sendMessage(
-        cfg.get(ConfigKey.GUI_ITEMEDITOR_AMOUNT_CHANGED)
+        ies.getMessages().getAmountChanged()
           .withPrefix()
           .withVariable("amount", amount)
           .asScalar()
@@ -254,7 +256,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           inst.redraw("13,27");
 
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_SET)
+            ies.getMessages().getCustomModelDataSet()
               .withPrefix()
               .withVariable("custom_model_data", data)
               .asScalar()
@@ -262,7 +264,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         }, singleChoiceGui, chatUtil)
           .withPrompt(
             "data",
-            values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_PROMPT).withPrefix(),
+            values -> ies.getMessages().getCustomModelDataPrompt().withPrefix(),
             Integer::parseInt,
             input -> cfg.get(ConfigKey.ERR_INTPARSE).withVariable("number", input).withPrefix(),
             null
@@ -275,7 +277,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       if (key == 2) {
         if (!meta.hasCustomModelData()) {
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_NOT_SET)
+            ies.getMessages().getPotioneffectCustomNone()
               .withPrefix()
               .asScalar()
           );
@@ -287,7 +289,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         inst.redraw("13,27");
 
         p.sendMessage(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_RESET)
+          ies.getMessages().getCustomModelDataReset()
             .withPrefix()
             .asScalar()
         );
@@ -321,7 +323,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       }, singleChoiceGui, chatUtil)
         .withChoice(
           "material",
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_MATERIAL_TITLE),
+          ies.getTitles().getMaterialChoice(),
           this::buildMaterialRepresentitives,
           null
         )
@@ -364,7 +366,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       }, singleChoiceGui, chatUtil)
         .withChoice(
           "flag",
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_TITLE),
+          ies.getTitles().getFlagChoice(),
           () -> buildItemFlagRepresentitives(meta::hasItemFlag),
           null
         )
@@ -418,7 +420,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       }, singleChoiceGui, chatUtil)
         .withChoice(
           "enchantment",
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_TITLE),
+          ies.getTitles().getEnchantmentChoice(),
           () -> buildEnchantmentRepresentitives(
             ench -> ench.canEnchantItem(item),
             meta::hasEnchant,
@@ -554,7 +556,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           )
           .withChoice(
             "index",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LORE_TITLE),
+            ies.getTitles().getLoreChoice(),
             () -> buildLoreRepresentitives(lines),
             // Key 2 means push back, no index required
             // Also, if there are no lines yet, just push back too
@@ -595,7 +597,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         }, singleChoiceGui, chatUtil)
           .withChoice(
             "index",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LORE_TITLE),
+            ies.getTitles().getLoreChoice(),
             () -> buildLoreRepresentitives(lines),
             null
           )
@@ -658,7 +660,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       // This item cannot take any damage
       if (!(meta instanceof Damageable d) || maxDur <= 0) {
         p.sendMessage(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_NOT_BREAKABLE)
+          ies.getMessages().getDurabilityNone()
             .withPrefix()
             .asScalar()
         );
@@ -686,7 +688,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         inst.redraw("13," + e.getTargetSlot());
 
         p.sendMessage(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_CHANGED)
+          ies.getMessages().getDurabilityChanged()
             .withPrefix()
             .withVariable("current_durability", maxDur - damage)
             .withVariable("max_durability", maxDur)
@@ -702,7 +704,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
         if (meta.isUnbreakable()) {
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_NOT_INACTIVE)
+            ies.getMessages().getDurabilityUnbreakableAlready()
               .withPrefix()
               .asScalar()
           );
@@ -716,7 +718,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         inst.redraw("13," + e.getTargetSlot());
 
         p.sendMessage(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_ACTIVE)
+          ies.getMessages().getDurabilityUnbreakableSet()
             .withPrefix()
             .asScalar()
         );
@@ -737,7 +739,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         inst.redraw("13," + e.getTargetSlot());
 
         p.sendMessage(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_CHANGED)
+          ies.getMessages().getDurabilityChanged()
             .withPrefix()
             .withVariable("current_durability", maxDur - damage)
             .withVariable("max_durability", maxDur)
@@ -753,7 +755,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
         if (!meta.isUnbreakable()) {
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_NOT_ACTIVE)
+            ies.getMessages().getDurabilityUnbreakableNone()
               .withPrefix()
               .asScalar()
           );
@@ -767,7 +769,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         inst.redraw("13," + e.getTargetSlot());
 
         p.sendMessage(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_INACTIVE)
+          ies.getMessages().getDurabilityUnbreakableReset()
             .withPrefix()
             .asScalar()
         );
@@ -807,7 +809,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           item.setItemMeta(meta);
 
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_ADDED)
+            ies.getMessages().getAttributeAdded()
               .withPrefix()
               .withVariable("attribute", formatConstant(attr.a().name()))
               .asScalar()
@@ -815,7 +817,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         }, singleChoiceGui, chatUtil)
           .withChoice(
             "attribute",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ATTR_TITLE),
+            ies.getTitles().getAttributeChoice(),
             () -> (
               buildAttributeRepresentitives(
                 // Create a "fake" multimap which contains an entry for every attribute with a null modifier
@@ -828,7 +830,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           )
           .withPrompt(
             "amount",
-            values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_AMOUNT_PROMPT).withPrefix(),
+            values -> ies.getMessages().getAttributeAmountPrompt().withPrefix(),
             Double::parseDouble,
             inp -> (
               cfg.get(ConfigKey.ERR_FLOATPARSE)
@@ -839,13 +841,13 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           )
           .withChoice(
             "slot",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_EQUIPMENT_TITLE),
+            ies.getTitles().getEquipmentChoice(),
             this::buildSlotRepresentitives,
             null
           )
           .withChoice(
             "operation",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_OPERATION_TITLE),
+            ies.getTitles().getOperationChoice(),
             this::buildOperationRepresentitives,
             null
           )
@@ -857,7 +859,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         Multimap<Attribute, AttributeModifier> attrs = meta.getAttributeModifiers();
         if (attrs == null) {
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_HAS_NONE)
+            ies.getMessages().getAttributesNone()
               .withPrefix()
               .asScalar()
           );
@@ -874,7 +876,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           inst.redraw("13");
 
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_CLEARED)
+            ies.getMessages().getAttributesReset()
               .withPrefix()
               .asScalar()
           );
@@ -890,7 +892,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           item.setItemMeta(meta);
 
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_REMOVED)
+            ies.getMessages().getAttributeRemoved()
               .withPrefix()
               .withVariable("attribute", formatConstant(attr.a().getKey().getKey()))
               .asScalar()
@@ -898,7 +900,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         }, singleChoiceGui, chatUtil)
           .withChoice(
             "attribute",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ATTR_TITLE),
+            ies.getTitles().getAttributeChoice(),
             () -> buildAttributeRepresentitives(attrs, true),
             null
           )
@@ -941,7 +943,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           inst.redraw("13,35");
 
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_FIREWORK_POWER_SET)
+            ies.getMessages().getFireworkPowerSet()
               .withPrefix()
               .withVariable("power", power)
               .asScalar()
@@ -949,7 +951,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         }, singleChoiceGui, chatUtil)
           .withPrompt(
             "power",
-            values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_FIREWORK_POWER_PROMPT).withPrefix(),
+            values -> ies.getMessages().getFireworkPowerPrompt().withPrefix(),
             Integer::parseInt,
             input -> cfg.get(ConfigKey.ERR_INTPARSE).withVariable("number", input).withPrefix(),
             null
@@ -981,20 +983,20 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           inst.redraw("13");
 
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_FIREWORK_EFFECTS_ADDED)
+            ies.getMessages().getFireworkEffectsAdded()
               .withPrefix()
               .withVariable("type", formatConstant(type.name()))
               .withVariable(
                 "colors",
                 String.join(
-                  cfg.get(ConfigKey.GUI_ITEMEDITOR_FIREWORK_EFFECTS_SEPARATOR).asScalar(),
+                  ies.getMessages().getFireworkEffectsSeparator().asScalar(),
                   colors.stream().map(t -> formatConstant(t.b())).toList()
                 )
               )
               .withVariable(
                 "fades",
                 String.join(
-                  cfg.get(ConfigKey.GUI_ITEMEDITOR_FIREWORK_EFFECTS_SEPARATOR).asScalar(),
+                  ies.getMessages().getFireworkEffectsSeparator().asScalar(),
                   fades.stream().map(t -> formatConstant(t.b())).toList()
                 )
               )
@@ -1005,14 +1007,14 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         }, singleChoiceGui, chatUtil)
           .withChoice(
             "type",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FIREWORK_TYPE_TITLE),
+            ies.getTitles().getFireworkTypeChoice(),
             this::buildFireworkTypeRepresentitives,
             null
           )
           .withChoice(
             multipleChoiceGui,
             "color",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FIREWORK_COLOR_TITLE),
+            ies.getTitles().getFireworkEffectColorChoice(),
             v -> generateColorReprs(
               this::colorToMaterial,
               cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_COLOR_NAME),
@@ -1023,7 +1025,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withChoice(
             multipleChoiceGui,
             "fade",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FIREWORK_FADE_TITLE),
+            ies.getTitles().getFireworkFadeColorChoice(),
             v -> generateColorReprs(
               this::colorToMaterial,
               cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_COLOR_NAME),
@@ -1034,14 +1036,14 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           )
           .withYesNo(
             yesNoGui, "flicker",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_YESNO_FLICKER_TITLE),
+            ies.getTitles().getFireworkFlickerYesNo(),
             cfg.get(ConfigKey.GUI_ITEMEDITOR_YESNO_FLICKER_LORE_YES),
             cfg.get(ConfigKey.GUI_ITEMEDITOR_YESNO_FLICKER_LORE_NO),
             null
           )
           .withYesNo(
             yesNoGui, "trail",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_YESNO_TRAIL_TITLE),
+            ies.getTitles().getFireworkTrailYesNo(),
             cfg.get(ConfigKey.GUI_ITEMEDITOR_YESNO_TRAIL_LORE_YES),
             cfg.get(ConfigKey.GUI_ITEMEDITOR_YESNO_TRAIL_LORE_NO),
             null
@@ -1054,7 +1056,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       if (key == 3) {
         if (fm.getEffects().size() == 0) {
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_FIREWORK_EFFECTS_NONE)
+            ies.getMessages().getFireworkEffectsNone()
               .withPrefix()
               .asScalar()
           );
@@ -1064,20 +1066,22 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         new UserInputChain(inst, values ->  {
           int index = (int) values.get("index");
 
+          FireworkEffect eff = fm.getEffects().get(index);
           fm.removeEffect(index);
           item.setItemMeta(fm);
           inst.redraw("13");
 
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_FIREWORK_EFFECTS_REMOVED)
+            ies.getMessages().getFireworkEffectsRemoved()
               .withPrefix()
               .withVariable("index", index + 1)
+              .withVariable("type", formatConstant(eff.getType().name()))
               .asScalar()
           );
         }, singleChoiceGui, chatUtil)
           .withChoice(
             "index",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_EFFECT_TITLE),
+            ies.getTitles().getFireworkEffectChoice(),
             () -> buildFireworkEffectRepresentitives(fm.getEffects()),
             null
           )
@@ -1089,7 +1093,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       if (key == 4) {
         if (fm.getEffects().size() == 0) {
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_FIREWORK_EFFECTS_NONE)
+            ies.getMessages().getFireworkEffectsNone()
               .withPrefix()
               .asScalar()
           );
@@ -1101,7 +1105,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         inst.redraw("13,35");
 
         p.sendMessage(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_FIREWORK_EFFECTS_RESET)
+          ies.getMessages().getFireworkEffectsReset()
             .withPrefix()
             .asScalar()
         );
@@ -1144,7 +1148,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         inst.redraw("13,37");
 
         p.sendMessage(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_COMPASS_LOCATION_SET)
+          ies.getMessages().getCompassLocationSet()
             .withPrefix()
             .withVariable("location", stringifyLocation(p.getLocation()))
             .asScalar()
@@ -1156,7 +1160,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       if (key == 2) {
         if (!cm.hasLodestone()) {
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_COMPASS_LOCATION_NONE)
+            ies.getMessages().getCompassLocationNone()
               .withPrefix()
               .asScalar()
           );
@@ -1168,7 +1172,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         inst.redraw("13,37");
 
         p.sendMessage(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_COMPASS_LOCATION_RESET)
+          ies.getMessages().getCompassLocationReset()
             .withPrefix()
             .asScalar()
         );
@@ -1203,7 +1207,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         PlayerTextureModel ownerTextures = textures.getTextures(owner, false).orElse(null);
         if (ownerTextures == null) {
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_NOT_LOADABLE)
+            ies.getMessages().getSkullownerNotLoadable()
               .withPrefix()
               .withVariable("owner", owner)
               .asScalar()
@@ -1224,7 +1228,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         item.setItemMeta(skullMeta);
 
         p.sendMessage(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_CHANGED)
+          ies.getMessages().getSkullownerSet()
             .withPrefix()
             .withVariable("owner", ownerTextures.getName())
             .asScalar()
@@ -1232,8 +1236,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       }, singleChoiceGui, chatUtil)
         .withPrompt(
           "owner",
-          values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_PROMPT)
-            .withPrefix(),
+          values -> ies.getMessages().getSkullownerPrompt().withPrefix(),
           s -> s, null, null
         )
         .start();
@@ -1303,7 +1306,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         }, singleChoiceGui, chatUtil)
           .withChoice(
             "type",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_POTION_TYPE_TITLE),
+            ies.getTitles().getPotionTypeChoice(),
             () -> generatePotionTypeReprs(
               cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_POTION_TYPE_NAME),
               cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_POTION_TYPE_LORE)
@@ -1319,47 +1322,106 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       if (key == 2) {
         PotionData data = potionMeta.getBasePotionData();
 
-        if (!data.getType().isExtendable()) {
+        // Is upgraded, try to extend
+        if (data.isUpgraded()) {
+          // Not extendable, upgrading is the only thing possible
+          if (!data.getType().isExtendable()) {
+            p.sendMessage(
+              ies.getMessages().getPotioneffectUpgradedAlready()
+                .withPrefix()
+                .asScalar()
+            );
+            return;
+          }
+
+          potionMeta.setBasePotionData(new PotionData(data.getType(), true, false));
+
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_NOT_EXTENDABLE)
-              .withPrefixes()
+            ies.getMessages().getPotioneffectExtended()
+              .withPrefix()
               .asScalar()
           );
-          return;
         }
 
-        potionMeta.setBasePotionData(new PotionData(data.getType(), true, false));
+        // Is extended, try to upgrade
+        else if (data.isExtended()) {
+          // Not upgradable, extending is the only thing possible
+          if (!data.getType().isUpgradeable()) {
+            p.sendMessage(
+              ies.getMessages().getPotioneffectExtendedAlready()
+                .withPrefix()
+                .asScalar()
+            );
+            return;
+          }
+
+          potionMeta.setBasePotionData(new PotionData(data.getType(), false, true));
+
+          p.sendMessage(
+            ies.getMessages().getPotioneffectUpgraded()
+              .withPrefix()
+              .asScalar()
+          );
+        }
+
+        // Has no enhancement yet
+        else {
+          // Start with an extension trial
+          if (data.getType().isExtendable()) {
+            potionMeta.setBasePotionData(new PotionData(data.getType(), true, false));
+
+            p.sendMessage(
+              ies.getMessages().getPotioneffectExtended()
+                .withPrefix()
+                .asScalar()
+            );
+          }
+
+          // Extension unsupported, try upgrading
+          else if (data.getType().isUpgradeable()) {
+            potionMeta.setBasePotionData(new PotionData(data.getType(), false, true));
+
+            p.sendMessage(
+              ies.getMessages().getPotioneffectUpgraded()
+                .withPrefix()
+                .asScalar()
+            );
+          }
+
+          // No enhancements are supported
+          else {
+            p.sendMessage(
+              ies.getMessages().getPotioneffectEnhancementUnsupported()
+                .withPrefix()
+                .asScalar()
+            );
+          }
+        }
+
         item.setItemMeta(potionMeta);
         inst.redraw("13");
-
-        p.sendMessage(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_DURATION_EXTENDED)
-            .withPrefixes()
-            .asScalar()
-        );
-
         return;
       }
 
-      // Upgrade main effect level
+      // Remove enhancements
       if (key == 3) {
         PotionData data = potionMeta.getBasePotionData();
 
-        if (!data.getType().isUpgradeable()) {
+        if (!(data.isExtended() || data.isUpgraded())) {
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_NOT_UPGRADABLE)
+            ies.getMessages().getPotioneffectEnhancementNone()
               .withPrefixes()
               .asScalar()
           );
           return;
         }
 
-        potionMeta.setBasePotionData(new PotionData(data.getType(), false, true));
+        potionMeta.setBasePotionData(new PotionData(data.getType(), false, false));
         item.setItemMeta(potionMeta);
         inst.redraw("13");
 
         p.sendMessage(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_LEVEL_UPGRADED)
+          ies.getMessages().getPotioneffectEnhancementRemove()
             .withPrefixes()
             .asScalar()
         );
@@ -1383,7 +1445,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           item.setItemMeta(meta);
 
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_ADDED)
+            ies.getMessages().getPotioneffectCustomAdded()
               .withPrefix()
               .withVariable("effect", formatConstant(type.getName()))
               .withVariable("duration", duration / 20)
@@ -1393,22 +1455,20 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         }, singleChoiceGui, chatUtil)
           .withChoice(
             "type",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_POTION_EFFECT_TITLE),
+            ies.getTitles().getPotionEffectChoice(),
             () -> buildPotionEffectRepresentitives(null),
             null
           )
           .withPrompt(
             "duration",
-            values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_DURATION_PROMPT)
-              .withPrefix(),
+            values -> ies.getMessages().getPotioneffectDurationPrompt().withPrefix(),
             Integer::parseInt,
             input -> cfg.get(ConfigKey.ERR_INTPARSE).withVariable("number", input).withPrefix(),
             null
           )
           .withPrompt(
             "amplifier",
-            values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_AMPLIFIER_PROMPT)
-              .withPrefix(),
+            values -> ies.getMessages().getPotioneffectAmplifierPrompt().withPrefix(),
             Integer::parseInt,
             input -> cfg.get(ConfigKey.ERR_INTPARSE).withVariable("number", input).withPrefix(),
             null
@@ -1424,7 +1484,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
         if (secondaries.size() == 0) {
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_NO_SECONDARY)
+            ies.getMessages().getPotioneffectCustomNone()
               .withPrefixes()
               .asScalar()
           );
@@ -1438,7 +1498,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           item.setItemMeta(meta);
 
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_REMOVED)
+            ies.getMessages().getPotioneffectCustomRemove()
               .withPrefix()
               .withVariable("effect", formatConstant(effect.getType().getName()))
               .asScalar()
@@ -1446,7 +1506,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         }, singleChoiceGui, chatUtil)
           .withChoice(
             "effect",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_POTION_EFFECT_TITLE),
+            ies.getTitles().getPotionEffectChoice(),
             () -> buildPotionEffectRepresentitives(potionMeta.getCustomEffects()),
             null
           )
@@ -1459,7 +1519,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       if (key == 6) {
         if (!potionMeta.clearCustomEffects()) {
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_NO_SECONDARY)
+            ies.getMessages().getPotioneffectCustomNone()
               .withPrefix()
               .asScalar()
           );
@@ -1470,7 +1530,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         inst.redraw("13");
 
         p.sendMessage(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_SECONDARIES_CLEARED)
+          ies.getMessages().getPotioneffectCustomReset()
             .withPrefix()
             .asScalar()
         );
@@ -1546,7 +1606,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         if (key == 2) {
           if (bookMeta.getTitle() == null) {
             p.sendMessage(
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_TITLE_NOT_SET)
+              ies.getMessages().getBookTitleNone()
                 .withPrefix()
                 .asScalar()
             );
@@ -1558,7 +1618,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           inst.redraw("13");
 
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_TITLE_RESET)
+            ies.getMessages().getBookTitleReset()
               .withPrefix()
               .asScalar()
           );
@@ -1566,13 +1626,13 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           return;
         }
 
-        promptPlainText(inst, cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_TITLE_PROMPT), title -> {
+        promptPlainText(inst, ies.getMessages().getBookTitlePrompt().withPrefix(), title -> {
           bookMeta.setTitle(title);
           item.setItemMeta(bookMeta);
           inst.redraw("13");
 
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_TITLE_SET)
+            ies.getMessages().getBookTitleSet()
               .withPrefix()
               .withVariable("title", title)
               .asScalar()
@@ -1587,7 +1647,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         if (key == 4) {
           if (bookMeta.getAuthor() == null) {
             p.sendMessage(
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_AUTHOR_NOT_SET)
+              ies.getMessages().getBookAuthorNone()
                 .withPrefix()
                 .asScalar()
             );
@@ -1599,7 +1659,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           inst.redraw("13");
 
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_AUTHOR_RESET)
+            ies.getMessages().getBookAuthorReset()
               .withPrefix()
               .asScalar()
           );
@@ -1607,13 +1667,13 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           return;
         }
 
-        promptPlainText(inst, cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_AUTHOR_PROMPT), author -> {
+        promptPlainText(inst, ies.getMessages().getBookAuthorPrompt().withPrefix(), author -> {
           bookMeta.setAuthor(author);
           item.setItemMeta(bookMeta);
           inst.redraw("13");
 
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_AUTHOR_SET)
+            ies.getMessages().getBookAuthorSet()
               .withPrefix()
               .withVariable("author", author)
               .asScalar()
@@ -1628,7 +1688,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         if (key == 6) {
           if (bookMeta.getGeneration() == null) {
             p.sendMessage(
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_GENERATION_NOT_SET)
+              ies.getMessages().getBookGenerationNone()
                 .withPrefix()
                 .asScalar()
             );
@@ -1640,7 +1700,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           inst.redraw("13");
 
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_GENERATION_RESET)
+            ies.getMessages().getBookGenerationReset()
               .withPrefix()
               .asScalar()
           );
@@ -1656,7 +1716,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           inst.redraw("13");
 
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_GENERATION_SET)
+            ies.getMessages().getBookGenerationSet()
               .withPrefix()
               .withVariable("generation", formatConstant(gen.name()))
               .asScalar()
@@ -1664,7 +1724,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         }, singleChoiceGui, chatUtil)
           .withChoice(
             "generation",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_GENERATION_TITLE),
+            ies.getTitles().getGenerationChoice(),
             this::buildGenerationRepresentitives,
             null
           )
@@ -1683,14 +1743,14 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           inst.redraw("13");
 
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_PAGES_EDITED)
+            ies.getMessages().getBookEdited()
               .withPrefix()
               .asScalar()
           );
         }, singleChoiceGui, chatUtil)
           .withBookEditor(
             bookEditor, "result",
-            values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_PAGES_EDIT_PROMPT).withPrefix(),
+            values -> ies.getMessages().getBookEditPrompt().withPrefix(),
             values -> bookMeta.getPages()
           )
           .start();
@@ -1704,7 +1764,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         // Cannot remove the only page
         if (pages.size() == 1) {
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_PAGES_SINGLE)
+            ies.getMessages().getBookPageSingle()
               .withPrefixes()
               .asScalar()
           );
@@ -1719,7 +1779,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           item.setItemMeta(meta);
 
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_PAGE_REMOVED)
+            ies.getMessages().getBookPageRemoved()
               .withPrefix()
               .withVariable("page_number", index + 1)
               .asScalar()
@@ -1727,7 +1787,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         }, singleChoiceGui, chatUtil)
           .withChoice(
             "index",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_PAGE_TITLE),
+            ies.getTitles().getPageChoice(),
             () -> buildPageRepresentitives(bookMeta.getPages()),
             null
           )
@@ -1765,7 +1825,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           inst.redraw("13");
 
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_BANNER_PATTERNS_ADDED)
+            ies.getMessages().getBannerPatternsAdded()
               .withPrefix()
               .withVariable("type", formatConstant(type.name()))
               .withVariable("color", formatConstant(color.name()))
@@ -1774,13 +1834,13 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         }, singleChoiceGui, chatUtil)
           .withChoice(
             "type",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_PATTERN_TYPE_TITLE),
+            ies.getTitles().getBannerPatternTypeChoice(),
             () -> buildBannerPatternTypeRepresentitives(item.getType()),
             null
           )
           .withChoice(
             "color",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_DYE_COLOR_TITLE),
+            ies.getTitles().getBannerDyeColorChoice(),
             v -> buildBannerDyeColorRepresentitives(item.getType(), (PatternType) v.get("type")),
             null
           )
@@ -1794,7 +1854,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
         if (patterns.size() == 0) {
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_BANNER_PATTERNS_NONE)
+            ies.getMessages().getBannerPatternsNone()
               .withPrefixes()
               .asScalar()
           );
@@ -1804,21 +1864,22 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         new UserInputChain(inst, values -> {
           int index = (int) values.get("index");
 
-          patterns.remove(index);
+          Pattern patt = patterns.remove(index);
           bm.setPatterns(patterns);
           item.setItemMeta(meta);
           inst.redraw("13");
 
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_BANNER_PATTERNS_REMOVED)
+            ies.getMessages().getBannerPatternsRemoved()
               .withPrefix()
               .withVariable("index", index + 1)
+              .withVariable("type", formatConstant(patt.getPattern().name()))
               .asScalar()
           );
         }, singleChoiceGui, chatUtil)
           .withChoice(
             "index",
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_PATTERNS_TITLE),
+            ies.getTitles().getBannerPatternChoice(),
             () -> buildBannerPatternRepresentitives(item.getType(), patterns),
             null
           )
@@ -1830,7 +1891,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       if (key == 3) {
         if (bm.getPatterns().size() == 0) {
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_BANNER_PATTERNS_NONE)
+            ies.getMessages().getBannerPatternsNone()
               .withPrefixes()
               .asScalar()
           );
@@ -1842,7 +1903,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         inst.redraw("13");
 
         p.sendMessage(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_BANNER_PATTERNS_CLEARED)
+          ies.getMessages().getBannerPatternsCleared()
             .withPrefix()
             .asScalar()
         );
@@ -1913,7 +1974,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
       if (color == null) {
         inst.getViewer().sendMessage(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_COLOR_RESET)
+          ies.getMessages().getColorReset()
             .withPrefix()
             .asScalar()
         );
@@ -1922,7 +1983,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       }
 
       inst.getViewer().sendMessage(
-        cfg.get(ConfigKey.GUI_ITEMEDITOR_COLOR_CHANGED)
+        ies.getMessages().getColorSet()
           .withPrefix()
           .withVariable("color", formatConstant(color.b()))
           .asScalar()
@@ -1947,7 +2008,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       // Has no color applied yet (leather always has a color - brown)
       if (color == null || (meta instanceof LeatherArmorMeta && color.equals(Color.fromRGB(0xA06540)))) {
         inst.getViewer().sendMessage(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_COLOR_NONE)
+          ies.getMessages().getColorNone()
             .withPrefix()
             .asScalar()
         );
@@ -1982,8 +2043,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     if (custom) {
       chain.withPrompt(
         "color",
-        values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_COLOR_PROMPT)
-          .withPrefix(),
+        values -> ies.getMessages().getColorPrompt().withPrefix(),
         s -> {
           String[] data = s.split(" ");
           return new Tuple<>(
@@ -1996,7 +2056,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           );
         },
         input -> (
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_COLOR_INVALID_FORMAT)
+          ies.getMessages().getColorInvalid()
             .withPrefix()
             .withVariable("input", input)
         ),
@@ -2008,7 +2068,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     else {
       chain.withChoice(
         "color",
-        cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_COLOR_TITLE),
+        ies.getTitles().getColorChoice(),
         () -> generateColorReprs(
           c -> item.getType(),
           cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_COLOR_NAME),
@@ -2168,14 +2228,14 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
                 .withVariable(
                   "colors",
                   String.join(
-                    cfg.get(ConfigKey.GUI_ITEMEDITOR_FIREWORK_EFFECTS_SEPARATOR).asScalar(),
+                    ies.getMessages().getFireworkEffectsSeparator().asScalar(),
                     effect.getColors().stream().map(this::stringifyColor).toList()
                   )
                 )
                 .withVariable(
                   "fades",
                   String.join(
-                    cfg.get(ConfigKey.GUI_ITEMEDITOR_FIREWORK_EFFECTS_SEPARATOR).asScalar(),
+                    ies.getMessages().getFireworkEffectsSeparator().asScalar(),
                     effect.getFadeColors().stream().map(this::stringifyColor).toList()
                   )
                 )
@@ -2377,12 +2437,13 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       ))
       .map(m -> (
           new Tuple<>((Object) m, (
-            new ItemStackBuilder(m)
-              .withName(
-                cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_MATERIAL_NAME)
-                  .withVariable("hr_type", formatConstant(m.name()))
+            ies.getItems().getChoices().getMaterial()
+              .asItem(
+                ConfigValue.makeEmpty()
+                  .withVariable("material", m.name())
+                  .withVariable("material_hr", formatConstant(m.name()))
+                  .exportVariables()
               )
-              .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_MATERIAL_LORE))
               .build()
           ))
         )
@@ -2566,7 +2627,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     Function<Enchantment, Boolean> isActive,
     Function<Enchantment, Integer> activeLevel
   ) {
-    List<Enchantment> enchantments = new ArrayList<>();
+    List<Tuple<String, Enchantment>> enchantments = new ArrayList<>();
 
     // Get all available enchantments from the abstract enchantment class's list of constant fields
     try {
@@ -2575,7 +2636,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         .toList();
 
       for (Field constant : constants)
-        enchantments.add((Enchantment) constant.get(null));
+        enchantments.add(new Tuple<>(constant.getName(), (Enchantment) constant.get(null)));
     } catch (Exception ex) {
       logger.logError(ex);
     }
@@ -2583,30 +2644,24 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     // Representitive items for each enchantment
     return enchantments.stream()
       // Sort by relevance
-      .sorted(Comparator.comparing(isNative, Comparator.reverseOrder()))
+      .sorted(Comparator.comparing(t -> isNative.apply(t.b()), Comparator.reverseOrder()))
       .map(ench -> {
-          boolean has = isActive.apply(ench);
+          boolean has = isActive.apply(ench.b());
           int level = -1;
 
           if (has)
-            level = activeLevel.apply(ench);
+            level = activeLevel.apply(ench.b());
 
           return new Tuple<>((Object) ench, (
-            new ItemStackBuilder(has ? Material.ENCHANTED_BOOK : enchantmentToMaterial(ench))
-              .withEnchantment(ench, 1)
-              .withName(
-                cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_NAME)
-                  .withVariable("enchantment", formatConstant(ench.getKey().getKey()))
-              )
-              .withLore(
-                cfg.get(has ? ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_LORE_ACTIVE : ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_LORE_INACTIVE)
-                  .withVariable(
-                    "state",
-                    cfg.get(has ? ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_ACTIVE : ConfigKey.GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_INACTIVE)
-                      .asScalar()
-                  )
+            (has ? ies.getItems().getChoices().getEnchantmentActive() : ies.getItems().getChoices().getEnchantmentInactive())
+              .asItem(
+                ConfigValue.makeEmpty()
+                  .withVariable("enchantment", ench.a())
+                  .withVariable("icon", enchantmentToMaterial(ench.b()).name())
+                  .withVariable("enchantment_hr", formatConstant(ench.b().getKey().getKey()))
+                  .withVariable("state", formatConstant(String.valueOf(has)))
                   .withVariable("level", level)
-              )
+                  .exportVariables())
               .build()
           ));
         }

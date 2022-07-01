@@ -19,4 +19,7 @@ public class IEItemsSection extends AConfigSection {
   @CSAlways
   private IEItemsHomeSection home;
 
+  @CSAlways
+  private IEItemsChoicesSection choices;
+
 }

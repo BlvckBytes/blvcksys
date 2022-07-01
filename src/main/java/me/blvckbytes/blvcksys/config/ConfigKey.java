@@ -1438,7 +1438,6 @@ public enum ConfigKey {
   //                           MultipleChoice GUI                            //
   //=========================================================================//
 
-  GUI_MULTIPLECHOICE_TITLE("gui.multiplechoice.title", "$0Auswahl $2{{type}}"),
   GUI_MULTIPLECHOICE_SELECTED_LORE(
     "gui.multiplechoice.selected.lore",
     " ",
@@ -1461,7 +1460,6 @@ public enum ConfigKey {
   //                            SingleChoice GUI                             //
   //=========================================================================//
 
-  GUI_SINGLECHOICE_TITLE("gui.singlechoice.title", "$0Auswahl $2{{type}}"),
   GUI_SINGLECHOICE_SEARCH_NAME("gui.singlechoice.search.name", "$0» $2Suche $0«"),
   GUI_SINGLECHOICE_SEARCH_LORE(
     "gui.singlechoice.search.lore",
@@ -1473,15 +1471,6 @@ public enum ConfigKey {
   //                             ItemEditor GUI                              //
   //=========================================================================//
 
-  GUI_ITEMEDITOR_AMOUNT_CHANGED("gui.itemeditor.amount.changed", "$0Du hast die Anzahl auf $2{{amount}} $0gesetzt."),
-  GUI_ITEMEDITOR_CHOICE_MATERIAL_TITLE("gui.itemeditor.choice.material.title", "$2Material"),
-  GUI_ITEMEDITOR_CHOICE_MATERIAL_NAME("gui.itemeditor.choice.material.name", "$2{{hr_type}}"),
-  GUI_ITEMEDITOR_CHOICE_MATERIAL_LORE(
-    "gui.itemeditor.choice.material.lore",
-    " ",
-    "$0Klicke um dieses Material zu wählen"
-  ),
-  GUI_ITEMEDITOR_CHOICE_FLAG_TITLE("gui.itemeditor.choice.flag.title", "$2Flags"),
   GUI_ITEMEDITOR_CHOICE_FLAG_NAME("gui.itemeditor.choice.flag.name", "$2{{flag}}"),
   GUI_ITEMEDITOR_CHOICE_FLAG_ACTIVE("gui.itemeditor.choice.flag.inactive", "&aAktiviert"),
   GUI_ITEMEDITOR_CHOICE_FLAG_INACTIVE("gui.itemeditor.choice.flag.active", "&cDeaktiviert"),
@@ -1491,26 +1480,6 @@ public enum ConfigKey {
     "$0Aktueller Zustand: {{state}}",
     "$0Klicke, um den Zustand zu wechseln."
   ),
-  GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_TITLE("gui.itemeditor.choice.enchantment.title", "$2Verzauberung"),
-  GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_NAME("gui.itemeditor.choice.enchantment.name", "$2{{enchantment}}"),
-  GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_ACTIVE("gui.itemeditor.choice.enchantment.inactive", "&cBereits angewandt"),
-  GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_INACTIVE("gui.itemeditor.choice.enchantment.active", "&aNoch nicht angewandt"),
-  GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_LORE_ACTIVE(
-    "gui.itemeditor.choice.enchantments.lore.active",
-    " ",
-    "$0Aktueller Zustand: {{state}}",
-    "$0Angewandter Level: $2{{level}}",
-    " ",
-    "$0Klicke um die Verzauberung zu &centfernen$0."
-  ),
-  GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_LORE_INACTIVE(
-    "gui.itemeditor.choice.enchantments.lore.inactive",
-    " ",
-    "$0Aktueller Zustand: {{state}}",
-    " ",
-    "$0Klicke um die Verzauberung &ahinzuzufügen$0."
-  ),
-  GUI_ITEMEDITOR_CHOICE_LORE_TITLE("gui.itemeditor.choice.lore.title", "$2Lore"),
   GUI_ITEMEDITOR_CHOICE_LORE_NAME("gui.itemeditor.choice.lore.name", "$2Zeile {{line_number}}"),
   GUI_ITEMEDITOR_CHOICE_LORE_LORE(
     "gui.itemeditor.choice.lore.lore",
@@ -1518,42 +1487,6 @@ public enum ConfigKey {
     "$0Inhalt: ",
     "{{line_content}}"
   ),
-  GUI_ITEMEDITOR_DURABILITY_NAME("gui.itemeditor.durability.name", "$0» $2Haltbarkeit $0«"),
-  GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE("gui.itemeditor.durability.unbreakable", "$2Unzerstörbar"),
-  GUI_ITEMEDITOR_DURABILITY_BREAKABLE("gui.itemeditor.durability.breakable", "$2{{current_durability}}$0/$2{{max_durability}}"),
-  GUI_ITEMEDITOR_DURABILITY_NON_BREAKABLE("gui.itemeditor.durability.non_breakable", "$2Nicht beschädigbar"),
-  GUI_ITEMEDITOR_DURABILITY_LORE(
-    "gui.itemeditor.durability.lore",
-    " ",
-    "$0Haltbarkeit: $2{{durability}}",
-    " ",
-    "$0[$21$0]: $2Haltbarkeit erhöhen",
-    "$0[$22$0]: $2Unzerstörbar setzen",
-    "$0[$23$0]: $2Haltbarkeit verringern",
-    "$0[$24$0]: $2Unzerstörbarkeit entfernen"
-  ),
-  GUI_ITEMEDITOR_DURABILITY_NOT_BREAKABLE("gui.itemeditor.durability.not_breakable", "$0Dieses Item ist $4nicht beschädigbar$0!"),
-  GUI_ITEMEDITOR_DURABILITY_CHANGED("gui.itemeditor.durability.changed", "$0Die Haltbarkeit dieses Items wurde auf $2{{current_durability}}$0/$2{{max_durability}} $0gesetzt."),
-  GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_ACTIVE("gui.itemeditor.durability.unbreakable_active", "$0Das Item ist nun $2Unzerstörbar$0."),
-  GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_INACTIVE("gui.itemeditor.durability.unbreakable_inactive", "$0Das Item ist nun $2nicht mehr $0unzerstörbar."),
-  GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_NOT_ACTIVE("gui.itemeditor.durability.unbreakable_not_active", "$0Das Item ist $4nicht unzerstörbar$0!"),
-  GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE_NOT_INACTIVE("gui.itemeditor.durability.unbreakable_not_inactive", "$0Das Item ist $4bereits unzerstörbar$0!"),
-  GUI_ITEMEDITOR_ATTRIBUTES_NAME("gui.itemeditor.attributes.name", "$0» $2Attribute $0«"),
-  GUI_ITEMEDITOR_ATTRIBUTES_LORE(
-    "gui.itemeditor.attributes.lore",
-    " ",
-    "$0Füge Attribute $2hinzu $0oder",
-    "$2entferne $0bestehende Attribute.",
-    " ",
-    "$0[$21$0]: $2Attribut hinzufügen",
-    "$0[$22$0]: $2Attribut wählen und entfernen",
-    "$0[$23$0]: $2Attribute leeren"
-  ),
-  GUI_ITEMEDITOR_ATTRIBUTES_HAS_NONE("gui.itemeditor.attributes.has_none", "$0Dieses Item besitzt $4keine Attribute$0!"),
-  GUI_ITEMEDITOR_ATTRIBUTES_CLEARED("gui.itemeditor.attributes.cleared", "$0Alle Attribute dieses Items wurden $2entfernt$0."),
-  GUI_ITEMEDITOR_ATTRIBUTES_REMOVED("gui.itemeditor.attributes.removed", "$0Das Attribut $2{{attribute}} $0wurde von diesem Item $2entfernt$0."),
-  GUI_ITEMEDITOR_ATTRIBUTES_ADDED("gui.itemeditor.attributes.added", "$0Das Attribut $2{{attribute}} $0wurde diesem Item $2hinzugefügt$0."),
-  GUI_ITEMEDITOR_CHOICE_ATTR_TITLE("gui.itemeditor.choice.attr.title", "$2Attribute"),
   GUI_ITEMEDITOR_CHOICE_ATTR_NAME("gui.itemeditor.choice.attr.name", "$2{{attribute}}"),
   GUI_ITEMEDITOR_CHOICE_ATTR_EXISTING_LORE(
     "gui.itemeditor.choice.attr.existing_lore",
@@ -1569,137 +1502,42 @@ public enum ConfigKey {
     "$0Erstelle eine $2neue $0Instanz",
     "$0dieses $2Attributs$0."
   ),
-  GUI_ITEMEDITOR_ATTRIBUTES_AMOUNT_PROMPT("gui.itemeditor.attributes.amount_prompt", "$0Bitte gib den gewünschten $2Betrag $0in den $2Chat $0ein."),
-  GUI_ITEMEDITOR_CHOICE_EQUIPMENT_TITLE("gui.itemeditor.choice.equipment.title", "$2Equipment"),
   GUI_ITEMEDITOR_CHOICE_EQUIPMENT_NAME("gui.itemeditor.choice.equipment.name", "$2{{slot}}"),
   GUI_ITEMEDITOR_CHOICE_EQUIPMENT_LORE(
     "gui.itemeditor.choice.equipment.lore",
     " ",
     "$0Klicke um diesen Equipment-Slot zu wählen."
   ),
-  GUI_ITEMEDITOR_CHOICE_OPERATION_TITLE("gui.itemeditor.choice.operation.title", "$2Operator"),
   GUI_ITEMEDITOR_CHOICE_OPERATION_NAME("gui.itemeditor.choice.operation.name", "$2{{operation}}"),
   GUI_ITEMEDITOR_CHOICE_OPERATION_LORE(
     "gui.itemeditor.choice.operation.lore",
     " ",
     "$0Klicke um diese Operation zu wählen."
   ),
-  GUI_ITEMEDITOR_SKULLOWNER_CHANGED("gui.itemeditor.skullowner.changed", "$0Der $2Kopfbesitzer $0dieses Items wurde auf $2{{owner}} $0geändert."),
-  GUI_ITEMEDITOR_SKULLOWNER_NAME("gui.itemeditor.skullowner.name", "$0» $2Kopfbesitzer $0«"),
-  GUI_ITEMEDITOR_SKULLOWNER_LORE(
-    "gui.itemeditor.skullowner.lore",
-    " ",
-    "$0Ändere den $2Besitzer $0dieses Kopfes."
-  ),
-  GUI_ITEMEDITOR_SKULLOWNER_PROMPT("gui.itemeditor.skullowner.prompt", "$0Bitte gib den gewünschten $2Kopfbesitzer $0in den $2Chat $0ein."),
-  GUI_ITEMEDITOR_SKULLOWNER_NOT_LOADABLE("gui.itemeditor.skullowner.not_loadable", "$0Der Skin von $4{{owner}} $0konnte nicht geladen werden!"),
-  GUI_ITEMEDITOR_LEATHERCOLOR_NAME("gui.itemeditor.leathercolor.name", "$0» $2Lederfarbe $0«"),
-  GUI_ITEMEDITOR_LEATHERCOLOR_LORE(
-    "gui.itemeditor.leathercolor.lore",
-    " ",
-    "$0Ändere die $2Farbe $0dieses $2Lederteils$0.",
-    " ",
-    "$0[$21$0]: $2Farbwert aus Liste",
-    "$0[$22$0]: $2RGB Farbwert",
-    "$0[$23$0]: $2Farbe zurücksetzen"
-  ),
-  GUI_ITEMEDITOR_POTIONEFFECTS_NAME("gui.itemeditor.potioneffects.name", "$0» $2Trankeffekte $0«"),
-  GUI_ITEMEDITOR_POTIONEFFECTS_LORE(
-    "gui.itemeditor.potioneffects.lore",
-    " ",
-    "$0Ändere die $2Effekte $0dieses $2Tranks$0.",
-    " ",
-    "$0[$21$0]: $2Haupteffekt ändern",
-    "$0[$22$0]: $2Verbesserte Dauer",
-    "$0[$23$0]: $2Verbesserte Stufe",
-    "$0[$24$0]: $2Sekundäreffekt hinzufügen",
-    "$0[$25$0]: $2Sekundäreffekt entfernen",
-    "$0[$26$0]: $2Sekundäreffekte leeren",
-    "$0[$27$0]: $2Farbwert aus Liste",
-    "$0[$28$0]: $2RGB Farbwert",
-    "$0[$29$0]: $2Farbe zurücksetzen"
-  ),
-  GUI_ITEMEDITOR_POTIONEFFECTS_DURATION_EXTENDED("gui.itemeditor.potioneffects.duration_extended", "&7Du hast die $2Dauer $0dieses Tranks verbessert."),
-  GUI_ITEMEDITOR_POTIONEFFECTS_NOT_EXTENDABLE("gui.itemeditor.potioneffects.not_extendable", "&7Dieser Trank unterstützt keine &cverbesserte Dauer&7!"),
-  GUI_ITEMEDITOR_POTIONEFFECTS_LEVEL_UPGRADED("gui.itemeditor.potioneffects.level_upgraded", "&7Du hast die $2Stufe $0dieses Tranks verbessert."),
-  GUI_ITEMEDITOR_POTIONEFFECTS_NOT_UPGRADABLE("gui.itemeditor.potioneffects.not_upgradable", "&7Dieser Trank unterstützt keine &cverbesserte Stufe&7!"),
-  GUI_ITEMEDITOR_CHOICE_POTION_TYPE_TITLE("gui.itemeditor.choice.potion_type.title", "$2Tranktyp"),
   GUI_ITEMEDITOR_CHOICE_POTION_TYPE_NAME("gui.itemeditor.choice.potion_type.name", "$2{{type}}"),
   GUI_ITEMEDITOR_CHOICE_POTION_TYPE_LORE(
     "gui.itemeditor.choice.potion_type.lore",
     " ",
     "$0Klicke um diesen Typ zu wählen."
   ),
-  GUI_ITEMEDITOR_POTIONEFFECTS_NO_SECONDARY("gui.itemeditor.potioneffects.no_secondary", "$0Dieses Item hat noch $4keine $0Sekundäreffekte!"),
-  GUI_ITEMEDITOR_POTIONEFFECTS_SECONDARIES_CLEARED("gui.itemeditor.potioneffects.secondaries_cleared", "$0Alle $2Sekundäreffekte $0dieses Items wurden gelöscht."),
-  GUI_ITEMEDITOR_CHOICE_POTION_EFFECT_TITLE("gui.itemeditor.choice.potion_effect.title", "$2Trankeffect"),
   GUI_ITEMEDITOR_CHOICE_POTION_EFFECT_NAME("gui.itemeditor.choice.potion_effect.name", "$2{{effect}}"),
   GUI_ITEMEDITOR_CHOICE_POTION_EFFECT_LORE(
     "gui.itemeditor.choice.potion_effect.lore",
     " ",
     "$0Klicke um diesen Effekt zu wählen."
   ),
-  GUI_ITEMEDITOR_POTIONEFFECTS_REMOVED("gui.itemeditor.potioneffects.removed", "$0Der Effekt $2{{effect}} $0wurde entfernt."),
-  GUI_ITEMEDITOR_POTIONEFFECTS_ADDED("gui.itemeditor.potioneffects.added", "$0Der Effekt $2{{effect}} $0wurde auf &dStufe {{level}} &7mit &d{{duration}} Sekunden &7hinzugefügt."),
-  GUI_ITEMEDITOR_POTIONEFFECTS_DURATION_PROMPT("gui.itemeditor.potioneffects.duration_prompt", "$0Bitte gib die gewünschte $2Dauer in Sekunden &7in den $2Chat $0ein."),
-  GUI_ITEMEDITOR_POTIONEFFECTS_AMPLIFIER_PROMPT("gui.itemeditor.potioneffects.amplifier_prompt", "$0Bitte gib die gewünschte $2Stufe &7in den $2Chat $0ein."),
-  GUI_ITEMEDITOR_MAP_NAME("gui.itemeditor.map.name", "$0» $2Karten $0«"),
-  GUI_ITEMEDITOR_MAP_LORE(
-    "gui.itemeditor.map.lore",
-    " ",
-    "$0Ändere die $2Eigenschaften $0dieser $2Karte$0.",
-    " ",
-    "$0[$21$0]: $2Farbwert aus Liste",
-    "$0[$22$0]: $2RGB Farbwert",
-    "$0[$23$0]: $2Farbe zurücksetzen"
-  ),
-  GUI_ITEMEDITOR_COLOR_CHANGED("gui.itemeditor.color.changed", "$0Die $2Farbe $0dieses Items wurde auf $2{{color}} $0geändert."),
-  GUI_ITEMEDITOR_COLOR_RESET("gui.itemeditor.color.reset", "$0Die Farbe wurde $2zurückgesetzt$0."),
-  GUI_ITEMEDITOR_COLOR_NONE("gui.itemeditor.color.none", "$0Dieses Item besitzt noch keine &cgewählte Farbe$0!"),
-  GUI_ITEMEDITOR_COLOR_PROMPT("gui.itemeditor.color.prompt", "$0Bitte gib den gewünschten $2Farbwert $0in den $2Chat $0ein (r g b)."),
-  GUI_ITEMEDITOR_COLOR_INVALID_FORMAT("gui.itemeditor.color.invalid_format", "$0Die Farbeingabe von $4{{input}} $0ist ungültig!"),
-  GUI_ITEMEDITOR_CHOICE_COLOR_TITLE("gui.itemeditor.choice.color.title", "$2Farbe"),
   GUI_ITEMEDITOR_CHOICE_COLOR_NAME("gui.itemeditor.choice.color.name", "$2{{color}}"),
   GUI_ITEMEDITOR_CHOICE_COLOR_LORE(
     "gui.itemeditor.choice.color.lore",
     " ",
     "$0Klicke um diese Farbe zu wählen."
   ),
-  GUI_ITEMEDITOR_BOOK_NAME("gui.itemeditor.book.name", "$0» $2Bücher $0«"),
-  GUI_ITEMEDITOR_BOOK_LORE(
-    "gui.itemeditor.book.lore",
-    " ",
-    "$0Ändere die $2Eigenschaften $0dieses $2Buches$0.",
-    " ",
-    "$0[$21$0]: $2Titel setzen",
-    "$0[$22$0]: $2Titel entfernen",
-    "$0[$23$0]: $2Author setzen",
-    "$0[$24$0]: $2Author entfernen",
-    "$0[$25$0]: $2Generation setzen",
-    "$0[$26$0]: $2Generation entfernen",
-    "$0[$27$0]: $2Seiten editieren",
-    "$0[$28$0]: $2Seite entfernen"
-  ),
-  GUI_ITEMEDITOR_BOOK_TITLE_SET("gui.itemeditor.book.title_set", "$0Der Titel des Buches wurde auf \"$2{{title}}$0\" gesetzt."),
-  GUI_ITEMEDITOR_BOOK_TITLE_NOT_SET("gui.itemeditor.book.title_not_set", "$0Dieses Buch besitzt noch keinen $4Titel$0."),
-  GUI_ITEMEDITOR_BOOK_TITLE_RESET("gui.itemeditor.book.title_reset", "$0Der Titel des Buches wurde $2zurückgesetzt$0."),
-  GUI_ITEMEDITOR_BOOK_TITLE_PROMPT("gui.itemeditor.book.title_prompt", "$0Bitte gib den gewünschten $2Titel $0in den $2Chat $0ein."),
-  GUI_ITEMEDITOR_BOOK_AUTHOR_SET("gui.itemeditor.book.author_set", "$0Der Author des Buches wurde auf \"$2{{author}}$0\" gesetzt."),
-  GUI_ITEMEDITOR_BOOK_AUTHOR_NOT_SET("gui.itemeditor.book.author_not_set", "$0Dieses Buch besitzt noch keinen $4Author$0."),
-  GUI_ITEMEDITOR_BOOK_AUTHOR_RESET("gui.itemeditor.book.author_reset", "$0Der Author des Buches wurde $2zurückgesetzt$0."),
-  GUI_ITEMEDITOR_BOOK_AUTHOR_PROMPT("gui.itemeditor.book.author_prompt", "$0Bitte gib den gewünschten $2Author $0in den $2Chat $0ein."),
-  GUI_ITEMEDITOR_BOOK_GENERATION_SET("gui.itemeditor.book.generation_set", "$0Die Generation des Buches wurde auf $2{{generation}} $0gesetzt."),
-  GUI_ITEMEDITOR_BOOK_GENERATION_NOT_SET("gui.itemeditor.book.generation_not_set", "$0Dieses Buch besitzt noch keine $4Generation$0."),
-  GUI_ITEMEDITOR_BOOK_GENERATION_RESET("gui.itemeditor.book.generation_reset", "$0Die Generation des Buches wurde $2zurückgesetzt$0."),
-  GUI_ITEMEDITOR_CHOICE_GENERATION_TITLE("gui.itemeditor.choice.generation.title", "$2Generationen"),
   GUI_ITEMEDITOR_CHOICE_GENERATION_NAME("gui.itemeditor.choice.generation.name", "$2{{generation}}"),
   GUI_ITEMEDITOR_CHOICE_GENERATION_LORE(
     "gui.itemeditor.choice.generation.lore",
     " ",
     "$0Klicke um diese Generation zu wählen."
   ),
-  GUI_ITEMEDITOR_BOOK_PAGES_SINGLE("gui.itemeditor.book.pages_single", "$0Dieses Buch besitzt nur mehr $4eine Seite$0!"),
-  GUI_ITEMEDITOR_CHOICE_PAGE_TITLE("gui.itemeditor.choice.page.title", "$2Seiten"),
   GUI_ITEMEDITOR_CHOICE_PAGE_NAME("gui.itemeditor.choice.page.name", "$2Seite {{page_number}}"),
   GUI_ITEMEDITOR_CHOICE_PAGE_LORE(
     "gui.itemeditor.choice.page.lore",
@@ -1707,52 +1545,12 @@ public enum ConfigKey {
     "$0Inhalt: ",
     "$2{{page_content}}"
   ),
-  GUI_ITEMEDITOR_BOOK_PAGE_REMOVED("gui.itemeditor.book.page_removed", "$0Die $2Seite {{page_number}} $0wurde aus dem Buch entfernt."),
-  GUI_ITEMEDITOR_BOOK_PAGES_EDITED("gui.itemeditor.book.pages_edited", "$0Die Änderungen der Buchseiten wurden gespeichert."),
-  GUI_ITEMEDITOR_BOOK_PAGES_EDIT_PROMPT("gui.itemeditor.book.pages_edit_prompt", "$0Öffne das Buch in deiner Hand und signiere dieses, wenn du fertig bist."),
-  GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_NAME("gui.itemeditor.custom_model_data.name", "$0» $2CustomModelData $0«"),
-  GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_LORE(
-    "gui.itemeditor.custom_model_data.lore",
-    " ",
-    "$0Ändere die $2CustomModelData $0dieses Items.",
-    "$0Aktueller Wert: $2{{custom_model_data}}",
-    " ",
-    "$0[$21$0]: $2Wert setzen",
-    "$0[$22$0]: $2Wert entfernen"
-  ),
-  GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_PROMPT("gui.itemeditor.custom_model_data.prompt", "$0Gib einen Wert für die $2CustomModelData $0in den Chat ein."),
-  GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_SET("gui.itemeditor.custom_model_data.set", "$0Die $2CustomModelData $0des Items wurde auf $2{{custom_model_data}} $0gesetzt."),
-  GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_NOT_SET("gui.itemeditor.custom_model_data.not_set", "$0Dieses Item besitzt noch keine $2CustomModelData$0."),
-  GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_RESET("gui.itemeditor.custom_model_data.reset", "$0Die $2CustomModelData $0des Items wurde $2zurückgesetzt$0."),
-  GUI_ITEMEDITOR_FIREWORK_NAME("gui.itemeditor.firework.name", "$0» $2Feuerwerk $0«"),
-  GUI_ITEMEDITOR_FIREWORK_LORE(
-    "gui.itemeditor.firework.lore",
-    " ",
-    "$0Bearbeite $2Feuerwerkskörper$0.",
-    "$0Aktuelle Power: $2{{power}}",
-    " ",
-    "$0[$21$0]: $2Power setzen",
-    "$0[$22$0]: $2Effekt hinzufügen",
-    "$0[$23$0]: $2Effekt entfernen",
-    "$0[$24$0]: $2Effekte leeren"
-  ),
-  GUI_ITEMEDITOR_FIREWORK_POWER_PROMPT("gui.itemeditor.firework.power.prompt", "$0Gib einen Wert für die $2Power $0in den Chat ein."),
-  GUI_ITEMEDITOR_FIREWORK_POWER_SET("gui.itemeditor.firework.power.set", "$0Die $2Power $0des Feuerwerks wurde auf $2{{power}} $0gesetzt."),
-  GUI_ITEMEDITOR_FIREWORK_EFFECTS_NONE("gui.itemeditor.firework.effects.none", "$0Dieses Feuerwerk besitzt $4keine Effekte$0!"),
-  GUI_ITEMEDITOR_FIREWORK_EFFECTS_RESET("gui.itemeditor.firework.effects.reset", "$0Die Effekte des Feuerwerks wurden $2zurückgesetzt."),
-  GUI_ITEMEDITOR_CHOICE_FIREWORK_TYPE_TITLE("gui.itemeditor.choice.firework_type.title", "$2Effekttyp"),
   GUI_ITEMEDITOR_CHOICE_FIREWORK_TYPE_NAME("gui.itemeditor.choice.firework_type.name", "$2{{type}}"),
   GUI_ITEMEDITOR_CHOICE_FIREWORK_TYPE_LORE(
     "gui.itemeditor.choice.firework_type.lore",
     " ",
     "$0Klicke um diesen Typ zu wählen."
   ),
-  GUI_ITEMEDITOR_CHOICE_FIREWORK_COLOR_TITLE("gui.itemeditor.choice.firework_color.title", "$2Effektfarben"),
-  GUI_ITEMEDITOR_CHOICE_FIREWORK_FADE_TITLE("gui.itemeditor.choice.firework_fade.title", "$2Glimmfarben"),
-  GUI_ITEMEDITOR_FIREWORK_EFFECTS_ADDED("gui.itemeditor.firework.effects.added", "$0Der Effekt $2{{type}} $0mit den Farbe(n) $2{{colors}}$0, der Glimmfarbe(n) $2{{fades}}$0, dem Flackern $2{{flicker}} $0sowie den Spuren $2{{trail}} $0wurde erstellt."),
-  GUI_ITEMEDITOR_FIREWORK_EFFECTS_REMOVED("gui.itemeditor.firework.effects.removed", "$0Der Effekt $2Nr. {{index}} $0wurde $2entfernt$0."),
-  GUI_ITEMEDITOR_FIREWORK_EFFECTS_SEPARATOR("gui.itemeditor.firework.effects.separator", "$0, $2"),
-  GUI_ITEMEDITOR_YESNO_FLICKER_TITLE("gui.itemeditor.yesno.flicker.title", "$2Flackern"),
   GUI_ITEMEDITOR_YESNO_FLICKER_LORE_YES(
     "gui.itemeditor.yesno.flicker.lore.yes",
     " ",
@@ -1763,7 +1561,6 @@ public enum ConfigKey {
     " ",
     "$0Flackern für diesen Effekt &cdeaktivieren&7."
   ),
-  GUI_ITEMEDITOR_YESNO_TRAIL_TITLE("gui.itemeditor.yesno.trail.title", "$2Spuren"),
   GUI_ITEMEDITOR_YESNO_TRAIL_LORE_YES(
     "gui.itemeditor.yesno.trail.lore.yes",
     " ",
@@ -1774,7 +1571,6 @@ public enum ConfigKey {
     " ",
     "$0Spuren für diesen Effekt &cdeaktivieren&7."
   ),
-  GUI_ITEMEDITOR_CHOICE_EFFECT_TITLE("gui.itemeditor.choice.effect.title", "$2Effekt"),
   GUI_ITEMEDITOR_CHOICE_EFFECT_NAME("gui.itemeditor.choice.effect.name", "$0Effekt $2Nr. {{index}}"),
   GUI_ITEMEDITOR_CHOICE_EFFECT_LORE(
     "gui.itemeditor.choice.effect.lore",
@@ -1787,34 +1583,6 @@ public enum ConfigKey {
     " ",
     "$0Klicke um diesen Effekt zu entfernen."
   ),
-  GUI_ITEMEDITOR_COMPASS_NAME("gui.itemeditor.compass.name", "$0» $2Kompass $0«"),
-  GUI_ITEMEDITOR_COMPASS_LORE(
-    "gui.itemeditor.compass.lore",
-    " ",
-    "$0Ändere das $2Ziel $0dieses Kompasses.",
-    "$0Aktuelles Ziel: $2{{location}}",
-    " ",
-    "$0[$21$0]: $2Ziel setzen",
-    "$0[$22$0]: $2Ziel entfernen"
-  ),
-  GUI_ITEMEDITOR_COMPASS_LOCATION_SET("gui.itemeditor.compass.location.set", "$0Das Ziel des Kompasses wurde auf $2{{location}} $0gesetzt."),
-  GUI_ITEMEDITOR_COMPASS_LOCATION_RESET("gui.itemeditor.compass.location.reset", "$0Das Ziel des Kompasses wurde $2zurückgesetzt$0."),
-  GUI_ITEMEDITOR_COMPASS_LOCATION_NONE("gui.itemeditor.compass.location.none", "$0Dieser Kompass hat noch $4kein Ziel$0!"),
-  GUI_ITEMEDITOR_BANNER_NAME("gui.itemeditor.banner.name", "$0» $2Banner $0«"),
-  GUI_ITEMEDITOR_BANNER_LORE(
-    "gui.itemeditor.banner.lore",
-    " ",
-    "$0Ändere die $2Muster $0dieses $2Banners$0.",
-    " ",
-    "$0[$21$0]: $2Muster hinzufügen",
-    "$0[$22$0]: $2Muster entfernen",
-    "$0[$23$0]: $2Muster leeren"
-  ),
-  GUI_ITEMEDITOR_BANNER_PATTERNS_NONE("gui.itemeditor.banner.patterns.none", "$0Dieser Banner hat noch $4keine Muster$0!"),
-  GUI_ITEMEDITOR_BANNER_PATTERNS_REMOVED("gui.itemeditor.banner.patterns.removed", "$0Das Muster $2Nr. {{index}} $0wurde von dem Banner entfernt."),
-  GUI_ITEMEDITOR_BANNER_PATTERNS_CLEARED("gui.itemeditor.banner.patterns.cleared", "$0Alle Muster wurden von diesem Banner $2entfernt$0."),
-  GUI_ITEMEDITOR_BANNER_PATTERNS_ADDED("gui.itemeditor.banner.patterns.added", "$0Das Muster $2{{type}} $0mit der Farbe $2{{color}} $0wurde dem Banner hinzugefügt."),
-  GUI_ITEMEDITOR_CHOICE_PATTERNS_TITLE("gui.itemeditor.choice.patterns.title", "$2Muster"),
   GUI_ITEMEDITOR_CHOICE_PATTERNS_NAME("gui.itemeditor.choice.patterns.name", "$0Muster $2Nr. {{index}}"),
   GUI_ITEMEDITOR_CHOICE_PATTERNS_LORE(
     "gui.itemeditor.choice.patterns.lore",
@@ -1824,14 +1592,12 @@ public enum ConfigKey {
     " ",
     "$0Klicke um dieses Muster zu entfernen."
   ),
-  GUI_ITEMEDITOR_CHOICE_PATTERN_TYPE_TITLE("gui.itemeditor.choice.pattern_type.title", "$2Mustertyp"),
   GUI_ITEMEDITOR_CHOICE_PATTERN_TYPE_NAME("gui.itemeditor.choice.pattern_type.name", "$2{{type}}"),
   GUI_ITEMEDITOR_CHOICE_PATTERN_TYPE_LORE(
     "gui.itemeditor.choice.pattern_type.lore",
     " ",
     "$0Klicke um dieses Muster zu wählen."
   ),
-  GUI_ITEMEDITOR_CHOICE_DYE_COLOR_TITLE("gui.itemeditor.choice.dye_color.title", "$2Farbe"),
   GUI_ITEMEDITOR_CHOICE_DYE_COLOR_NAME("gui.itemeditor.choice.dye_color.name", "$2{{color}}"),
   GUI_ITEMEDITOR_CHOICE_DYE_COLOR_LORE(
     "gui.itemeditor.choice.dye_color.lore",

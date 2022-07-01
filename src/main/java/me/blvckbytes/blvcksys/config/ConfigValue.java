@@ -1,9 +1,17 @@
 package me.blvckbytes.blvcksys.config;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
+import org.bukkit.Color;
+import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.ItemFlag;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
@@ -24,6 +32,7 @@ import java.util.stream.Stream;
   TextComponent representations are also offered to the consumer. The color
   palette can be accessed in templates by $0...$9
 */
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
 public class ConfigValue {
 
   // Decimal format used when encountering double variables
@@ -164,21 +173,18 @@ public class ConfigValue {
 
   /**
    * Get the first available value from the list as a
-   * scalar of a specific type by trying to cast it or use
-   * the fallback if the local type is mismatching the request
-   * or there are no available items.
+   * scalar of a specific type by trying to cast
    * @param type Required type
-   * @param fallback Fallback to use on type mismatches
-   * @return Cast type or fallback value
+   * @return Cast type or null
    */
-  public<T> T asScalar(Class<T> type, T fallback) {
+  public<T> @Nullable T asScalar(Class<T> type) {
     try {
       if (lines.size() != 0)
-        return cast(lines.get(0), type).orElse(fallback);
+        return cast(lines.get(0), type).orElse(null);
     } catch (ClassCastException e) {
       e.printStackTrace();
     }
-    return fallback;
+    return null;
   }
 
   /**
@@ -400,6 +406,13 @@ public class ConfigValue {
     return sb.toString();
   }
 
+  /**
+   * Create a carbon copy of this config value
+   */
+  public ConfigValue copy() {
+    return new ConfigValue(new ArrayList<>(lines), new HashMap<>(vars), prefix, palette, prefixMode);
+  }
+
   @Override
   public String toString() {
     return asScalar();
@@ -429,18 +442,69 @@ public class ConfigValue {
   private<T> Optional<T> cast(Object value, Class<T> type) {
     try {
 
+      String stringValue = applyVariables(value.toString().trim());
+
       // Automatic enum parsing
       if (type.isEnum()) {
         for (T ec : type.getEnumConstants()) {
-          if (((Enum<?>) ec).name().equalsIgnoreCase(value.toString().trim()))
+          if (((Enum<?>) ec).name().equalsIgnoreCase(stringValue))
             return Optional.of(ec);
         }
 
         return Optional.empty();
       }
 
+      // Automatic enchantment parsing
+      if (type == Enchantment.class) {
+        Field target = Arrays.stream(Enchantment.class.getDeclaredFields())
+          .filter(f -> Modifier.isStatic(f.getModifiers()) && f.getType() == Enchantment.class)
+          .filter(f -> f.getName().equalsIgnoreCase(stringValue))
+          .findFirst()
+          .orElse(null);
+
+        if (target == null)
+          return Optional.empty();
+
+        return Optional.of(type.cast(target.get(null)));
+      }
+
+      // Automatic material parsing
+      if (type == Material.class)
+        return Optional.of(type.cast(Material.valueOf(stringValue)));
+
+      // Automatic itemflag parsing
+      if (type == ItemFlag.class)
+        return Optional.of(type.cast(ItemFlag.valueOf(stringValue)));
+
+      // Automatic color parsing
+      if (type == Color.class) {
+        Field target = Arrays.stream(Color.class.getDeclaredFields())
+          .filter(f -> Modifier.isStatic(f.getModifiers()) && f.getType() == Color.class)
+          .filter(f -> f.getName().equalsIgnoreCase(stringValue))
+          .findFirst()
+          .orElse(null);
+
+        // A color with this name existed
+        if (target != null)
+          return Optional.of(type.cast(target.get(null)));
+
+        // Assume it's an RGB color
+        String[] parts = stringValue.split(" ");
+
+        // Malformed
+        if (parts.length != 3)
+          return Optional.empty();
+
+        // Parse RGB parts
+        return Optional.of(type.cast(Color.fromRGB(
+          Integer.parseInt(parts[0]),
+          Integer.parseInt(parts[1]),
+          Integer.parseInt(parts[2])
+        )));
+      }
+
       return Optional.of(type.cast(value));
-    } catch (ClassCastException e) {
+    } catch (Exception e) {
       return Optional.empty();
     }
   }

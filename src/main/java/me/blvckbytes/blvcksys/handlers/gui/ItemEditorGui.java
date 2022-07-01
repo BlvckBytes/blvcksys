@@ -307,13 +307,15 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         return;
 
       new UserInputChain(inst, values -> {
+        Material previous = item.getType();
         Material mat = (Material) values.get("material");
         item.setType(mat);
 
         p.sendMessage(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_MATERIAL_CHANGED)
+          ies.getMessages().getMaterialChanged()
             .withPrefix()
-            .withVariable("material", formatConstant(mat.name()))
+            .withVariable("current", formatConstant(mat.name()))
+            .withVariable("previous", formatConstant(previous.name()))
             .asScalar()
         );
       }, singleChoiceGui, chatUtil)
@@ -353,14 +355,10 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         item.setItemMeta(meta);
 
         p.sendMessage(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_FLAG_CHANGED)
+          ies.getMessages().getFlagChanged()
             .withPrefix()
             .withVariable("flag", formatConstant(flag.name()))
-            .withVariable(
-              "state",
-              cfg.get(!has ? ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_ACTIVE : ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_INACTIVE)
-                .asScalar()
-            )
+            .withVariable("state", formatConstant(String.valueOf(!has)))
             .asScalar()
         );
       }, singleChoiceGui, chatUtil)
@@ -397,7 +395,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           item.setItemMeta(meta);
 
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_ENCHANTMENT_REMOVED)
+            ies.getMessages().getEnchantmentRemoved()
               .withPrefix()
               .withVariable("enchantment", formatConstant(enchantment.getKey().getKey()))
               .asScalar()
@@ -411,7 +409,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         item.setItemMeta(meta);
 
         p.sendMessage(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_ENCHANTMENT_ADDED)
+          ies.getMessages().getEnchantmentAdded()
             .withPrefix()
             .withVariable("enchantment", formatConstant(enchantment.getKey().getKey()))
             .withVariable("level", level)
@@ -430,9 +428,11 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         )
         .withPrompt(
           "level",
-          values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_ENCHANTMENT_LEVEL_PROMPT)
-            .withVariable("enchantment", formatConstant(((Enchantment) values.get("enchantment")).getKey().getKey()))
-            .withPrefix(),
+          values -> (
+            ies.getMessages().getEnchantmentLevelPrompt()
+              .withVariable("enchantment", formatConstant(((Enchantment) values.get("enchantment")).getKey().getKey()))
+              .withPrefix()
+          ),
           Integer::parseInt,
           input -> cfg.get(ConfigKey.ERR_INTPARSE).withVariable("number", input).withPrefix(),
           values -> meta.hasEnchant((Enchantment) values.get("enchantment"))
@@ -450,29 +450,56 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       if (!checkPermission(IEPerm.DISPLAYNAME, p))
         return;
 
-      new UserInputChain(inst, values -> {
-        String name = (String) values.get("name");
+      Integer key = e.getHotbarKey().orElse(null);
+      if (key == null)
+        return;
 
-        boolean reset = name.equalsIgnoreCase("null");
-        name = ChatColor.translateAlternateColorCodes('&', name);
+      // Set a new name
+      if (key == 1) {
+        new UserInputChain(inst, values -> {
+          String name = ChatColor.translateAlternateColorCodes('&', (String) values.get("name"));
 
-        meta.setDisplayName(reset ? null : name);
+          meta.setDisplayName(name);
+          item.setItemMeta(meta);
+
+          p.sendMessage(
+            ies.getMessages().getDisplaynameSet()
+              .withPrefix()
+              .withVariable("name", name)
+              .asScalar()
+          );
+        }, singleChoiceGui, chatUtil)
+          .withPrompt(
+            "name",
+            values -> ies.getMessages().getDisplaynamePrompt().withPrefix(),
+            s -> s, null, null
+          )
+          .start();
+        return;
+      }
+
+      // Reset an existing name
+      if (key == 2) {
+        if (meta.getDisplayName().isBlank()) {
+          p.sendMessage(
+            ies.getMessages().getDisplaynameNone()
+              .withPrefixes()
+              .asScalar()
+          );
+          return;
+        }
+
+        meta.setDisplayName(null);
         item.setItemMeta(meta);
+        inst.redraw("13");
 
         p.sendMessage(
-          cfg.get(reset ? ConfigKey.GUI_ITEMEDITOR_DISPLAYNAME_RESET : ConfigKey.GUI_ITEMEDITOR_DISPLAYNAME_SET)
-            .withPrefix()
-            .withVariable("name", name)
+          ies.getMessages().getDisplaynameReset()
+            .withPrefixes()
             .asScalar()
         );
-      }, singleChoiceGui, chatUtil)
-        .withPrompt(
-          "name",
-          values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_DISPLAYNAME_PROMPT)
-            .withPrefix(),
-          s -> s, null, null
-        )
-        .start();
+        return;
+      }
     });
 
     //////////////////////////////////// Lore Lines ////////////////////////////////////
@@ -514,15 +541,15 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           item.setItemMeta(meta);
 
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_LINE_ADDED)
+            ies.getMessages().getLoreAdded()
               .withPrefix()
+              .withVariable("content", line)
               .asScalar()
           );
         }, singleChoiceGui, chatUtil)
           .withPrompt(
             "line",
-            values -> cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_PROMPT)
-              .withPrefix(),
+            values -> ies.getMessages().getLoreLinePrompt().withPrefix(),
             s -> s, null, null
           )
           .withChoice(
@@ -544,7 +571,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         // Has no lore yet
         if (lines == null) {
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_NO_LORE)
+            ies.getMessages().getLoreNone()
               .withPrefix()
               .asScalar()
           );
@@ -559,10 +586,10 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           item.setItemMeta(meta);
 
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_LINE_REMOVED)
+            ies.getMessages().getLoreLineRemoved()
               .withPrefix()
-              .withVariable("line_number", index + 1)
-              .withVariable("line_content", content)
+              .withVariable("line", index + 1)
+              .withVariable("content", content)
               .asScalar()
           );
         }, singleChoiceGui, chatUtil)
@@ -583,7 +610,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         // Has no lore yet
         if (meta.getLore() == null || meta.getLore().size() == 0) {
           p.sendMessage(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_NO_LORE)
+            ies.getMessages().getLoreNone()
               .withPrefix()
               .asScalar()
           );
@@ -596,7 +623,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         inst.redraw("13");
 
         p.sendMessage(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_RESET)
+          ies.getMessages().getLoreReset()
             .withPrefix()
             .asScalar()
         );
@@ -2294,11 +2321,11 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         new ItemStackBuilder(Material.PAPER)
           .withName(
             cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LORE_NAME)
-              .withVariable("line_number", i + 1)
+              .withVariable("line", i + 1)
           )
           .withLore(
             cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LORE_LORE)
-              .withVariable("line_content", line)
+              .withVariable("content", line)
           )
           .build()
       ));

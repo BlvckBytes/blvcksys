@@ -1473,52 +1473,13 @@ public enum ConfigKey {
   //                             ItemEditor GUI                              //
   //=========================================================================//
 
-  GUI_ITEMEDITOR_TITLE("gui.itemeditor.title", "$0Itemeditor $2{{item_type}}"),
-  GUI_ITEMEDITOR_META_UNAVAILABLE("gui.itemeditor.meta_unavailable", "$0Auf die ItemMeta dieses Items konnte $4nicht $0zugegriffen werden!"),
-  GUI_ITEMEDITOR_NOT_APPLICABLE_LORE(
-    "gui.itemeditor.not_applicable",
-    " ",
-    "&cDiese Konfiguration ist nicht auf",
-    "&cdas aktuell gewählte Item anwendbar."
-  ),
   GUI_ITEMEDITOR_AMOUNT_CHANGED("gui.itemeditor.amount.changed", "$0Du hast die Anzahl auf $2{{amount}} $0gesetzt."),
-  GUI_ITEMEDITOR_AMOUNT_INCREASE_NAME("gui.itemeditor.amount.increase.name", "$0» $2Anzahl erhöhen $0«"),
-  GUI_ITEMEDITOR_AMOUNT_INCREASE_LORE(
-    "gui.itemeditor.amount.increase.lore",
-    " ",
-    "$0[$21$0]: Anzahl $2+1",
-    "$0[$22$0]: Anzahl $2+64",
-    "$0[$23$0]: Anzahl $2+8",
-    "$0[$24$0]: Anzahl $2=64"
-  ),
-  GUI_ITEMEDITOR_AMOUNT_DECREASE_NAME("gui.itemeditor.amount.decrease.name", "$0» $2Anzahl verringern $0«"),
-  GUI_ITEMEDITOR_AMOUNT_DECREASE_LORE(
-    "gui.itemeditor.amount.decrease.lore",
-    " ",
-    "$0[$21$0]: Anzahl $2-1",
-    "$0[$22$0]: Anzahl $2-64",
-    "$0[$23$0]: Anzahl $2-8",
-    "$0[$24$0]: Anzahl $2=1"
-  ),
-  GUI_ITEMEDITOR_MATERIAL_NAME("gui.itemeditor.material.name", "$0» $2Material $0«"),
-  GUI_ITEMEDITOR_MATERIAL_LORE(
-    "gui.itemeditor.material.lore",
-    " ",
-    "$0Ändere das $2Material $0dieses Items."
-  ),
   GUI_ITEMEDITOR_CHOICE_MATERIAL_TITLE("gui.itemeditor.choice.material.title", "$2Material"),
   GUI_ITEMEDITOR_CHOICE_MATERIAL_NAME("gui.itemeditor.choice.material.name", "$2{{hr_type}}"),
   GUI_ITEMEDITOR_CHOICE_MATERIAL_LORE(
     "gui.itemeditor.choice.material.lore",
     " ",
     "$0Klicke um dieses Material zu wählen"
-  ),
-  GUI_ITEMEDITOR_MATERIAL_CHANGED("gui.itemeditor.material.changed", "$0Du hast das Material $2{{material}} $0gewählt."),
-  GUI_ITEMEDITOR_FLAGS_NAME("gui.itemeditor.flags.name", "$0» $2Flags $0«"),
-  GUI_ITEMEDITOR_FLAGS_LORE(
-    "gui.itemeditor.flags.lore",
-    " ",
-    "$0Aktiviere/Deaktiviere $2Flags$0."
   ),
   GUI_ITEMEDITOR_CHOICE_FLAG_TITLE("gui.itemeditor.choice.flag.title", "$2Flags"),
   GUI_ITEMEDITOR_CHOICE_FLAG_NAME("gui.itemeditor.choice.flag.name", "$2{{flag}}"),
@@ -1529,14 +1490,6 @@ public enum ConfigKey {
     " ",
     "$0Aktueller Zustand: {{state}}",
     "$0Klicke, um den Zustand zu wechseln."
-  ),
-  GUI_ITEMEDITOR_FLAG_CHANGED("gui.itemeditor.flag.changed", "$0Du hast den Flag $2{{flag}} $0auf $2{{state}} $0geändert."),
-  GUI_ITEMEDITOR_ENCHANTMENTS_NAME("gui.itemeditor.enchantments.name", "$0» $2Verzauberungen $0«"),
-  GUI_ITEMEDITOR_ENCHANTMENTS_LORE(
-    "gui.itemeditor.enchantments.lore",
-    " ",
-    "$0Füge Verzauberungen $2hinzu $0oder",
-    "$2entferne $0bestehende Verzauberungen."
   ),
   GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_TITLE("gui.itemeditor.choice.enchantment.title", "$2Verzauberung"),
   GUI_ITEMEDITOR_CHOICE_ENCHANTMENT_NAME("gui.itemeditor.choice.enchantment.name", "$2{{enchantment}}"),
@@ -1557,32 +1510,6 @@ public enum ConfigKey {
     " ",
     "$0Klicke um die Verzauberung &ahinzuzufügen$0."
   ),
-  GUI_ITEMEDITOR_ENCHANTMENT_ADDED("gui.itemeditor.enchantment.changed", "$0Du hast die Verzauberung $2{{enchantment}} $0auf Level $2{{level}} $0hinzugefügt."),
-  GUI_ITEMEDITOR_ENCHANTMENT_REMOVED("gui.itemeditor.enchantment.removed", "$0Du hast die Verzauberung $2{{enchantment}} $0entfernt."),
-  GUI_ITEMEDITOR_ENCHANTMENT_LEVEL_PROMPT("gui.itemeditor.enchantment.level_prompt", "$0Bitte gib das gewünschte $2Verzauberungslevel $0für die Verzauberung $2{{enchantment}} $0in den $2Chat $0ein."),
-  GUI_ITEMEDITOR_DISPLAYNAME_NAME("gui.itemeditor.displayname.name", "$0» $2Anzeigename $0«"),
-  GUI_ITEMEDITOR_DISPLAYNAME_LORE(
-    "gui.itemeditor.displayname.lore",
-    " ",
-    "$0Ändere den $2Namen $0des Items."
-  ),
-  GUI_ITEMEDITOR_DISPLAYNAME_PROMPT("gui.itemeditor.displayname.prompt", "$0Bitte gib den gewünschten $2Anzeigenamen $0in den $2Chat $0ein (tippe \"null\" um diesen zurückzusetzen)."),
-  GUI_ITEMEDITOR_DISPLAYNAME_SET("gui.itemeditor.displayname.set", "$0Du hast den Anzeigenamen auf &r{{name}} $0gesetzt."),
-  GUI_ITEMEDITOR_DISPLAYNAME_RESET("gui.itemeditor.displayname.reset", "$0Du hast den Anzeigenamen $2zurückgesetzt$0."),
-  GUI_ITEMEDITOR_LORE_NAME("gui.itemeditor.lore.name", "$0» $2Lore $0«"),
-  GUI_ITEMEDITOR_LORE_LORE(
-    "gui.itemeditor.lore.lore",
-    " ",
-    "$0Ändere die $2Zeilen $0der $2Lore$0.",
-    " ",
-    "$0[$21$0]: $2Zeile einfügen",
-    "$0[$22$0]: $2Zeile anfügen",
-    "$0[$23$0]: $2Zeile wählen und entfernen",
-    "$0[$24$0]: $2Lore leeren"
-  ),
-  GUI_ITEMEDITOR_LORE_RESET("gui.itemeditor.lore.reset", "$0Du hast die Lore $2zurückgesetzt$0."),
-  GUI_ITEMEDITOR_LORE_LINE_REMOVED("gui.itemeditor.lore.line_removed", "$0Die Zeile $2{{line_number}} $0($2{{line_content}}$0) wurde entfernt."),
-  GUI_ITEMEDITOR_LORE_NO_LORE("gui.itemeditor.lore.no_lore", "$0Dieses Item hat noch $4keine $0Lore!"),
   GUI_ITEMEDITOR_CHOICE_LORE_TITLE("gui.itemeditor.choice.lore.title", "$2Lore"),
   GUI_ITEMEDITOR_CHOICE_LORE_NAME("gui.itemeditor.choice.lore.name", "$2Zeile {{line_number}}"),
   GUI_ITEMEDITOR_CHOICE_LORE_LORE(
@@ -1591,9 +1518,6 @@ public enum ConfigKey {
     "$0Inhalt: ",
     "{{line_content}}"
   ),
-  GUI_ITEMEDITOR_LORE_PROMPT("gui.itemeditor.lore.prompt", "$0Bitte gib die gewünschte $2Lore-Zeile $0in den $2Chat $0ein (tippe \"null\" um eine leere Zeile einzufügen)."),
-  GUI_ITEMEDITOR_LORE_SELECT_POS("gui.itemeditor.lore.select_pos", "$0Bitte wähle die gewünschte $2Position $0der Zeile."),
-  GUI_ITEMEDITOR_LORE_LINE_ADDED("gui.itemeditor.lore.line_added", "$0Die $2Lore-Zeile $0wurde hinzugefügt."),
   GUI_ITEMEDITOR_DURABILITY_NAME("gui.itemeditor.durability.name", "$0» $2Haltbarkeit $0«"),
   GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE("gui.itemeditor.durability.unbreakable", "$2Unzerstörbar"),
   GUI_ITEMEDITOR_DURABILITY_BREAKABLE("gui.itemeditor.durability.breakable", "$2{{current_durability}}$0/$2{{max_durability}}"),

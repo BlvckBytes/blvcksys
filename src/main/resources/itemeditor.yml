@@ -7,8 +7,22 @@
 # BBItemEditor - Developed by BlvckBytes <blvckbytes@gmail.com>
 
 messages:
-  metaUnavailable: '&7Auf die ItemMeta dieses Items konnte &cnicht &7zugegriffen werden!'
+  metaUnavailable: '&7Auf die ItemMeta dieses Items konnte &cnicht &7zugegriffen werden.'
   missingPermission: '&cDu hast für diese Aktion keine Rechte.'
+  materialChanged: '&7Das Material des Items wurde von &d{{previous}} &7auf &d{{current}} &7geändert.'
+  flagChanged: '&7Der Flag &d{{flag}} &7des Items wurde auf &d{{state}} &7geändert.'
+  enchantmentAdded: '&7Die Verzauberung &d{{enchantment}} &7auf Level &d{{level}} &7wurde dem Item &dhinzugefügt&7.'
+  enchantmentRemoved: '&7Die Verzauberung &d{{enchantment}} &7wurde vom Item &dentfernt&7.'
+  enchantmentLevelPrompt: '&7Gib das &dVerzauberungslevel &7für die Verzauberung &d{{enchantment}} &7in den &dChat &7ein.'
+  displaynameSet: '&7Der Anzeigename des Items wurde auf &d{{name}} &7gesetzt.'
+  displaynameReset: '&7Der Anzeigename des Items wurde &dzurückgesetzt&7.'
+  displaynameNone: '&7Dieses Item besitzt noch &ckeinen &7Anzeigenamen.'
+  displaynamePrompt: '&7Gib den &dAnzeigenamen &7in den &dChat &7ein.'
+  loreReset: '&7Die Lore des Items wurde &dzurückgesetzt&7.'
+  loreLineRemoved: '&7Die Zeile &d{{line}} &7("&d{{content}}&7") des Items wurde &dentfernt&7.'
+  loreNone: '&7Dieses Item besitzt noch &ckeine &7Lore.'
+  loreLinePrompt: '&7Gib die &dLore-Zeile &7in den &dChat &7ein.'
+  loreAdded: '&7Die Lore-Zeile &7"&d{{content}}&7" &7wurde dem Item &dhinzugefügt&7.'
 
 titles:
   home: '&8IE &5{{item_type}}'
@@ -105,7 +119,10 @@ items:
       name: '&7» &dAnzeigename &7«'
       lore:
         - ' '
-        - '&7Ändere den &dNamen &7des Items.'
+        - '&7Ändere den &dAnzeigenamen &7des Items.'
+        - ' '
+        - '&7[&d1&7]: &dAnzeigename setzen'
+        - '&7[&d2&7]: &dAnzeigename zurücksetzen'
 
     lore:
       type: OAK_SIGN

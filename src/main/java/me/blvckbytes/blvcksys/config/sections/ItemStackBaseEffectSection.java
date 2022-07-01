@@ -2,9 +2,12 @@ package me.blvckbytes.blvcksys.config.sections;
 
 import lombok.Getter;
 import me.blvckbytes.blvcksys.config.AConfigSection;
+import me.blvckbytes.blvcksys.config.ConfigValue;
 import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionType;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Map;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -15,16 +18,19 @@ import org.jetbrains.annotations.Nullable;
 @Getter
 public class ItemStackBaseEffectSection extends AConfigSection {
 
-  private @Nullable PotionType type;
+  private @Nullable ConfigValue type;
   private @Nullable Boolean extended;
   private @Nullable Boolean upgraded;
 
   /**
    * Convert the properties of this section to a PotionData object
+   * @param variables Variables to apply while evaluating values
    */
-  public PotionData asData() {
+  public PotionData asData(@Nullable Map<String, String> variables) {
     boolean _upgraded = upgraded != null && upgraded;
     boolean _extended = extended != null && extended;
+
+    PotionType type = this.type == null ? null : this.type.withVariables(variables).asScalar(PotionType.class);
 
     // Potions cannot be both extended and upgraded at the same
     // time, focus the priority on the upgraded flag
@@ -40,6 +46,7 @@ public class ItemStackBaseEffectSection extends AConfigSection {
    * @param data Target data
    */
   public boolean describesData(PotionData data) {
+    PotionType type = this.type == null ? null : this.type.asScalar(PotionType.class);
     if (type != null && type != data.getType())
       return false;
 

@@ -16,6 +16,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -78,10 +79,10 @@ public class ItemStackSection extends AConfigSection {
       ), enchantments != null)
       .withColor(() -> c, c != null)
       .withProfile(() -> textures, textures != null)
-      .withBaseEffect(() -> baseEffect.asData(), baseEffect != null)
+      .withBaseEffect(() -> baseEffect.asData(variables), baseEffect != null)
       .withCustomEffects(() -> (
         Arrays.stream(customEffects)
-          .map(effect -> effect.asEffect().orElse(null))
+          .map(effect -> effect.asEffect(variables).orElse(null))
           .filter(Objects::nonNull)
           .toList()
       ), customEffects != null);

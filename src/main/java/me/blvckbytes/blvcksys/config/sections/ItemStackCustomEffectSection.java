@@ -2,10 +2,12 @@ package me.blvckbytes.blvcksys.config.sections;
 
 import lombok.Getter;
 import me.blvckbytes.blvcksys.config.AConfigSection;
+import me.blvckbytes.blvcksys.config.ConfigValue;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Map;
 import java.util.Optional;
 
 /*
@@ -17,9 +19,9 @@ import java.util.Optional;
 @Getter
 public class ItemStackCustomEffectSection extends AConfigSection {
 
-  private @Nullable PotionEffectType effect;
-  private @Nullable Integer duration;
-  private @Nullable Integer amplifier;
+  private @Nullable ConfigValue effect;
+  private @Nullable ConfigValue duration;
+  private @Nullable ConfigValue amplifier;
   private @Nullable Boolean ambient;
   private @Nullable Boolean particles;
   private @Nullable Boolean icon;
@@ -27,14 +29,20 @@ public class ItemStackCustomEffectSection extends AConfigSection {
   /**
    * Convert the properties of this section to a PotionEffet object
    * @return A PotionEffect on success, empty if crucial data was missing
+   * @param variables Variables to apply while evaluating values
    */
-  public Optional<PotionEffect> asEffect() {
+  public Optional<PotionEffect> asEffect(@Nullable Map<String, String> variables) {
     // Cannot create an effect object without the effect itself
-    if (effect == null || duration == null)
+    PotionEffectType type = this.effect == null ? null : this.effect.withVariables(variables).asScalar(PotionEffectType.class);
+
+    if (type == null || duration == null)
       return Optional.empty();
 
+    Integer amplifier = this.amplifier == null ? 0 : this.amplifier.asScalar(Integer.class);
+    Integer duration = this.duration == null ? 0 : this.duration.asScalar(Integer.class);
+
     return Optional.of(new PotionEffect(
-      effect, duration,
+      type, duration == null ? 20 * 60 : duration,
       // Default to no amplifier
       amplifier == null ? 0 : amplifier,
       // Default boolean flags to false
@@ -53,13 +61,16 @@ public class ItemStackCustomEffectSection extends AConfigSection {
     if (effect == null)
       return false;
 
-    if (this.effect != null && effect.getType() != this.effect)
+    PotionEffectType type = this.effect == null ? null : this.effect.asScalar(PotionEffectType.class);
+    if (type != null && effect.getType() != type)
       return false;
 
-    if (this.duration != null && effect.getDuration() != this.duration)
+    Integer duration = this.duration == null ? 0 : this.duration.asScalar(Integer.class);
+    if (duration != null && effect.getDuration() != duration)
       return false;
 
-    if (this.amplifier != null && effect.getAmplifier() != this.amplifier)
+    Integer amplifier = this.amplifier == null ? 0 : this.amplifier.asScalar(Integer.class);
+    if (amplifier != null && effect.getAmplifier() != amplifier)
       return false;
 
     if (this.ambient != null && effect.isAmbient() != this.ambient)

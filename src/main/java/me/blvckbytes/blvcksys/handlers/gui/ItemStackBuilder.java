@@ -390,14 +390,14 @@ public class ItemStackBuilder {
       res.withProfile(data::getTextures, true);
 
     if (data.getBaseEffect() != null)
-      res.withBaseEffect(() -> data.getBaseEffect().asData(), true);
+      res.withBaseEffect(() -> data.getBaseEffect().asData(null), true);
 
     if (data.getCustomEffects().length > 0) {
       if (res.meta instanceof PotionMeta pm)
         pm.clearCustomEffects();
 
       res.withCustomEffects(() -> (
-        Arrays.stream(data.getCustomEffects()).map(ItemStackCustomEffectSection::asEffect)
+        Arrays.stream(data.getCustomEffects()).map(e -> e.asEffect(null))
           .filter(Optional::isPresent)
           .map(Optional::get)
           .toList()

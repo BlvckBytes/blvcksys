@@ -270,7 +270,7 @@ public class QuestHandler implements IQuestHandler, IAutoConstructed, Listener {
       // Try to load the config
       cfg.reader(FOLDERNAME + "/" + fn.substring(0, fn.indexOf('.')))
         // Parse the top level (full file) into a quest
-        .flatMap(cr -> cr.parseValue(null, QuestSection.class))
+        .flatMap(cr -> cr.parseValue(null, QuestSection.class, false))
         // Store in local cache
         .ifPresent(q -> {
           // Cannot store quests without a name

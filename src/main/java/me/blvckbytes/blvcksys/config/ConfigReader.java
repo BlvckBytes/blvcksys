@@ -35,6 +35,8 @@ public class ConfigReader {
   private final @Nullable IPlayerTextureHandler textureHandler;
   private final @Nullable ILogger logger;
 
+  private final Map<String, Object> parseCache;
+
   public ConfigReader(
     IConfig cfg, String path,
     @Nullable IPlayerTextureHandler textureHandler,
@@ -44,7 +46,9 @@ public class ConfigReader {
     this.path = path;
     this.textureHandler = textureHandler;
     this.logger = logger;
+
     this.typeParsers = new HashMap<>();
+    this.parseCache = new HashMap<>();
 
     registerParsers();
   }
@@ -60,8 +64,17 @@ public class ConfigReader {
    * @param type Internal model to parse into
    * @return Optional parsed model, if the key existed
    */
-  public<T extends Object> Optional<T> parseValue(@Nullable String key, Class<T> type) {
-    return parseValueSub(key, type, false, false);
+  @SuppressWarnings("unchecked")
+  public<T extends Object> Optional<T> parseValue(@Nullable String key, Class<T> type, boolean cache) {
+    if (cache && parseCache.containsKey(key))
+      return Optional.of((T) parseCache.get(key));
+
+    return parseValueSub(key, type, false, false)
+      .map(v -> {
+        if (cache)
+          parseCache.put(key, v);
+        return v;
+      });
   }
 
   /**
@@ -185,7 +198,7 @@ public class ConfigReader {
 
           // Initially try to parse the value
           Class<?> ffType = fType;
-          Object v = parseValue(fKey, fType).orElse(null);
+          Object v = parseValue(fKey, fType, false).orElse(null);
 
           // Failed, try to ask for a default value
           if (v == null)
@@ -359,7 +372,7 @@ public class ConfigReader {
    * @return ItemStack on success, empty if the key was invalid
    */
   private Optional<ItemStackBuilder> getItem(String key) {
-    ItemStackSection is = parseValue(key, ItemStackSection.class).orElse(null);
+    ItemStackSection is = parseValue(key, ItemStackSection.class, false).orElse(null);
     return is == null ? Optional.empty() : Optional.of(is.asItem());
   }
 

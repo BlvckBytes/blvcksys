@@ -37,10 +37,15 @@ public class ItemStackSection extends AConfigSection {
   private @Nullable ConfigValue lore;
   private @Nullable ConfigValue flags;
   private @Nullable Color color;
-  private @Nullable ItemStackEnchantmentSection[] enchantments;
+  private ItemStackEnchantmentSection[] enchantments;
   private @Nullable GameProfile textures;
   private @Nullable ItemStackBaseEffectSection baseEffect;
-  private @Nullable ItemStackCustomEffectSection[] customEffects;
+  private ItemStackCustomEffectSection[] customEffects;
+
+  public ItemStackSection() {
+    this.enchantments = new ItemStackEnchantmentSection[0];
+    this.customEffects = new ItemStackCustomEffectSection[0];
+  }
 
   // Builder cache, as instances will be reusable
   @CSIgnore

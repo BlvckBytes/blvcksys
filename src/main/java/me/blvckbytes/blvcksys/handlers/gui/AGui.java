@@ -1,6 +1,8 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.Setter;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
@@ -43,7 +45,8 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
 
   // Inventory title supplier
   @Getter
-  private final Function<GuiInstance<T>, ConfigValue> title;
+  @Setter(AccessLevel.PROTECTED)
+  private Function<GuiInstance<T>, ConfigValue> title;
 
   @Getter
   private final int rows;

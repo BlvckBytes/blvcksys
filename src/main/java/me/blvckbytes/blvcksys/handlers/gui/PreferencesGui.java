@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
@@ -65,7 +66,7 @@ public class PreferencesGui extends AGui<Object> {
   protected boolean opening(GuiInstance<Object> inst) {
     Player p = inst.getViewer();
 
-    inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
+    inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
 
     // Msg disable
     inst.addStateToggle(19, 10, () -> !prefs.isMsgDisabled(p), s -> prefs.setMsgDisabled(p, s));

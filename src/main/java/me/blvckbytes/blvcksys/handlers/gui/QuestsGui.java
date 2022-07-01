@@ -59,7 +59,7 @@ public class QuestsGui extends AGui<Object> {
   protected boolean opening(GuiInstance<Object> inst) {
     Player p = inst.getViewer();
 
-    inst.addBorder(Material.BLACK_STAINED_GLASS_PANE);
+    inst.addBorder(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build());
     inst.addPagination(37, 40, 43);
 
     inst.setPageContents(() -> (

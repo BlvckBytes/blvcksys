@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -49,7 +50,7 @@ public class IgnoreDetailGui extends AGui<OfflinePlayer> {
   protected boolean opening(GuiInstance<OfflinePlayer> inst) {
     Player p = inst.getViewer();
 
-    inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
+    inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
     inst.addBack(27, ignoresGui, null, AnimationType.SLIDE_RIGHT);
 
     inst.fixedItem(12, () -> (

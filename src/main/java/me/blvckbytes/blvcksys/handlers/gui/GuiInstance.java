@@ -5,6 +5,7 @@ import lombok.Setter;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.config.sections.ItemStackSection;
 import me.blvckbytes.blvcksys.events.InventoryManipulationEvent;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.util.SymbolicHead;
@@ -367,9 +368,9 @@ public class GuiInstance<T> {
 
   /**
    * Adds a fill of fixed items consiting of the provided material to the GUI
-   * @param mat Material to use to fill
+   * @param item Item to use to fill
    */
-  protected void addFill(Material mat) {
+  protected void addFill(ItemStack item) {
     StringBuilder slotExpr = new StringBuilder();
 
     for (int i = 0; i < template.getRows() * 9; i++) {
@@ -377,14 +378,14 @@ public class GuiInstance<T> {
         slotExpr.append(i == 0 ? "" : ",").append(i);
     }
 
-    addSpacer(slotExpr.toString(), mat);
+    addSpacer(slotExpr.toString(), item);
   }
 
   /**
    * Adds a border of fixed items consiting of the provided material to the GUI
-   * @param mat Material to use as a border
+   * @param item Item to use as a border
    */
-  protected void addBorder(Material mat) {
+  protected void addBorder(ItemStack item) {
     StringBuilder slotExpr = new StringBuilder();
 
     for (int i = 0; i < template.getRows(); i++) {
@@ -403,18 +404,16 @@ public class GuiInstance<T> {
       slotExpr.append(lastSlot);
     }
 
-    addSpacer(slotExpr.toString(), mat);
+    addSpacer(slotExpr.toString(), item);
   }
 
   /**
    * Adds a spacer with no name to a given slot
    * @param slotExpr Where to set the item
-   * @param mat Material to use as a spacer
+   * @param item Item to use as a spacer
    */
-  protected void addSpacer(String slotExpr, Material mat) {
-    spacer = new ItemStackBuilder(mat)
-      .withName(ConfigValue.immediate(" "))
-      .build();
+  protected void addSpacer(String slotExpr, ItemStack item) {
+    spacer = item;
     fixedItem(slotExpr, () -> spacer, null, null);
   }
 

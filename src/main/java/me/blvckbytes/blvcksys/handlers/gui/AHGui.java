@@ -103,7 +103,7 @@ public class AHGui extends AGui<Object> {
     ), e -> inst.switchTo(AnimationType.SLIDE_LEFT, ahProfileGui, null));
 
     // Spacer
-    inst.addSpacer("50", Material.BLACK_STAINED_GLASS_PANE);
+    inst.addSpacer("50", new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build());
 
     // Paginator
     inst.addPagination(51, 52, 53);

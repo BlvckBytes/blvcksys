@@ -61,7 +61,7 @@ public class QuestStagesGui extends AGui<QuestSection> {
   protected boolean opening(GuiInstance<QuestSection> inst) {
     Player p = inst.getViewer();
 
-    inst.addBorder(Material.BLACK_STAINED_GLASS_PANE);
+    inst.addBorder(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build());
     inst.addPagination(38, 40, 42);
     inst.addBack(36, questsGui, null, AnimationType.SLIDE_RIGHT);
 

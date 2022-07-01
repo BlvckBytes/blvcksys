@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -82,7 +83,7 @@ public class AHBidGui extends AGui<AHAuctionModel> {
 
     Runnable back = () -> inst.switchTo(AnimationType.SLIDE_RIGHT, ahGui, null);;
 
-    inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
+    inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
     inst.addBack(18, e -> back.run());
 
     // Target item status indicators

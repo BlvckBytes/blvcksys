@@ -55,7 +55,7 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
   protected boolean opening(GuiInstance<SingleChoiceParam> inst) {
     Player p = inst.getViewer();
 
-    inst.addBorder(Material.BLACK_STAINED_GLASS_PANE);
+    inst.addBorder(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build());
     inst.addPagination(38, 40, 42);
 
     // Reopens this instance on the next tick when called

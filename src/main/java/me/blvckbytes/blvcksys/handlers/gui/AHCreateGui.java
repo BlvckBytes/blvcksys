@@ -118,7 +118,7 @@ public class AHCreateGui extends AGui<Object> {
 
     Runnable back = () -> inst.switchTo(AnimationType.SLIDE_RIGHT, ahProfileGui, null);
 
-    inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
+    inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
     inst.addBack(18, e -> back.run());
 
     // Auction item markers

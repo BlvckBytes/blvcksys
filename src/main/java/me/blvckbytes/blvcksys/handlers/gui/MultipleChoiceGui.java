@@ -70,7 +70,7 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
 
     List<Tuple<Object, ItemStack>> choices = playerChoices.get(inst);
 
-    inst.addBorder(Material.BLACK_STAINED_GLASS_PANE);
+    inst.addBorder(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build());
     inst.addPagination(38, 40, 42);
 
     // Add another choice

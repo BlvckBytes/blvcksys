@@ -47,7 +47,7 @@ public class KitContentGui extends AGui<KitModel> {
 
   @Override
   protected boolean opening(GuiInstance<KitModel> inst) {
-    inst.addBorder(Material.BLACK_STAINED_GLASS_PANE);
+    inst.addBorder(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build());
     inst.addBack(36, kitsGui, null, AnimationType.SLIDE_RIGHT);
 
     inst.setPageContents(() -> (

@@ -107,7 +107,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
       return false;
     }
 
-    inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
+    inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
 
     /////////////////////////////////// Body Columns ////////////////////////////////////
 

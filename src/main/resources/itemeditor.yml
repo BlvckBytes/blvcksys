@@ -1,0 +1,241 @@
+# ____________________________                ___________________________
+# ___  __ )__  __ )___  _/_  /____________ ______  ____/_____  /__(_)_  /______________
+# __  __  |_  __  |__  / _  __/  _ \_  __ `__ \_  __/  _  __  /__  /_  __/  __ \_  ___/
+# _  /_/ /_  /_/ /__/ /  / /_ /  __/  / / / / /  /___  / /_/ / _  / / /_ / /_/ /  /
+# /_____/ /_____/ /___/  \__/ \___//_/ /_/ /_//_____/  \__,_/  /_/  \__/ \____//_/
+#
+# BBItemEditor - Developed by BlvckBytes <blvckbytes@gmail.com>
+
+messages:
+  metaUnavailable: '&7Auf die ItemMeta dieses Items konnte &cnicht &7zugegriffen werden!'
+
+titles:
+  home: '&8IE &5{{item_type}}'
+
+items:
+  generic:
+    background:
+      type: BLACK_STAINED_GLASS_PANE
+      name: ' '
+
+  home:
+    increase:
+      type: PLAYER_HEAD
+      textures: 'MHF_ArrowUp'
+      name: '&7» &dAnzahl erhöhen &7«'
+      lore:
+        - ' '
+        - '&7[&d1&7]: Anzahl &d+1'
+        - '&7[&d2&7]: Anzahl &d+64'
+        - '&7[&d3&7]: Anzahl &d+8'
+        - '&7[&d4&7]: Anzahl &d=64'
+
+    decrease:
+      type: PLAYER_HEAD
+      textures: 'MHF_ArrowDown'
+      name: '&7» &dAnzahl verringern &7«'
+      lore:
+        - ' '
+        - '&7[&d1&7]: Anzahl &d-1'
+        - '&7[&d2&7]: Anzahl &d-64'
+        - '&7[&d3&7]: Anzahl &d-8'
+        - '&7[&d4&7]: Anzahl &d=1'
+
+    displayMarker:
+      type: PURPLE_STAINED_GLASS_PANE
+      name: ' '
+
+    # If a category is not applicable, it's item will be
+    # patched with the properties of this item (lore is extended)
+    notApplicable:
+      type: BARRIER
+      lore:
+        - ' '
+        - '&cDiese Konfiguration ist nicht auf'
+        - '&cdas aktuell gewählte Item anwendbar.'
+
+    customModelData:
+      type: ITEM_FRAME
+      name: '&7» &dCustom Model Data &7«'
+      lore:
+        - ' '
+        - '&7Ändere die &dCustom Model Data &7dieses Items.'
+        - '&7Aktueller Wert: &d{{custom_model_data}}'
+        - ' '
+        - '&7[&d1&7]: &dWert setzen'
+        - '&7[&d2&7]: &dWert entfernen'
+
+    material:
+      type: CHEST
+      name: '&7» &dMaterial &7«'
+      lore:
+        - ' '
+        - '&7Ändere das &dMaterial &7dieses Items.'
+
+    flags:
+      type: NAME_TAG
+      name: '&7» &dFlags &7«'
+      lore:
+        - ' '
+        - '&7Aktiviere und deaktiviere &dFlags&7.'
+        - ' '
+        - '&7Aktive Flags: &d{{count}}'
+
+    enchantments:
+      type: ENCHANTED_BOOK
+      name: '&7» &dVerzauberungen &7«'
+      lore:
+        - ' '
+        - '&7Füge &dVerzauberungen &7hinzu und'
+        - '&7entferne bestehende &dEinträge&7.'
+        - ' '
+        - '&7Aktive Verzauberungen: &d{{count}}'
+
+    displayname:
+      type: PAPER
+      name: '&7» &dAnzeigename &7«'
+      lore:
+        - ' '
+        - '&7Ändere den &dNamen &7des Items.'
+
+    lore:
+      type: OAK_SIGN
+      name: '&7» &dLore &7«'
+      lore:
+        - ' '
+        - '&7Ändere die &dZeilen &7der &dLore.'
+        - ' '
+        - '&7[&d1&7]: &dZeile einfügen'
+        - '&7[&d2&7]: &dZeile anfügen'
+        - '&7[&d3&7]: &dZeile wählen und entfernen'
+        - '&7[&d4&7]: &dLore leeren'
+
+    durability:
+      type: ANVIL
+      name: '&7» &dHaltbarkeit &7«'
+      lore:
+        - ' '
+        - '&7Ändere die &dHaltbarkeit &7des Items.'
+        - ' '
+        - '&7Aktuelle Haltbarkeit: &d{{durability}}'
+        - ' '
+        - '&7[&d1&7]: &dHaltbarkeit erhöhen'
+        - '&7[&d2&7]: &dUnzerstörbar setzen'
+        - '&7[&d3&7]: &dHaltbarkeit verringern'
+        - '&7[&d4&7]: &dUnzerstörbarkeit entfernen'
+
+    attributes:
+      type: COMPARATOR
+      name: '&7» &dAttribute &7«'
+      lore:
+        - ' '
+        - '&7Füge &dAttribute &7hinzu und'
+        - '&7entferne bestehende &dEinträge&7.'
+        - ' '
+        - '&7[&d1&7]: &dAttribut hinzufügen'
+        - '&7[&d2&7]: &dAttribut wählen und entfernen'
+        - '&7[&d3&7]: &dAttribute leeren'
+
+    fireworks:
+      type: FIREWORK_ROCKET
+      name: '&7» &dFeuerwerk &7«'
+      lore:
+        - ' '
+        - '&7Bearbeite die &dEigenschaften'
+        - '&7von &dFeuerwerkskörpern&7.'
+        - ' '
+        - '&7Aktuelle Power: &d{{power}}'
+        - ' '
+        - '&7[&d1&7]: &dPower setzen'
+        - '&7[&d2&7]: &dEffekt hinzufügen'
+        - '&7[&d3&7]: &dEffekt entfernen'
+        - '&7[&d4&7]: &dEffekte leeren'
+
+    compass:
+      type: COMPASS
+      name: '&7» &dKompass &7«'
+      lore:
+        - ' '
+        - '&7Ändere das &dZiel &7dieses &dKompasses&7.'
+        - ' '
+        - '&7Aktuelles Ziel: &d{{location}}'
+        - ' '
+        - '&7[&d1&7]: &dZiel setzen'
+        - '&7[&d2&7]: &dZiel entfernen'
+
+    headOwner:
+      type: PLAYER_HEAD
+      name: '&7» &dKopfbesitzer &7«'
+      lore:
+        - ' '
+        - '&7Ändere den &dBesitzer &7dieses &dKopfes&7.'
+        - ' '
+        - '&7Aktueller Besitzer: &d{{owner}}'
+
+    leatherColor:
+      type: LEATHER
+      name: '&7» &dLederfarbe &7«'
+      lore:
+        - ' '
+        - '&7Ändere die &dFarbe &7dieses &dLederteiles&7.'
+        - ' '
+        - '&7Aktuelle Farbe: &d{{color}}'
+        - ' '
+        - '&7[&d1&7]: &dFarbwert aus Liste'
+        - '&7[&d2&7]: &dRGB Farbwert'
+        - '&7[&d3&7]: &dFarbe zurücksetzen'
+
+    potionEffects:
+      type: BREWING_STAND
+      name: '&7» &dTrankeffekte &7«'
+      lore:
+        - ' '
+        - '&7Ändere die &dEffekte &7dieses &dTranks&7.'
+        - ' '
+        - '&7[&d1&7]: &dHaupteffekt ändern'
+        - '&7[&d2&7]: &dVerbesserte Dauer'
+        - '&7[&d3&7]: &dVerbesserte Stufe'
+        - '&7[&d4&7]: &dSekundäreffekt hinzufügen'
+        - '&7[&d5&7]: &dSekundäreffekt entfernen'
+        - '&7[&d6&7]: &dSekundäreffekte leeren'
+        - '&7[&d7&7]: &dFarbwert aus Liste'
+        - '&7[&d8&7]: &dRGB Farbwert'
+        - '&7[&d9&7]: &dFarbe zurücksetzen'
+
+    maps:
+      type: FILLED_MAP
+      name: '&7» &dKarten &7«'
+      lore:
+        - ' '
+        - '&7Ändere die &dEigenschaften &7dieser &dKarte&7.'
+        - ' '
+        - '&7[&d1&7]: &dFarbwert aus Liste'
+        - '&7[&d2&7]: &dRGB Farbwert'
+        - '&7[&d3&7]: &dFarbe zurücksetzen'
+
+    books:
+      type: WRITTEN_BOOK
+      name: '&7» &dBücher &7«'
+      lore:
+        - ' '
+        - '&7Ändere die &dEigenschaften &7dieses &dBuches&7.'
+        - ' '
+        - '&7[&d1&7]: &dTitel setzen'
+        - '&7[&d2&7]: &dTitel entfernen'
+        - '&7[&d3&7]: &dAuthor setzen'
+        - '&7[&d4&7]: &dAuthor entfernen'
+        - '&7[&d5&7]: &dGeneration setzen'
+        - '&7[&d6&7]: &dGeneration entfernen'
+        - '&7[&d7&7]: &dSeiten editieren'
+        - '&7[&d8&7]: &dSeite entfernen'
+
+    banners:
+      type: WHITE_BANNER
+      name: '&7» &dBanner &7«'
+      lore:
+        - ' '
+        - '&7Ändere die &dMuster &7dieses &dBanners&7.'
+        - ' '
+        - '&7[&d1&7]: &dMuster hinzufügen'
+        - '&7[&d2&7]: &dMuster entfernen'
+        - '&7[&d3&7]: &dMuster leeren'

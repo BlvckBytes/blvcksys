@@ -5,6 +5,7 @@ import com.google.common.collect.Multimap;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.config.sections.itemeditor.IESection;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
@@ -12,7 +13,6 @@ import me.blvckbytes.blvcksys.packets.communicators.bookeditor.IBookEditorCommun
 import me.blvckbytes.blvcksys.persistence.models.PlayerTextureModel;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.MCReflect;
-import me.blvckbytes.blvcksys.util.SymbolicHead;
 import me.blvckbytes.blvcksys.util.Triple;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.util.Tuple;
@@ -59,6 +59,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
   private final YesNoGui yesNoGui;
   private final MultipleChoiceGui multipleChoiceGui;
 
+  private final IESection ies;
+
   public ItemEditorGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
@@ -71,10 +73,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     @AutoInject YesNoGui yesNoGui,
     @AutoInject MultipleChoiceGui multipleChoiceGui
   ) {
-    super(6, "", i -> (
-      cfg.get(ConfigKey.GUI_ITEMEDITOR_TITLE)
-        .withVariable("item_type", i.getArg().a().getType().name())
-    ), plugin, cfg, textures);
+    super(6, "", null, plugin, cfg, textures);
 
     this.singleChoiceGui = singleChoiceGui;
     this.logger = logger;
@@ -83,6 +82,15 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     this.bookEditor = bookEditor;
     this.yesNoGui = yesNoGui;
     this.multipleChoiceGui = multipleChoiceGui;
+
+    this.ies = cfg.reader("itemeditor")
+      .flatMap(r -> r.parseValue(null, IESection.class, true))
+      .orElseThrow();
+
+    setTitle(i -> (
+      ies.getTitles().getHome()
+        .withVariable("item_type", formatConstant(i.getArg().a().getType().name()))
+    ));
   }
 
   @Override
@@ -92,7 +100,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
   @Override
   protected boolean opening(GuiInstance<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<GuiInstance<?>>>> inst) {
-    inst.addFill(Material.BLACK_STAINED_GLASS_PANE);
+    inst.addFill(ies.getItems().getGeneric().getBackground().build());
 
     ItemStack item = inst.getArg().a();
     ItemMeta meta = item.getItemMeta();
@@ -100,7 +108,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     if (meta == null) {
       p.sendMessage(
-        cfg.get(ConfigKey.GUI_ITEMEDITOR_META_UNAVAILABLE)
+        ies.getMessages().getMetaUnavailable()
           .withPrefix()
           .asScalar()
       );
@@ -117,7 +125,10 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     ///////////////////////////////////// Preview //////////////////////////////////////
 
-    inst.fixedItem("12,14", () -> new ItemStackBuilder(Material.PURPLE_STAINED_GLASS_PANE).build(), null);
+    inst.fixedItem("12,14", () -> (
+      ies.getItems().getHome().getDisplayMarker()
+        .build()
+    ), null);
 
     // Always keep the edited item in sync with the player's inventory
     inst.fixedItem(13, () -> {
@@ -136,9 +147,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
 
     inst.fixedItem(10, () -> (
-      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_UP.getOwner()))
-        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_AMOUNT_INCREASE_NAME))
-        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_AMOUNT_INCREASE_LORE))
+      ies.getItems().getHome().getIncrease()
         .build()
     ), e -> {
       Integer key = e.getHotbarKey().orElse(null);
@@ -174,9 +183,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     ///////////////////////////////// Decrease Amount //////////////////////////////////
 
     inst.fixedItem(16, () -> (
-      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_DOWN.getOwner()))
-        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_AMOUNT_DECREASE_NAME))
-        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_AMOUNT_DECREASE_LORE))
+      ies.getItems().getHome().getDecrease()
         .build()
     ), e -> {
       Integer key = e.getHotbarKey().orElse(null);
@@ -213,13 +220,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     //////////////////////////////// Custom Model Data //////////////////////////////////
 
     inst.fixedItem(27, () -> (
-      new ItemStackBuilder(Material.ITEM_FRAME)
-        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_NAME))
-        .withLore(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_CUSTOM_MODEL_DATA_LORE)
+      ies.getItems().getHome().getCustomModelData()
+        .build(
+          ConfigValue.makeEmpty()
             .withVariable("custom_model_data", meta.hasCustomModelData() ? meta.getCustomModelData() : "/")
+            .exportVariables()
         )
-        .build()
     ), e -> {
       Integer key = e.getHotbarKey().orElse(null);
       if (key == null)
@@ -280,9 +286,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     ///////////////////////////////////// Material /////////////////////////////////////
 
     inst.fixedItem(28, () -> (
-      new ItemStackBuilder(Material.CHEST)
-        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_MATERIAL_NAME))
-        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_MATERIAL_LORE))
+      ies.getItems().getHome().getMaterial()
         .build()
     ), e -> {
       new UserInputChain(inst, values -> {
@@ -308,10 +312,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     /////////////////////////////////// Item Flags ///////////////////////////////////
 
     inst.fixedItem(29, () -> (
-      new ItemStackBuilder(Material.NAME_TAG)
-        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_FLAGS_NAME))
-        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_FLAGS_LORE))
-        .build()
+      ies.getItems().getHome().getFlags()
+        .build(
+          ConfigValue.makeEmpty()
+            .withVariable("count", meta.getItemFlags().size())
+            .exportVariables()
+        )
     ), e -> {
       new UserInputChain(inst, values -> {
         ItemFlag flag = (ItemFlag) values.get("flag");
@@ -349,10 +355,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     //////////////////////////////////// Enchantments ////////////////////////////////////
 
     inst.fixedItem(30, () -> (
-      new ItemStackBuilder(Material.ENCHANTED_BOOK)
-        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_ENCHANTMENTS_NAME))
-        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_ENCHANTMENTS_LORE))
-        .build()
+      ies.getItems().getHome().getEnchantments()
+        .build(
+          ConfigValue.makeEmpty()
+            .withVariable("count", meta.getEnchants().size())
+            .exportVariables()
+        )
     ), e -> {
       new UserInputChain(inst, values -> {
         Enchantment enchantment = (Enchantment) values.get("enchantment");
@@ -410,9 +418,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     //////////////////////////////////// Displayname ////////////////////////////////////
 
     inst.fixedItem(31, () -> (
-      new ItemStackBuilder(Material.PAPER)
-        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_DISPLAYNAME_NAME))
-        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_DISPLAYNAME_LORE))
+      ies.getItems().getHome().getDisplayname()
         .build()
     ), e -> {
       new UserInputChain(inst, values -> {
@@ -443,9 +449,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     //////////////////////////////////// Lore Lines ////////////////////////////////////
 
     inst.fixedItem(32, () -> (
-      new ItemStackBuilder(Material.OAK_SIGN)
-        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_NAME))
-        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_LORE_LORE))
+      ies.getItems().getHome().getLore()
         .build()
     ), e -> {
       Integer key = e.getHotbarKey().orElse(null);
@@ -568,33 +572,26 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       }
     });
 
-    //////////////////////////////////// Unbreakability ////////////////////////////////////
+    //////////////////////////////////// Durability ////////////////////////////////////
 
     inst.fixedItem(33, () -> {
       boolean isDamageable = (meta instanceof Damageable && item.getType().getMaxDurability() > 0);
-      int currDur = item.getType().getMaxDurability() - ((meta instanceof Damageable d) ? d.getDamage() : -1);
+      int currDur = item.getType().getMaxDurability() - ((meta instanceof Damageable d) ? d.getDamage() : 0);
       int maxDur = item.getType().getMaxDurability();
 
-      return new ItemStackBuilder(isDamageable ? Material.ANVIL : Material.BARRIER)
-        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_NAME))
-        .withLore(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_DURABILITY_LORE)
+      return ies.getItems().getHome().getDurability()
+        .patch(ies.getItems().getHome().getNotApplicable(), !isDamageable)
+        .build(
+          ConfigValue.makeEmpty()
             .withVariable(
               "durability",
-              cfg.get(
-                meta.isUnbreakable() ?
-                  ConfigKey.GUI_ITEMEDITOR_DURABILITY_UNBREAKABLE :
-                  (isDamageable ? ConfigKey.GUI_ITEMEDITOR_DURABILITY_BREAKABLE : ConfigKey.GUI_ITEMEDITOR_DURABILITY_NON_BREAKABLE)
-                )
-                .withVariable("current_durability", currDur)
-                .withVariable("max_durability", maxDur)
-                .asScalar()
+              meta.isUnbreakable() ? "Unbreakable" : (
+                isDamageable ? (currDur + "/" + maxDur) : "/"
+              )
             )
-        )
-        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_NOT_APPLICABLE_LORE), !isDamageable)
-        .build();
+            .exportVariables()
+        );
     }, e -> {
-
       int maxDur = item.getType().getMaxDurability();
 
       // This item cannot take any damage
@@ -708,9 +705,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     ////////////////////////////////////// Attributes //////////////////////////////////////
 
     inst.fixedItem(34, () -> (
-      new ItemStackBuilder(Material.COMPARATOR)
-        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_NAME))
-        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_ATTRIBUTES_LORE))
+      ies.getItems().getHome().getAttributes()
         .build()
     ), e -> {
 
@@ -841,14 +836,13 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     inst.fixedItem(35, () -> {
       FireworkMeta fMeta = meta instanceof FireworkMeta fm ? fm : null;
-      return new ItemStackBuilder(fMeta != null ? Material.FIREWORK_ROCKET : Material.BARRIER)
-        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_FIREWORK_NAME))
-        .withLore(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_FIREWORK_LORE)
+      return ies.getItems().getHome().getFireworks()
+        .patch(ies.getItems().getHome().getNotApplicable(), fMeta == null)
+        .build(
+          ConfigValue.makeEmpty()
             .withVariable("power", fMeta == null ? "/" : fMeta.getPower())
-        )
-        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_NOT_APPLICABLE_LORE), fMeta == null)
-        .build();
+            .exportVariables()
+        );
     }, e -> {
       if (!(meta instanceof FireworkMeta fm))
         return;
@@ -860,7 +854,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       // Set the firework's power
       if (key == 1) {
         new UserInputChain(inst, values -> {
-          int power = (int) values.get("power");
+          int power = Math.max(0, (int) values.get("power"));
 
           fm.setPower(power);
           item.setItemMeta(meta);
@@ -1039,19 +1033,18 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     inst.fixedItem(37, () -> {
       CompassMeta cm = meta instanceof CompassMeta x ? x : null;
-      return new ItemStackBuilder(cm != null ? Material.COMPASS : Material.BARRIER)
-        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_COMPASS_NAME))
-        .withLore(
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_COMPASS_LORE)
+      return ies.getItems().getHome().getCompass()
+        .patch(ies.getItems().getHome().getNotApplicable(), cm == null)
+        .build(
+          ConfigValue.makeEmpty()
             .withVariable(
               "location",
               (cm != null && cm.getLodestone() != null) ?
                 stringifyLocation(cm.getLodestone()) :
                 "/"
             )
-        )
-        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_NOT_APPLICABLE_LORE), cm == null)
-        .build();
+            .exportVariables()
+        );
     }, e -> {
       if (!(meta instanceof CompassMeta cm))
         return;
@@ -1102,12 +1095,14 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     ///////////////////////////////////// Skull Owner /////////////////////////////////////
 
     inst.fixedItem(38, () -> {
-      boolean applicable = meta instanceof SkullMeta;
-      return new ItemStackBuilder(applicable ? Material.SKELETON_SKULL : Material.BARRIER)
-        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_NAME))
-        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_SKULLOWNER_LORE))
-        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_NOT_APPLICABLE_LORE), !applicable)
-        .build();
+      SkullMeta sm = meta instanceof SkullMeta x ? x : null;
+      return ies.getItems().getHome().getHeadOwner()
+        .patch(ies.getItems().getHome().getNotApplicable(), sm == null)
+        .build(
+          ConfigValue.makeEmpty()
+            .withVariable("owner", (sm == null || sm.getOwnerProfile() == null) ? "/" : sm.getOwnerProfile().getName())
+            .exportVariables()
+        );
     }, e -> {
       // Not an item which will have skull meta
       if (!(meta instanceof SkullMeta skullMeta))
@@ -1159,15 +1154,17 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     ///////////////////////////////////// Leather Color /////////////////////////////////////
 
     inst.fixedItem(39, () -> {
-      boolean applicable = meta instanceof LeatherArmorMeta;
-      return new ItemStackBuilder(applicable ? Material.LEATHER : Material.BARRIER)
-        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_NAME))
-        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_LEATHERCOLOR_LORE))
-        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_NOT_APPLICABLE_LORE), !applicable)
-        .build();
+      LeatherArmorMeta lam = meta instanceof LeatherArmorMeta x ? x : null;
+      return ies.getItems().getHome().getLeatherColor()
+        .patch(ies.getItems().getHome().getNotApplicable(), lam == null)
+        .build(
+          ConfigValue.makeEmpty()
+            .withVariable("color", lam == null ? "/" : stringifyColor(lam.getColor()))
+            .exportVariables()
+        );
     }, e -> {
       // Not an item which will have leather armor meta
-      if (!(meta instanceof LeatherArmorMeta armorMeta))
+      if (!(meta instanceof LeatherArmorMeta))
         return;
 
       Integer key = e.getHotbarKey().orElse(null);
@@ -1187,14 +1184,11 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     ///////////////////////////////////// Potion Effects /////////////////////////////////////
 
-    inst.fixedItem(40, () -> {
-      boolean applicable = meta instanceof PotionMeta;
-      return new ItemStackBuilder(applicable ? Material.BREWING_STAND : Material.BARRIER)
-        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_NAME))
-        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_POTIONEFFECTS_LORE))
-        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_NOT_APPLICABLE_LORE), !applicable)
-        .build();
-    }, e -> {
+    inst.fixedItem(40, () -> (
+      ies.getItems().getHome().getPotionEffects()
+        .patch(ies.getItems().getHome().getNotApplicable(), !(meta instanceof PotionMeta))
+        .build()
+    ), e -> {
       // Not an item which will have potion meta
       if (!(meta instanceof PotionMeta potionMeta))
         return;
@@ -1401,14 +1395,11 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     //////////////////////////////////////// Maps ////////////////////////////////////////
 
-    inst.fixedItem(41, () -> {
-      boolean applicable = meta instanceof MapMeta;
-      return new ItemStackBuilder(applicable ? Material.FILLED_MAP : Material.BARRIER)
-        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_MAP_NAME))
-        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_MAP_LORE))
-        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_NOT_APPLICABLE_LORE), !applicable)
-        .build();
-    }, e -> {
+    inst.fixedItem(41, () -> (
+      ies.getItems().getHome().getMaps()
+        .patch(ies.getItems().getHome().getNotApplicable(), !(meta instanceof MapMeta))
+        .build()
+    ), e -> {
       // Not an item which will have map meta
       if (!(meta instanceof MapMeta mapMeta))
         return;
@@ -1432,14 +1423,11 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     //////////////////////////////////////// Books ////////////////////////////////////////
 
-    inst.fixedItem(42, () -> {
-      boolean applicable = meta instanceof BookMeta;
-      return new ItemStackBuilder(applicable ? Material.BOOK : Material.BARRIER)
-        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_NAME))
-        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_BOOK_LORE))
-        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_NOT_APPLICABLE_LORE), !applicable)
-        .build();
-    }, e -> {
+    inst.fixedItem(42, () -> (
+      ies.getItems().getHome().getBooks()
+        .patch(ies.getItems().getHome().getNotApplicable(), !(meta instanceof BookMeta))
+        .build()
+    ), e -> {
       // Not an item which will have book meta
       if (!(meta instanceof BookMeta bookMeta))
         return;
@@ -1646,14 +1634,11 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     //////////////////////////////////////// Banners ////////////////////////////////////////
 
-    inst.fixedItem(43, () -> {
-      boolean applicable = meta instanceof BannerMeta;
-      return new ItemStackBuilder(applicable ? Material.WHITE_BANNER : Material.BARRIER)
-        .withName(cfg.get(ConfigKey.GUI_ITEMEDITOR_BANNER_NAME))
-        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_BANNER_LORE))
-        .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_NOT_APPLICABLE_LORE), !applicable)
-        .build();
-    }, e -> {
+    inst.fixedItem(43, () -> (
+      ies.getItems().getHome().getBanners()
+        .patch(ies.getItems().getHome().getNotApplicable(), !(meta instanceof BannerMeta))
+        .build()
+    ), e -> {
       if (!(meta instanceof BannerMeta bm))
         return;
 

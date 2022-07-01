@@ -355,8 +355,9 @@ public class ItemStackBuilder {
     if (data.getAmount() != null)
       res.stack.setAmount(data.getAmount());
 
-    if (data.getType() != null) {
-      res.stack.setType(data.getType());
+    Material m = data.getType() == null ? null : data.getType().asScalar(Material.class);
+    if (m != null) {
+      res.stack.setType(m);
       res.meta = res.stack.getItemMeta();
     }
 
@@ -371,13 +372,18 @@ public class ItemStackBuilder {
       data.getFlags().asList(ItemFlag.class).forEach(res.meta::addItemFlags);
     }
 
-    if (data.getColor() != null)
-      res.withColor(data::getColor, true);
+    Color c = data.getColor() == null ? null : data.getColor().asScalar(Color.class);
+    if (c != null)
+      res.withColor(() -> c, true);
 
     if (data.getEnchantments().length > 0) {
       res.meta.getEnchants().forEach((e, i) -> res.meta.removeEnchant(e));
       Arrays.stream(data.getEnchantments())
-        .forEach(e -> res.withEnchantment(e.getEnchantment(), e.getLevel() == null ? 1 : e.getLevel()));
+        .forEach(e -> {
+          Enchantment ench = e.getEnchantment() == null ? null : e.getEnchantment().asScalar(Enchantment.class);
+          if (ench != null)
+            res.withEnchantment(ench, e.getLevel() == null ? 1 : e.getLevel());
+        });
     }
 
     if (data.getTextures() != null)

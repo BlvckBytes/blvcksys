@@ -1,7 +1,6 @@
 package me.blvckbytes.blvcksys.config.sections;
 
 import com.mojang.authlib.GameProfile;
-import lombok.AccessLevel;
 import lombok.Getter;
 import me.blvckbytes.blvcksys.config.AConfigSection;
 import me.blvckbytes.blvcksys.config.ConfigValue;
@@ -10,6 +9,7 @@ import net.minecraft.util.Tuple;
 import org.bukkit.Color;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -19,6 +19,7 @@ import org.bukkit.inventory.meta.SkullMeta;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -32,11 +33,11 @@ import java.util.function.Function;
 public class ItemStackSection extends AConfigSection {
 
   private @Nullable Integer amount;
-  private @Nullable Material type;
+  private @Nullable ConfigValue type;
   private @Nullable ConfigValue name;
   private @Nullable ConfigValue lore;
   private @Nullable ConfigValue flags;
-  private @Nullable Color color;
+  private @Nullable ConfigValue color;
   private ItemStackEnchantmentSection[] enchantments;
   private @Nullable GameProfile textures;
   private @Nullable ItemStackBaseEffectSection baseEffect;
@@ -47,41 +48,43 @@ public class ItemStackSection extends AConfigSection {
     this.customEffects = new ItemStackCustomEffectSection[0];
   }
 
-  // Builder cache, as instances will be reusable
-  @CSIgnore
-  @Getter(AccessLevel.PRIVATE)
-  private ItemStackBuilder item = null;
-
   /**
    * Create an item stack builder from the parameters of this section
+   * @param variables Variables to apply while evaluating values
    */
-  public ItemStackBuilder asItem() {
-    // Cache the builder instance
-    if (item == null) {
-      item = new ItemStackBuilder(
-        type == null ? Material.BARRIER : type,
-        amount == null ? 1 : amount
-      )
-        .withName(name, name != null)
-        .withLore(lore, lore != null)
-        .withFlags(() -> flags.asList(ItemFlag.class), flags != null)
-        .withEnchantments(() -> (
-          Arrays.stream(enchantments)
-            .map(es -> new Tuple<>(es.getEnchantment(), es.getLevel() == null ? 1 : es.getLevel()))
-            .toList()
-        ), enchantments != null)
-        .withColor(() -> color, color != null)
-        .withProfile(() -> textures, textures != null)
-        .withBaseEffect(() -> baseEffect.asData(), baseEffect != null)
-        .withCustomEffects(() -> (
-          Arrays.stream(customEffects)
-            .map(effect -> effect.asEffect().orElse(null))
-            .filter(Objects::nonNull)
-            .toList()
-        ), customEffects != null);
-    }
+  public ItemStackBuilder asItem(@Nullable Map<String, String> variables) {
+    Material m = getType() == null ? null : getType().copy().withVariables(variables).asScalar(Material.class);
+    Color c = getColor() == null ? null : getColor().copy().withVariables(variables).asScalar(Color.class);
 
-    return item;
+    return new ItemStackBuilder(
+      m == null ? Material.BARRIER : m,
+      amount == null ? 1 : amount
+    )
+      .withName(() -> name.copy().withVariables(variables), name != null)
+      .withLore(() -> lore.copy().withVariables(variables), lore != null)
+      .withFlags(() -> flags.copy().withVariables(variables).asList(ItemFlag.class), flags != null)
+      .withEnchantments(() -> (
+        Arrays.stream(enchantments)
+          .map(es -> (
+            new Tuple<>(
+              es.getEnchantment() == null ?
+                null :
+                es.getEnchantment().copy().withVariables(variables).asScalar(Enchantment.class),
+              es.getLevel() == null ? 1 : es.getLevel()
+            )
+          ))
+          .filter(t -> t.a() != null)
+          .toList()
+      ), enchantments != null)
+      .withColor(() -> c, c != null)
+      .withProfile(() -> textures, textures != null)
+      .withBaseEffect(() -> baseEffect.asData(), baseEffect != null)
+      .withCustomEffects(() -> (
+        Arrays.stream(customEffects)
+          .map(effect -> effect.asEffect().orElse(null))
+          .filter(Objects::nonNull)
+          .toList()
+      ), customEffects != null);
   }
 
   /**
@@ -93,7 +96,8 @@ public class ItemStackSection extends AConfigSection {
     if (item == null)
       return false;
 
-    if (type != null && item.getType() != type)
+    Material m = getType() == null ? null : getType().asScalar(Material.class);
+    if (m != null && item.getType() != m)
       return false;
 
     if (amount != null && item.getAmount() != amount)
@@ -127,11 +131,17 @@ public class ItemStackSection extends AConfigSection {
     // Check for the presence of all enchantments at the right levels (ignoring order)
     if (!checkMeta(item, enchantments, meta -> {
       for (ItemStackEnchantmentSection ench : enchantments) {
+        Enchantment e = ench.getEnchantment() == null ? null : ench.getEnchantment().asScalar(Enchantment.class);
+
+        // Cannot compare
+        if (e == null)
+          continue;
+
         if (!(
           // Contains this enchantment at any levej
-          meta.hasEnchant(ench.getEnchantment()) &&
+          meta.hasEnchant(e) &&
           // Contains at a matching level, if required
-          (ench.getLevel() == null || meta.getEnchantLevel(ench.getEnchantment()) == ench.getLevel())
+          (ench.getLevel() == null || meta.getEnchantLevel(e) == ench.getLevel())
         ))
           return false;
       }

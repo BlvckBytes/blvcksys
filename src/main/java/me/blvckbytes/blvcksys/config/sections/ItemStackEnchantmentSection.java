@@ -2,7 +2,7 @@ package me.blvckbytes.blvcksys.config.sections;
 
 import lombok.Getter;
 import me.blvckbytes.blvcksys.config.AConfigSection;
-import org.bukkit.enchantments.Enchantment;
+import me.blvckbytes.blvcksys.config.ConfigValue;
 import org.jetbrains.annotations.Nullable;
 
 /*
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 @Getter
 public class ItemStackEnchantmentSection extends AConfigSection {
 
-  private @Nullable Enchantment enchantment;
+  private @Nullable ConfigValue enchantment;
   private @Nullable Integer level;
 
 }

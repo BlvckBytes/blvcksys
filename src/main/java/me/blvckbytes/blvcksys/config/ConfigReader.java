@@ -102,8 +102,8 @@ public class ConfigReader {
 
       if (cv != null) {
         // Set the scalar value, only if it's type matches
-        Object v = cv.asScalar(type, null);
-        if (type.isAssignableFrom(v.getClass()))
+        Object v = cv.asScalar(type);
+        if (v != null && type.isAssignableFrom(v.getClass()))
           return Optional.of(type.cast(v));
       }
 
@@ -373,7 +373,7 @@ public class ConfigReader {
    */
   private Optional<ItemStackBuilder> getItem(String key) {
     ItemStackSection is = parseValue(key, ItemStackSection.class, false).orElse(null);
-    return is == null ? Optional.empty() : Optional.of(is.asItem());
+    return is == null ? Optional.empty() : Optional.of(is.asItem(null));
   }
 
   /**

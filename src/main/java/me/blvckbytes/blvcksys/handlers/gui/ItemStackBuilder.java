@@ -282,6 +282,8 @@ public class ItemStackBuilder {
    * @param variables Optional variables to apply to the name and lore
    */
   public ItemStack build(@Nullable Map<String, String> variables) {
+    ItemStack res = stack.clone();
+
     // There is a meta to manipulate
     if (meta != null) {
 
@@ -306,10 +308,10 @@ public class ItemStackBuilder {
         buildMeta.setLore(lines);
       }
 
-      stack.setItemMeta(buildMeta);
+      res.setItemMeta(buildMeta);
     }
 
-    return stack;
+    return res;
   }
 
   /**

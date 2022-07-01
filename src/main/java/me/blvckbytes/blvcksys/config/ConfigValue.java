@@ -5,9 +5,6 @@ import lombok.AllArgsConstructor;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
-import org.bukkit.Material;
-import org.bukkit.enchantments.Enchantment;
-import org.bukkit.inventory.ItemFlag;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
@@ -444,49 +441,24 @@ public class ConfigValue {
 
       String stringValue = applyVariables(value.toString().trim());
 
+      // Requested the whole wrapper
+      if (type == ConfigValue.class)
+        return Optional.of(type.cast(this));
+
+      // String value as scalar
+      if (type == String.class)
+        return Optional.of(type.cast(stringValue));
+
       // Automatic enum parsing
-      if (type.isEnum()) {
-        for (T ec : type.getEnumConstants()) {
-          if (((Enum<?>) ec).name().equalsIgnoreCase(stringValue))
-            return Optional.of(ec);
-        }
+      if (type.isEnum() || hasStaticSelfConstants(type))
+        return parseEnum(type, stringValue);
 
-        return Optional.empty();
-      }
-
-      // Automatic enchantment parsing
-      if (type == Enchantment.class) {
-        Field target = Arrays.stream(Enchantment.class.getDeclaredFields())
-          .filter(f -> Modifier.isStatic(f.getModifiers()) && f.getType() == Enchantment.class)
-          .filter(f -> f.getName().equalsIgnoreCase(stringValue))
-          .findFirst()
-          .orElse(null);
-
-        if (target == null)
-          return Optional.empty();
-
-        return Optional.of(type.cast(target.get(null)));
-      }
-
-      // Automatic material parsing
-      if (type == Material.class)
-        return Optional.of(type.cast(Material.valueOf(stringValue)));
-
-      // Automatic itemflag parsing
-      if (type == ItemFlag.class)
-        return Optional.of(type.cast(ItemFlag.valueOf(stringValue)));
-
-      // Automatic color parsing
+      // Automatic color parsing with RGB-notation support
       if (type == Color.class) {
-        Field target = Arrays.stream(Color.class.getDeclaredFields())
-          .filter(f -> Modifier.isStatic(f.getModifiers()) && f.getType() == Color.class)
-          .filter(f -> f.getName().equalsIgnoreCase(stringValue))
-          .findFirst()
-          .orElse(null);
-
-        // A color with this name existed
-        if (target != null)
-          return Optional.of(type.cast(target.get(null)));
+        // Try to parse an enum name
+        Optional<T> enumValue = parseEnum(type, stringValue);
+        if (enumValue.isPresent())
+          return enumValue;
 
         // Assume it's an RGB color
         String[] parts = stringValue.split(" ");
@@ -507,6 +479,52 @@ public class ConfigValue {
     } catch (Exception e) {
       return Optional.empty();
     }
+  }
+
+  /**
+   * Checks whether a class declares static constants of it's own type (enum-like)
+   * @param c Class to check
+   */
+  private boolean hasStaticSelfConstants(Class<?> c) {
+    return Arrays.stream(c.getDeclaredFields()).anyMatch(field -> field.getType().equals(c) && Modifier.isStatic(field.getModifiers()));
+  }
+
+  /**
+   * Parses an "enum" from either true enum constants or static self-typed
+   * constant declarations within the specified class
+   * @param c Target class
+   * @param value String value to parse
+   * @return Optional constant, empty if there was no such constant
+   */
+  @SuppressWarnings("unchecked")
+  private<T> Optional<T> parseEnum(Class<T> c, String value) {
+    value = value.trim();
+
+    // Parse enums
+    if (c.isEnum()) {
+      for (T ec : c.getEnumConstants()) {
+        if (((Enum<?>) ec).name().equalsIgnoreCase(value))
+          return Optional.of(ec);
+      }
+    }
+
+    // Parse classes with static constants
+    else {
+      try {
+        List<Field> constants = Arrays.stream(c.getDeclaredFields())
+          .filter(field -> field.getType().equals(c) && Modifier.isStatic(field.getModifiers()))
+          .toList();
+
+        for (Field constant : constants) {
+          if (constant.getName().equalsIgnoreCase(value))
+            return Optional.of((T) constant.get(null));
+        }
+      } catch (Exception ex) {
+        ex.printStackTrace();
+      }
+    }
+
+    return Optional.empty();
   }
 
   /**

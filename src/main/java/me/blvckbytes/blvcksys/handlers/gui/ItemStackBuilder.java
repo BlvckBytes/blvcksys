@@ -4,6 +4,8 @@ import com.mojang.authlib.GameProfile;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import me.blvckbytes.blvcksys.config.ConfigValue;
+import me.blvckbytes.blvcksys.config.sections.ItemStackCustomEffectSection;
+import me.blvckbytes.blvcksys.config.sections.ItemStackSection;
 import net.minecraft.util.Tuple;
 import org.bukkit.Color;
 import org.bukkit.DyeColor;
@@ -19,9 +21,7 @@ import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Supplier;
 
 /*
@@ -34,7 +34,7 @@ import java.util.function.Supplier;
 public class ItemStackBuilder {
 
   private final ItemStack stack;
-  private final ItemMeta meta;
+  private ItemMeta meta;
 
   // Name and lore should only be evaluated at the build-step
   // in order to allow for extra variable injection
@@ -336,5 +336,66 @@ public class ItemStackBuilder {
     return new ItemStackBuilder(
       stack.clone(), meta.clone(), name, loreOverride, new ArrayList<>(lore)
     );
+  }
+
+  /**
+   * Conditionally apply patches to this item, by first copying it and
+   * then altering all affected properties
+   * @param data Data to patch with
+   * @param condition Boolean which has to evaluate to true in order to apply the patch
+   */
+  public ItemStackBuilder patch(ItemStackSection data, boolean condition) {
+    if (!condition)
+      return this;
+
+    ItemStackBuilder res = this.copy();
+
+    if (data.getAmount() != null)
+      res.stack.setAmount(data.getAmount());
+
+    if (data.getType() != null) {
+      res.stack.setType(data.getType());
+      res.meta = res.stack.getItemMeta();
+    }
+
+    if (data.getName() != null)
+      res.withName(data.getName());
+
+    if (data.getLore() != null)
+      res.withLore(data.getLore());
+
+    if (data.getFlags() != null) {
+      res.meta.getItemFlags().forEach(res.meta::removeItemFlags);
+      data.getFlags().asList(ItemFlag.class).forEach(res.meta::addItemFlags);
+    }
+
+    if (data.getColor() != null)
+      res.withColor(data::getColor, true);
+
+    if (data.getEnchantments().length > 0) {
+      res.meta.getEnchants().forEach((e, i) -> res.meta.removeEnchant(e));
+      Arrays.stream(data.getEnchantments())
+        .forEach(e -> res.withEnchantment(e.getEnchantment(), e.getLevel() == null ? 1 : e.getLevel()));
+    }
+
+    if (data.getTextures() != null)
+      res.withProfile(data::getTextures, true);
+
+    if (data.getBaseEffect() != null)
+      res.withBaseEffect(() -> data.getBaseEffect().asData(), true);
+
+    if (data.getCustomEffects().length > 0) {
+      if (res.meta instanceof PotionMeta pm)
+        pm.clearCustomEffects();
+
+      res.withCustomEffects(() -> (
+        Arrays.stream(data.getCustomEffects()).map(ItemStackCustomEffectSection::asEffect)
+          .filter(Optional::isPresent)
+          .map(Optional::get)
+          .toList()
+      ), true);
+    }
+
+    return res;
   }
 }

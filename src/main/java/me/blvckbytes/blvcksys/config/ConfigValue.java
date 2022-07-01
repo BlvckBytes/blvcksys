@@ -438,7 +438,6 @@ public class ConfigValue {
    */
   private<T> Optional<T> cast(Object value, Class<T> type) {
     try {
-
       String stringValue = applyVariables(value.toString().trim());
 
       // Requested the whole wrapper
@@ -474,6 +473,18 @@ public class ConfigValue {
           Integer.parseInt(parts[2])
         )));
       }
+
+      // Parse integers
+      if (type == Integer.class || type == Long.class)
+        return Optional.of(type.cast(Integer.parseInt(stringValue)));
+
+      // Parse floating points
+      if (type == Float.class || type == Double.class)
+        return Optional.of(type.cast(Float.parseFloat(stringValue)));
+
+      // Parse booleans
+      if (type == Boolean.class)
+        return Optional.of(type.cast(Boolean.parseBoolean(stringValue)));
 
       return Optional.of(type.cast(value));
     } catch (Exception e) {

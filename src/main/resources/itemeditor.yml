@@ -400,3 +400,72 @@ items:
         - HIDE_DYE
         - HIDE_PLACED_ON
         - HIDE_POTION_EFFECTS
+
+    flag:
+      type: NAME_TAG
+      name: '&d{{flag}}'
+      lore:
+        - ' '
+        - '&7Aktueller Zustand: &d{{state}}'
+        - ' '
+        - '&7Klicke, um den Zustand zu wechseln.'
+
+    lore:
+      type: PAPER
+      name: '&7Zeile &d{{line}}'
+      lore:
+        - ' '
+        - '&7Inhalt:'
+        - '&d{{content}}'
+
+    attributeNew:
+      type: COMPARATOR
+      name: '&d{{attribute}}'
+      lore:
+        - ' '
+        - '&7Klicke, um eine neue Instanz zu erstellen.'
+
+    attributeExisting:
+      type: COMPARATOR
+      name: '&d{{attribute}}'
+      lore:
+        - ' '
+        - '&7Name: &d{{name}}'
+        - '&7Wert: &d{{amount}}'
+        - '&7Operator: &d{{operation}}'
+        - '&7Slot: &d{{slot}}'
+
+    equipment:
+      type: CHEST
+      name: '&d{{slot}}'
+      lore:
+        - ' '
+        - '&7Klicke, um diesen Slot zu wählen.'
+
+    operation:
+      type: REDSTONE_TORCH
+      name: '&d{{operation}}'
+      lore:
+        - ' '
+        - '&7Klicke, um diese Operation zu wählen.'
+
+    potionType:
+      type: POTION
+      name: '&d{{type_hr}}'
+      lore:
+        - ' '
+        - '&7Klicke, um diesen Typ zu wählen.'
+      baseEffect:
+        type: '{{type}}'
+
+    potionEffect:
+      type: POTION
+      name: '&d{{effect_hr}}'
+      lore:
+        - ' '
+        - '&7Klicke, um diesen Effekt zu wählen.'
+      customEffects:
+        -
+          effect: '{{effect}}'
+          duration: '{{duration}}'
+          amplifier: '{{amplifier}}'

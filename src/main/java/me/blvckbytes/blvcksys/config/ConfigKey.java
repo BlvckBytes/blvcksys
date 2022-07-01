@@ -1471,61 +1471,6 @@ public enum ConfigKey {
   //                             ItemEditor GUI                              //
   //=========================================================================//
 
-  GUI_ITEMEDITOR_CHOICE_FLAG_NAME("gui.itemeditor.choice.flag.name", "$2{{flag}}"),
-  GUI_ITEMEDITOR_CHOICE_FLAG_ACTIVE("gui.itemeditor.choice.flag.inactive", "&aAktiviert"),
-  GUI_ITEMEDITOR_CHOICE_FLAG_INACTIVE("gui.itemeditor.choice.flag.active", "&cDeaktiviert"),
-  GUI_ITEMEDITOR_CHOICE_FLAG_LORE(
-    "gui.itemeditor.choice.flag.lore",
-    " ",
-    "$0Aktueller Zustand: {{state}}",
-    "$0Klicke, um den Zustand zu wechseln."
-  ),
-  GUI_ITEMEDITOR_CHOICE_LORE_NAME("gui.itemeditor.choice.lore.name", "$2Zeile {{line_number}}"),
-  GUI_ITEMEDITOR_CHOICE_LORE_LORE(
-    "gui.itemeditor.choice.lore.lore",
-    " ",
-    "$0Inhalt: ",
-    "{{line_content}}"
-  ),
-  GUI_ITEMEDITOR_CHOICE_ATTR_NAME("gui.itemeditor.choice.attr.name", "$2{{attribute}}"),
-  GUI_ITEMEDITOR_CHOICE_ATTR_EXISTING_LORE(
-    "gui.itemeditor.choice.attr.existing_lore",
-    " ",
-    "$0Name: $2{{name}}",
-    "$0Wert: $2{{amount}}",
-    "$0Operator: $2{{operation}}",
-    "$0Slot: $2{{slot}}"
-  ),
-  GUI_ITEMEDITOR_CHOICE_ATTR_NEW_LORE(
-    "gui.itemeditor.choice.attr.new_lore",
-    " ",
-    "$0Erstelle eine $2neue $0Instanz",
-    "$0dieses $2Attributs$0."
-  ),
-  GUI_ITEMEDITOR_CHOICE_EQUIPMENT_NAME("gui.itemeditor.choice.equipment.name", "$2{{slot}}"),
-  GUI_ITEMEDITOR_CHOICE_EQUIPMENT_LORE(
-    "gui.itemeditor.choice.equipment.lore",
-    " ",
-    "$0Klicke um diesen Equipment-Slot zu wählen."
-  ),
-  GUI_ITEMEDITOR_CHOICE_OPERATION_NAME("gui.itemeditor.choice.operation.name", "$2{{operation}}"),
-  GUI_ITEMEDITOR_CHOICE_OPERATION_LORE(
-    "gui.itemeditor.choice.operation.lore",
-    " ",
-    "$0Klicke um diese Operation zu wählen."
-  ),
-  GUI_ITEMEDITOR_CHOICE_POTION_TYPE_NAME("gui.itemeditor.choice.potion_type.name", "$2{{type}}"),
-  GUI_ITEMEDITOR_CHOICE_POTION_TYPE_LORE(
-    "gui.itemeditor.choice.potion_type.lore",
-    " ",
-    "$0Klicke um diesen Typ zu wählen."
-  ),
-  GUI_ITEMEDITOR_CHOICE_POTION_EFFECT_NAME("gui.itemeditor.choice.potion_effect.name", "$2{{effect}}"),
-  GUI_ITEMEDITOR_CHOICE_POTION_EFFECT_LORE(
-    "gui.itemeditor.choice.potion_effect.lore",
-    " ",
-    "$0Klicke um diesen Effekt zu wählen."
-  ),
   GUI_ITEMEDITOR_CHOICE_COLOR_NAME("gui.itemeditor.choice.color.name", "$2{{color}}"),
   GUI_ITEMEDITOR_CHOICE_COLOR_LORE(
     "gui.itemeditor.choice.color.lore",

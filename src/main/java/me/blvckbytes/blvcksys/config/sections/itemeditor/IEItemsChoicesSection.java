@@ -19,6 +19,14 @@ public class IEItemsChoicesSection extends AConfigSection {
   private ItemStackSection material;
   private ItemStackSection enchantmentActive;
   private ItemStackSection enchantmentInactive;
+  private ItemStackSection flag;
+  private ItemStackSection lore;
+  private ItemStackSection attributeNew;
+  private ItemStackSection attributeExisting;
+  private ItemStackSection equipment;
+  private ItemStackSection operation;
+  private ItemStackSection potionType;
+  private ItemStackSection potionEffect;
 
   @Override
   public Object defaultFor(Class<?> type, String field) {

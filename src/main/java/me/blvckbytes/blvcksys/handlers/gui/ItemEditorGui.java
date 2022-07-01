@@ -1307,10 +1307,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withChoice(
             "type",
             ies.getTitles().getPotionTypeChoice(),
-            () -> generatePotionTypeReprs(
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_POTION_TYPE_NAME),
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_POTION_TYPE_LORE)
-            ),
+            this::generatePotionTypeReprs,
             null
           )
           .start();
@@ -2327,18 +2324,39 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     for (PotionEffect effect : effects) {
       representitives.add(new Tuple<>(
         effect,
-        new ItemStackBuilder(Material.POTION)
-          .withName(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_POTION_EFFECT_NAME)
-              .withVariable("effect", formatConstant(effect.getType().getName()))
+        ies.getItems().getChoices().getPotionEffect()
+          .asItem(
+            ConfigValue.makeEmpty()
+              .withVariable("effect_hr", formatConstant(effect.getType().getName()))
+              .withVariable("effect", getPotionEffectTypeConstant(effect.getType()))
+              .withVariable("duration", effect.getDuration())
+              .withVariable("amplifier", effect.getAmplifier())
+              .exportVariables()
           )
-          .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_POTION_EFFECT_LORE))
-          .withCustomEffects(() -> List.of(effect), true)
           .build()
       ));
     }
 
     return representitives;
+  }
+
+  /**
+   * Get a potion effect's constant name by it's reference
+   * @param type Type ref
+   * @return Constant name
+   */
+  private String getPotionEffectTypeConstant(PotionEffectType type) {
+    return Arrays.stream(PotionEffectType.class.getDeclaredFields())
+      .filter(f -> {
+        try {
+          return Modifier.isStatic(f.getModifiers()) && f.get(null).equals(type);
+        } catch (Exception e) {
+          return false;
+        }
+      })
+      .map(Field::getName)
+      .findFirst()
+      .orElse("?");
   }
 
   /**
@@ -2378,14 +2396,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       String line = lore.get(i);
       representitives.add(new Tuple<>(
         i,
-        new ItemStackBuilder(Material.PAPER)
-          .withName(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LORE_NAME)
+        ies.getItems().getChoices().getLore()
+          .asItem(
+            ConfigValue.makeEmpty()
               .withVariable("line", i + 1)
-          )
-          .withLore(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_LORE_LORE)
               .withVariable("content", line)
+              .exportVariables()
           )
           .build()
       ));
@@ -2402,26 +2418,15 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     return Arrays.stream(ItemFlag.values())
       .map(f -> (
           new Tuple<>((Object) f, (
-            new ItemStackBuilder(Material.NAME_TAG)
-              .withName(
-                cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_NAME)
+            ies.getItems().getChoices().getFlag()
+              .asItem(
+                ConfigValue.makeEmpty()
                   .withVariable("flag", formatConstant(f.name()))
+                  .withVariable("state", formatConstant(String.valueOf(isActive.apply(f))))
+                  .exportVariables())
               )
-              .withLore(
-                cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_LORE)
-                  .withVariable(
-                    "state",
-                    cfg.get(
-                      isActive.apply(f) ?
-                        ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_ACTIVE :
-                        ConfigKey.GUI_ITEMEDITOR_CHOICE_FLAG_INACTIVE
-                      )
-                      .asScalar()
-                  )
-              )
-              .build()
-          ))
-        )
+            .build()
+        ))
       ).toList();
   }
 
@@ -2460,12 +2465,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     for (AttributeModifier.Operation op : AttributeModifier.Operation.values()) {
       opReprs.add(new Tuple<>(
         op,
-        new ItemStackBuilder(Material.REDSTONE_TORCH)
-          .withName(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_OPERATION_NAME)
+        ies.getItems().getChoices().getOperation()
+          .asItem(
+            ConfigValue.makeEmpty()
               .withVariable("operation", formatConstant(op.name()))
+              .exportVariables()
           )
-          .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_OPERATION_LORE))
           .build()
       ));
     }
@@ -2481,12 +2486,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     for (EquipmentSlot slot : EquipmentSlot.values()) {
       slotReprs.add(new Tuple<>(
         slot,
-        new ItemStackBuilder(Material.CHEST)
-          .withName(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_EQUIPMENT_NAME)
+        ies.getItems().getChoices().getEquipment()
+          .asItem(
+            ConfigValue.makeEmpty()
               .withVariable("slot", formatConstant(slot.name()))
+              .exportVariables()
           )
-          .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_EQUIPMENT_LORE))
           .build()
       ));
     }
@@ -2673,33 +2678,24 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
    * @param attrs Attributes to display
    * @param areExisting Whether there are modifiers existing, if false, modifiers are ignored
    */
-  private List<Tuple<Object, ItemStack>> buildAttributeRepresentitives(Multimap<Attribute, AttributeModifier> attrs, boolean areExisting) {
+  private List<Tuple<Object, ItemStack>> buildAttributeRepresentitives(Multimap<Attribute, @Nullable AttributeModifier> attrs, boolean areExisting) {
     // Create representitive items for each attribute
     List<Tuple<Object, ItemStack>> representitives = new ArrayList<>();
-    for (Map.Entry<Attribute, AttributeModifier> entry : attrs.entries()) {
+    for (Map.Entry<Attribute, @Nullable AttributeModifier> entry : attrs.entries()) {
       AttributeModifier mod = entry.getValue();
-
-      ConfigValue lore = cfg.get(
-        areExisting ?
-          ConfigKey.GUI_ITEMEDITOR_CHOICE_ATTR_EXISTING_LORE :
-          ConfigKey.GUI_ITEMEDITOR_CHOICE_ATTR_NEW_LORE
-      );
-
-      if (areExisting) {
-        lore.withVariable("name", mod.getName())
-          .withVariable("amount", mod.getAmount())
-          .withVariable("operation", formatConstant(mod.getOperation().name()))
-          .withVariable("slot", mod.getSlot() == null ? "/" : formatConstant(mod.getSlot().name()));
-      }
 
       representitives.add(new Tuple<>(
         new Tuple<>(entry.getKey(), entry.getValue()),
-        new ItemStackBuilder(Material.COMPARATOR)
-          .withName(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_ATTR_NAME)
+        (areExisting ? ies.getItems().getChoices().getAttributeExisting() : ies.getItems().getChoices().getAttributeNew())
+          .asItem(
+            ConfigValue.makeEmpty()
+              .withVariable("name", mod == null ? "/" : mod.getName())
               .withVariable("attribute", formatConstant(entry.getKey().getKey().getKey()))
+              .withVariable("amount", mod == null ? "/" : mod.getAmount())
+              .withVariable("operation", formatConstant(mod == null ? "/" : mod.getOperation().name()))
+              .withVariable("slot", (mod == null || mod.getSlot() == null) ? "/" : formatConstant(mod.getSlot().name()))
+              .exportVariables()
           )
-          .withLore(lore)
           .build()
       ));
     }
@@ -2708,20 +2704,22 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
   }
 
   /**
-   * Generate a list of potion type representations from bukkit's potion type enum to be used with a choice GUI
-   * @param name Item name value
-   * @param lore Item lore value
+   * Generate a list of potion type representations from bukkit's potion type enum
+   * to be used with a choice GUI
    */
-  public List<Tuple<Object, ItemStack>> generatePotionTypeReprs(ConfigValue name, ConfigValue lore) {
+  public List<Tuple<Object, ItemStack>> generatePotionTypeReprs() {
     // Create a list of all available types
     List<Tuple<Object, ItemStack>> typeReprs = new ArrayList<>();
     for (PotionType type : PotionType.values()) {
       typeReprs.add(new Tuple<>(
         type,
-        new ItemStackBuilder(Material.POTION)
-          .withName(name.withVariable("type", formatConstant(type.name())))
-          .withLore(lore)
-          .withBaseEffect(() -> new PotionData(type, false, false), true)
+        ies.getItems().getChoices().getPotionType()
+          .asItem(
+            ConfigValue.makeEmpty()
+              .withVariable("type_hr", formatConstant(type.name()))
+              .withVariable("type", type.name())
+              .exportVariables()
+          )
           .build()
       ));
     }

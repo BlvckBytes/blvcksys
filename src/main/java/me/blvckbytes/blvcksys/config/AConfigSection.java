@@ -1,5 +1,7 @@
 package me.blvckbytes.blvcksys.config;
 
+import org.jetbrains.annotations.Nullable;
+
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 06/24/2022
@@ -24,5 +26,15 @@ public abstract class AConfigSection {
    */
   public Class<?> runtimeDecide(String field) {
     return Object.class;
+  }
+
+  /**
+   * Called when a field wasn't found within the config and a default could be set
+   * @param type Target field's type
+   * @param field Target field name
+   * @return Value to use as a default
+   */
+  public @Nullable Object defaultFor(Class<?> type, String field) {
+    return null;
   }
 }

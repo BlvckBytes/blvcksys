@@ -43,7 +43,7 @@ public class ItemStackSection extends AConfigSection {
   private @Nullable ItemStackCustomEffectSection[] customEffects;
 
   // Builder cache, as instances will be reusable
-  @ConfigSectionIgnore
+  @CSIgnore
   @Getter(AccessLevel.PRIVATE)
   private ItemStackBuilder item = null;
 

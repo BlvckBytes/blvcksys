@@ -58,7 +58,7 @@ public class YamlConfig implements IConfig, IAutoConstructed {
     this.palette = "";
 
     // Copy default config files from the resource folder
-    this.copyDefaults("quests");
+    this.copyDefaults(new String[] {"quests"}, new String[] {"itemeditor"});
 
     // Initially load the main config (always needed)
     this.load("config");
@@ -342,31 +342,41 @@ public class YamlConfig implements IConfig, IAutoConstructed {
   /**
    * Copies default .yml files from the resources folder if they are not yet exising
    * @param folders Folders to copy from the resources-folder
+   * @param files Top level files to copy from the resources-folder
    */
-  private void copyDefaults(String... folders) {
+  private void copyDefaults(String[] folders, String[] files) {
     try {
 
-      for (String folder : folders) {
-        for (Tuple<String, InputStream> file : getResourceFiles(folder)) {
-          // Not a yaml configuration file
-          if (!file.a().endsWith(".yml"))
-            continue;
+      List<Tuple<String, InputStream>> targets = new ArrayList<>();
 
-          File f = new File(plugin.getDataFolder(), file.a());
+      // Add all top level files
+      Arrays.stream(files)
+        .map(file -> new Tuple<>(file + ".yml", getClass().getClassLoader().getResourceAsStream(file + ".yml")))
+        .forEach(targets::add);
 
-          // This yaml has already been copied before
-          if (f.exists())
-            continue;
+      // Add all files within a folder
+      for (String folder : folders)
+        targets.addAll(getResourceFiles(folder));
 
-          // Create parent directories
-          if (f.getParentFile().exists() || f.getParentFile().mkdirs()) {
-            // Copy stream contents into the file
-            FileOutputStream fos = new FileOutputStream(f);
-            InputStream is = file.b();
-            fos.write(is.readAllBytes());
-            is.close();
-            fos.close();
-          }
+      for (Tuple<String, InputStream> file : targets) {
+        // Not a yaml configuration file
+        if (!file.a().endsWith(".yml"))
+          continue;
+
+        File f = new File(plugin.getDataFolder(), file.a());
+
+        // This yaml has already been copied before
+        if (f.exists())
+          continue;
+
+        // Create parent directories
+        if (f.getParentFile().exists() || f.getParentFile().mkdirs()) {
+          // Copy stream contents into the file
+          FileOutputStream fos = new FileOutputStream(f);
+          InputStream is = file.b();
+          fos.write(is.readAllBytes());
+          is.close();
+          fos.close();
         }
       }
 

@@ -2,7 +2,8 @@ package me.blvckbytes.blvcksys.config;
 
 import com.google.common.primitives.Primitives;
 import com.mojang.authlib.GameProfile;
-import me.blvckbytes.blvcksys.config.sections.ConfigSectionIgnore;
+import me.blvckbytes.blvcksys.config.sections.CSAlways;
+import me.blvckbytes.blvcksys.config.sections.CSIgnore;
 import me.blvckbytes.blvcksys.config.sections.ItemStackSection;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.handlers.gui.ItemStackBuilder;
@@ -60,14 +61,14 @@ public class ConfigReader {
    * @return Optional parsed model, if the key existed
    */
   public<T extends Object> Optional<T> parseValue(@Nullable String key, Class<T> type) {
-    return parseValueSub(key, type, false);
+    return parseValueSub(key, type, false, false);
   }
 
   /**
    * Recursive sub-routine with extra parameters
    */
   @SuppressWarnings("unchecked")
-  private<T extends Object> Optional<T> parseValueSub(@Nullable String key, Class<T> type, boolean withinArray) {
+  private<T extends Object> Optional<T> parseValueSub(@Nullable String key, Class<T> type, boolean withinArray, boolean ignoreMissing) {
     boolean isSection = AConfigSection.class.isAssignableFrom(type);
 
     // Null keys mean root level scope
@@ -76,7 +77,7 @@ public class ConfigReader {
 
     // If the type is not within an array (as emptyness is used to find list-ends) and
     // the type is not just a scalar value, skip this check, as empty leaf objects should always be initialized
-    if (cfg.get(path, key).isEmpty() && (!isSection || withinArray))
+    if (cfg.get(path, key).isEmpty() && (!isSection || withinArray) && !ignoreMissing)
       return Optional.empty();
 
     // Since ConfigValue scalars always work with boxed types, box at this point
@@ -103,7 +104,7 @@ public class ConfigReader {
       // Try to fetch as many values of the list as possible, until the end is reached
       List<Object> items = new ArrayList<>();
       for (int i = 0; i < Integer.MAX_VALUE; i++) {
-        Optional<?> v = parseValueSub(key + "[" + i + "]", (Class<? extends AConfigSection>) arrType, true);
+        Optional<?> v = parseValueSub(key + "[" + i + "]", (Class<? extends AConfigSection>) arrType, true, false);
 
         // End of list reached, no more items available
         if (v.isEmpty())
@@ -161,7 +162,7 @@ public class ConfigReader {
 
         for (Field f : fields) {
           // Ignore fields marked for ignore
-          if (f.getAnnotation(ConfigSectionIgnore.class) != null)
+          if (f.getAnnotation(CSIgnore.class) != null)
             continue;
 
           f.setAccessible(true);
@@ -176,13 +177,20 @@ public class ConfigReader {
 
           // Is another config section and thus needs recursion
           if (AConfigSection.class.isAssignableFrom(fType)) {
-            Object v = parseValue(fKey, (Class<? extends AConfigSection>) fType).orElse(null);
+            Object v = parseValueSub(fKey, (Class<? extends AConfigSection>) fType, false, f.isAnnotationPresent(CSAlways.class)).orElse(null);
             if (v != null)
               f.set(res, v);
             continue;
           }
 
+          // Initially try to parse the value
+          Class<?> ffType = fType;
           Object v = parseValue(fKey, fType).orElse(null);
+
+          // Failed, try to ask for a default value
+          if (v == null)
+            v = res.defaultFor(ffType, fName);
+
           if (v != null)
             f.set(res, v);
         }

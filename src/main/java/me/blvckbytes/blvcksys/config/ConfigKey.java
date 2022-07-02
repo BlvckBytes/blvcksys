@@ -1468,46 +1468,6 @@ public enum ConfigKey {
   ),
 
   //=========================================================================//
-  //                             ItemEditor GUI                              //
-  //=========================================================================//
-
-  GUI_ITEMEDITOR_YESNO_FLICKER_LORE_YES(
-    "gui.itemeditor.yesno.flicker.lore.yes",
-    " ",
-    "$0Flackern für diesen Effekt &aaktivieren&7."
-  ),
-  GUI_ITEMEDITOR_YESNO_FLICKER_LORE_NO(
-    "gui.itemeditor.yesno.flicker.lore.no",
-    " ",
-    "$0Flackern für diesen Effekt &cdeaktivieren&7."
-  ),
-  GUI_ITEMEDITOR_YESNO_TRAIL_LORE_YES(
-    "gui.itemeditor.yesno.trail.lore.yes",
-    " ",
-    "$0Spuren für diesen Effekt &aaktivieren&7."
-  ),
-  GUI_ITEMEDITOR_YESNO_TRAIL_LORE_NO(
-    "gui.itemeditor.yesno.trail.lore.no",
-    " ",
-    "$0Spuren für diesen Effekt &cdeaktivieren&7."
-  ),
-  GUI_ITEMEDITOR_CHOICE_PATTERNS_NAME("gui.itemeditor.choice.patterns.name", "$0Muster $2Nr. {{index}}"),
-  GUI_ITEMEDITOR_CHOICE_PATTERNS_LORE(
-    "gui.itemeditor.choice.patterns.lore",
-    " ",
-    "&7Typ: &d{{type}}",
-    "&7Farbe: &d{{color}}",
-    " ",
-    "$0Klicke um dieses Muster zu entfernen."
-  ),
-  GUI_ITEMEDITOR_CHOICE_DYE_COLOR_NAME("gui.itemeditor.choice.dye_color.name", "$2{{color}}"),
-  GUI_ITEMEDITOR_CHOICE_DYE_COLOR_LORE(
-    "gui.itemeditor.choice.dye_color.lore",
-    " ",
-    "$0Klicke um diese Farbe zu wählen."
-  ),
-
-  //=========================================================================//
   //                             AnvilSearch GUI                             //
   //=========================================================================//
 

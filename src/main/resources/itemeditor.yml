@@ -9,7 +9,9 @@
 messages:
   metaUnavailable: '&7Auf die ItemMeta dieses Items konnte &cnicht &7zugegriffen werden.'
   missingPermission: '&cDu hast für diese Aktion keine Rechte.'
-  amountChanged: '&7Die &2Anzahl &7des Items wurde auf &2{{amount}} &7gesetzt.'
+  invalidInteger: '&7Die Eingabe &c{{number}} &7ist keine &cGanzzahl&7.'
+  invalidFloat: '&7Die Eingabe &c{{number}} &7ist keine &cKommazahl&7.'
+  amountChanged: '&7Die &dAnzahl &7des Items wurde auf &d{{amount}} &7gesetzt.'
   materialChanged: '&7Das Material des Items wurde von &d{{previous}} &7auf &d{{current}} &7geändert.'
   flagChanged: '&7Der Flag &d{{flag}} &7des Items wurde auf &d{{state}} &7geändert.'
   enchantmentAdded: '&7Die Verzauberung &d{{enchantment}} &7auf Level &d{{level}} &7wurde dem Item &dhinzugefügt&7.'
@@ -85,10 +87,10 @@ messages:
   compassLocationSet: '&7Das &dZiel &7des Kompasses wurde auf &d{{location}} &7gesetzt.'
   compassLocationReset: '&7Das &dZiel &7des Kompasses wurde &dzurückgesetzt&7.'
   compassLocationNone: '&7Dieser Kompass hat noch &ckein Ziel&7.'
-  bannerPatternsAdded: '&7Das Muster &2{{type}} &7mit der Farbe &2{{color}} &7wurde dem Banner hinzugefügt.'
-  bannerPatternsRemoved: '&7Das Muster &2Nr. {{index}} &7mit dem Typ &2{{type}} &7wurde entfernt.'
+  bannerPatternsAdded: '&7Das Muster &d{{type}} &7mit der Farbe &d{{color}} &7wurde dem Banner hinzugefügt.'
+  bannerPatternsRemoved: '&7Das Muster &dNr. {{index}} &7mit dem Typ &d{{type}} &7wurde entfernt.'
   bannerPatternsNone: '&7Dieser Banner hat noch &ckeine Muster&7.'
-  bannerPatternsCleared: '&7Alle &2Muster &7dieses Banners wurden &dentfernt.'
+  bannerPatternsCleared: '&7Alle &dMuster &7dieses Banners wurden &dentfernt.'
 
 titles:
   home: '&8IE &5{{item_type}}'
@@ -514,18 +516,64 @@ items:
 
     patternNew:
       type: '{{base}}'
-      name: '&d{{type}}'
+      name: '&d{{type_hr}}'
       lore:
         - ' '
         - '&7Klicke, um dieses Muster zu wählen.'
       bannerPatterns:
         -
-          pattern: '{{pattern_type}}'
-          color: '{{pattern_color}}'
+          pattern: '{{type}}'
+          color: '{{color}}'
 
     patternExisting:
-      type: '{{icon}}'
-      name: '&d{{type}}'
+      type: '{{base}}'
+      name: '&7Muster &dNr. {{index}}'
       lore:
         - ' '
-        - '&7Klicke, um diesen Typ zu wählen.'
+        - '&7Typ: &d{{type_hr}}'
+        - '&7Farbe: &d{{color_hr}}'
+        - ' '
+        - '&7Klicke, um dieses Muster zu wählen.'
+      bannerPatterns:
+        -
+          pattern: '{{type}}'
+          color: '{{color}}'
+
+    bannerDyeColor:
+      type: '{{base}}'
+      name: '&d{{color_hr}}'
+      lore:
+        - ' '
+        - '&7Klicke, um diese Farbe zu wählen.'
+      bannerPatterns:
+        -
+          pattern: '{{type}}'
+          color: '{{color}}'
+
+    flickerYes:
+      type: GREEN_TERRACOTTA
+      name: '&aMit Flackern'
+      lore:
+        - ' '
+        - '&7Aktiviert den Flackereffekt.'
+
+    flickerNo:
+      type: RED_TERRACOTTA
+      name: '&cOhne Flackern'
+      lore:
+        - ' '
+        - '&7Deaktiviert den Flackereffekt.'
+
+    trailYes:
+      type: GREEN_TERRACOTTA
+      name: '&aMit Spuren'
+      lore:
+        - ' '
+        - '&7Aktiviert den Spureneffekt.'
+
+    trailNo:
+      type: RED_TERRACOTTA
+      name: '&cOhne Spuren'
+      lore:
+        - ' '
+        - '&7Deaktiviert den Spureneffekt.'

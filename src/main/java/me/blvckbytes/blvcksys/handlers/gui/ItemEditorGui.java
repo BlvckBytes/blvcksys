@@ -2,7 +2,6 @@ package me.blvckbytes.blvcksys.handlers.gui;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.sections.itemeditor.IEPerm;
@@ -267,7 +266,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "data",
             values -> ies.getMessages().getCustomModelDataPrompt().withPrefix(),
             Integer::parseInt,
-            input -> cfg.get(ConfigKey.ERR_INTPARSE).withVariable("number", input).withPrefix(),
+            input -> ies.getMessages().getInvalidInteger().withVariable("number", input).withPrefix(),
             null
           )
           .start();
@@ -437,7 +436,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
               .withPrefix()
           ),
           Integer::parseInt,
-          input -> cfg.get(ConfigKey.ERR_INTPARSE).withVariable("number", input).withPrefix(),
+          input -> ies.getMessages().getInvalidInteger().withVariable("number", input).withPrefix(),
           values -> meta.hasEnchant((Enchantment) values.get("enchantment"))
         )
         .start();
@@ -834,7 +833,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             values -> ies.getMessages().getAttributeAmountPrompt().withPrefix(),
             Double::parseDouble,
             inp -> (
-              cfg.get(ConfigKey.ERR_FLOATPARSE)
+              ies.getMessages().getInvalidFloat()
                 .withPrefix()
                 .withVariable("number", inp)
             ),
@@ -954,7 +953,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "power",
             values -> ies.getMessages().getFireworkPowerPrompt().withPrefix(),
             Integer::parseInt,
-            input -> cfg.get(ConfigKey.ERR_INTPARSE).withVariable("number", input).withPrefix(),
+            input -> ies.getMessages().getInvalidInteger().withVariable("number", input).withPrefix(),
             null
           )
           .start();
@@ -1029,15 +1028,17 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withYesNo(
             yesNoGui, "flicker",
             ies.getTitles().getFireworkFlickerYesNo(),
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_YESNO_FLICKER_LORE_YES),
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_YESNO_FLICKER_LORE_NO),
+            ies.getItems().getGeneric().getBackground().build(),
+            ies.getItems().getChoices().getFlickerYes().build(),
+            ies.getItems().getChoices().getFlickerNo().build(),
             null
           )
           .withYesNo(
             yesNoGui, "trail",
             ies.getTitles().getFireworkTrailYesNo(),
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_YESNO_TRAIL_LORE_YES),
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_YESNO_TRAIL_LORE_NO),
+            ies.getItems().getGeneric().getBackground().build(),
+            ies.getItems().getChoices().getTrailYes().build(),
+            ies.getItems().getChoices().getTrailNo().build(),
             null
           )
           .start();
@@ -1452,14 +1453,14 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "duration",
             values -> ies.getMessages().getPotioneffectDurationPrompt().withPrefix(),
             Integer::parseInt,
-            input -> cfg.get(ConfigKey.ERR_INTPARSE).withVariable("number", input).withPrefix(),
+            input -> ies.getMessages().getInvalidInteger().withVariable("number", input).withPrefix(),
             null
           )
           .withPrompt(
             "amplifier",
             values -> ies.getMessages().getPotioneffectAmplifierPrompt().withPrefix(),
             Integer::parseInt,
-            input -> cfg.get(ConfigKey.ERR_INTPARSE).withVariable("number", input).withPrefix(),
+            input -> ies.getMessages().getInvalidInteger().withVariable("number", input).withPrefix(),
             null
           )
           .start();
@@ -2131,11 +2132,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         ies.getItems().getChoices().getPatternNew()
           .asItem(
             ConfigValue.makeEmpty()
-              .withVariable("type", formatConstant(type.name()))
               .withVariable("base", base)
-              .withVariable("pattern_type", type)
+              .withVariable("type_hr", formatConstant(type.name()))
+              .withVariable("base_hr", base)
+              .withVariable("type", type)
               .withVariable(
-                "pattern_color",
+                "color",
                 (
                   base == Material.WHITE_BANNER ||
                     base == Material.GRAY_BANNER ||
@@ -2158,13 +2160,15 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     return Arrays.stream(DyeColor.values()).map(color -> (
       new Tuple<>(
         (Object) color,
-        new ItemStackBuilder(base, 1)
-          .setPatterns(() -> List.of(new Pattern(color, type)), true)
-          .withName(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_DYE_COLOR_NAME)
-              .withVariable("color", formatConstant(color.name()))
+        ies.getItems().getChoices().getBannerDyeColor()
+          .asItem(
+            ConfigValue.makeEmpty()
+              .withVariable("base", base)
+              .withVariable("color_hr", formatConstant(color.name()))
+              .withVariable("color", color.name())
+              .withVariable("type", type.name())
+              .exportVariables()
           )
-          .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_DYE_COLOR_LORE))
           .build()
       )
     )).toList();
@@ -2179,16 +2183,16 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     return patterns.stream().map(pattern -> (
       new Tuple<>(
         (Object) patterns.indexOf(pattern),
-        new ItemStackBuilder(base, 1)
-          .setPatterns(() -> List.of(pattern), true)
-          .withName(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_PATTERNS_NAME)
+        ies.getItems().getChoices().getPatternExisting()
+          .asItem(
+            ConfigValue.makeEmpty()
               .withVariable("index", patterns.indexOf(pattern) + 1)
-          )
-          .withLore(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_PATTERNS_LORE)
-              .withVariable("type", formatConstant(pattern.getPattern().name()))
-              .withVariable("color", formatConstant(pattern.getColor().name()))
+              .withVariable("type_hr", formatConstant(pattern.getPattern().name()))
+              .withVariable("color_hr", formatConstant(pattern.getColor().name()))
+              .withVariable("type", pattern.getPattern().name())
+              .withVariable("color", pattern.getColor().name())
+              .withVariable("base", base)
+              .exportVariables()
           )
           .build()
       )

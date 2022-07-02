@@ -1,6 +1,5 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
-import com.mojang.datafixers.types.Func;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.handlers.TriResult;
 import me.blvckbytes.blvcksys.packets.communicators.bookeditor.IBookEditorCommunicator;
@@ -157,16 +156,15 @@ public class UserInputChain {
    * @param gui GUI ref
    * @param field Name of the field
    * @param type Type of choice (part of the screen title)
-   * @param yesLore Lore of the yes button
-   * @param noLore Lore of the no button
    * @param skip Optional skip predicate
    */
   public UserInputChain withYesNo(
     YesNoGui gui,
     String field,
     ConfigValue type,
-    ConfigValue yesLore,
-    ConfigValue noLore,
+    ItemStack background,
+    ItemStack yesButton,
+    ItemStack noButton,
     @Nullable Function<Map<String, Object>, Boolean> skip
   ) {
     stages.add(isBack -> {
@@ -177,7 +175,7 @@ public class UserInputChain {
       }
 
       YesNoParam param = new YesNoParam(
-        type.asScalar(),
+        type.asScalar(), background, yesButton, noButton,
 
         // Has chosen
         (selection, selectionInst) -> {
@@ -200,8 +198,6 @@ public class UserInputChain {
           lastWasGui = true;
           nextStage();
         },
-
-        yesLore, noLore,
 
         // Back button, reopen the last stage
         selectionInst -> {

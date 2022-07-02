@@ -34,6 +34,11 @@ public class IEItemsChoicesSection extends AConfigSection {
   private ItemStackSection fireworkEffect;
   private ItemStackSection patternNew;
   private ItemStackSection patternExisting;
+  private ItemStackSection bannerDyeColor;
+  private ItemStackBuilder flickerYes;
+  private ItemStackBuilder flickerNo;
+  private ItemStackBuilder trailYes;
+  private ItemStackBuilder trailNo;
 
   @Override
   public Object defaultFor(Class<?> type, String field) {

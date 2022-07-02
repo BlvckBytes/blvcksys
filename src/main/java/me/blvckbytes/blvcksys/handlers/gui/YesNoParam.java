@@ -1,7 +1,7 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
-import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.handlers.TriResult;
+import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.function.BiConsumer;
@@ -16,12 +16,11 @@ import java.util.function.Consumer;
 public record YesNoParam(
   // Type of yes/no to be displayed in the title
   String type,
+  ItemStack background,
+  ItemStack yesButton,
+  ItemStack noButton,
   // Three states: SUCC=yes, ERR=no, EMPTY=inv closed
   BiConsumer<TriResult, GuiInstance<?>> choice,
-  // Lore to be displayed on the yes button
-  ConfigValue yesLore,
-  // Lore to be displayed on the no button
-  ConfigValue noLore,
   // Back button, providing a ref to the GUI about to navigate away from
   @Nullable Consumer<GuiInstance<YesNoParam>> backButton
 ) {}

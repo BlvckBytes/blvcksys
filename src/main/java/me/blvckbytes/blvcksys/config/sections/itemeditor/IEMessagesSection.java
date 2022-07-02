@@ -15,6 +15,8 @@ public class IEMessagesSection extends AConfigSection {
 
   private ConfigValue metaUnavailable;
   private ConfigValue missingPermission;
+  private ConfigValue invalidInteger;
+  private ConfigValue invalidFloat;
   private ConfigValue materialChanged;
   private ConfigValue flagChanged;
   private ConfigValue enchantmentAdded;

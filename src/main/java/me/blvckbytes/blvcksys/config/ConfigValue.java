@@ -448,10 +448,6 @@ public class ConfigValue {
       if (type == String.class)
         return Optional.of(type.cast(stringValue));
 
-      // Automatic enum parsing
-      if (type.isEnum() || hasStaticSelfConstants(type))
-        return parseEnum(type, stringValue);
-
       // Automatic color parsing with RGB-notation support
       if (type == Color.class) {
         // Try to parse an enum name
@@ -473,6 +469,10 @@ public class ConfigValue {
           Integer.parseInt(parts[2])
         )));
       }
+
+      // Automatic enum parsing
+      if (type.isEnum() || hasStaticSelfConstants(type))
+        return parseEnum(type, stringValue);
 
       // Parse integers
       if (type == Integer.class || type == Long.class)

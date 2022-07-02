@@ -469,3 +469,11 @@ items:
           effect: '{{effect}}'
           duration: '{{duration}}'
           amplifier: '{{amplifier}}'
+
+    color:
+      type: '{{icon}}'
+      name: '&d{{color_hr}}'
+      color: '{{color}}'
+      lore:
+        - ' '
+        - '&7Klicke, um diese Farbe zu wählen.'

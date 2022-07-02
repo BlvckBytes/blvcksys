@@ -40,6 +40,7 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -1015,23 +1016,14 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             multipleChoiceGui,
             "color",
             ies.getTitles().getFireworkEffectColorChoice(),
-            v -> generateColorReprs(
-              this::colorToMaterial,
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_COLOR_NAME),
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_COLOR_LORE)
-            ),
+            v -> generateColorReprs(this::colorToMaterial),
             null
           )
           .withChoice(
             multipleChoiceGui,
             "fade",
             ies.getTitles().getFireworkFadeColorChoice(),
-            v -> generateColorReprs(
-              this::colorToMaterial,
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_COLOR_NAME),
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_COLOR_LORE),
-              true
-            ),
+            v -> generateColorReprs(this::colorToMaterial, true),
             null
           )
           .withYesNo(
@@ -2066,11 +2058,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       chain.withChoice(
         "color",
         ies.getTitles().getColorChoice(),
-        () -> generateColorReprs(
-          c -> item.getType(),
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_COLOR_NAME),
-          cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_COLOR_LORE)
-        ),
+        () -> generateColorReprs(c -> item.getType()),
         null
       );
     }
@@ -2730,11 +2718,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
   /**
    * Generate a list of color representations from bukkit's color class to be used with a choice GUI
    * @param material Material resolver function
-   * @param name Item name value
-   * @param lore Item lore value
    */
-  public List<Tuple<Object, ItemStack>> generateColorReprs(Function<Color, Material> material, ConfigValue name, ConfigValue lore) {
-    return generateColorReprs(material, name, lore, false);
+  public List<Tuple<Object, ItemStack>> generateColorReprs(Function<Color, Material> material) {
+    return generateColorReprs(material, false);
   }
 
   /**
@@ -2798,37 +2784,31 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
   /**
    * Generate a list of color representations from bukkit's color class to be used with a choice GUI
    * @param material Material resolver function
-   * @param name Item name value
-   * @param lore Item lore value
    * @param withTransparent Whether to offer a choice of a transparent color, which will return null
    */
-  public List<Tuple<Object, ItemStack>> generateColorReprs(Function<Color, Material> material, ConfigValue name, ConfigValue lore, boolean withTransparent) {
+  public List<Tuple<Object, ItemStack>> generateColorReprs(Function<Color, Material> material, boolean withTransparent) {
     // Create a list of all available slots
     List<Tuple<Object, ItemStack>> slotReprs = new ArrayList<>();
-    for (Tuple<Color, String> color : getColorConstants()) {
-      slotReprs.add(new Tuple<>(
-        color,
-        new ItemStackBuilder(material.apply(color.a()))
-          .withColor(color::a, true)
-          .withName(
-            name
-              .withVariable("color", formatConstant(color.b()))
-          )
-          .withLore(lore)
-          .build()
-      ));
-    }
+
+    List<Triple<Color, String, Material>> colors = getColorConstants().stream()
+      .map(t -> new Triple<>(t.a(), t.b(), material.apply(t.a())))
+      .collect(Collectors.toList());
 
     // Offer a transparent choice (represents null-color)
-    if (withTransparent) {
+    if (withTransparent)
+      colors.add(new Triple<>(null, "Transparent", Material.GLASS));
+
+    for (Triple<Color, String, Material> color : colors) {
       slotReprs.add(new Tuple<>(
-        new Tuple<Color, String>(null, "Transparent"),
-        new ItemStackBuilder(Material.GLASS)
-          .withName(
-            name
-              .withVariable("color", formatConstant("Transparent"))
+        new Tuple<>(color.a(), color.b()),
+        ies.getItems().getChoices().getColor()
+          .asItem(
+            ConfigValue.makeEmpty()
+              .withVariable("color_hr", formatConstant(color.b()))
+              .withVariable("color", color.b())
+              .withVariable("icon", color.c())
+              .exportVariables()
           )
-          .withLore(lore)
           .build()
       ));
     }

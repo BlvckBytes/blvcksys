@@ -159,11 +159,7 @@ public class PreferencesGui extends AGui<Object> {
         .withChoice(
           "color",
           cfg.get(ConfigKey.GUI_PREFERENCES_ARROW_TRAILS_COLOR_TITLE),
-          () -> itemEditorGui.generateColorReprs(
-            this::colorToMaterial,
-            cfg.get(ConfigKey.GUI_PREFERENCES_CHOICE_COLOR_NAME),
-            cfg.get(ConfigKey.GUI_PREFERENCES_CHOICE_COLOR_LORE)
-          ),
+          () -> itemEditorGui.generateColorReprs(this::colorToMaterial),
           values -> {
             // Skip whenever either the particle doesn't support color or the player hasn't yet unlocked this effect
             Particle particle = (Particle) values.get("particle");

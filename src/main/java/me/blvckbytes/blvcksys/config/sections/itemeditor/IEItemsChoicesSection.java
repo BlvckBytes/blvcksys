@@ -27,6 +27,7 @@ public class IEItemsChoicesSection extends AConfigSection {
   private ItemStackSection operation;
   private ItemStackSection potionType;
   private ItemStackSection potionEffect;
+  private ItemStackSection color;
 
   @Override
   public Object defaultFor(Class<?> type, String field) {

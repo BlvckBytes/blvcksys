@@ -1471,12 +1471,6 @@ public enum ConfigKey {
   //                             ItemEditor GUI                              //
   //=========================================================================//
 
-  GUI_ITEMEDITOR_CHOICE_COLOR_NAME("gui.itemeditor.choice.color.name", "$2{{color}}"),
-  GUI_ITEMEDITOR_CHOICE_COLOR_LORE(
-    "gui.itemeditor.choice.color.lore",
-    " ",
-    "$0Klicke um diese Farbe zu wählen."
-  ),
   GUI_ITEMEDITOR_CHOICE_GENERATION_NAME("gui.itemeditor.choice.generation.name", "$2{{generation}}"),
   GUI_ITEMEDITOR_CHOICE_GENERATION_LORE(
     "gui.itemeditor.choice.generation.lore",

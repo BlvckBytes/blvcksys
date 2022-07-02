@@ -1751,7 +1751,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         List<String> pages = new ArrayList<>(bookMeta.getPages());
 
         // Cannot remove the only page
-        if (pages.size() == 1) {
+        if (pages.size() <= 1) {
           p.sendMessage(
             ies.getMessages().getBookPageSingle()
               .withPrefixes()
@@ -2128,20 +2128,22 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     return Arrays.stream(PatternType.values()).map(type -> (
       new Tuple<>(
         (Object) type,
-        new ItemStackBuilder(base, 1)
-          .setPattern(
-            // Check the banner color to at least avoid horrible contrasts
-            type, (
-              base == Material.WHITE_BANNER ||
-              base == Material.GRAY_BANNER ||
-              base == Material.LIGHT_GRAY_BANNER
-            ) ? DyeColor.BLACK : DyeColor.WHITE
-          )
-          .withName(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_PATTERN_TYPE_NAME)
+        ies.getItems().getChoices().getPatternNew()
+          .asItem(
+            ConfigValue.makeEmpty()
               .withVariable("type", formatConstant(type.name()))
+              .withVariable("base", base)
+              .withVariable("pattern_type", type)
+              .withVariable(
+                "pattern_color",
+                (
+                  base == Material.WHITE_BANNER ||
+                    base == Material.GRAY_BANNER ||
+                    base == Material.LIGHT_GRAY_BANNER
+                ) ? DyeColor.BLACK : DyeColor.WHITE
+              )
+              .exportVariables()
           )
-          .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_PATTERN_TYPE_LORE))
           .build()
       )
     )).toList();
@@ -2157,7 +2159,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       new Tuple<>(
         (Object) color,
         new ItemStackBuilder(base, 1)
-          .setPattern(type, color)
+          .setPatterns(() -> List.of(new Pattern(color, type)), true)
           .withName(
             cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_DYE_COLOR_NAME)
               .withVariable("color", formatConstant(color.name()))
@@ -2178,7 +2180,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       new Tuple<>(
         (Object) patterns.indexOf(pattern),
         new ItemStackBuilder(base, 1)
-          .setPattern(pattern.getPattern(), pattern.getColor())
+          .setPatterns(() -> List.of(pattern), true)
           .withName(
             cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_PATTERNS_NAME)
               .withVariable("index", patterns.indexOf(pattern) + 1)
@@ -2202,13 +2204,11 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       .map(effect -> (
         new Tuple<>(
           (Object) effects.indexOf(effect),
-          new ItemStackBuilder(resolveFireworkEffectTypeIcon(effect.getType()), 1)
-            .withName(
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_EFFECT_NAME)
+          ies.getItems().getChoices().getFireworkEffect()
+            .asItem(
+              ConfigValue.makeEmpty()
+                .withVariable("icon", resolveFireworkEffectTypeIcon(effect.getType()))
                 .withVariable("index", effects.indexOf(effect) + 1)
-            )
-            .withLore(
-              cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_EFFECT_LORE)
                 .withVariable("type", formatConstant(effect.getType().name()))
                 .withVariable(
                   "colors",
@@ -2219,13 +2219,16 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
                 )
                 .withVariable(
                   "fades",
-                  String.join(
-                    ies.getMessages().getFireworkEffectsSeparator().asScalar(),
-                    effect.getFadeColors().stream().map(this::stringifyColor).toList()
-                  )
+                  effect.getFadeColors().size() == 0 ?
+                    "/" :
+                    String.join(
+                      ies.getMessages().getFireworkEffectsSeparator().asScalar(),
+                      effect.getFadeColors().stream().map(this::stringifyColor).toList()
+                    )
                 )
                 .withVariable("flicker", formatConstant(String.valueOf(effect.hasFlicker())))
                 .withVariable("trail", formatConstant(String.valueOf(effect.hasTrail())))
+                .exportVariables()
             )
             .build()
         )
@@ -2258,12 +2261,13 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     for (FireworkEffect.Type type : FireworkEffect.Type.values()) {
       representitives.add(new Tuple<>(
         type,
-        new ItemStackBuilder(resolveFireworkEffectTypeIcon(type))
-          .withName(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FIREWORK_TYPE_NAME)
+        ies.getItems().getChoices().getFireworkType()
+          .asItem(
+            ConfigValue.makeEmpty()
               .withVariable("type", formatConstant(type.name()))
+              .withVariable("icon", resolveFireworkEffectTypeIcon(type))
+              .exportVariables()
           )
-          .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_FIREWORK_TYPE_LORE))
           .build()
       ));
     }
@@ -2281,12 +2285,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     for (BookMeta.Generation generation : BookMeta.Generation.values()) {
       representitives.add(new Tuple<>(
         generation,
-        new ItemStackBuilder(Material.BOOK)
-          .withName(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_GENERATION_NAME)
+        ies.getItems().getChoices().getGeneration()
+          .asItem(
+            ConfigValue.makeEmpty()
               .withVariable("generation", formatConstant(generation.name()))
+              .exportVariables()
           )
-          .withLore(cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_GENERATION_LORE))
           .build()
       ));
     }
@@ -2358,14 +2362,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       String page = pages.get(i);
       representitives.add(new Tuple<>(
         i,
-        new ItemStackBuilder(Material.PAPER)
-          .withName(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_PAGE_NAME)
-              .withVariable("page_number", i + 1)
-          )
-          .withLore(
-            cfg.get(ConfigKey.GUI_ITEMEDITOR_CHOICE_PAGE_LORE)
-              .withVariable("page_content", wrapText(page, 35))
+        ies.getItems().getChoices().getPage()
+          .asItem(
+            ConfigValue.makeEmpty()
+              .withVariable("content", wrapText(page, 35))
+              .withVariable("number", i + 1)
+              .exportVariables()
           )
           .build()
       ));

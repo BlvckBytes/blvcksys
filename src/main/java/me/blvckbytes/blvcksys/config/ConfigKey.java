@@ -1471,25 +1471,6 @@ public enum ConfigKey {
   //                             ItemEditor GUI                              //
   //=========================================================================//
 
-  GUI_ITEMEDITOR_CHOICE_GENERATION_NAME("gui.itemeditor.choice.generation.name", "$2{{generation}}"),
-  GUI_ITEMEDITOR_CHOICE_GENERATION_LORE(
-    "gui.itemeditor.choice.generation.lore",
-    " ",
-    "$0Klicke um diese Generation zu wählen."
-  ),
-  GUI_ITEMEDITOR_CHOICE_PAGE_NAME("gui.itemeditor.choice.page.name", "$2Seite {{page_number}}"),
-  GUI_ITEMEDITOR_CHOICE_PAGE_LORE(
-    "gui.itemeditor.choice.page.lore",
-    " ",
-    "$0Inhalt: ",
-    "$2{{page_content}}"
-  ),
-  GUI_ITEMEDITOR_CHOICE_FIREWORK_TYPE_NAME("gui.itemeditor.choice.firework_type.name", "$2{{type}}"),
-  GUI_ITEMEDITOR_CHOICE_FIREWORK_TYPE_LORE(
-    "gui.itemeditor.choice.firework_type.lore",
-    " ",
-    "$0Klicke um diesen Typ zu wählen."
-  ),
   GUI_ITEMEDITOR_YESNO_FLICKER_LORE_YES(
     "gui.itemeditor.yesno.flicker.lore.yes",
     " ",
@@ -1510,18 +1491,6 @@ public enum ConfigKey {
     " ",
     "$0Spuren für diesen Effekt &cdeaktivieren&7."
   ),
-  GUI_ITEMEDITOR_CHOICE_EFFECT_NAME("gui.itemeditor.choice.effect.name", "$0Effekt $2Nr. {{index}}"),
-  GUI_ITEMEDITOR_CHOICE_EFFECT_LORE(
-    "gui.itemeditor.choice.effect.lore",
-    " ",
-    "&7Typ: &d{{type}}",
-    "&7Effektfarbe(n): &d{{colors}}",
-    "&7Glimmfarbe(n): &d{{fades}}",
-    "&7Flackern: &d{{flicker}}",
-    "&7Spuren: &d{{trail}}",
-    " ",
-    "$0Klicke um diesen Effekt zu entfernen."
-  ),
   GUI_ITEMEDITOR_CHOICE_PATTERNS_NAME("gui.itemeditor.choice.patterns.name", "$0Muster $2Nr. {{index}}"),
   GUI_ITEMEDITOR_CHOICE_PATTERNS_LORE(
     "gui.itemeditor.choice.patterns.lore",
@@ -1530,12 +1499,6 @@ public enum ConfigKey {
     "&7Farbe: &d{{color}}",
     " ",
     "$0Klicke um dieses Muster zu entfernen."
-  ),
-  GUI_ITEMEDITOR_CHOICE_PATTERN_TYPE_NAME("gui.itemeditor.choice.pattern_type.name", "$2{{type}}"),
-  GUI_ITEMEDITOR_CHOICE_PATTERN_TYPE_LORE(
-    "gui.itemeditor.choice.pattern_type.lore",
-    " ",
-    "$0Klicke um dieses Muster zu wählen."
   ),
   GUI_ITEMEDITOR_CHOICE_DYE_COLOR_NAME("gui.itemeditor.choice.dye_color.name", "$2{{color}}"),
   GUI_ITEMEDITOR_CHOICE_DYE_COLOR_LORE(

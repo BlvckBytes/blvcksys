@@ -42,10 +42,12 @@ public class ItemStackSection extends AConfigSection {
   private @Nullable GameProfile textures;
   private @Nullable ItemStackBaseEffectSection baseEffect;
   private ItemStackCustomEffectSection[] customEffects;
+  private ItemStackBannerPatternSection[] bannerPatterns;
 
   public ItemStackSection() {
     this.enchantments = new ItemStackEnchantmentSection[0];
     this.customEffects = new ItemStackCustomEffectSection[0];
+    this.bannerPatterns = new ItemStackBannerPatternSection[0];
   }
 
   /**
@@ -60,6 +62,12 @@ public class ItemStackSection extends AConfigSection {
       m == null ? Material.BARRIER : m,
       amount == null ? 1 : amount
     )
+      .setPatterns(() -> (
+        Arrays.stream(bannerPatterns)
+          .map(p -> p.asPattern(variables))
+          .filter(Objects::nonNull)
+          .toList()
+      ), bannerPatterns != null)
       .withName(() -> name.copy().withVariables(variables), name != null)
       .withLore(() -> lore.copy().withVariables(variables), lore != null)
       .withFlags(() -> flags.copy().withVariables(variables).asList(ItemFlag.class), flags != null)
@@ -190,6 +198,8 @@ public class ItemStackSection extends AConfigSection {
       return true;
     }))
       return false;
+
+    // TODO: Compare banner patterns
 
     // All checks passed
     return true;

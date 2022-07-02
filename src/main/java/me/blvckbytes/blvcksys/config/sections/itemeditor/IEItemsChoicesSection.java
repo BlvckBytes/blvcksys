@@ -28,6 +28,12 @@ public class IEItemsChoicesSection extends AConfigSection {
   private ItemStackSection potionType;
   private ItemStackSection potionEffect;
   private ItemStackSection color;
+  private ItemStackSection generation;
+  private ItemStackSection page;
+  private ItemStackSection fireworkType;
+  private ItemStackSection fireworkEffect;
+  private ItemStackSection patternNew;
+  private ItemStackSection patternExisting;
 
   @Override
   public Object defaultFor(Class<?> type, String field) {

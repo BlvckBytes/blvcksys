@@ -261,12 +261,15 @@ public class ItemStackBuilder {
 
   /**
    * Set a new pattern on this banner
-   * @param type Type of pattern to add
-   * @param color Color of the pattern to add
+   * @param patterns Pattern to add
    */
-  public ItemStackBuilder setPattern(PatternType type, DyeColor color) {
+  public ItemStackBuilder setPatterns(Supplier<List<Pattern>> patterns, boolean condition) {
+    if (!condition)
+      return this;
+
     if (meta instanceof BannerMeta bm)
-      bm.setPatterns(List.of(new Pattern(color, type)));
+      bm.setPatterns(patterns.get());
+
     return this;
   }
 

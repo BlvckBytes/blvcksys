@@ -477,3 +477,55 @@ items:
       lore:
         - ' '
         - '&7Klicke, um diese Farbe zu wählen.'
+
+    generation:
+      type: BOOK
+      name: '&d{{generation}}'
+      lore:
+        - ' '
+        - '&7Klicke, um diese Generation zu wählen.'
+
+    page:
+      type: PAPER
+      name: '&7Seite &d{{number}}'
+      lore:
+        - ' '
+        - '&7Inhalt:'
+        - '&d{{content}}'
+
+    fireworkType:
+      type: '{{icon}}'
+      name: '&d{{type}}'
+      lore:
+        - ' '
+        - '&7Klicke, um diesen Typ zu wählen.'
+
+    fireworkEffect:
+      type: '{{icon}}'
+      name: '&7Effekt &dNr. {{index}}'
+      lore:
+        - '&7Typ: &d{{type}}'
+        - '&7Effektfarbe(n): &d{{colors}}'
+        - '&7Glimmfarbe(n): &d{{fades}}'
+        - '&7Flackern: &d{{flicker}}'
+        - '&7Spuren: &d{{trail}}'
+        - ' '
+        - '&7Klicke um diesen Effekt zu entfernen.'
+
+    patternNew:
+      type: '{{base}}'
+      name: '&d{{type}}'
+      lore:
+        - ' '
+        - '&7Klicke, um dieses Muster zu wählen.'
+      bannerPatterns:
+        -
+          pattern: '{{pattern_type}}'
+          color: '{{pattern_color}}'
+
+    patternExisting:
+      type: '{{icon}}'
+      name: '&d{{type}}'
+      lore:
+        - ' '
+        - '&7Klicke, um diesen Typ zu wählen.'

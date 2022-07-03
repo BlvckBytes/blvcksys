@@ -56,13 +56,13 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
     Player p = inst.getViewer();
 
     inst.addBorder(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build());
-    inst.addPagination(38, 40, 42);
+    inst.addPagination("38", "40", "42");
 
     // Reopens this instance on the next tick when called
     Runnable reopen = () -> Bukkit.getScheduler().runTask(plugin, () -> inst.reopen(AnimationType.SLIDE_UP));
 
     // Search button
-    inst.fixedItem(44, () -> (
+    inst.fixedItem("44", () -> (
       new ItemStackBuilder(Material.NAME_TAG)
         .withName(cfg.get(ConfigKey.GUI_SINGLECHOICE_SEARCH_NAME))
         .withLore(cfg.get(ConfigKey.GUI_SINGLECHOICE_SEARCH_LORE))
@@ -83,7 +83,7 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
     }, null);
 
     if (inst.getArg().backButton() != null) {
-      inst.addBack(36, e -> {
+      inst.addBack("36", e -> {
         haveChosen.add(p);
         inst.getArg().backButton().accept(inst);
       });

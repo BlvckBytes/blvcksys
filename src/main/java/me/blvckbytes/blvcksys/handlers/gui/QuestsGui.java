@@ -60,7 +60,7 @@ public class QuestsGui extends AGui<Object> {
     Player p = inst.getViewer();
 
     inst.addBorder(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build());
-    inst.addPagination(37, 40, 43);
+    inst.addPagination("37", "40", "43");
 
     inst.setPageContents(() -> (
       quests.getQuests().stream().map(quest -> (

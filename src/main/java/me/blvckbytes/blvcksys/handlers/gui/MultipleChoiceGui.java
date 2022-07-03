@@ -71,10 +71,10 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
     List<Tuple<Object, ItemStack>> choices = playerChoices.get(inst);
 
     inst.addBorder(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build());
-    inst.addPagination(38, 40, 42);
+    inst.addPagination("38", "40", "42");
 
     // Add another choice
-    inst.fixedItem(26, () -> (
+    inst.fixedItem("26", () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.GREEN_PLUS.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_MULTIPLECHOICE_ADD_NAME))
         .withLore(cfg.get(ConfigKey.GUI_MULTIPLECHOICE_ADD_LORE))
@@ -116,14 +116,14 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
 
     // Render the back button, if provided
     if (inst.getArg().backButton() != null) {
-      inst.addBack(36, e -> {
+      inst.addBack("36", e -> {
         choices.add(null);
         inst.getArg().backButton().accept(inst);
       });
     }
 
     // Submit the list of choices
-    inst.fixedItem(44, () -> (
+    inst.fixedItem("44", () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_RIGHT.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_MULTIPLECHOICE_SUBMIT_NAME))
         .withLore(cfg.get(ConfigKey.GUI_MULTIPLECHOICE_SUBMIT_LORE))

@@ -41,19 +41,19 @@ public class VirtualFurnaceGui extends AGui<VirtualFurnace> {
     VirtualFurnace vf = inst.getArg();
 
     // Item to be smelted
-    inst.fixedItem(0, vf::getSmelting, e -> {
+    inst.fixedItem("0", vf::getSmelting, e -> {
       e.setCancelled(false);
       Bukkit.getScheduler().runTask(plugin, () -> vf.setSmelting(inst.getInv().getItem(0)));
     }, 1);
 
     // Power source
-    inst.fixedItem(1, vf::getPowerSource, e -> {
+    inst.fixedItem("1", vf::getPowerSource, e -> {
       e.setCancelled(false);
       Bukkit.getScheduler().runTask(plugin, () -> vf.setPowerSource(inst.getInv().getItem(1)));
     }, 1);
 
     // Smelted output
-    inst.fixedItem(2, vf::getSmelted, e -> {
+    inst.fixedItem("2", vf::getSmelted, e -> {
       e.setCancelled(false);
       Bukkit.getScheduler().runTask(plugin, () -> vf.setSmelted(inst.getInv().getItem(2)));
     }, 1);

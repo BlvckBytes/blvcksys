@@ -67,8 +67,8 @@ public class AHBidsGui extends AGui<Object> {
     Runnable back = () -> inst.switchTo(AnimationType.SLIDE_RIGHT, ahProfileGui, null);;
 
     inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
-    inst.addPagination(38, 40, 42);
-    inst.addBack(36, e -> back.run());
+    inst.addPagination("38", "40", "42");
+    inst.addBack("36", e -> back.run());
 
     inst.setPageContents(() -> {
       List<Tuple<AHAuctionModel, AHBidModel>> auctions = ahHandler.listParticipatingOrRetrievableBidAuctions(p);

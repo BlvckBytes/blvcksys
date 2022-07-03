@@ -119,7 +119,7 @@ public class AHCreateGui extends AGui<Object> {
     Runnable back = () -> inst.switchTo(AnimationType.SLIDE_RIGHT, ahProfileGui, null);
 
     inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
-    inst.addBack(18, e -> back.run());
+    inst.addBack("18", e -> back.run());
 
     // Auction item markers
     inst.fixedItem("4,22", () -> (
@@ -129,7 +129,7 @@ public class AHCreateGui extends AGui<Object> {
     ), null, null);
 
     // Start bid amount
-    inst.fixedItem(11, () -> (
+    inst.fixedItem("11", () -> (
       new ItemStackBuilder(Material.GOLD_INGOT)
         .withName(cfg.get(ConfigKey.GUI_CREATE_AH_START_NAME))
         .withLore(
@@ -173,7 +173,7 @@ public class AHCreateGui extends AGui<Object> {
     }, null);
 
     // Auction item
-    inst.fixedItem(13, () -> {
+    inst.fixedItem("13", () -> {
       AHCreateState state = getState(inst);
 
       // Decide whether to render either the placeholder or the auction's item
@@ -229,7 +229,7 @@ public class AHCreateGui extends AGui<Object> {
     }, null);
 
     // Auction duration
-    inst.fixedItem(15, () -> (
+    inst.fixedItem("15", () -> (
       new ItemStackBuilder(Material.CLOCK)
         .withName(cfg.get(ConfigKey.GUI_CREATE_AH_DURATION_NAME))
         .withLore(
@@ -260,7 +260,7 @@ public class AHCreateGui extends AGui<Object> {
     }, null);
 
     // Submit button
-    inst.fixedItem(26, () -> {
+    inst.fixedItem("26", () -> {
       AHCreateState state = getState(inst);
       return new ItemStackBuilder(textures.getProfileOrDefault(
         state.isValid() ? SymbolicHead.GREEN_PLUS.getOwner() : SymbolicHead.RED_X.getOwner()

@@ -92,10 +92,10 @@ public class AHGui extends AGui<Object> {
     itemSortTypeCycler(inst, 47);
 
     // Free text search initiator
-    itemFreeTextSearch(inst, 48);
+    itemFreeTextSearch(inst, "48");
 
     // Profile button
-    inst.fixedItem(49, () -> (
+    inst.fixedItem("49", () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(p.getName()))
         .withName(cfg.get(ConfigKey.GUI_AH_PROFILE_NAME))
         .withLore(cfg.get(ConfigKey.GUI_AH_PROFILE_LORE))
@@ -106,7 +106,7 @@ public class AHGui extends AGui<Object> {
     inst.addSpacer("50", new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build());
 
     // Paginator
-    inst.addPagination(51, 52, 53);
+    inst.addPagination("51", "52", "53");
 
     inst.setPageContents(() -> {
       // List all auctions based on the currently applied filters
@@ -258,10 +258,10 @@ public class AHGui extends AGui<Object> {
    * Creates the free text search promting icon which opens a new chat prompt
    * or resets current values and displays the query in it's lore
    * @param inst GUI ref
-   * @param slot Slot to put the type icon at
+   * @param slotExpr Slot to put the type icon at
    */
-  private void itemFreeTextSearch(GuiInstance<Object> inst, int slot) {
-    inst.fixedItem(slot, () -> {
+  private void itemFreeTextSearch(GuiInstance<Object> inst, String slotExpr) {
+    inst.fixedItem(slotExpr, () -> {
       StringBuilder search = new StringBuilder();
       AHStateModel state = ahHandler.getState(inst.getViewer());
 
@@ -329,7 +329,7 @@ public class AHGui extends AGui<Object> {
    * @param slot Slot to put the type icon at
    */
   private void itemSortTypeCycler(GuiInstance<Object> inst, int slot) {
-    inst.fixedItem(slot, () -> {
+    inst.fixedItem(String.valueOf(slot), () -> {
       StringBuilder selectionLines = new StringBuilder();
       AHStateModel state = ahHandler.getState(inst.getViewer());
 
@@ -389,7 +389,7 @@ public class AHGui extends AGui<Object> {
    */
   private void itemCategoryTab(GuiInstance<Object> inst, int slot, AuctionCategory category) {
     // Category icon
-    inst.fixedItem(slot, () -> (
+    inst.fixedItem(String.valueOf(slot), () -> (
       new ItemStackBuilder(category.getMat())
         .withName(category.getName(cfg))
         .withLore(cfg.get(ConfigKey.GUI_AH_CAT_GENERIC_LORE))
@@ -405,7 +405,7 @@ public class AHGui extends AGui<Object> {
     }, null);
 
     // Category status indicator next to the icon
-    inst.fixedItem(slot + 1, () -> (
+    inst.fixedItem(String.valueOf(slot + 1), () -> (
       new ItemStackBuilder(
         ahHandler.getState(inst.getViewer()).getCategory() == category ?
           Material.PURPLE_STAINED_GLASS_PANE :

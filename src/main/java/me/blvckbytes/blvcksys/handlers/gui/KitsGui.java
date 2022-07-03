@@ -82,7 +82,7 @@ public class KitsGui extends AGui<Object> implements Listener {
     Player p = inst.getViewer();
 
     inst.addBorder(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build());
-    inst.addPagination(37, 40, 43);
+    inst.addPagination("37", "40", "43");
 
     List<KitModel> kits = pers.list(KitModel.class);
 

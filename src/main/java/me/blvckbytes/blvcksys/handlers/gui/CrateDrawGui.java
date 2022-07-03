@@ -155,7 +155,7 @@ public class CrateDrawGui extends AGui<CrateModel> {
 
     // Set a fixed item into each slot of the animation which updates on every tick
     for (int slot : animSlots) {
-      inst.fixedItem(slot, () -> {
+      inst.fixedItem(String.valueOf(slot), () -> {
         int speedTicks = SPEED_TICKS[currSpeed.get()];
         int calls = totalCalls.incrementAndGet();
         int slotIndex = animSlots.indexOf(slot);

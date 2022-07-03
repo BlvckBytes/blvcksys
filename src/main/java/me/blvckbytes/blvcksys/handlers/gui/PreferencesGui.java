@@ -69,8 +69,8 @@ public class PreferencesGui extends AGui<Object> {
     inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
 
     // Msg disable
-    inst.addStateToggle(19, 10, () -> !prefs.isMsgDisabled(p), s -> prefs.setMsgDisabled(p, s));
-    inst.fixedItem(10, () -> (
+    inst.addStateToggle("19", "10", () -> !prefs.isMsgDisabled(p), s -> prefs.setMsgDisabled(p, s));
+    inst.fixedItem("10", () -> (
       new ItemStackBuilder(Material.NAME_TAG)
         .withName(cfg.get(ConfigKey.GUI_PREFERENCES_MSG_NAME))
         .withLore(
@@ -81,8 +81,8 @@ public class PreferencesGui extends AGui<Object> {
     ), null, null);
 
     // Chat disable
-    inst.addStateToggle(20, 11, () -> !prefs.isChatHidden(p), s -> prefs.setChatHidden(p, s));
-    inst.fixedItem(11, () -> (
+    inst.addStateToggle("20", "11", () -> !prefs.isChatHidden(p), s -> prefs.setChatHidden(p, s));
+    inst.fixedItem("11", () -> (
       new ItemStackBuilder(Material.PAPER)
         .withName(cfg.get(ConfigKey.GUI_PREFERENCES_CHAT_NAME))
         .withLore(
@@ -93,8 +93,8 @@ public class PreferencesGui extends AGui<Object> {
     ), null, null);
 
     // Scoreboard hide
-    inst.addStateToggle(21, 12, () -> obj.getSidebarVisibility(p), s -> obj.setSidebarVisibility(p, !s));
-    inst.fixedItem(12, () -> (
+    inst.addStateToggle("21", "12", () -> obj.getSidebarVisibility(p), s -> obj.setSidebarVisibility(p, !s));
+    inst.fixedItem("12", () -> (
       new ItemStackBuilder(Material.LADDER)
         .withName(cfg.get(ConfigKey.GUI_PREFERENCES_SCOREBOARD_NAME))
         .withLore(
@@ -105,7 +105,7 @@ public class PreferencesGui extends AGui<Object> {
     ), null, null);
 
     // Arrow trails
-    inst.fixedItem(13, () -> {
+    inst.fixedItem("13", () -> {
       Tuple<@Nullable Particle, @Nullable Color> currTrail = prefs.getArrowTrail(p);
       Particle particle = currTrail.a();
       Color color = currTrail.b();
@@ -170,7 +170,7 @@ public class PreferencesGui extends AGui<Object> {
     }, null);
 
     // Arrow trails clear
-    inst.fixedItem(22, () -> {
+    inst.fixedItem("22", () -> {
       boolean hasTrails = prefs.getArrowTrail(p).a() != null;
 
       return new ItemStackBuilder(hasTrails ? Material.BARRIER : Material.WHITE_STAINED_GLASS_PANE)
@@ -184,8 +184,8 @@ public class PreferencesGui extends AGui<Object> {
     }, null);
 
     // Home laser enable
-    inst.addStateToggle(23, 14, () -> prefs.showHomeLasers(p), s -> prefs.setShowHomeLasers(p, !s));
-    inst.fixedItem(14, () -> (
+    inst.addStateToggle("23", "14", () -> prefs.showHomeLasers(p), s -> prefs.setShowHomeLasers(p, !s));
+    inst.fixedItem("14", () -> (
       new ItemStackBuilder(Material.BEACON)
         .withName(cfg.get(ConfigKey.GUI_PREFERENCES_HOME_LASERS_NAME))
         .withLore(

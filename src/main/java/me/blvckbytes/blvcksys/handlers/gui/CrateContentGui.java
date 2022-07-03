@@ -57,7 +57,7 @@ public class CrateContentGui extends AGui<Tuple<CrateModel, Boolean>> {
   @Override
   protected boolean opening(GuiInstance<Tuple<CrateModel, Boolean>> inst) {
     inst.addBorder(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build());
-    inst.addPagination(46, 49, 52);
+    inst.addPagination("46", "49", "52");
 
     CrateModel crate = inst.getArg().a();
     boolean editMode = inst.getArg().b();

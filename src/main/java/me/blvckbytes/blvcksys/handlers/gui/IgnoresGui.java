@@ -53,7 +53,7 @@ public class IgnoresGui extends AGui<Object> {
     Player p = inst.getViewer();
 
     inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
-    inst.addPagination(28, 31, 34);
+    inst.addPagination("28", "31", "34");
 
     inst.setPageContents(() -> {
       List<PlayerIgnoreModel> active = ignore.listActiveIgnores(p);

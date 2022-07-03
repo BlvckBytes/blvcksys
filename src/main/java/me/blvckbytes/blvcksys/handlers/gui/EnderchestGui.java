@@ -105,7 +105,7 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
         .build()
     ), null, null);
     
-    inst.addPagination(46, 49, 52);
+    inst.addPagination("46", "49", "52");
 
     EnderchestInstance chestInst = getOrCreate(inst.getArg());
     EnderchestModel model = chestInst.getModel();

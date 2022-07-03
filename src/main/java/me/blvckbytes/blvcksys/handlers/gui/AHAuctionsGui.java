@@ -74,8 +74,8 @@ public class AHAuctionsGui extends AGui<Object> {
     Runnable back = () -> inst.switchTo(AnimationType.SLIDE_RIGHT, ahProfileGui, null);;
 
     inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
-    inst.addPagination(38, 40, 42);
-    inst.addBack(36, e -> back.run());
+    inst.addPagination("38", "40", "42");
+    inst.addBack("36", e -> back.run());
 
     inst.setPageContents(() -> {
       // List all auctions that are either active or require final interaction

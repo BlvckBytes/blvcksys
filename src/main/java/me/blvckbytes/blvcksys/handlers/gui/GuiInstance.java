@@ -3,9 +3,7 @@ package me.blvckbytes.blvcksys.handlers.gui;
 import lombok.Getter;
 import lombok.Setter;
 import me.blvckbytes.blvcksys.config.ConfigKey;
-import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
-import me.blvckbytes.blvcksys.config.sections.ItemStackSection;
 import me.blvckbytes.blvcksys.events.InventoryManipulationEvent;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.util.SymbolicHead;
@@ -236,23 +234,6 @@ public class GuiInstance<T> {
   /**
    * Add a fixed item, which is an item that will always have the same position,
    * no matter of the viewer's state
-   * @param slot Slot to set this item to
-   * @param item An item supplier
-   * @param onClick Action to run when this item has been clicked
-   * @param updatePeriod Item update period in ticks, null means never
-   */
-  protected void fixedItem(
-    int slot,
-    Supplier<ItemStack> item,
-    @Nullable Consumer<InventoryManipulationEvent> onClick,
-    Integer updatePeriod
-  ) {
-    fixedItem(String.valueOf(slot), item, onClick, updatePeriod);
-  }
-
-  /**
-   * Add a fixed item, which is an item that will always have the same position,
-   * no matter of the viewer's state
    * @param slotExpr Slot(s) to set this item to
    * @param item An item supplier
    * @param onClick Action to run when this item has been clicked
@@ -271,24 +252,24 @@ public class GuiInstance<T> {
   /**
    * Adds a previous, an indicator as well as a next item as fixed and
    * standardized items to the GUI
-   * @param prevSlot Slot of the previous button
-   * @param indicatorSlot Slot of the page indicator
-   * @param nextSlot Slot of the next button
+   * @param prevSlotExpr Slot of the previous button
+   * @param indicatorSlotExpr Slot of the page indicator
+   * @param nextSlotExpr Slot of the next button
    */
-  protected void addPagination(int prevSlot, int indicatorSlot, int nextSlot) {
-    beforePaging = () -> Bukkit.getScheduler().runTaskLater(plugin, () -> redraw(String.valueOf(indicatorSlot)), 10);
+  protected void addPagination(String prevSlotExpr, String indicatorSlotExpr, String nextSlotExpr) {
+    beforePaging = () -> Bukkit.getScheduler().runTaskLater(plugin, () -> redraw(String.valueOf(indicatorSlotExpr)), 10);
 
-    fixedItem(prevSlot, () -> (
+    fixedItem(prevSlotExpr, () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_NAME))
         .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_LORE))
         .build()
     ), e -> {
       previousPage(AnimationType.SLIDE_RIGHT);
-      redraw(String.valueOf(indicatorSlot));
+      redraw(String.valueOf(indicatorSlotExpr));
     }, null);
 
-    fixedItem(indicatorSlot, () -> (
+    fixedItem(indicatorSlotExpr, () -> (
       new ItemStackBuilder(Material.PAPER)
         .withName(
           cfg.get(ConfigKey.GUI_GENERICS_PAGING_INDICATOR_NAME)
@@ -304,26 +285,26 @@ public class GuiInstance<T> {
         .build()
     ), null, null);
 
-    fixedItem(nextSlot, () -> (
+    fixedItem(nextSlotExpr, () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_RIGHT.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_NAME))
         .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_LORE))
         .build()
     ), e -> {
       nextPage(AnimationType.SLIDE_LEFT);
-      redraw(String.valueOf(indicatorSlot));
+      redraw(String.valueOf(indicatorSlotExpr));
     }, null);
   }
 
   /**
    * Add a standardized state toggle button to the GUI
-   * @param slot Where to set the item
-   * @param update What slots to update separately when the state changed
+   * @param slotExpr Where to set the item
+   * @param updateSlotExpr What slots to update separately when the state changed
    * @param state State supplier
    * @param onClick Click event, providing the current state and the player
    */
-  protected void addStateToggle(int slot, @Nullable Integer update, Supplier<Boolean> state, Consumer<Boolean> onClick) {
-    fixedItem(slot, () -> {
+  protected void addStateToggle(String slotExpr, @Nullable String updateSlotExpr, Supplier<Boolean> state, Consumer<Boolean> onClick) {
+    fixedItem(slotExpr, () -> {
       boolean s = state.get();
 
       return new ItemStackBuilder(s ? Material.GREEN_DYE : Material.RED_DYE)
@@ -332,7 +313,7 @@ public class GuiInstance<T> {
         .build();
     }, e -> {
       onClick.accept(state.get());
-      redraw(slot + "," + (update == null ? "" : update));
+      redraw(slotExpr + "," + (updateSlotExpr == null ? "" : updateSlotExpr));
     }, null);
   }
 
@@ -402,7 +383,7 @@ public class GuiInstance<T> {
    * @param slot Slot of the back button
    * @param clicked Event callback
    */
-  protected<A> void addBack(int slot, Consumer<InventoryManipulationEvent> clicked) {
+  protected<A> void addBack(String slot, Consumer<InventoryManipulationEvent> clicked) {
     fixedItem(slot, this::buildBackButton, clicked, null);
   }
 
@@ -413,7 +394,7 @@ public class GuiInstance<T> {
    * @param param Gui parameter
    * @param animation Animation to use when navigating back
    */
-  protected<A> void addBack(int slot, AGui<A> gui, Supplier<A> param, @Nullable AnimationType animation) {
+  protected<A> void addBack(String slot, AGui<A> gui, Supplier<A> param, @Nullable AnimationType animation) {
     fixedItem(slot, this::buildBackButton, e -> switchTo(animation, gui, param == null ? null : param.get()), null);
   }
 

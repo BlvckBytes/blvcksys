@@ -53,7 +53,7 @@ public class FurnacesGui extends AGui<Object> {
     Player p = inst.getViewer();
 
     inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
-    inst.addPagination(37, 40, 43);
+    inst.addPagination("37", "40", "43");
 
     inst.setPageContents(() -> (
       furnaceHandler.listFurnaces(p).stream()
@@ -65,7 +65,7 @@ public class FurnacesGui extends AGui<Object> {
         .collect(Collectors.toList())
     ));
 
-    inst.fixedItem(26, () -> (
+    inst.fixedItem("26", () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.GREEN_PLUS.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_FURNACES_CREATE_NAME))
         .withLore(

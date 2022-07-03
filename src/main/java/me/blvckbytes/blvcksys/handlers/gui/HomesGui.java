@@ -65,7 +65,7 @@ public class HomesGui extends AGui<OfflinePlayer> {
     boolean isSelf = inst.getArg().equals(p);
 
     inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
-    inst.addPagination(37, 40, 43);
+    inst.addPagination("37", "40", "43");
 
     inst.setPageContents(() -> {
       List<HomeModel> homes = homeHandler.listHomes(inst.getArg());

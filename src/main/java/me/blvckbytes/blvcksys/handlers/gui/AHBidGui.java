@@ -84,13 +84,13 @@ public class AHBidGui extends AGui<AHAuctionModel> {
     Runnable back = () -> inst.switchTo(AnimationType.SLIDE_RIGHT, ahGui, null);;
 
     inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
-    inst.addBack(18, e -> back.run());
+    inst.addBack("18", e -> back.run());
 
     // Target item status indicators
     inst.fixedItem("2,20", () -> createStatusIndicator(inst).orElse(null), null, null);
 
     // Target item itself
-    inst.fixedItem(11, () -> {
+    inst.fixedItem("11", () -> {
       Tuple<TriResult, @Nullable AHBidModel> bidT = ahHandler.lastBid(auction, null);
 
       // Auction not available anymore, close the screen
@@ -109,7 +109,7 @@ public class AHBidGui extends AGui<AHAuctionModel> {
     }, null, 10);
 
     // Custom bid
-    inst.fixedItem(13, () -> (
+    inst.fixedItem("13", () -> (
       new ItemStackBuilder(Material.OAK_SIGN)
         .withName(cfg.get(ConfigKey.GUI_BID_AH_CUSTOM_BID_NAME))
         .withLore(cfg.get(ConfigKey.GUI_BID_AH_CUSTOM_BID_LORE))
@@ -146,7 +146,7 @@ public class AHBidGui extends AGui<AHAuctionModel> {
     );
 
     // Minimum bid
-    inst.fixedItem(15, () -> (
+    inst.fixedItem("15", () -> (
       new ItemStackBuilder(Material.BOOK)
         .withName(cfg.get(ConfigKey.GUI_BID_AH_MIN_BID_NAME))
         .withLore(
@@ -162,7 +162,7 @@ public class AHBidGui extends AGui<AHAuctionModel> {
     );
 
     // Bidding history log
-    inst.fixedItem(26, () -> {
+    inst.fixedItem("26", () -> {
       StringBuilder lines = new StringBuilder();
       List<AHBidModel> bids = ahHandler.listBids(auction).orElse(new ArrayList<>());
 

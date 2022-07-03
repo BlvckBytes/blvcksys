@@ -54,10 +54,10 @@ public class AHProfileGui extends AGui<Object> {
   protected boolean opening(GuiInstance<Object> inst) {
 
     inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
-    inst.addBack(18, ahGui, null, AnimationType.SLIDE_RIGHT);
+    inst.addBack("18", ahGui, null, AnimationType.SLIDE_RIGHT);
 
     // New entry
-    inst.fixedItem(11, () -> (
+    inst.fixedItem("11", () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.GREEN_PLUS.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_PROFILE_AH_CREATE_NAME))
         .withLore(cfg.get(ConfigKey.GUI_PROFILE_AH_CREATE_LORE))
@@ -65,7 +65,7 @@ public class AHProfileGui extends AGui<Object> {
     ), e -> inst.switchTo(AnimationType.SLIDE_LEFT, ahCreateGui, null), null);
 
     // Manage auctions
-    inst.fixedItem(13, () -> (
+    inst.fixedItem("13", () -> (
       new ItemStackBuilder(Material.ANVIL)
         .withName(cfg.get(ConfigKey.GUI_PROFILE_AH_MANAGE_AUCTIONS_NAME))
         .withLore(cfg.get(ConfigKey.GUI_PROFILE_AH_MANAGE_AUCTIONS_LORE))
@@ -73,7 +73,7 @@ public class AHProfileGui extends AGui<Object> {
     ), e -> inst.switchTo(AnimationType.SLIDE_LEFT, ahAuctionsGui, null), null);
 
     // Manage bids
-    inst.fixedItem(15, () -> (
+    inst.fixedItem("15", () -> (
       new ItemStackBuilder(Material.CLOCK)
         .withName(cfg.get(ConfigKey.GUI_PROFILE_AH_MANAGE_BIDS_NAME))
         .withLore(cfg.get(ConfigKey.GUI_PROFILE_AH_MANAGE_BIDS_LORE))

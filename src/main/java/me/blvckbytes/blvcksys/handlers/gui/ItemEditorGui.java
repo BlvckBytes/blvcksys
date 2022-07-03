@@ -123,7 +123,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     // Only render the back button if a callback has been provided
     Consumer<GuiInstance<?>> back = inst.getArg().c();
     if (back != null) {
-      inst.addBack(45, e -> back.accept(inst));
+      inst.addBack("45", e -> back.accept(inst));
     }
 
     ///////////////////////////////////// Preview //////////////////////////////////////
@@ -134,7 +134,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     ), null, null);
 
     // Always keep the edited item in sync with the player's inventory
-    inst.fixedItem(13, () -> {
+    inst.fixedItem("13", () -> {
       p.getInventory().setItemInMainHand(item);
       return item;
     }, null, null);
@@ -149,7 +149,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     ///////////////////////////////// Increase Amount //////////////////////////////////
 
 
-    inst.fixedItem(10, () -> (
+    inst.fixedItem("10", () -> (
       ies.getItems().getHome().getIncrease()
         .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.INCREASE.has(p))
         .build()
@@ -189,7 +189,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     ///////////////////////////////// Decrease Amount //////////////////////////////////
 
-    inst.fixedItem(16, () -> (
+    inst.fixedItem("16", () -> (
       ies.getItems().getHome().getDecrease()
         .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.DECREASE.has(p))
         .build()
@@ -230,7 +230,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     //////////////////////////////// Custom Model Data //////////////////////////////////
 
-    inst.fixedItem(27, () -> (
+    inst.fixedItem("27", () -> (
       ies.getItems().getHome().getCustomModelData()
         .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.CUSTOMMODELDATA.has(p))
         .build(
@@ -300,7 +300,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     ///////////////////////////////////// Material /////////////////////////////////////
 
-    inst.fixedItem(28, () -> (
+    inst.fixedItem("28", () -> (
       ies.getItems().getHome().getMaterial()
         .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.MATERIAL.has(p))
         .build()
@@ -332,7 +332,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     /////////////////////////////////// Item Flags ///////////////////////////////////
 
-    inst.fixedItem(29, () -> (
+    inst.fixedItem("29", () -> (
       ies.getItems().getHome().getFlags()
         .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.FLAGS.has(p))
         .build(
@@ -375,7 +375,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     //////////////////////////////////// Enchantments ////////////////////////////////////
 
-    inst.fixedItem(30, () -> (
+    inst.fixedItem("30", () -> (
       ies.getItems().getHome().getEnchantments()
         .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.ENCHANTMENTS.has(p))
         .build(
@@ -444,7 +444,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     //////////////////////////////////// Displayname ////////////////////////////////////
 
-    inst.fixedItem(31, () -> (
+    inst.fixedItem("31", () -> (
       ies.getItems().getHome().getDisplayname()
         .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.DISPLAYNAME.has(p))
         .build()
@@ -506,7 +506,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     //////////////////////////////////// Lore Lines ////////////////////////////////////
 
-    inst.fixedItem(32, () -> (
+    inst.fixedItem("32", () -> (
       ies.getItems().getHome().getLore()
         .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.LORE.has(p))
         .build()
@@ -636,7 +636,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     //////////////////////////////////// Durability ////////////////////////////////////
 
-    inst.fixedItem(33, () -> {
+    inst.fixedItem("33", () -> {
       boolean isDamageable = (meta instanceof Damageable && item.getType().getMaxDurability() > 0);
       int currDur = item.getType().getMaxDurability() - ((meta instanceof Damageable d) ? d.getDamage() : 0);
       int maxDur = item.getType().getMaxDurability();
@@ -779,7 +779,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     ////////////////////////////////////// Attributes //////////////////////////////////////
 
-    inst.fixedItem(34, () -> (
+    inst.fixedItem("34", () -> (
       ies.getItems().getHome().getAttributes()
         .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.ATTRIBUTES.has(p))
         .build()
@@ -912,7 +912,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     ////////////////////////////////////// Fireworks //////////////////////////////////////
 
-    inst.fixedItem(35, () -> {
+    inst.fixedItem("35", () -> {
       FireworkMeta fMeta = meta instanceof FireworkMeta fm ? fm : null;
       return ies.getItems().getHome().getFireworks()
         .patch(ies.getItems().getHome().getNotApplicable(), fMeta == null)
@@ -1108,7 +1108,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     ////////////////////////////////////// Compasses //////////////////////////////////////
 
-    inst.fixedItem(37, () -> {
+    inst.fixedItem("37", () -> {
       CompassMeta cm = meta instanceof CompassMeta x ? x : null;
       return ies.getItems().getHome().getCompass()
         .patch(ies.getItems().getHome().getNotApplicable(), cm == null)
@@ -1175,7 +1175,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     ///////////////////////////////////// Skull Owner /////////////////////////////////////
 
-    inst.fixedItem(38, () -> {
+    inst.fixedItem("38", () -> {
       SkullMeta sm = meta instanceof SkullMeta x ? x : null;
       return ies.getItems().getHome().getHeadOwner()
         .patch(ies.getItems().getHome().getNotApplicable(), sm == null)
@@ -1237,7 +1237,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     ///////////////////////////////////// Leather Color /////////////////////////////////////
 
-    inst.fixedItem(39, () -> {
+    inst.fixedItem("39", () -> {
       LeatherArmorMeta lam = meta instanceof LeatherArmorMeta x ? x : null;
       return ies.getItems().getHome().getLeatherColor()
         .patch(ies.getItems().getHome().getNotApplicable(), lam == null)
@@ -1272,7 +1272,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     ///////////////////////////////////// Potion Effects /////////////////////////////////////
 
-    inst.fixedItem(40, () -> (
+    inst.fixedItem("40", () -> (
       ies.getItems().getHome().getPotionEffects()
         .patch(ies.getItems().getHome().getNotApplicable(), !(meta instanceof PotionMeta))
         .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.POTION_EFFECTS.has(p))
@@ -1541,7 +1541,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     //////////////////////////////////////// Maps ////////////////////////////////////////
 
-    inst.fixedItem(41, () -> (
+    inst.fixedItem("41", () -> (
       ies.getItems().getHome().getMaps()
         .patch(ies.getItems().getHome().getNotApplicable(), !(meta instanceof MapMeta))
         .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.MAPS.has(p))
@@ -1573,7 +1573,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     //////////////////////////////////////// Books ////////////////////////////////////////
 
-    inst.fixedItem(42, () -> (
+    inst.fixedItem("42", () -> (
       ies.getItems().getHome().getBooks()
         .patch(ies.getItems().getHome().getNotApplicable(), !(meta instanceof BookMeta))
         .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.BOOKS.has(p))
@@ -1788,7 +1788,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     //////////////////////////////////////// Banners ////////////////////////////////////////
 
-    inst.fixedItem(43, () -> (
+    inst.fixedItem("43", () -> (
       ies.getItems().getHome().getBanners()
         .patch(ies.getItems().getHome().getNotApplicable(), !(meta instanceof BannerMeta))
         .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.BANNERS.has(p))

@@ -51,7 +51,7 @@ public class ConfirmationGui extends AGui<BiConsumer<TriResult, GuiInstance<?>>>
 
     inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
 
-    inst.fixedItem(11, () -> (
+    inst.fixedItem("11", () -> (
       new ItemStackBuilder(Material.GREEN_TERRACOTTA)
         .withName(cfg.get(ConfigKey.GUI_CONFIRMATION_CONFIRM_NAME))
         .withLore(cfg.get(ConfigKey.GUI_CONFIRMATION_CONFIRM_LORE))
@@ -61,7 +61,7 @@ public class ConfirmationGui extends AGui<BiConsumer<TriResult, GuiInstance<?>>>
       inst.getArg().accept(TriResult.SUCC, inst);
     }, null);
 
-    inst.fixedItem(15, () -> (
+    inst.fixedItem("15", () -> (
       new ItemStackBuilder(Material.RED_TERRACOTTA)
         .withName(cfg.get(ConfigKey.GUI_CONFIRMATION_CANCEL_NAME))
         .withLore(cfg.get(ConfigKey.GUI_CONFIRMATION_CANCEL_LORE))

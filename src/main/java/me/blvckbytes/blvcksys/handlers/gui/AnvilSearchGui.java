@@ -91,7 +91,7 @@ public class AnvilSearchGui extends AGui<SingleChoiceParam> implements IPacketMo
   protected boolean opening(GuiInstance<SingleChoiceParam> inst) {
     // This item serves as a placeholder to get the typing functionality up and working, while
     // it also informes the player about the concept of filtering
-    inst.fixedItem(0, () -> (
+    inst.fixedItem("0", () -> (
       new ItemStackBuilder(Material.PURPLE_TERRACOTTA)
         .withName(ConfigValue.immediate(" "))
         .withLore(cfg.get(ConfigKey.GUI_ANVILSEARCH_ITEM_LORE))
@@ -100,7 +100,7 @@ public class AnvilSearchGui extends AGui<SingleChoiceParam> implements IPacketMo
 
     // Back button
     if (inst.getArg().backButton() != null) {
-      inst.addBack(1, e -> {
+      inst.addBack("1", e -> {
         madeSelection.add(inst.getViewer());
         inst.getArg().backButton().accept(inst);
       });

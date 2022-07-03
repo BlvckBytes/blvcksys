@@ -51,20 +51,20 @@ public class YesNoGui extends AGui<YesNoParam> {
 
     // Render the back button, if a callback has been set
     if (inst.getArg().backButton() != null) {
-      inst.addBack(18, e -> {
+      inst.addBack("18", e -> {
         madeSelection.add(p);
         inst.getArg().backButton().accept(inst);
       });
     }
 
     // Yes button
-    inst.fixedItem(11, () -> inst.getArg().yesButton(), e -> {
+    inst.fixedItem("11", () -> inst.getArg().yesButton(), e -> {
       madeSelection.add(p);
       inst.getArg().choice().accept(TriResult.SUCC, inst);
     }, null);
 
     // No button
-    inst.fixedItem(15, () -> inst.getArg().noButton(), e -> {
+    inst.fixedItem("15", () -> inst.getArg().noButton(), e -> {
       madeSelection.add(p);
       inst.getArg().choice().accept(TriResult.ERR, inst);
     }, null);

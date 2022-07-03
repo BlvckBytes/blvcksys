@@ -111,42 +111,42 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
 
     /////////////////////////////////// Body Columns ////////////////////////////////////
 
-    inst.fixedItem(10, () -> (
+    inst.fixedItem("10", () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.LETTER_H.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_HELMET_NAME))
         .withLore(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_HELMET_LORE))
         .build()
     ), null, null);
 
-    inst.fixedItem(11, () -> (
+    inst.fixedItem("11", () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.LETTER_B.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_CHESTPLATE_NAME))
         .withLore(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_CHESTPLATE_LORE))
         .build()
     ), null, null);
 
-    inst.fixedItem(12, () -> (
+    inst.fixedItem("12", () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.LETTER_H.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_LEGGINGS_NAME))
         .withLore(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_LEGGINGS_LORE))
         .build()
     ), null, null);
 
-    inst.fixedItem(13, () -> (
+    inst.fixedItem("13", () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.LETTER_S.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_BOOTS_NAME))
         .withLore(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_BOOTS_LORE))
         .build()
     ), null, null);
 
-    inst.fixedItem(14, () -> (
+    inst.fixedItem("14", () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.LETTER_L.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_LEFT_ARM_NAME))
         .withLore(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_LEFT_ARM_LORE))
         .build()
     ), null, null);
 
-    inst.fixedItem(15, () -> (
+    inst.fixedItem("15", () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.LETTER_R.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_RIGHT_ARM_NAME))
         .withLore(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_RIGHT_ARM_LORE))
@@ -155,25 +155,25 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
 
     /////////////////////////////////// Equipment Slots ////////////////////////////////////
 
-    equipmentSlotTemplate(inst, 19, EquipmentSlot.HELMET, props);
-    equipmentSlotTemplate(inst, 20, EquipmentSlot.CHESTPLATE, props);
-    equipmentSlotTemplate(inst, 21, EquipmentSlot.LEGGINGS, props);
-    equipmentSlotTemplate(inst, 22, EquipmentSlot.BOOTS, props);
-    equipmentSlotTemplate(inst, 23, EquipmentSlot.OFF_HAND, props);
-    equipmentSlotTemplate(inst, 24, EquipmentSlot.MAIN_HAND, props);
+    equipmentSlotTemplate(inst, "19", EquipmentSlot.HELMET, props);
+    equipmentSlotTemplate(inst, "20", EquipmentSlot.CHESTPLATE, props);
+    equipmentSlotTemplate(inst, "21", EquipmentSlot.LEGGINGS, props);
+    equipmentSlotTemplate(inst, "22", EquipmentSlot.BOOTS, props);
+    equipmentSlotTemplate(inst, "23", EquipmentSlot.OFF_HAND, props);
+    equipmentSlotTemplate(inst, "24", EquipmentSlot.MAIN_HAND, props);
 
     /////////////////////////////////// Body Poses ////////////////////////////////////
 
-    poseSlotTemplate(inst, 28, MoveablePart.HEAD, props);
-    poseSlotTemplate(inst, 29, MoveablePart.BODY, props);
-    poseSlotTemplate(inst, 30, MoveablePart.LEFT_LEG, props);
-    poseSlotTemplate(inst, 31, MoveablePart.RIGHT_LEG, props);
-    poseSlotTemplate(inst, 32, MoveablePart.LEFT_ARM, props);
-    poseSlotTemplate(inst, 33, MoveablePart.RIGHT_ARM, props);
+    poseSlotTemplate(inst, "28", MoveablePart.HEAD, props);
+    poseSlotTemplate(inst, "29", MoveablePart.BODY, props);
+    poseSlotTemplate(inst, "30", MoveablePart.LEFT_LEG, props);
+    poseSlotTemplate(inst, "31", MoveablePart.RIGHT_LEG, props);
+    poseSlotTemplate(inst, "32", MoveablePart.LEFT_ARM, props);
+    poseSlotTemplate(inst, "33", MoveablePart.RIGHT_ARM, props);
 
     /////////////////////////////////// Boolean Flags ////////////////////////////////////
 
-    inst.fixedItem(16, () -> (
+    inst.fixedItem("16", () -> (
       new ItemStackBuilder(props.isVisible() ? Material.GREEN_DYE : Material.GRAY_DYE)
         .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_VISIBILITY_NAME))
         .withLore(
@@ -187,7 +187,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
       inst.redraw("16");
     }, null);
 
-    inst.fixedItem(25, () -> (
+    inst.fixedItem("25", () -> (
       new ItemStackBuilder(props.isArms() ? Material.GREEN_DYE : Material.GRAY_DYE)
         .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_ARMS_NAME))
         .withLore(
@@ -201,7 +201,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
       inst.redraw("25");
     }, null);
 
-    inst.fixedItem(34, () -> (
+    inst.fixedItem("34", () -> (
       new ItemStackBuilder(props.isSmall() ? Material.GREEN_DYE : Material.GRAY_DYE)
         .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_SMALL_NAME))
         .withLore(
@@ -215,7 +215,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
       inst.redraw("34");
     }, null);
 
-    inst.fixedItem(43, () -> (
+    inst.fixedItem("43", () -> (
       new ItemStackBuilder(props.isBaseplate() ? Material.GREEN_DYE : Material.GRAY_DYE)
         .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_BASEPLATE_NAME))
         .withLore(
@@ -231,7 +231,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
 
     /////////////////////////////////// Name (+Visibility) ////////////////////////////////////
 
-    inst.fixedItem(37, () -> (
+    inst.fixedItem("37", () -> (
       new ItemStackBuilder(props.isNameVisible() ? Material.GREEN_DYE : Material.GRAY_DYE)
         .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_NAME_VISIBILITY_NAME))
         .withLore(
@@ -246,7 +246,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
     }, null);
 
 
-    inst.fixedItem(38, () -> (
+    inst.fixedItem("38", () -> (
       new ItemStackBuilder(Material.NAME_TAG)
         .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_DISPLAYNAME_NAME))
         .withLore(
@@ -473,12 +473,12 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
   /**
    * Item button template for an equipment slot manipulator
    * @param inst GUI instance
-   * @param invSlot Slot within the GUI
+   * @param invSlotExpr Slot within the GUI
    * @param slot Slot of the armorstand to manipulate
    * @param props Current properties value
    */
-  private void equipmentSlotTemplate(GuiInstance<ArmorStandModel> inst, int invSlot, EquipmentSlot slot, ArmorStandProperties props) {
-    inst.fixedItem(invSlot, () -> (
+  private void equipmentSlotTemplate(GuiInstance<ArmorStandModel> inst, String invSlotExpr, EquipmentSlot slot, ArmorStandProperties props) {
+    inst.fixedItem(invSlotExpr, () -> (
       slot.get(props) == null ?
         new ItemStackBuilder(Material.BARRIER)
           .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_EMPTY_EQUIP_NAME))
@@ -503,7 +503,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
       if (e.getClick().isRightClick()) {
         slot.set(props, null);
         standHandler.setProperties(inst.getArg().getName(), props, true);
-        inst.redraw(String.valueOf(invSlot));
+        inst.redraw(invSlotExpr);
         return;
       }
 
@@ -513,7 +513,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
           stack -> {
             slot.set(props, stack);
             standHandler.setProperties(inst.getArg().getName(), props, true);
-            inst.redraw(String.valueOf(invSlot));
+            inst.redraw(invSlotExpr);
           },
           editorInst -> inst.reopen(AnimationType.SLIDE_RIGHT, editorInst)
         ));
@@ -524,12 +524,12 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
   /**
    * Pose button template for a pose manipulator
    * @param inst GUI instance
-   * @param invSlot Slot within the GUI
+   * @param invSlotExpr Slot within the GUI
    * @param part Bodypart to manipulate
    * @param props Current properties value
    */
-  private void poseSlotTemplate(GuiInstance<ArmorStandModel> inst, int invSlot, MoveablePart part, ArmorStandProperties props) {
-    inst.fixedItem(invSlot, () -> (
+  private void poseSlotTemplate(GuiInstance<ArmorStandModel> inst, String invSlotExpr, MoveablePart part, ArmorStandProperties props) {
+    inst.fixedItem(invSlotExpr, () -> (
       new ItemStackBuilder(Material.GOLDEN_AXE)
         .hideAttributes()
         .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_ALTER_POSE_NAME))

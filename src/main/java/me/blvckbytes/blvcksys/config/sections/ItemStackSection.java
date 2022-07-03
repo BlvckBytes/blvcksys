@@ -1,6 +1,8 @@
 package me.blvckbytes.blvcksys.config.sections;
 
 import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.Property;
+import com.mojang.authlib.properties.PropertyMap;
 import lombok.Getter;
 import me.blvckbytes.blvcksys.config.AConfigSection;
 import me.blvckbytes.blvcksys.config.ConfigValue;
@@ -16,9 +18,12 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.LeatherArmorMeta;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.inventory.meta.SkullMeta;
+import org.bukkit.profile.PlayerProfile;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Field;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
@@ -39,7 +44,7 @@ public class ItemStackSection extends AConfigSection {
   private @Nullable ConfigValue flags;
   private @Nullable ConfigValue color;
   private ItemStackEnchantmentSection[] enchantments;
-  private @Nullable GameProfile textures;
+  private @Nullable ConfigValue textures;
   private @Nullable ItemStackBaseEffectSection baseEffect;
   private ItemStackCustomEffectSection[] customEffects;
   private ItemStackBannerPatternSection[] bannerPatterns;
@@ -85,7 +90,7 @@ public class ItemStackSection extends AConfigSection {
           .toList()
       ), enchantments != null)
       .withColor(() -> c, c != null)
-      .withProfile(() -> textures, textures != null)
+      .withTextures(() -> textures.copy().withVariables(variables).asScalar(), textures != null)
       .withBaseEffect(() -> baseEffect.asData(variables), baseEffect != null)
       .withCustomEffects(() -> (
         Arrays.stream(customEffects)
@@ -164,13 +169,30 @@ public class ItemStackSection extends AConfigSection {
       if (!(meta instanceof SkullMeta sm))
         return false;
 
+      PlayerProfile pf = sm.getOwnerProfile();
       OfflinePlayer owner = sm.getOwningPlayer();
 
       // Has no head owner
       if (owner == null)
-        return null;
+        return false;
 
-      return textures.getId().equals(owner.getUniqueId());
+
+      try {
+        Field profileField = meta.getClass().getDeclaredField("profile");
+        profileField.setAccessible(true);
+        GameProfile profile = (GameProfile) profileField.get(sm);
+        PropertyMap pm = profile.getProperties();
+        Collection<Property> targets = pm.get("textures");
+
+        // Does not contain any textures
+        if (targets.size() == 0)
+          return false;
+
+        String texturesValue = textures.asScalar();
+        return targets.stream().anyMatch(prop -> prop.getValue().equals(texturesValue));
+      } catch (Exception ignored) {}
+
+      return false;
     }))
       return false;
 

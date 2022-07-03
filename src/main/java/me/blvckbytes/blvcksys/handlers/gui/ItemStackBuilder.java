@@ -1,17 +1,15 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import com.mojang.authlib.GameProfile;
+import com.mojang.authlib.properties.Property;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import me.blvckbytes.blvcksys.config.ConfigValue;
-import me.blvckbytes.blvcksys.config.sections.ItemStackCustomEffectSection;
 import me.blvckbytes.blvcksys.config.sections.ItemStackSection;
 import net.minecraft.util.Tuple;
 import org.bukkit.Color;
-import org.bukkit.DyeColor;
 import org.bukkit.Material;
 import org.bukkit.block.banner.Pattern;
-import org.bukkit.block.banner.PatternType;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
@@ -249,13 +247,16 @@ public class ItemStackBuilder {
   }
 
   /**
-   * Set the head owner's profile of this item
-   * @param profile Profile to set
-   * @param condition Boolean which has to evaluate to true in order to apply the profile
+   * Set the head textures of this item
+   * @param textures Base64 encoded textures to set
+   * @param condition Boolean which has to evaluate to true in order to apply the textures
    */
-  public ItemStackBuilder withProfile(Supplier<GameProfile> profile, boolean condition) {
-    if (condition && this.meta != null)
-      setHeadProfile(profile.get());
+  public ItemStackBuilder withTextures(Supplier<String> textures, boolean condition) {
+    if (condition && this.meta != null) {
+      GameProfile prof = new GameProfile(UUID.randomUUID(), null);
+      prof.getProperties().put("textures", new Property("textures", textures.get()));
+      setHeadProfile(prof);
+    }
     return this;
   }
 
@@ -390,7 +391,7 @@ public class ItemStackBuilder {
     }
 
     if (data.getTextures() != null)
-      res.withProfile(data::getTextures, true);
+      res.withTextures(() -> data.getTextures().asScalar(), true);
 
     if (data.getBaseEffect() != null)
       res.withBaseEffect(() -> data.getBaseEffect().asData(null), true);

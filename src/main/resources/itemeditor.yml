@@ -125,7 +125,7 @@ items:
   home:
     increase:
       type: PLAYER_HEAD
-      textures: 'MHF_ArrowUp'
+      textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOTRhMDRiMzJkMmI3NTk4ZjlkZDhlMjNmYjQwMTVjNjljM2NkOTQyYTM3YTllYTg0ZDA2ODY5ZjQ1OWYxIn19fQ=='
       name: '&7» &dAnzahl erhöhen &7«'
       lore:
         - ' '
@@ -136,7 +136,7 @@ items:
 
     decrease:
       type: PLAYER_HEAD
-      textures: 'MHF_ArrowDown'
+      textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMzkxMmQ0NWIxYzc4Y2MyMjQ1MjcyM2VlNjZiYTJkMTU3NzdjYzI4ODU2OGQ2YzFiNjJhNTQ1YjI5YzcxODcifX19'
       name: '&7» &dAnzahl verringern &7«'
       lore:
         - ' '

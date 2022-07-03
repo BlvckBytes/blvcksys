@@ -10,7 +10,6 @@ import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.ACooldownModel;
 import me.blvckbytes.blvcksys.persistence.models.APersistentModel;
 import me.blvckbytes.blvcksys.persistence.models.CooldownSessionModel;
-import me.blvckbytes.blvcksys.persistence.models.WarpModel;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.FieldQueryGroup;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
@@ -60,10 +59,6 @@ public abstract class APlayerCommand extends Command {
   protected final ILogger logger;
   protected final IConfig cfg;
   protected final MCReflect refl;
-
-  // Used to remove vanished players from suggestions for non-bypassing players
-  @AutoInjectLate
-  private IVanishCommand vanish;
 
   @AutoInjectLate
   private TimeUtil timeUtil;
@@ -419,15 +414,10 @@ public abstract class APlayerCommand extends Command {
    * @return Stream of suggestions
    */
   protected Stream<String> suggestOnlinePlayers(Player p, String[] args, int currArg, boolean suggestAll, List<Player> exclude) {
-    boolean canSeeVanished = PlayerPermission.COMMAND_VANISH_BYPASS.has(p);
-
     Stream<? extends Player> players = Bukkit.getOnlinePlayers()
       .stream()
-      .filter(n -> !exclude.contains(n));
-
-    // Filter out vanished players if the invoker cannot see vanished players
-    if (vanish != null && !canSeeVanished)
-      players = players.filter(n -> !vanish.isVanished(n));
+      .filter(o -> !exclude.contains(o))
+      .filter(p::canSee);
 
     Stream<String> names = players
       .map(Player::getDisplayName);

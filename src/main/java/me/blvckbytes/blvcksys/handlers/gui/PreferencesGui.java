@@ -78,7 +78,7 @@ public class PreferencesGui extends AGui<Object> {
             .withVariable("state", statePlaceholderED(!prefs.isMsgDisabled(p)))
         )
         .build()
-    ), null);
+    ), null, null);
 
     // Chat disable
     inst.addStateToggle(20, 11, () -> !prefs.isChatHidden(p), s -> prefs.setChatHidden(p, s));
@@ -90,7 +90,7 @@ public class PreferencesGui extends AGui<Object> {
             .withVariable("state", statePlaceholderED(!prefs.isChatHidden(p)))
         )
         .build()
-    ), null);
+    ), null, null);
 
     // Scoreboard hide
     inst.addStateToggle(21, 12, () -> obj.getSidebarVisibility(p), s -> obj.setSidebarVisibility(p, !s));
@@ -102,7 +102,7 @@ public class PreferencesGui extends AGui<Object> {
             .withVariable("state", statePlaceholderED(obj.getSidebarVisibility(p)))
         )
         .build()
-    ), null);
+    ), null, null);
 
     // Arrow trails
     inst.fixedItem(13, () -> {
@@ -167,7 +167,7 @@ public class PreferencesGui extends AGui<Object> {
           }
         )
         .start();
-    });
+    }, null);
 
     // Arrow trails clear
     inst.fixedItem(22, () -> {
@@ -181,7 +181,7 @@ public class PreferencesGui extends AGui<Object> {
       // Remove the arrow trail and redraw both the arrow and the remove slot
       prefs.setArrowTrail(p, null, null);
       inst.redraw("22,13");
-    });
+    }, null);
 
     // Home laser enable
     inst.addStateToggle(23, 14, () -> prefs.showHomeLasers(p), s -> prefs.setShowHomeLasers(p, !s));
@@ -193,7 +193,7 @@ public class PreferencesGui extends AGui<Object> {
             .withVariable("state", statePlaceholderED(prefs.showHomeLasers(p)))
         )
         .build()
-    ), null);
+    ), null, null);
 
     return true;
   }

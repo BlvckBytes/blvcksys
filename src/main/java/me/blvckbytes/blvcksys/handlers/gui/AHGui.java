@@ -100,7 +100,7 @@ public class AHGui extends AGui<Object> {
         .withName(cfg.get(ConfigKey.GUI_AH_PROFILE_NAME))
         .withLore(cfg.get(ConfigKey.GUI_AH_PROFILE_LORE))
         .build()
-    ), e -> inst.switchTo(AnimationType.SLIDE_LEFT, ahProfileGui, null));
+    ), e -> inst.switchTo(AnimationType.SLIDE_LEFT, ahProfileGui, null), null);
 
     // Spacer
     inst.addSpacer("50", new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build());
@@ -319,7 +319,7 @@ public class AHGui extends AGui<Object> {
         inst.refreshPageContents();
         inst.redraw("*");
       });
-    });
+    }, null);
   }
 
   /**
@@ -377,7 +377,7 @@ public class AHGui extends AGui<Object> {
 
       inst.refreshPageContents();
       inst.redraw("*");
-    });
+    }, null);
   }
 
   /**
@@ -402,7 +402,7 @@ public class AHGui extends AGui<Object> {
 
       inst.refreshPageContents();
       inst.redraw("*");
-    });
+    }, null);
 
     // Category status indicator next to the icon
     inst.fixedItem(slot + 1, () -> (
@@ -413,6 +413,6 @@ public class AHGui extends AGui<Object> {
         )
         .withName(ConfigValue.immediate(" "))
         .build()
-    ), null);
+    ), null, null);
   }
 }

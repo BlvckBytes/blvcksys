@@ -144,7 +144,7 @@ public class CrateDrawGui extends AGui<CrateModel> {
         .withName(cfg.get(ConfigKey.GUI_CRATE_DRAW_INDICATOR_NAME))
         .withLore(cfg.get(ConfigKey.GUI_CRATE_DRAW_INDICATOR_LORE))
         .build()
-    ), null);
+    ), null, null);
 
     // Slot animation state, where totalCalls is relative to each speed, marked by currSpeed and the
     // offset indicates the offset within the item loop for all slots

@@ -126,7 +126,7 @@ public class AHCreateGui extends AGui<Object> {
       new ItemStackBuilder(Material.PURPLE_STAINED_GLASS_PANE)
         .withName(ConfigValue.immediate(" "))
         .build()
-    ), null);
+    ), null, null);
 
     // Start bid amount
     inst.fixedItem(11, () -> (
@@ -170,7 +170,7 @@ public class AHCreateGui extends AGui<Object> {
           null
         )
         .start();
-    });
+    }, null);
 
     // Auction item
     inst.fixedItem(13, () -> {
@@ -226,7 +226,7 @@ public class AHCreateGui extends AGui<Object> {
         state.item = null;
         inst.redraw("13,26");
       }
-    });
+    }, null);
 
     // Auction duration
     inst.fixedItem(15, () -> (
@@ -257,7 +257,7 @@ public class AHCreateGui extends AGui<Object> {
       state.durationSeconds = Math.max(0, Math.min(MAX_DURATION_S, state.durationSeconds));
 
       inst.redraw("15,26");
-    });
+    }, null);
 
     // Submit button
     inst.fixedItem(26, () -> {
@@ -303,7 +303,7 @@ public class AHCreateGui extends AGui<Object> {
 
       // Move back to the profile
       back.run();
-    });
+    }, null);
 
     return true;
   }

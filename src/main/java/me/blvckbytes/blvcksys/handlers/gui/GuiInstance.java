@@ -239,21 +239,6 @@ public class GuiInstance<T> {
    * @param slot Slot to set this item to
    * @param item An item supplier
    * @param onClick Action to run when this item has been clicked
-   */
-  protected void fixedItem(
-    int slot,
-    Supplier<ItemStack> item,
-    @Nullable Consumer<InventoryManipulationEvent> onClick
-  ) {
-    fixedItem(slot, item, onClick, null);
-  }
-
-  /**
-   * Add a fixed item, which is an item that will always have the same position,
-   * no matter of the viewer's state
-   * @param slot Slot to set this item to
-   * @param item An item supplier
-   * @param onClick Action to run when this item has been clicked
    * @param updatePeriod Item update period in ticks, null means never
    */
   protected void fixedItem(
@@ -281,21 +266,6 @@ public class GuiInstance<T> {
   ) {
     for (int slotNumber : template.slotExprToSlots(slotExpr))
       fixedItems.put(slotNumber, new GuiItem(s -> item.get(), onClick, updatePeriod));
-  }
-
-  /**
-   * Add a fixed item, which is an item that will always have the same position,
-   * no matter of the viewer's state
-   * @param slotExpr Slot(s) to set this item to
-   * @param item An item supplier
-   * @param onClick Action to run when this item has been clicked
-   */
-  protected void fixedItem(
-    String slotExpr,
-    Supplier<ItemStack> item,
-    @Nullable Consumer<InventoryManipulationEvent> onClick
-  ) {
-    fixedItem(slotExpr, item, onClick, null);
   }
 
   /**
@@ -433,7 +403,7 @@ public class GuiInstance<T> {
    * @param clicked Event callback
    */
   protected<A> void addBack(int slot, Consumer<InventoryManipulationEvent> clicked) {
-    fixedItem(slot, this::buildBackButton, clicked);
+    fixedItem(slot, this::buildBackButton, clicked, null);
   }
 
   /**

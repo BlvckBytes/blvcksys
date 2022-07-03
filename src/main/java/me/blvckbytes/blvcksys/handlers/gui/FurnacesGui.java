@@ -96,7 +96,7 @@ public class FurnacesGui extends AGui<Object> {
 
       // Redraw the new button to update the slot indicator
       inst.redraw("26");
-    });
+    }, null);
 
     return true;
   }

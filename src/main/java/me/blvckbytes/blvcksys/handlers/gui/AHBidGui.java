@@ -87,7 +87,7 @@ public class AHBidGui extends AGui<AHAuctionModel> {
     inst.addBack(18, e -> back.run());
 
     // Target item status indicators
-    inst.fixedItem("2,20", () -> createStatusIndicator(inst).orElse(null), null);
+    inst.fixedItem("2,20", () -> createStatusIndicator(inst).orElse(null), null, null);
 
     // Target item itself
     inst.fixedItem(11, () -> {
@@ -158,7 +158,7 @@ public class AHBidGui extends AGui<AHAuctionModel> {
       e -> {
         int nextBid = ahHandler.nextBid(auction).orElseGet(auction::getStartBid);
         bidAmount(inst, nextBid, back);
-      }
+      }, null
     );
 
     // Bidding history log
@@ -190,7 +190,7 @@ public class AHBidGui extends AGui<AHAuctionModel> {
             .withVariable("history_lines", lines)
         )
         .build();
-    }, null);
+    }, null, null);
 
     return true;
   }

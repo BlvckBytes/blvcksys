@@ -67,12 +67,12 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
     CrateItemModel item = inst.getArg().b();
 
     inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
-    inst.fixedItem("12,14,22", () -> new ItemStackBuilder(Material.PURPLE_STAINED_GLASS_PANE).build(), null);
+    inst.fixedItem("12,14,22", () -> new ItemStackBuilder(Material.PURPLE_STAINED_GLASS_PANE).build(), null, null);
 
     inst.addBack(45, crateContentGui, () -> new Tuple<>(inst.getArg().a(), true), AnimationType.SLIDE_RIGHT);
 
     // Selected item showcase
-    inst.fixedItem(13, () -> crateContentGui.appendDecoration(inst.getArg().a(), inst.getArg().b()), null);
+    inst.fixedItem(13, () -> crateContentGui.appendDecoration(inst.getArg().a(), inst.getArg().b()), null, null);
 
     // Probability change
     inst.fixedItem(29, () -> (
@@ -135,7 +135,7 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
       );
 
       p.closeInventory();
-    });
+    }, null);
 
     // Delete button
     inst.fixedItem(40, () -> (
@@ -174,7 +174,7 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
         if (confirmed != TriResult.EMPTY)
           confirmationInst.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
       });
-    });
+    }, null);
 
     // Invoke itemeditor on this item
     inst.fixedItem(33, () -> (
@@ -197,7 +197,7 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
           editorInv.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
         }
       ));
-    });
+    }, null);
 
     return true;
   }

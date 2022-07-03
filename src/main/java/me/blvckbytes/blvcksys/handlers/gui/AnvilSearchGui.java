@@ -96,7 +96,7 @@ public class AnvilSearchGui extends AGui<SingleChoiceParam> implements IPacketMo
         .withName(ConfigValue.immediate(" "))
         .withLore(cfg.get(ConfigKey.GUI_ANVILSEARCH_ITEM_LORE))
         .build()
-    ), null);
+    ), null, null);
 
     // Back button
     if (inst.getArg().backButton() != null) {

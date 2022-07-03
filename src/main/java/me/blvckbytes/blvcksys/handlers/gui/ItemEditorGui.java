@@ -131,13 +131,13 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     inst.fixedItem("12,14", () -> (
       ies.getItems().getHome().getDisplayMarker()
         .build()
-    ), null);
+    ), null, null);
 
     // Always keep the edited item in sync with the player's inventory
     inst.fixedItem(13, () -> {
       p.getInventory().setItemInMainHand(item);
       return item;
-    }, null);
+    }, null, null);
 
     // Fire the item update callback whenever the preview slot changes
     inst.onRedrawing(13, () -> {
@@ -185,7 +185,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withVariable("amount", amount)
           .asScalar()
       );
-    });
+    }, null);
 
     ///////////////////////////////// Decrease Amount //////////////////////////////////
 
@@ -226,7 +226,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withVariable("amount", amount)
           .asScalar()
       );
-    });
+    }, null);
 
     //////////////////////////////// Custom Model Data //////////////////////////////////
 
@@ -296,7 +296,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
         return;
       }
-    });
+    }, null);
 
     ///////////////////////////////////// Material /////////////////////////////////////
 
@@ -328,7 +328,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           null
         )
         .start();
-    });
+    }, null);
 
     /////////////////////////////////// Item Flags ///////////////////////////////////
 
@@ -371,7 +371,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           null
         )
         .start();
-    });
+    }, null);
 
     //////////////////////////////////// Enchantments ////////////////////////////////////
 
@@ -440,7 +440,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           values -> meta.hasEnchant((Enchantment) values.get("enchantment"))
         )
         .start();
-    });
+    }, null);
 
     //////////////////////////////////// Displayname ////////////////////////////////////
 
@@ -502,7 +502,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         );
         return;
       }
-    });
+    }, null);
 
     //////////////////////////////////// Lore Lines ////////////////////////////////////
 
@@ -632,7 +632,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
         return;
       }
-    });
+    }, null);
 
     //////////////////////////////////// Durability ////////////////////////////////////
 
@@ -775,7 +775,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         );
         return;
       }
-    });
+    }, null);
 
     ////////////////////////////////////// Attributes //////////////////////////////////////
 
@@ -908,7 +908,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
         return;
       }
-    });
+    }, null);
 
     ////////////////////////////////////// Fireworks //////////////////////////////////////
 
@@ -1104,7 +1104,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         );
         return;
       }
-    });
+    }, null);
 
     ////////////////////////////////////// Compasses //////////////////////////////////////
 
@@ -1171,7 +1171,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         );
         return;
       }
-    });
+    }, null);
 
     ///////////////////////////////////// Skull Owner /////////////////////////////////////
 
@@ -1233,7 +1233,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           s -> s, null, null
         )
         .start();
-    });
+    }, null);
 
     ///////////////////////////////////// Leather Color /////////////////////////////////////
 
@@ -1268,7 +1268,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         resetColor(inst, item, meta);
         return;
       }
-    });
+    }, null);
 
     ///////////////////////////////////// Potion Effects /////////////////////////////////////
 
@@ -1537,7 +1537,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         resetColor(inst, item, meta);
         return;
       }
-    });
+    }, null);
 
     //////////////////////////////////////// Maps ////////////////////////////////////////
 
@@ -1569,7 +1569,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         resetColor(inst, item, meta);
         return;
       }
-    });
+    }, null);
 
     //////////////////////////////////////// Books ////////////////////////////////////////
 
@@ -1784,7 +1784,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .start();
         return;
       }
-    });
+    }, null);
 
     //////////////////////////////////////// Banners ////////////////////////////////////////
 
@@ -1899,7 +1899,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         );
         return;
       }
-    });
+    }, null);
 
     return true;
   }

@@ -103,7 +103,7 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
       new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE)
         .withName(ConfigValue.immediate(" "))
         .build()
-    ), null);
+    ), null, null);
     
     inst.addPagination(46, 49, 52);
 

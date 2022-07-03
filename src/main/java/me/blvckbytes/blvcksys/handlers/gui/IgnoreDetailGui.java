@@ -62,7 +62,7 @@ public class IgnoreDetailGui extends AGui<OfflinePlayer> {
             .withVariable("target", inst.getArg().getName())
         )
         .build()
-    ), null);
+    ), null, null);
 
     inst.fixedItem(14, () -> (
       new ItemStackBuilder(Material.PAPER)
@@ -73,7 +73,7 @@ public class IgnoreDetailGui extends AGui<OfflinePlayer> {
             .withVariable("target", inst.getArg().getName())
         )
         .build()
-    ), null);
+    ), null, null);
 
     inst.addStateToggle(21, 12, () -> ignore.getMsgIgnore(p, inst.getArg()), s -> ignore.setMsgIgnore(p, inst.getArg(), !s));
     inst.addStateToggle(23, 14, () -> ignore.getChatIgnore(p, inst.getArg()), s -> ignore.setChatIgnore(p, inst.getArg(), !s));

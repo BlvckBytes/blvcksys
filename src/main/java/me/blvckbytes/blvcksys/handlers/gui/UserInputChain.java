@@ -31,6 +31,8 @@ import java.util.function.Supplier;
 */
 public class UserInputChain {
 
+  // TODO: Add custom text/item parameters to all input types
+
   private final SingleChoiceGui singleChoiceGui;
   private final ChatUtil chatUtil;
 

@@ -80,7 +80,7 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
       // Add to chosen just to not trigger any callbacks prematurely
       haveChosen.add(p);
       searchGui.show(p, scp, null);
-    });
+    }, null);
 
     if (inst.getArg().backButton() != null) {
       inst.addBack(36, e -> {

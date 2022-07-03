@@ -112,7 +112,7 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
           inst.reopen(AnimationType.SLIDE_RIGHT, selInst);
         }
       ));
-    });
+    }, null);
 
     // Render the back button, if provided
     if (inst.getArg().backButton() != null) {
@@ -137,7 +137,7 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
 
       // Call selection callback
       inst.getArg().selected().accept(choices.stream().map(Tuple::a).toList(), inst);
-    });
+    }, null);
 
     // Draw the player's choices as pages
     inst.setPageContents(() -> (

@@ -116,42 +116,42 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
         .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_HELMET_NAME))
         .withLore(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_HELMET_LORE))
         .build()
-    ), null);
+    ), null, null);
 
     inst.fixedItem(11, () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.LETTER_B.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_CHESTPLATE_NAME))
         .withLore(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_CHESTPLATE_LORE))
         .build()
-    ), null);
+    ), null, null);
 
     inst.fixedItem(12, () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.LETTER_H.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_LEGGINGS_NAME))
         .withLore(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_LEGGINGS_LORE))
         .build()
-    ), null);
+    ), null, null);
 
     inst.fixedItem(13, () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.LETTER_S.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_BOOTS_NAME))
         .withLore(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_BOOTS_LORE))
         .build()
-    ), null);
+    ), null, null);
 
     inst.fixedItem(14, () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.LETTER_L.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_LEFT_ARM_NAME))
         .withLore(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_LEFT_ARM_LORE))
         .build()
-    ), null);
+    ), null, null);
 
     inst.fixedItem(15, () -> (
       new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.LETTER_R.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_RIGHT_ARM_NAME))
         .withLore(cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_RIGHT_ARM_LORE))
         .build()
-    ), null);
+    ), null, null);
 
     /////////////////////////////////// Equipment Slots ////////////////////////////////////
 
@@ -185,7 +185,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
       props.setVisible(!props.isVisible());
       standHandler.setProperties(model.getName(), props, true);
       inst.redraw("16");
-    });
+    }, null);
 
     inst.fixedItem(25, () -> (
       new ItemStackBuilder(props.isArms() ? Material.GREEN_DYE : Material.GRAY_DYE)
@@ -199,7 +199,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
       props.setArms(!props.isArms());
       standHandler.setProperties(model.getName(), props, true);
       inst.redraw("25");
-    });
+    }, null);
 
     inst.fixedItem(34, () -> (
       new ItemStackBuilder(props.isSmall() ? Material.GREEN_DYE : Material.GRAY_DYE)
@@ -213,7 +213,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
       props.setSmall(!props.isSmall());
       standHandler.setProperties(model.getName(), props, true);
       inst.redraw("34");
-    });
+    }, null);
 
     inst.fixedItem(43, () -> (
       new ItemStackBuilder(props.isBaseplate() ? Material.GREEN_DYE : Material.GRAY_DYE)
@@ -227,7 +227,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
       props.setBaseplate(!props.isBaseplate());
       standHandler.setProperties(model.getName(), props, true);
       inst.redraw("43");
-    });
+    }, null);
 
     /////////////////////////////////// Name (+Visibility) ////////////////////////////////////
 
@@ -243,7 +243,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
       props.setNameVisible(!props.isNameVisible());
       standHandler.setProperties(model.getName(), props, true);
       inst.redraw("37");
-    });
+    }, null);
 
 
     inst.fixedItem(38, () -> (
@@ -285,7 +285,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
         // No back button
         null
       );
-    });
+    }, null);
 
     return true;
   }
@@ -518,7 +518,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
           editorInst -> inst.reopen(AnimationType.SLIDE_RIGHT, editorInst)
         ));
       }
-    });
+    }, null);
   }
 
   /**
@@ -538,7 +538,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
             .withVariable("bodypart", formatConstant(part.name()))
         )
         .build()
-    ), e -> initializePoseCustomize(inst, props, part));
+    ), e -> initializePoseCustomize(inst, props, part), null);
   }
 
   /**

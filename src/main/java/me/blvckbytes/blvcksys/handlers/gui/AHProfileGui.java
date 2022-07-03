@@ -62,7 +62,7 @@ public class AHProfileGui extends AGui<Object> {
         .withName(cfg.get(ConfigKey.GUI_PROFILE_AH_CREATE_NAME))
         .withLore(cfg.get(ConfigKey.GUI_PROFILE_AH_CREATE_LORE))
         .build()
-    ), e -> inst.switchTo(AnimationType.SLIDE_LEFT, ahCreateGui, null));
+    ), e -> inst.switchTo(AnimationType.SLIDE_LEFT, ahCreateGui, null), null);
 
     // Manage auctions
     inst.fixedItem(13, () -> (
@@ -70,7 +70,7 @@ public class AHProfileGui extends AGui<Object> {
         .withName(cfg.get(ConfigKey.GUI_PROFILE_AH_MANAGE_AUCTIONS_NAME))
         .withLore(cfg.get(ConfigKey.GUI_PROFILE_AH_MANAGE_AUCTIONS_LORE))
         .build()
-    ), e -> inst.switchTo(AnimationType.SLIDE_LEFT, ahAuctionsGui, null));
+    ), e -> inst.switchTo(AnimationType.SLIDE_LEFT, ahAuctionsGui, null), null);
 
     // Manage bids
     inst.fixedItem(15, () -> (
@@ -78,7 +78,7 @@ public class AHProfileGui extends AGui<Object> {
         .withName(cfg.get(ConfigKey.GUI_PROFILE_AH_MANAGE_BIDS_NAME))
         .withLore(cfg.get(ConfigKey.GUI_PROFILE_AH_MANAGE_BIDS_LORE))
         .build()
-    ), e -> inst.switchTo(AnimationType.SLIDE_LEFT, ahBidsGui, null));
+    ), e -> inst.switchTo(AnimationType.SLIDE_LEFT, ahBidsGui, null), null);
 
     return true;
   }

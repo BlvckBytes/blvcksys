@@ -27,6 +27,8 @@ import java.util.stream.Collectors;
 @AutoConstruct
 public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
 
+  // TODO: Call closed except when clicking next
+
   private final Map<GuiInstance<MultipleChoiceParam>, List<Tuple<Object, ItemStack>>> playerChoices;
   private final SingleChoiceGui singleChoiceGui;
 

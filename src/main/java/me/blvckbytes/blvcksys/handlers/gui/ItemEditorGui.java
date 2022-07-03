@@ -1029,7 +1029,11 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           )
           .withChoice(
             multipleChoiceGui,
-            i -> i, // TODO: Implement properly
+            i -> (
+              new ItemStackBuilder(i, i.getAmount())
+                .patch(ies.getItems().getGeneric().getChoiceSelected(), true)
+                .build()
+            ),
             "color",
             ies.getTitles().getFireworkEffectColorChoice(),
             ies.getItems().getGeneric(),
@@ -1038,7 +1042,11 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           )
           .withChoice(
             multipleChoiceGui,
-            i -> i, // TODO: Implement properly
+            i -> (
+              new ItemStackBuilder(i, i.getAmount())
+                .patch(ies.getItems().getGeneric().getChoiceSelected(), true)
+                .build()
+            ),
             "fade",
             ies.getTitles().getFireworkFadeColorChoice(),
             ies.getItems().getGeneric(),

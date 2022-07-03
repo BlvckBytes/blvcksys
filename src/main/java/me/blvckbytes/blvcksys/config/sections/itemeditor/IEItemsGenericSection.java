@@ -3,6 +3,7 @@ package me.blvckbytes.blvcksys.config.sections.itemeditor;
 import lombok.Getter;
 import me.blvckbytes.blvcksys.config.AConfigSection;
 import me.blvckbytes.blvcksys.config.ConfigValue;
+import me.blvckbytes.blvcksys.config.sections.ItemStackSection;
 import me.blvckbytes.blvcksys.handlers.gui.IStdGuiParamProvider;
 import me.blvckbytes.blvcksys.handlers.gui.ItemStackBuilder;
 import me.blvckbytes.blvcksys.handlers.gui.StdGuiItem;
@@ -28,7 +29,7 @@ public class IEItemsGenericSection extends AConfigSection implements IStdGuiPara
   private ItemStackBuilder search;
   private ItemStackBuilder newChoice;
   private ItemStackBuilder submitChoices;
-  private ItemStackBuilder choiceSelected;
+  private ItemStackSection choiceSelected;
   private ItemStackBuilder searchPlaceholder;
   private ItemStackBuilder back;
   private boolean animate;

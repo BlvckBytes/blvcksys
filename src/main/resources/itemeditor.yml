@@ -161,7 +161,7 @@ items:
       name: '&7» &dFreitextsuche &7«'
       lore:
         - ' '
-        - '&7Durchsuche die Ergebnisse in Echtzeit.'
+        - '&dDurchsuche &7die Ergebnisse in Echtzeit.'
 
     newChoice:
       type: PLAYER_HEAD
@@ -174,11 +174,11 @@ items:
 
     submitChoices:
       type: PLAYER_HEAD
-      name: '&7» &aWeiter &7«'
+      name: '&7» &dWeiter &7«'
       textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZDk5ZjI4MzMyYmNjMzQ5ZjQyMDIzYzI5ZTZlNjQxZjRiMTBhNmIxZTQ4NzE4Y2FlNTU3NDY2ZDUxZWI5MjIifX19'
       lore:
         - ' '
-        - '&7Bestätige deine aktuelle Auswahl.'
+        - '&dBestätige &7deine aktuelle Auswahl.'
 
     # If a available choice has been selected, it's item will be
     # patched with the properties of this item

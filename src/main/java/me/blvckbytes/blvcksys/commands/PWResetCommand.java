@@ -35,8 +35,8 @@ public class PWResetCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "pwreset",
       "Change the weather of your client back to the server's",
-      PlayerPermission.COMMAND_PWEATHER,
-      new CommandArgument("[player]", "Target player", PlayerPermission.COMMAND_PWEATHER_OTHERS)
+      PlayerPermission.COMMAND_PWEATHER.toString(),
+      new CommandArgument("[player]", "Target player", PlayerPermission.COMMAND_PWEATHER_OTHERS.toString())
     );
 
     this.pweather = pweather;

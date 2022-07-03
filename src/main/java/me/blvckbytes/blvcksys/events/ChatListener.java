@@ -72,7 +72,7 @@ public class ChatListener implements Listener, IChatListener {
     String prefix = tg.map(TeamGroup::prefix).orElse("§r");
 
     // Translate chat colors based on permissions
-    message = translateColors(sender, message, PlayerPermission.CHAT_COLOR_PREFIX);
+    message = translateColors(sender, message, PlayerPermission.CHAT_COLOR_PREFIX.toString());
 
     // Set a default message color
     message = cfg.get(ConfigKey.CHAT_MESSAGE_DEF_COLOR).asScalar() + message;
@@ -123,7 +123,7 @@ public class ChatListener implements Listener, IChatListener {
   }
 
   @Override
-  public String translateColors(Player p, String message, PlayerPermission prefix) {
+  public String translateColors(Player p, String message, String prefix) {
     StringBuilder res = new StringBuilder();
 
     for (int i = 0; i < message.length(); i++) {
@@ -147,7 +147,7 @@ public class ChatListener implements Listener, IChatListener {
         continue;
 
       // Player cannot use this color, skip
-      if (!prefix.has(p, color.name().toLowerCase()))
+      if (!p.hasPermission(prefix + "." + color.name().toLowerCase()))
         continue;
 
       // Substitute color character to enable this color

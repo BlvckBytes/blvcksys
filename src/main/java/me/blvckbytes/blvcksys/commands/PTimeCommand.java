@@ -32,9 +32,9 @@ public class PTimeCommand extends APlayerCommand implements IPTimeCommand {
       plugin, logger, cfg, refl,
       "ptime",
       "Change the time of your client",
-      PlayerPermission.COMMAND_PTIME,
+      PlayerPermission.COMMAND_PTIME.toString(),
       new CommandArgument("<time>", "The time to set"),
-      new CommandArgument("[player]", "Target player", PlayerPermission.COMMAND_PTIME_OTHERS)
+      new CommandArgument("[player]", "Target player", PlayerPermission.COMMAND_PTIME_OTHERS.toString())
     );
   }
 

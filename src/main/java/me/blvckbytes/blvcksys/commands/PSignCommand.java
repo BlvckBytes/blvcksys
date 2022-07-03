@@ -51,7 +51,7 @@ public class PSignCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "psign",
       "Manage player signs and their lines",
-      PlayerPermission.COMMAND_PSIGN,
+      PlayerPermission.COMMAND_PSIGN.toString(),
       new CommandArgument("<action>", "Action to perform"),
       new CommandArgument("[line id]", "ID of the line to set (1-4)"),
       new CommandArgument("[text]", "The text to set to")

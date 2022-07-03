@@ -42,7 +42,7 @@ public class DelBanCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "delban",
       "Delete a non-active ban completely",
-      PlayerPermission.COMMAND_DELBAN,
+      PlayerPermission.COMMAND_DELBAN.toString(),
       new CommandArgument("<id>", "ID of the ban")
     );
 

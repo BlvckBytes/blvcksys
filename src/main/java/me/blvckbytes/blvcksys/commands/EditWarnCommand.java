@@ -50,7 +50,7 @@ public class EditWarnCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "editwarn",
       "Edit a field of an existing warn",
-      PlayerPermission.COMMAND_WARN,
+      PlayerPermission.COMMAND_WARN.toString(),
       new CommandArgument("<id>", "Name of the target player"),
       new CommandArgument("<field>", "Field to change"),
       new CommandArgument("<value>", "New value of the field")

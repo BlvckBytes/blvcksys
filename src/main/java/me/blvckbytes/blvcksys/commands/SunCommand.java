@@ -33,7 +33,7 @@ public class SunCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "sun",
       "Change the weather of the world you're in to sun",
-      PlayerPermission.COMMAND_WEATHER,
+      PlayerPermission.COMMAND_WEATHER.toString(),
       new CommandArgument("[duration]", "For how long to keep sunny (ticks)")
     );
 

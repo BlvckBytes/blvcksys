@@ -47,8 +47,8 @@ public class RepairCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "repair",
       "Repair used items",
-      PlayerPermission.COMMAND_REPAIR,
-      new CommandArgument("[all]", "Repair all items in your inventory", PlayerPermission.COMMAND_REPAIR_ALL)
+      PlayerPermission.COMMAND_REPAIR.toString(),
+      new CommandArgument("[all]", "Repair all items in your inventory", PlayerPermission.COMMAND_REPAIR_ALL.toString())
     );
 
     this.cooldownHandler = cooldownHandler;

@@ -42,7 +42,7 @@ public class WarnInfoCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "warninfo",
       "Display the details of a warn",
-      PlayerPermission.COMMAND_WARNS,
+      PlayerPermission.COMMAND_WARNS.toString(),
       new CommandArgument("<id>", "UUID of the warn to display")
     );
 

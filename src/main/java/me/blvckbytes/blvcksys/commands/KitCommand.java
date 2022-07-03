@@ -53,7 +53,7 @@ public class KitCommand extends APlayerCommand implements IKitCommand {
       "Obtain a specific kit by it's name",
       null,
       new CommandArgument("<name>", "Name of the kit"),
-      new CommandArgument("[player]", "Player to give the kit to", PlayerPermission.COMMAND_KIT_OTHERS)
+      new CommandArgument("[player]", "Player to give the kit to", PlayerPermission.COMMAND_KIT_OTHERS.toString())
     );
 
     this.pers = pers;

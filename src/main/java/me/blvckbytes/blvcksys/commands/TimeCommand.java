@@ -34,7 +34,7 @@ public class TimeCommand extends APlayerCommand implements ITimeCommand {
       plugin, logger, cfg, refl,
       "time",
       "Change the time of the world you're in",
-      PlayerPermission.COMMAND_TIME,
+      PlayerPermission.COMMAND_TIME.toString(),
       new CommandArgument("<time>", "Time to set")
     );
   }

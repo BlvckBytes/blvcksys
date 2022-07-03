@@ -50,7 +50,7 @@ public class BansCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "bans",
       "List all bans of a player",
-      PlayerPermission.COMMAND_BANS,
+      PlayerPermission.COMMAND_BANS.toString(),
       new CommandArgument("<name>", "Name of the target player"),
       new CommandArgument("<type>", "Type of ban to list")
     );

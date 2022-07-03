@@ -40,7 +40,7 @@ public class GiveHandCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "givehand, gh",
       "Give the item in your hand away",
-      PlayerPermission.COMMAND_GIVEHAND,
+      PlayerPermission.COMMAND_GIVEHAND.toString(),
       new CommandArgument("<player/all>", "Who to give this item to")
     );
 
@@ -80,7 +80,7 @@ public class GiveHandCommand extends APlayerCommand {
 
     // Give this item to all online players
     if (argval(args, 0).equalsIgnoreCase("all")) {
-      ensurePermission(p, PlayerPermission.COMMAND_GIVEHAND_ALL);
+      ensurePermission(p, PlayerPermission.COMMAND_GIVEHAND_ALL.toString());
 
       for (Player target : Bukkit.getOnlinePlayers()) {
         // Skip self

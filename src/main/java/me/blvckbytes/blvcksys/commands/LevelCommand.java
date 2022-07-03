@@ -47,7 +47,7 @@ public class LevelCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "level",
       "Manage a player's experience",
-      PlayerPermission.COMMAND_LEVEL,
+      PlayerPermission.COMMAND_LEVEL.toString(),
       new CommandArgument("<action>", "Action to perform"),
       new CommandArgument("[player]", "Target player"),
       new CommandArgument("[amount]", "Amount of levels")
@@ -85,7 +85,7 @@ public class LevelCommand extends APlayerCommand {
 
     // Foreign target (not self)
     if (!isSelf)
-      ensurePermission(p, PlayerPermission.COMMAND_LEVEL_OTHERS);
+      ensurePermission(p, PlayerPermission.COMMAND_LEVEL_OTHERS.toString());
 
     // Get - read the current number of level
     if (action == LevelAction.GET) {

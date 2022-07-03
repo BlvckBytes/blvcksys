@@ -2,7 +2,6 @@ package me.blvckbytes.blvcksys.commands.exceptions;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
-import me.blvckbytes.blvcksys.config.PlayerPermission;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -12,11 +11,11 @@ import me.blvckbytes.blvcksys.config.PlayerPermission;
 */
 public class MissingPermissionException extends CommandException {
 
-  public MissingPermissionException(IConfig cfg, PlayerPermission perm) {
+  public MissingPermissionException(IConfig cfg, String perm) {
     super(
       cfg.get(ConfigKey.ERR_PERMISSION)
         .withPrefix()
-        .withVariable("permission", perm.getValue())
+        .withVariable("permission", perm)
         .asScalar()
     );
   }

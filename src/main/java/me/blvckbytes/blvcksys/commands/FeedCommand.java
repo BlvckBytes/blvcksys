@@ -37,8 +37,8 @@ public class FeedCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "feed",
       "Feed yourself or others",
-      PlayerPermission.COMMAND_FEED,
-      new CommandArgument("[player]", "The player to feed", PlayerPermission.COMMAND_FEED_OTHERS)
+      PlayerPermission.COMMAND_FEED.toString(),
+      new CommandArgument("[player]", "The player to feed", PlayerPermission.COMMAND_FEED_OTHERS.toString())
     );
 
     this.cooldownHandler = cooldownHandler;

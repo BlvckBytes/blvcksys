@@ -43,7 +43,7 @@ public class HeadsCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "heads",
       "Open the head-database",
-      PlayerPermission.COMMAND_HEADS
+      PlayerPermission.COMMAND_HEADS.toString()
     );
 
     this.textureHandler = textureHandler;

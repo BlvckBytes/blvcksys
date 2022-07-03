@@ -42,7 +42,7 @@ public class EnderchestCommand extends APlayerCommand implements IEnderchestComm
       "enderchest,ec",
       "Access your enderchest",
       null,
-      new CommandArgument("<player>", "Player to access", PlayerPermission.COMMAND_ENDERCHEST_OTHERS)
+      new CommandArgument("<player>", "Player to access", PlayerPermission.COMMAND_ENDERCHEST_OTHERS.toString())
     );
 
     this.combatLog = combatLog;

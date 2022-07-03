@@ -47,7 +47,7 @@ public class CrateSortCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "cratesort",
       "Sort the items within a crate",
-      PlayerPermission.COMMAND_CRATE,
+      PlayerPermission.COMMAND_CRATE.toString(),
       new CommandArgument("<name>", "Name of the crate"),
       new CommandArgument("[ids]", "Item IDs in desired order")
     );

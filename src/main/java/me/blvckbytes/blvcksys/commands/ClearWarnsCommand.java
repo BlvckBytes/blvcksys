@@ -47,7 +47,7 @@ public class ClearWarnsCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "clearwarns",
       "Clear all warns of a specific player",
-      PlayerPermission.COMMAND_CLEARWARNS,
+      PlayerPermission.COMMAND_CLEARWARNS.toString(),
       new CommandArgument("<player>", "Player to clear the warns from")
     );
 

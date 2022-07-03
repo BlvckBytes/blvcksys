@@ -39,7 +39,7 @@ public class MuteCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "mute",
       "Cast a new mute upon a player",
-      PlayerPermission.COMMAND_MUTE,
+      PlayerPermission.COMMAND_MUTE.toString(),
       new CommandArgument("<name>", "Name of the target player"),
       new CommandArgument("<duration>", "Duration of this punishment"),
       new CommandArgument("[reason]", "Reason of this punishment")

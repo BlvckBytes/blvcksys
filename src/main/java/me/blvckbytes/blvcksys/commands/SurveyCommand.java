@@ -63,7 +63,7 @@ public class SurveyCommand extends APlayerCommand implements ISurveyCommand, IAu
       plugin, logger, cfg, refl,
       "survey",
       "Create a new survey",
-      PlayerPermission.COMMAND_SURVEY,
+      PlayerPermission.COMMAND_SURVEY.toString(),
       new CommandArgument("<action>", "Action to perform"),
       new CommandArgument("[duration]", "Duration of the survey"),
       new CommandArgument("[answers]", "Comma separated answer options"),

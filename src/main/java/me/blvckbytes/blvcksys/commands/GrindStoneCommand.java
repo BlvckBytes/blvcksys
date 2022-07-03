@@ -35,7 +35,7 @@ public class GrindStoneCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "grindstone",
       "Open a mobile grindstone",
-      PlayerPermission.COMMAND_GRINDSTONE
+      PlayerPermission.COMMAND_GRINDSTONE.toString()
     );
 
     this.container = container;

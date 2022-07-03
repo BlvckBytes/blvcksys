@@ -36,8 +36,8 @@ public class ClearChatCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "clearchat,cc",
       "Clear the chat for yourself or others",
-      PlayerPermission.COMMAND_CLEARCHAT_SELF,
-      new CommandArgument("[global]", "Whether to clear globally", PlayerPermission.COMMAND_CLEARCHAT_GLOBAL)
+      PlayerPermission.COMMAND_CLEARCHAT_SELF.toString(),
+      new CommandArgument("[global]", "Whether to clear globally", PlayerPermission.COMMAND_CLEARCHAT_GLOBAL.toString())
     );
   }
 

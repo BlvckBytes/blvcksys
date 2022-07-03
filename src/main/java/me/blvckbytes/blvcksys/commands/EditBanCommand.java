@@ -50,7 +50,7 @@ public class EditBanCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "editban",
       "Edit a field of an existing ban",
-      PlayerPermission.COMMAND_BAN,
+      PlayerPermission.COMMAND_BAN.toString(),
       new CommandArgument("<id>", "Name of the target player"),
       new CommandArgument("<field>", "Field to change"),
       new CommandArgument("<value>", "New value of the field")

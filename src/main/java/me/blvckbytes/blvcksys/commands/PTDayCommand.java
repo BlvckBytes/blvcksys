@@ -35,8 +35,8 @@ public class PTDayCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "ptday",
       "Change the time of your client to day",
-      PlayerPermission.COMMAND_PTIME,
-      new CommandArgument("[player]", "Target player", PlayerPermission.COMMAND_PTIME_OTHERS)
+      PlayerPermission.COMMAND_PTIME.toString(),
+      new CommandArgument("[player]", "Target player", PlayerPermission.COMMAND_PTIME_OTHERS.toString())
     );
 
     this.ptime = ptime;

@@ -33,11 +33,11 @@ public class TpcCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "tpc",
       "Teleport to specific coordinates instantly",
-      PlayerPermission.COMMAND_TPC,
+      PlayerPermission.COMMAND_TPC.toString(),
       new CommandArgument("<x>", "X coordinate"),
       new CommandArgument("<y>", "Y coordinate"),
       new CommandArgument("<z>", "Z coordinate"),
-      new CommandArgument("[player]", "Player to teleport, defaults to yourself", PlayerPermission.COMMAND_TPC_OTHERS)
+      new CommandArgument("[player]", "Player to teleport, defaults to yourself", PlayerPermission.COMMAND_TPC_OTHERS.toString())
     );
   }
 

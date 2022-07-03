@@ -42,7 +42,7 @@ public class RevokeWarnCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "revokewarn",
       "Revoke a previously casted warn",
-      PlayerPermission.COMMAND_WARNREVOKE,
+      PlayerPermission.COMMAND_WARNREVOKE.toString(),
       new CommandArgument("<id>", "ID of the warn"),
       new CommandArgument("[reason]", "Reason of this revocation")
     );

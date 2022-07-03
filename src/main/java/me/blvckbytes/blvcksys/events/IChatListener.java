@@ -44,5 +44,5 @@ public interface IChatListener {
    * @param prefix Prefix permission that "scopes" this set of permissions
    * @return Color-translated string
    */
-  String translateColors(Player p, String message, PlayerPermission prefix);
+  String translateColors(Player p, String message, String prefix);
 }

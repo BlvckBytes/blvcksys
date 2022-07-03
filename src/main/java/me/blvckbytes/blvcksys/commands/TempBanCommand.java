@@ -39,7 +39,7 @@ public class TempBanCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "tempban",
       "Cast a new temporary ban upon a player",
-      PlayerPermission.COMMAND_TEMPBAN,
+      PlayerPermission.COMMAND_TEMPBAN.toString(),
       new CommandArgument("<name>", "Name of the target player"),
       new CommandArgument("<duration>", "Duration of this punishment"),
       new CommandArgument("[reason]", "Reason of this punishment")

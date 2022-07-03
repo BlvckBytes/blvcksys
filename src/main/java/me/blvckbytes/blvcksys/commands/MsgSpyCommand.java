@@ -42,7 +42,7 @@ public class MsgSpyCommand extends APlayerCommand implements IMsgSpyCommand, Lis
       plugin, logger, cfg, refl,
       "msgspy",
       "Get a copy of all private messages of a target",
-      PlayerPermission.COMMAND_MSGSPY,
+      PlayerPermission.COMMAND_MSGSPY.toString(),
       new CommandArgument("<target>", "Target to spy on")
     );
 

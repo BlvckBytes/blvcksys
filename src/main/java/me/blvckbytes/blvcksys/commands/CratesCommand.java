@@ -53,7 +53,7 @@ public class CratesCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "crates",
       "List all crates",
-      PlayerPermission.COMMAND_CRATE
+      PlayerPermission.COMMAND_CRATE.toString()
     );
 
     this.crateHandler = crateHandler;

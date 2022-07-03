@@ -52,7 +52,7 @@ public class NpcsCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "npcs",
       "List nearby npcs",
-      PlayerPermission.COMMAND_NPC,
+      PlayerPermission.COMMAND_NPC.toString(),
       new CommandArgument("[radius]", "Radius to list within")
     );
 

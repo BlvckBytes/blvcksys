@@ -39,7 +39,7 @@ public class BanCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "ban",
       "Cast a new ban upon a player",
-      PlayerPermission.COMMAND_BAN,
+      PlayerPermission.COMMAND_BAN.toString(),
       new CommandArgument("<name>", "Name of the target player"),
       new CommandArgument("[reason]", "Reason of this punishment")
     );

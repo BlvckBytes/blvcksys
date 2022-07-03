@@ -38,7 +38,7 @@ public class ItemEditorCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "itemeditor,ie",
       "Edit the item held in your hand",
-      PlayerPermission.COMMAND_ITEMEDITOR
+      PlayerPermission.COMMAND_ITEMEDITOR.toString()
     );
 
     this.itemEditorGui = itemEditorGui;

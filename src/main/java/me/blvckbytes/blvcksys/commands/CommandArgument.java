@@ -17,7 +17,7 @@ public class CommandArgument {
   private String name;
   private String description;
 
-  private PlayerPermission permission;
+  private String permission;
 
   public CommandArgument(String name, String description) {
     this(name, description, null);

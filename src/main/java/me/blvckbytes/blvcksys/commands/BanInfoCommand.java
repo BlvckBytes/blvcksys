@@ -42,7 +42,7 @@ public class BanInfoCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "baninfo",
       "Display the details of a ban",
-      PlayerPermission.COMMAND_BANS,
+      PlayerPermission.COMMAND_BANS.toString(),
       new CommandArgument("<id>", "UUID of the ban to display")
     );
 

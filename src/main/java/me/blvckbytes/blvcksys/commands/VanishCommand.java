@@ -49,7 +49,7 @@ public class VanishCommand extends APlayerCommand implements IAutoConstructed, L
       plugin, logger, cfg, refl,
       "vanish",
       "Hide yourself from all players",
-      PlayerPermission.COMMAND_VANISH
+      PlayerPermission.COMMAND_VANISH.toString()
     );
 
     this.team = team;

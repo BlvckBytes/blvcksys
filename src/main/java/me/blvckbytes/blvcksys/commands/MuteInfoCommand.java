@@ -42,7 +42,7 @@ public class MuteInfoCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "muteinfo",
       "Display the details of a mute",
-      PlayerPermission.COMMAND_MUTE,
+      PlayerPermission.COMMAND_MUTE.toString(),
       new CommandArgument("<id>", "UUID of the mute to display")
     );
 

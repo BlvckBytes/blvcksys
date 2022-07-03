@@ -44,10 +44,10 @@ public class GiveCommand extends APlayerCommand implements IGiveCommand {
       plugin, logger, cfg, refl,
       "give",
       "Give a certain amount of an item to yourself or others",
-      PlayerPermission.COMMAND_GIVE,
+      PlayerPermission.COMMAND_GIVE.toString(),
       new CommandArgument("<item>", "Material of the item"),
       new CommandArgument("<amount>", "Number of items"),
-      new CommandArgument("[player/all]", "The receiving player", PlayerPermission.COMMAND_GIVE_OTHERS)
+      new CommandArgument("[player/all]", "The receiving player", PlayerPermission.COMMAND_GIVE_OTHERS.toString())
     );
   }
 
@@ -85,7 +85,7 @@ public class GiveCommand extends APlayerCommand implements IGiveCommand {
 
     // Give to all players
     if (argval(args, 2, "self").equalsIgnoreCase("all")) {
-      ensurePermission(p, PlayerPermission.COMMAND_GIVE_ALL);
+      ensurePermission(p, PlayerPermission.COMMAND_GIVE_ALL.toString());
 
       for (Player target : Bukkit.getOnlinePlayers())
         // Skip self

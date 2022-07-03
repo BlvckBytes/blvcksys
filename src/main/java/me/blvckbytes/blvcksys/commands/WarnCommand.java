@@ -39,7 +39,7 @@ public class WarnCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "warn",
       "Cast a new warn upon a player",
-      PlayerPermission.COMMAND_WARN,
+      PlayerPermission.COMMAND_WARN.toString(),
       new CommandArgument("<name>", "Name of the target player"),
       new CommandArgument("[reason]", "Reason of this punishment")
     );

@@ -48,8 +48,8 @@ public class HealCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "heal",
       "Heal yourself or others",
-      PlayerPermission.COMMAND_HEAL,
-      new CommandArgument("[player]", "The player to heal", PlayerPermission.COMMAND_HEAL_OTHERS)
+      PlayerPermission.COMMAND_HEAL.toString(),
+      new CommandArgument("[player]", "The player to heal", PlayerPermission.COMMAND_HEAL_OTHERS.toString())
     );
 
     this.obj = obj;

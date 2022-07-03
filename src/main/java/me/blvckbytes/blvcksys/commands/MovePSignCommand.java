@@ -44,7 +44,7 @@ public class MovePSignCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "movepsign",
       "Move an existing psign to another location",
-      PlayerPermission.COMMAND_PSIGN,
+      PlayerPermission.COMMAND_PSIGN.toString(),
       new CommandArgument("<x>", "X coordinate of the sign to move"),
       new CommandArgument("<y>", "Y coordinate of the sign to move"),
       new CommandArgument("<z>", "Z coordinate of the sign to move")

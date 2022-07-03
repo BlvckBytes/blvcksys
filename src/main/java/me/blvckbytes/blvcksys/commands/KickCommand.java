@@ -38,7 +38,7 @@ public class KickCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "kick",
       "Kick a player from the server",
-      PlayerPermission.COMMAND_KICK,
+      PlayerPermission.COMMAND_KICK.toString(),
       new CommandArgument("<player/all>", "Name of the player to kick"),
       new CommandArgument("[Reason]", "Reason of the kick")
     );

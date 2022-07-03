@@ -43,7 +43,7 @@ public class TpAllCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "tpall",
       "Teleport all players to you",
-      PlayerPermission.COMMAND_TPALL
+      PlayerPermission.COMMAND_TPALL.toString()
     );
 
     this.lastButtons = new HashMap<>();

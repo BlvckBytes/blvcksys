@@ -55,7 +55,7 @@ public class ImageFramesCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "imageframes,iframes",
       "List nearby image frames",
-      PlayerPermission.COMMAND_IFRAME,
+      PlayerPermission.COMMAND_IFRAME.toString(),
       new CommandArgument("[radius]", "Radius to list within")
     );
 

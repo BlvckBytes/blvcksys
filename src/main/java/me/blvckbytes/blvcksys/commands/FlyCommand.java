@@ -53,8 +53,8 @@ public class FlyCommand extends APlayerCommand implements Listener, IAutoConstru
       plugin, logger, cfg, refl,
       "fly",
       "Toggle flying mode",
-      PlayerPermission.COMMAND_FLY,
-      new CommandArgument("[player]", "The target player", PlayerPermission.COMMAND_FLY_OTHERS)
+      PlayerPermission.COMMAND_FLY.toString(),
+      new CommandArgument("[player]", "The target player", PlayerPermission.COMMAND_FLY_OTHERS.toString())
     );
 
     this.justRevoked = new HashMap<>();

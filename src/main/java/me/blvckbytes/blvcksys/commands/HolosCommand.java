@@ -55,7 +55,7 @@ public class HolosCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "holos",
       "List nearby holograms",
-      PlayerPermission.COMMAND_HOLO,
+      PlayerPermission.COMMAND_HOLO.toString(),
       new CommandArgument("[radius]", "Radius to list within")
     );
 

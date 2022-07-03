@@ -66,7 +66,7 @@ public class CrateCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "crate",
       "Manage crates and their items",
-      PlayerPermission.COMMAND_CRATE,
+      PlayerPermission.COMMAND_CRATE.toString(),
       new CommandArgument("<name>", "Name of the crate"),
       new CommandArgument("<action>", "Action to perform"),
       new CommandArgument("[value]", "Value to set")

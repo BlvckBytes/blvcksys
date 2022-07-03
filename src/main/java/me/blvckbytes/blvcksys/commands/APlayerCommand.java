@@ -5,7 +5,6 @@ import me.blvckbytes.blvcksys.commands.exceptions.*;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
-import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.handlers.ICooldownHandler;
 import me.blvckbytes.blvcksys.handlers.ICooldownable;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
@@ -65,7 +64,7 @@ public abstract class APlayerCommand extends Command {
 
   // The top level permission of this command
   @Getter
-  private final PlayerPermission rootPerm;
+  private final String rootPerm;
 
   static {
     registeredCommands = new HashMap<>();
@@ -83,7 +82,7 @@ public abstract class APlayerCommand extends Command {
     MCReflect refl,
     String name,
     String description,
-    @Nullable PlayerPermission rootPerm,
+    @Nullable String rootPerm,
     CommandArgument... cmdArgs
   ) {
     super(
@@ -104,7 +103,7 @@ public abstract class APlayerCommand extends Command {
     // Set the command's permission to disallow command completion for
     // commands the player has no permission to execute
     if (rootPerm != null)
-      setPermission(rootPerm.getValue());
+      setPermission(rootPerm);
 
     this.cmdArgs = cmdArgs;
     this.plugin = plugin;
@@ -170,14 +169,14 @@ public abstract class APlayerCommand extends Command {
     int currArg = Math.max(0, args.length - 1);
 
     // Doesn't have permission to invoke this command
-    if (rootPerm != null && !rootPerm.has(p))
+    if (rootPerm != null && !p.hasPermission(rootPerm))
       return new ArrayList<>();
 
     // Get it's connected permission
-    PlayerPermission argPerm = cmdArgs[Math.min(currArg, cmdArgs.length - 1)].getPermission();
+    String argPerm = cmdArgs[Math.min(currArg, cmdArgs.length - 1)].getPermission();
 
     // Doesn't have permission for this arg
-    if (argPerm != null && !argPerm.has(p))
+    if (argPerm != null && !p.hasPermission(argPerm))
       return new ArrayList<>();
 
     // Call tab completion handler and limit the results to 10 items
@@ -200,13 +199,13 @@ public abstract class APlayerCommand extends Command {
 
     try {
       // Check for the top level permission
-      if (rootPerm != null && !rootPerm.has(p))
+      if (rootPerm != null && !p.hasPermission(rootPerm))
         throw new MissingPermissionException(cfg, rootPerm);
 
       // Check for all permissions regarding arguments
       for (int i = 0; i < args.length; i++) {
-        PlayerPermission argPerm = cmdArgs[Math.min(i, cmdArgs.length - 1)].getPermission();
-        if (argPerm != null && !argPerm.has(p))
+        String argPerm = cmdArgs[Math.min(i, cmdArgs.length - 1)].getPermission();
+        if (argPerm != null && !p.hasPermission(argPerm))
           throw new MissingPermissionException(cfg, argPerm);
       }
 
@@ -566,8 +565,8 @@ public abstract class APlayerCommand extends Command {
    * @param p Target player
    * @param perm Permission to test for
    */
-  protected void ensurePermission(Player p, PlayerPermission perm) throws CommandException {
-    if (!perm.has(p))
+  protected void ensurePermission(Player p, String perm) throws CommandException {
+    if (!p.hasPermission(perm))
       throw new MissingPermissionException(cfg, perm);
   }
 

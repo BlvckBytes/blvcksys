@@ -53,7 +53,7 @@ public class ArmorStandCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "armorstands,as",
       "Manage fake Armor Stands",
-      PlayerPermission.COMMAND_ARMORSTAND,
+      PlayerPermission.COMMAND_ARMORSTAND.toString(),
       new CommandArgument("<name>", "Name of the armor stand"),
       new CommandArgument("<action>", "Action to perform")
     );

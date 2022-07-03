@@ -43,7 +43,7 @@ public class DelMuteCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "delmute",
       "Delete a non-active mute completely",
-      PlayerPermission.COMMAND_DELMUTE,
+      PlayerPermission.COMMAND_DELMUTE.toString(),
       new CommandArgument("<id>", "ID of the mute")
     );
 

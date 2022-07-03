@@ -94,7 +94,7 @@ public class HelpCommand extends APlayerCommand implements IFontWidthTable {
     Collection<APlayerCommand> commands = APlayerCommand.getCommands();
     for (APlayerCommand command : commands) {
       // The player cannot execute this command, don't render it
-      if (command.getRootPerm() != null && !command.getRootPerm().has(p))
+      if (command.getRootPerm() != null && !p.hasPermission(command.getRootPerm()))
         continue;
 
       List<BaseComponent> words = new LinkedList<>();

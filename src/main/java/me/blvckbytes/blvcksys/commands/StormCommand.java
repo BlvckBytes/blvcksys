@@ -33,7 +33,7 @@ public class StormCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "storm",
       "Change the weather of the world you're in to storm",
-      PlayerPermission.COMMAND_WEATHER,
+      PlayerPermission.COMMAND_WEATHER.toString(),
       new CommandArgument("[duration]", "For how long to keep storming (ticks)")
     );
 

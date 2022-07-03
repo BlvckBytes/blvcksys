@@ -39,7 +39,7 @@ public class BroadcastCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "broadcast,bc",
       "Broadcast a message to all players",
-      PlayerPermission.COMMAND_BROADCAST,
+      PlayerPermission.COMMAND_BROADCAST.toString(),
       new CommandArgument("<message>", "The message to broadcast")
     );
 

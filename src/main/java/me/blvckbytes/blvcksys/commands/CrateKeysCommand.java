@@ -55,7 +55,7 @@ public class CrateKeysCommand extends APlayerCommand {
       "cratekeys",
       "Manage crate keys",
       null,
-      new CommandArgument("<action>", "Action to perform", PlayerPermission.COMMAND_CRATEKEYS_MANAGE),
+      new CommandArgument("<action>", "Action to perform", PlayerPermission.COMMAND_CRATEKEYS_MANAGE.toString()),
       new CommandArgument("[player]", "Target player"),
       new CommandArgument("[crate]", "Target crate"),
       new CommandArgument("[amount]", "Amount of keys")

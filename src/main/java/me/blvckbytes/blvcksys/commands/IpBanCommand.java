@@ -39,7 +39,7 @@ public class IpBanCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "ipban",
       "Cast a new ip ban upon a player",
-      PlayerPermission.COMMAND_IPBAN,
+      PlayerPermission.COMMAND_IPBAN.toString(),
       new CommandArgument("<name>", "Name of the target player"),
       new CommandArgument("[reason]", "Reason of this punishment")
     );

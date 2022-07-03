@@ -38,7 +38,7 @@ public class WeatherCommand extends APlayerCommand implements IWeatherCommand {
       plugin, logger, cfg, refl,
       "weather",
       "Change the weather of the world you're in",
-      PlayerPermission.COMMAND_WEATHER,
+      PlayerPermission.COMMAND_WEATHER.toString(),
       new CommandArgument("<type>", "The type of weather to set"),
       new CommandArgument("[duration]", "For how long to keep this weather (ticks)")
     );

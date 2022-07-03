@@ -32,7 +32,7 @@ public class KillCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "kill",
       "Kill another player instantly",
-      PlayerPermission.COMMAND_KILL,
+      PlayerPermission.COMMAND_KILL.toString(),
       new CommandArgument("[player]", "Player to kill")
     );
   }

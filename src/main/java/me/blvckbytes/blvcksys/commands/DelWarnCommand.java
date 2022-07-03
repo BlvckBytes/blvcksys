@@ -42,7 +42,7 @@ public class DelWarnCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "delwarn",
       "Delete a non-active warn completely",
-      PlayerPermission.COMMAND_DELWARN,
+      PlayerPermission.COMMAND_DELWARN.toString(),
       new CommandArgument("<id>", "ID of the warn")
     );
 

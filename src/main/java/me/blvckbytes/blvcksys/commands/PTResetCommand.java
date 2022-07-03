@@ -35,8 +35,8 @@ public class PTResetCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "ptreset",
       "Change the time of your client to the server's",
-      PlayerPermission.COMMAND_PTIME,
-      new CommandArgument("[player]", "Target player", PlayerPermission.COMMAND_PTIME_OTHERS)
+      PlayerPermission.COMMAND_PTIME.toString(),
+      new CommandArgument("[player]", "Target player", PlayerPermission.COMMAND_PTIME_OTHERS.toString())
     );
 
     this.ptime = ptime;

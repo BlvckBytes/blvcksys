@@ -50,7 +50,7 @@ public class EditMuteCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "editmute",
       "Edit a field of an existing mute",
-      PlayerPermission.COMMAND_MUTE,
+      PlayerPermission.COMMAND_MUTE.toString(),
       new CommandArgument("<id>", "Name of the target player"),
       new CommandArgument("<field>", "Field to change"),
       new CommandArgument("<value>", "New value of the field")

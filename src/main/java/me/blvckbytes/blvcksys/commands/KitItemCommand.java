@@ -41,7 +41,7 @@ public class KitItemCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "kititem",
       "Set a kit's representative item",
-      PlayerPermission.COMMAND_KITITEM,
+      PlayerPermission.COMMAND_KITITEM.toString(),
       new CommandArgument("<name>", "Name of the kit")
     );
 

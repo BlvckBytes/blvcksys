@@ -38,8 +38,8 @@ public class ClearInventoryCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "clearinventory,ci",
       "Clear the inventory for yourself or others",
-      PlayerPermission.COMMAND_CLEARINVENTORY_SELF,
-      new CommandArgument("[player]", "Player to clear the inventory for", PlayerPermission.COMMAND_CLEARINVENTORY_OTHERS)
+      PlayerPermission.COMMAND_CLEARINVENTORY_SELF.toString(),
+      new CommandArgument("[player]", "Player to clear the inventory for", PlayerPermission.COMMAND_CLEARINVENTORY_OTHERS.toString())
     );
 
     this.chat = chat;

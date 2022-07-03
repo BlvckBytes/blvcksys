@@ -34,7 +34,7 @@ public class TopCommand extends APlayerCommand implements ITopCommand {
       plugin, logger, cfg, refl,
       "top",
       "Teleport to the highest block",
-      PlayerPermission.COMMAND_TOP
+      PlayerPermission.COMMAND_TOP.toString()
     );
   }
 

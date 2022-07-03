@@ -49,7 +49,7 @@ public class NpcCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "npc",
       "Manage fake NPCs",
-      PlayerPermission.COMMAND_NPC,
+      PlayerPermission.COMMAND_NPC.toString(),
       new CommandArgument("<name>", "Name of the npc"),
       new CommandArgument("<action>", "Action to perform"),
       new CommandArgument("[skin]", "Skin value")

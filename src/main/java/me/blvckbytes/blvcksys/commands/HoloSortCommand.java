@@ -43,7 +43,7 @@ public class HoloSortCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "holosort",
       "Sort all lines of a hologram",
-      PlayerPermission.COMMAND_HOLO,
+      PlayerPermission.COMMAND_HOLO.toString(),
       new CommandArgument("<name>", "Name of the hologram"),
       new CommandArgument("<ids>", "Line IDs in desired order")
     );

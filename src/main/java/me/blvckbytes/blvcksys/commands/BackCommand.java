@@ -40,7 +40,7 @@ public class BackCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "back",
       "Go back to your previous teleport-location",
-      PlayerPermission.COMMAND_BACK
+      PlayerPermission.COMMAND_BACK.toString()
     );
 
     this.tel = tel;

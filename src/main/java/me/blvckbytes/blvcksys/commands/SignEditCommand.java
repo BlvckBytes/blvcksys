@@ -48,7 +48,7 @@ public class SignEditCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "signedit,se",
       "Edit the sign you're pointing at",
-      PlayerPermission.COMMAND_SIGNEDIT
+      PlayerPermission.COMMAND_SIGNEDIT.toString()
     );
 
     this.regions = regions;
@@ -104,7 +104,7 @@ public class SignEditCommand extends APlayerCommand {
         s.setLine(
           i,
           // Translate sign colors based on the player's permissions
-          chat.translateColors(p, lines[i], PlayerPermission.SIGN_COLOR_PREFIX)
+          chat.translateColors(p, lines[i], PlayerPermission.SIGN_COLOR_PREFIX.toString())
         );
 
       // Update the block and make changes visible

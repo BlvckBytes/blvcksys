@@ -34,7 +34,7 @@ public class FurnaceCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "furnace,fn",
       "Open your virtual furnace manager",
-      PlayerPermission.COMMAND_FURNACE
+      PlayerPermission.COMMAND_FURNACE.toString()
     );
 
     this.furnacesGui = furnacesGui;

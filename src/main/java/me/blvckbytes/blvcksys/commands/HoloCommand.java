@@ -52,7 +52,7 @@ public class HoloCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "holo",
       "Manage holograms and their lines",
-      PlayerPermission.COMMAND_HOLO,
+      PlayerPermission.COMMAND_HOLO.toString(),
       new CommandArgument("<name>", "Name of the hologram"),
       new CommandArgument("<action>", "Action to perform"),
       new CommandArgument("[line id/text]", "ID of the line to delete or the text to add"),

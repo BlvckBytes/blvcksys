@@ -42,7 +42,7 @@ public class RevokeBanCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "revokeban",
       "Revoke a previously casted ban",
-      PlayerPermission.COMMAND_BANREVOKE,
+      PlayerPermission.COMMAND_BANREVOKE.toString(),
       new CommandArgument("<id>", "ID of the ban"),
       new CommandArgument("[reason]", "Reason of this revocation")
     );

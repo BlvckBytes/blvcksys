@@ -38,7 +38,7 @@ public class HomesCommand extends APlayerCommand {
       "homes",
       "Display all existing homes",
       null,
-      new CommandArgument("[player]", "Name of the player to list homes from", PlayerPermission.COMMAND_HOMES_OTHERS)
+      new CommandArgument("[player]", "Name of the player to list homes from", PlayerPermission.COMMAND_HOMES_OTHERS.toString())
     );
 
     this.homesGui = homesGui;

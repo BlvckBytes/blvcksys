@@ -42,7 +42,7 @@ public class RevokeMuteCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "revokemute",
       "Revoke a previously casted mute",
-      PlayerPermission.COMMAND_MUTEREVOKE,
+      PlayerPermission.COMMAND_MUTEREVOKE.toString(),
       new CommandArgument("<id>", "ID of the mute"),
       new CommandArgument("[reason]", "Reason of this revocation")
     );

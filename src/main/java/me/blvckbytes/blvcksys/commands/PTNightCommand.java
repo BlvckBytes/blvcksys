@@ -35,8 +35,8 @@ public class PTNightCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "ptnight",
       "Change the time of your client to night",
-      PlayerPermission.COMMAND_PTIME,
-      new CommandArgument("[player]", "Target player", PlayerPermission.COMMAND_PTIME_OTHERS)
+      PlayerPermission.COMMAND_PTIME.toString(),
+      new CommandArgument("[player]", "Target player", PlayerPermission.COMMAND_PTIME_OTHERS.toString())
     );
 
     this.ptime = ptime;

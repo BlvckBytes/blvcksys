@@ -77,7 +77,7 @@ public class InjectCommand extends APlayerCommand implements IPacketModifier, IA
       plugin, logger, cfg, refl,
       "inject",
       "Inject an interceptor to monitor a player's packets",
-      PlayerPermission.COMMAND_INJECT,
+      PlayerPermission.COMMAND_INJECT.toString(),
       new CommandArgument("<player>", "Player to capture"),
       new CommandArgument("[direction]", "Direction of packets"),
       new CommandArgument("[depth]", "Recursion depth for stringification"),

@@ -33,9 +33,9 @@ public class PWeatherCommand extends APlayerCommand implements IPWeatherCommand 
       plugin, logger, cfg, refl,
       "pweather",
       "Change the weather of your client",
-      PlayerPermission.COMMAND_PWEATHER,
+      PlayerPermission.COMMAND_PWEATHER.toString(),
       new CommandArgument("<type>", "The type of weather to set"),
-      new CommandArgument("[player]", "Target player", PlayerPermission.COMMAND_PWEATHER_OTHERS)
+      new CommandArgument("[player]", "Target player", PlayerPermission.COMMAND_PWEATHER_OTHERS.toString())
     );
   }
 

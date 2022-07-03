@@ -46,7 +46,7 @@ public class SetKitCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "setkit",
       "Create a new kit with the contents of your inventory",
-      PlayerPermission.COMMAND_SETKIT,
+      PlayerPermission.COMMAND_SETKIT.toString(),
       new CommandArgument("<name>", "Name of the kit"),
       new CommandArgument("<cooldown unit multiplier>", "Multiplier of the cooldown unit chosen"),
       new CommandArgument("<cooldown unit>", "Unit of time for the cooldown")

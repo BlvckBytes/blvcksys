@@ -39,7 +39,7 @@ public class SetwarpCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "setwarp",
       "Create a new warp at your current location",
-      PlayerPermission.COMMAND_SETWARP,
+      PlayerPermission.COMMAND_SETWARP.toString(),
       new CommandArgument("<name>", "Name of the warp")
     );
 

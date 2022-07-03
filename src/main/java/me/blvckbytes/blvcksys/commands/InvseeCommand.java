@@ -40,7 +40,7 @@ public class InvseeCommand extends APlayerCommand implements Listener {
       plugin, logger, cfg, refl,
       "invsee",
       "Watch foreign inventories remotely",
-      PlayerPermission.COMMAND_INVSEE,
+      PlayerPermission.COMMAND_INVSEE.toString(),
       new CommandArgument("<player>", "Target inventory holder")
     );
   }

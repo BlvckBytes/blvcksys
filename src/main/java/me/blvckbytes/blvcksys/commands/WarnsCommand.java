@@ -50,7 +50,7 @@ public class WarnsCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "warns",
       "List all warns of a player",
-      PlayerPermission.COMMAND_WARNS,
+      PlayerPermission.COMMAND_WARNS.toString(),
       new CommandArgument("<name>", "Name of the target player"),
       new CommandArgument("<type>", "Type of warn to list")
     );

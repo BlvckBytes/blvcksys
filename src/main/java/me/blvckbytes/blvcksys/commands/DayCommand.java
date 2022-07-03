@@ -32,7 +32,7 @@ public class DayCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "day",
       "Change the time of the world you're in to day",
-      PlayerPermission.COMMAND_TIME
+      PlayerPermission.COMMAND_TIME.toString()
     );
 
     this.time = time;

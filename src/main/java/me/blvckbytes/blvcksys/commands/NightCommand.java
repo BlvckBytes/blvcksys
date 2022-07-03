@@ -32,7 +32,7 @@ public class NightCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "night",
       "Change the time of the world you're in to night",
-      PlayerPermission.COMMAND_TIME
+      PlayerPermission.COMMAND_TIME.toString()
     );
 
     this.time = time;

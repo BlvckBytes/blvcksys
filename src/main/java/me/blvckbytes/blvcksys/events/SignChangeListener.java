@@ -31,6 +31,6 @@ public class SignChangeListener implements Listener {
 
     // Translate all sign colors
     for (int i = 0; i < lines.length; i++)
-      e.setLine(i, chat.translateColors(e.getPlayer(), lines[i], PlayerPermission.SIGN_COLOR_PREFIX));
+      e.setLine(i, chat.translateColors(e.getPlayer(), lines[i], PlayerPermission.SIGN_COLOR_PREFIX.toString()));
   }
 }

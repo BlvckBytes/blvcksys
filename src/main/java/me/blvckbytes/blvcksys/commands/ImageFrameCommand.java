@@ -51,7 +51,7 @@ public class ImageFrameCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "imageframe,iframe",
       "Manage image item frames",
-      PlayerPermission.COMMAND_IFRAME,
+      PlayerPermission.COMMAND_IFRAME.toString(),
       new CommandArgument("<name>", "Name of the target group"),
       new CommandArgument("<action>", "Action to perform"),
       new CommandArgument("[type]", "Type of the new group"),

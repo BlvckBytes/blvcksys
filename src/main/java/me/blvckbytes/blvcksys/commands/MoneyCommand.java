@@ -48,7 +48,7 @@ public class MoneyCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "money",
       "Add, remove or set the amount of money of players",
-      PlayerPermission.COMMAND_MONEY,
+      PlayerPermission.COMMAND_MONEY.toString(),
       new CommandArgument("<action>", "Action to perform"),
       new CommandArgument("[player]", "Target player"),
       new CommandArgument("[amount]", "Amount of money")
@@ -86,7 +86,7 @@ public class MoneyCommand extends APlayerCommand {
 
     // Foreign target (not self)
     if (!isSelf)
-      ensurePermission(p, PlayerPermission.COMMAND_MONEY_OTHERS);
+      ensurePermission(p, PlayerPermission.COMMAND_MONEY_OTHERS.toString());
 
     int before = stats.getStats(target).getMoney();
 

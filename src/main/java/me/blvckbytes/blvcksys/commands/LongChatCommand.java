@@ -49,7 +49,7 @@ public class LongChatCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "longchat,lc",
       "Send a really long chat message",
-      PlayerPermission.COMMAND_LONGCHAT
+      PlayerPermission.COMMAND_LONGCHAT.toString()
     );
 
     this.chat = chat;

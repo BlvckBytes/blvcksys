@@ -45,7 +45,7 @@ public class ServerSettingsCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "serversettings",
       "Get or change server settings",
-      PlayerPermission.COMMAND_SERVERSETTINGS,
+      PlayerPermission.COMMAND_SERVERSETTINGS.toString(),
       new CommandArgument("<action>", "Action to perform"),
       new CommandArgument("<setting>", "Name of the setting"),
       new CommandArgument("[value]", "Value to write")

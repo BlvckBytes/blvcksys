@@ -50,7 +50,7 @@ public class MutesCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "mutes",
       "List all mutes of a player",
-      PlayerPermission.COMMAND_MUTES,
+      PlayerPermission.COMMAND_MUTES.toString(),
       new CommandArgument("<name>", "Name of the target player"),
       new CommandArgument("<type>", "Type of mute to list")
     );

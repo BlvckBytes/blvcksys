@@ -33,9 +33,9 @@ public class GameModeCommand extends APlayerCommand {
       plugin, logger, cfg, refl,
       "gamemode,gm",
       "Change the gamemode of a player",
-      PlayerPermission.COMMAND_GAMEMODE,
+      PlayerPermission.COMMAND_GAMEMODE.toString(),
       new CommandArgument("<mode>", "GameMode to change to"),
-      new CommandArgument("[player]", "Who to change the mode for", PlayerPermission.COMMAND_GAMEMODE_OTHERS)
+      new CommandArgument("[player]", "Who to change the mode for", PlayerPermission.COMMAND_GAMEMODE_OTHERS.toString())
     );
   }
 

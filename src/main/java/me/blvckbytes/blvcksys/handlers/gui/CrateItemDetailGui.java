@@ -30,7 +30,7 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
   private final ChatUtil chatUtil;
   private final ConfirmationGui confirmationGui;
   private final ItemEditorGui itemEditorGui;
-  private final IStdGuiItemsProvider stdGuiItemsProvider;
+  private final IStdGuiParamProvider stdGuiParamProvider;
 
   @AutoInjectLate
   private CrateContentGui crateContentGui;
@@ -43,7 +43,7 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
     @AutoInject ChatUtil chatUtil,
     @AutoInject ConfirmationGui confirmationGui,
     @AutoInject ItemEditorGui itemEditorGui,
-    @AutoInject IStdGuiItemsProvider stdGuiItemsProvider
+    @AutoInject IStdGuiParamProvider stdGuiParamProvider
   ) {
     super(6, "", i -> (
       cfg.get(ConfigKey.GUI_CRATE_DETAIL_NAME).
@@ -54,7 +54,7 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
     this.chatUtil = chatUtil;
     this.confirmationGui = confirmationGui;
     this.itemEditorGui = itemEditorGui;
-    this.stdGuiItemsProvider = stdGuiItemsProvider;
+    this.stdGuiParamProvider = stdGuiParamProvider;
   }
 
   @Override
@@ -68,11 +68,11 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
     CrateModel crate = inst.getArg().a();
     CrateItemModel item = inst.getArg().b();
 
-    inst.addFill(stdGuiItemsProvider);
+    inst.addFill(stdGuiParamProvider);
     inst.fixedItem("12,14,22", () -> new ItemStackBuilder(Material.PURPLE_STAINED_GLASS_PANE).build(), null, null);
 
     inst.addBack(
-      "45", stdGuiItemsProvider, crateContentGui,
+      "45", stdGuiParamProvider, crateContentGui,
       () -> new Tuple<>(inst.getArg().a(), true), AnimationType.SLIDE_RIGHT
     );
 

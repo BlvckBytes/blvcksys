@@ -32,7 +32,7 @@ public class HomesGui extends AGui<OfflinePlayer> {
   private final ConfirmationGui confirmationGui;
   private final SingleChoiceGui singleChoiceGui;
   private final ItemEditorGui itemEditorGui;
-  private final IStdGuiItemsProvider stdGuiItemsProvider;
+  private final IStdGuiParamProvider stdGuiParamProvider;
 
   public HomesGui(
     @AutoInject IConfig cfg,
@@ -42,7 +42,7 @@ public class HomesGui extends AGui<OfflinePlayer> {
     @AutoInject ConfirmationGui confirmationGui,
     @AutoInject SingleChoiceGui singleChoiceGui,
     @AutoInject ItemEditorGui itemEditorGui,
-    @AutoInject IStdGuiItemsProvider stdGuiItemsProvider
+    @AutoInject IStdGuiParamProvider stdGuiParamProvider
   ) {
     super(5, "10-16,19-25,28-34", i -> (
       cfg.get(ConfigKey.GUI_HOMES)
@@ -53,7 +53,7 @@ public class HomesGui extends AGui<OfflinePlayer> {
     this.confirmationGui = confirmationGui;
     this.singleChoiceGui = singleChoiceGui;
     this.itemEditorGui = itemEditorGui;
-    this.stdGuiItemsProvider = stdGuiItemsProvider;
+    this.stdGuiParamProvider = stdGuiParamProvider;
   }
 
   @Override
@@ -66,10 +66,10 @@ public class HomesGui extends AGui<OfflinePlayer> {
     Player p = inst.getViewer();
     boolean isSelf = inst.getArg().equals(p);
 
-    inst.addFill(stdGuiItemsProvider);
+    inst.addFill(stdGuiParamProvider);
 
     // Paginator
-    inst.addPagination("37", "40", "43", stdGuiItemsProvider);
+    inst.addPagination("37", "40", "43", stdGuiParamProvider);
 
     inst.setPageContents(() -> {
       List<HomeModel> homes = homeHandler.listHomes(inst.getArg());
@@ -157,7 +157,7 @@ public class HomesGui extends AGui<OfflinePlayer> {
       .withChoice(
         "material",
         cfg.get(ConfigKey.GUI_HOMES_CHOICE_ICON_TITLE),
-        stdGuiItemsProvider,
+        stdGuiParamProvider,
         values -> itemEditorGui.buildMaterialRepresentitives(),
         null
       )
@@ -204,7 +204,7 @@ public class HomesGui extends AGui<OfflinePlayer> {
       .withChoice(
         "color",
         cfg.get(ConfigKey.GUI_HOMES_CHOICE_COLOR_TITLE),
-        stdGuiItemsProvider,
+        stdGuiParamProvider,
         values -> this.buildChatColorRepresentitives(),
         null
       )

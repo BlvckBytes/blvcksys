@@ -113,6 +113,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
   @Override
   protected boolean opening(GuiInstance<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<GuiInstance<?>>>> inst) {
+    inst.setAnimationsEnabled(ies.getItems().getGeneric().areAnimationsEnabled());
     inst.addFill(ies.getItems().getGeneric());
 
     ItemStack item = inst.getArg().a();

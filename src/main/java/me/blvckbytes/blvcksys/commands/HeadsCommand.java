@@ -8,7 +8,7 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.handlers.gui.AnvilSearchGui;
-import me.blvckbytes.blvcksys.handlers.gui.IStdGuiItemsProvider;
+import me.blvckbytes.blvcksys.handlers.gui.IStdGuiParamProvider;
 import me.blvckbytes.blvcksys.handlers.gui.ItemStackBuilder;
 import me.blvckbytes.blvcksys.handlers.gui.SingleChoiceParam;
 import me.blvckbytes.blvcksys.util.MCReflect;
@@ -31,7 +31,7 @@ public class HeadsCommand extends APlayerCommand {
 
   private final IPlayerTextureHandler textureHandler;
   private final AnvilSearchGui anvilSearchGui;
-  private final IStdGuiItemsProvider stdGuiItemsProvider;
+  private final IStdGuiParamProvider stdGuiParamProvider;
 
   public HeadsCommand(
     @AutoInject JavaPlugin plugin,
@@ -40,7 +40,7 @@ public class HeadsCommand extends APlayerCommand {
     @AutoInject MCReflect refl,
     @AutoInject IPlayerTextureHandler textureHandler,
     @AutoInject AnvilSearchGui anvilSearchGui,
-    @AutoInject IStdGuiItemsProvider stdGuiItemsProvider
+    @AutoInject IStdGuiParamProvider stdGuiParamProvider
     ) {
     super(
       plugin, logger, cfg, refl,
@@ -51,7 +51,7 @@ public class HeadsCommand extends APlayerCommand {
 
     this.textureHandler = textureHandler;
     this.anvilSearchGui = anvilSearchGui;
-    this.stdGuiItemsProvider = stdGuiItemsProvider;
+    this.stdGuiParamProvider = stdGuiParamProvider;
   }
 
   //=========================================================================//
@@ -62,7 +62,7 @@ public class HeadsCommand extends APlayerCommand {
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     SingleChoiceParam scp = new SingleChoiceParam(
       cfg.get(ConfigKey.GUI_HEADS_SEARCH_NAME).asScalar(),
-      new ArrayList<>(), stdGuiItemsProvider,
+      new ArrayList<>(), stdGuiParamProvider,
 
       search -> (
         // Only return as many results at max as will fit into the search GUI

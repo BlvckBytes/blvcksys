@@ -11,7 +11,7 @@ import java.util.Map;
 
   Provides all available standard GUI items with templating abilities.
 */
-public interface IStdGuiItemsProvider {
+public interface IStdGuiParamProvider {
 
   /**
    * Get a standard GUI item
@@ -19,5 +19,10 @@ public interface IStdGuiItemsProvider {
    * @param variables Variables to use on the item template
    */
   ItemStack getItem(StdGuiItem item, @Nullable Map<String, String> variables);
+
+  /**
+   * Checks whether to play animations
+   */
+  boolean areAnimationsEnabled();
 
 }

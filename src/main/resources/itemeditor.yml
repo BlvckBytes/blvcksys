@@ -118,6 +118,8 @@ titles:
 
 items:
   generic:
+    animate: true
+
     background:
       type: BLACK_STAINED_GLASS_PANE
       name: ' '

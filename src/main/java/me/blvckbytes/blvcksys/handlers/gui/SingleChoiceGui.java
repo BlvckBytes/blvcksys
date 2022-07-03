@@ -56,13 +56,14 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
   @Override
   protected boolean opening(GuiInstance<SingleChoiceParam> inst) {
     Player p = inst.getViewer();
-
     SingleChoiceParam arg = inst.getArg();
-    IStdGuiItemsProvider itemsProvider = arg.itemsProvider();
+    IStdGuiParamProvider paramProvider = arg.paramProvider();
 
-    inst.addBorder(itemsProvider);
+    inst.setAnimationsEnabled(paramProvider.areAnimationsEnabled());
 
-    inst.addPagination("38", "40", "42", itemsProvider);
+    inst.addBorder(paramProvider);
+
+    inst.addPagination("38", "40", "42", paramProvider);
 
     // Reopens this instance on the next tick when called
     Runnable reopen = () -> Bukkit.getScheduler().runTask(plugin, () -> inst.reopen(AnimationType.SLIDE_UP));
@@ -70,11 +71,11 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
     // Search button
     inst.fixedItem(
       "44",
-      () -> itemsProvider.getItem(StdGuiItem.SEARCH, null),
+      () -> paramProvider.getItem(StdGuiItem.SEARCH, null),
       e -> {
         // Create a carbon copy of the param and re-route callbacks
         SingleChoiceParam scp = new SingleChoiceParam(
-          arg.type(), arg.representitives(), itemsProvider,
+          arg.type(), arg.representitives(), paramProvider,
           arg.customFilter(), arg.selected(),
 
           // Re-open the choice if nothing was chosen or back was clicked
@@ -90,7 +91,7 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
     );
 
     if (inst.getArg().backButton() != null) {
-      inst.addBack("36", itemsProvider, e -> {
+      inst.addBack("36", paramProvider, e -> {
         haveChosen.add(p);
         inst.getArg().backButton().accept(inst);
       });

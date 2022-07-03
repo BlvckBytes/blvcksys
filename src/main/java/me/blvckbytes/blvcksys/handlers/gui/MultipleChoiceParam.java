@@ -22,8 +22,8 @@ public record MultipleChoiceParam(
   // List of choices, objects represented by itemstacks
   List<Tuple<Object, ItemStack>> representitives,
 
-  // Provider for standard items used in GUIs
-  IStdGuiItemsProvider itemsProvider,
+  // Provider for standard parameters used in GUIs
+  IStdGuiParamProvider paramProvider,
 
   // Used to transform selected items
   @Nullable Function<ItemStack, ItemStack> selectionTransform,

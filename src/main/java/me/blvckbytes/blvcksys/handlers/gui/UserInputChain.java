@@ -16,7 +16,6 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -165,7 +164,7 @@ public class UserInputChain {
     YesNoGui gui,
     String field,
     ConfigValue type,
-    IStdGuiItemsProvider stdProvider,
+    IStdGuiParamProvider stdProvider,
     ItemStack yesButton,
     ItemStack noButton,
     @Nullable Function<Map<String, Object>, Boolean> skip
@@ -234,7 +233,7 @@ public class UserInputChain {
   public UserInputChain withChoice(
     String field,
     ConfigValue type,
-    IStdGuiItemsProvider stdProvider,
+    IStdGuiParamProvider stdProvider,
     Function<Map<String, Object>, List<Tuple<Object, ItemStack>>> representitives,
     @Nullable Function<Map<String, Object>, Boolean> skip
   ) {
@@ -255,7 +254,7 @@ public class UserInputChain {
     @Nullable Function<ItemStack, ItemStack> selectionTransform,
     String field,
     ConfigValue type,
-    IStdGuiItemsProvider stdProvider,
+    IStdGuiParamProvider stdProvider,
     Function<Map<String, Object>, List<Tuple<Object, ItemStack>>> representitives,
     @Nullable Function<Map<String, Object>, Boolean> skip
   ) {

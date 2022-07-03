@@ -22,8 +22,8 @@ public record SingleChoiceParam(
   // List of choices, objects represented by itemstacks
   List<Tuple<Object, ItemStack>> representitives,
 
-  // Provider for standard items used in GUIs
-  IStdGuiItemsProvider itemsProvider,
+  // Provider for standard parameters used in GUIs
+  IStdGuiParamProvider paramProvider,
 
   // Custom external filtering function
   @Nullable Function<String, List<Tuple<Object, ItemStack>>> customFilter,

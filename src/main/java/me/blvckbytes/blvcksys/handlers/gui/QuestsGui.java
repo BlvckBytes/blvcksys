@@ -28,7 +28,7 @@ public class QuestsGui extends AGui<Object> {
 
   private final IQuestHandler quests;
   private final QuestStagesGui stagesGui;
-  private final IStdGuiItemsProvider stdGuiItemsProvider;
+  private final IStdGuiParamProvider stdGuiParamProvider;
 
   public QuestsGui(
     @AutoInject IConfig cfg,
@@ -36,7 +36,7 @@ public class QuestsGui extends AGui<Object> {
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject IQuestHandler quests,
     @AutoInject QuestStagesGui stagesGui,
-    @AutoInject IStdGuiItemsProvider stdGuiItemsProvider
+    @AutoInject IStdGuiParamProvider stdGuiParamProvider
   ) {
     super(5, "10-16,19-25,28-34", i -> (
       cfg.get(ConfigKey.GUI_QUESTS_TITLE)
@@ -45,7 +45,7 @@ public class QuestsGui extends AGui<Object> {
 
     this.quests = quests;
     this.stagesGui = stagesGui;
-    this.stdGuiItemsProvider = stdGuiItemsProvider;
+    this.stdGuiParamProvider = stdGuiParamProvider;
 
     // Refresh the page contents for the viewer that just made progress
     quests.registerProgressInterest(p -> {
@@ -62,10 +62,10 @@ public class QuestsGui extends AGui<Object> {
   protected boolean opening(GuiInstance<Object> inst) {
     Player p = inst.getViewer();
 
-    inst.addBorder(stdGuiItemsProvider);
+    inst.addBorder(stdGuiParamProvider);
 
     // Paginator
-    inst.addPagination("37", "40", "43", stdGuiItemsProvider);
+    inst.addPagination("37", "40", "43", stdGuiParamProvider);
 
     inst.setPageContents(() -> (
       quests.getQuests().stream().map(quest -> (

@@ -17,7 +17,7 @@ public record YesNoParam(
   // Type of yes/no to be displayed in the title
   String type,
 
-  IStdGuiItemsProvider itemsProvider,
+  IStdGuiParamProvider paramProvider,
 
   // Button to display for YES
   ItemStack yesButton,

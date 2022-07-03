@@ -22,7 +22,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class IgnoreDetailGui extends AGui<OfflinePlayer> {
 
   private final IIgnoreHandler ignore;
-  private final IStdGuiItemsProvider stdGuiItemsProvider;
+  private final IStdGuiParamProvider stdGuiParamProvider;
 
   @AutoInjectLate
   private IgnoresGui ignoresGui;
@@ -32,7 +32,7 @@ public class IgnoreDetailGui extends AGui<OfflinePlayer> {
     @AutoInject JavaPlugin plugin,
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject IIgnoreHandler ignore,
-    @AutoInject IStdGuiItemsProvider stdGuiItemsProvider
+    @AutoInject IStdGuiParamProvider stdGuiParamProvider
   ) {
     super(4, "", i -> (
       cfg.get(ConfigKey.GUI_IGNORE_TITLE)
@@ -40,7 +40,7 @@ public class IgnoreDetailGui extends AGui<OfflinePlayer> {
     ), plugin, cfg, textures);
 
     this.ignore = ignore;
-    this.stdGuiItemsProvider = stdGuiItemsProvider;
+    this.stdGuiParamProvider = stdGuiParamProvider;
   }
 
   @Override
@@ -52,9 +52,9 @@ public class IgnoreDetailGui extends AGui<OfflinePlayer> {
   protected boolean opening(GuiInstance<OfflinePlayer> inst) {
     Player p = inst.getViewer();
 
-    inst.addFill(stdGuiItemsProvider);
+    inst.addFill(stdGuiParamProvider);
 
-    inst.addBack("27", stdGuiItemsProvider, ignoresGui, null, AnimationType.SLIDE_RIGHT);
+    inst.addBack("27", stdGuiParamProvider, ignoresGui, null, AnimationType.SLIDE_RIGHT);
 
     inst.fixedItem("12", () -> (
       new ItemStackBuilder(Material.NAME_TAG)

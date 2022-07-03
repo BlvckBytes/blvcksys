@@ -3,7 +3,7 @@ package me.blvckbytes.blvcksys.config.sections.itemeditor;
 import lombok.Getter;
 import me.blvckbytes.blvcksys.config.AConfigSection;
 import me.blvckbytes.blvcksys.config.ConfigValue;
-import me.blvckbytes.blvcksys.handlers.gui.IStdGuiItemsProvider;
+import me.blvckbytes.blvcksys.handlers.gui.IStdGuiParamProvider;
 import me.blvckbytes.blvcksys.handlers.gui.ItemStackBuilder;
 import me.blvckbytes.blvcksys.handlers.gui.StdGuiItem;
 import org.bukkit.Material;
@@ -19,7 +19,7 @@ import java.util.Map;
   Represents a section containing all shared GUI items.
 */
 @Getter
-public class IEItemsGenericSection extends AConfigSection implements IStdGuiItemsProvider {
+public class IEItemsGenericSection extends AConfigSection implements IStdGuiParamProvider {
 
   private ItemStackBuilder background;
   private ItemStackBuilder nextPage;
@@ -31,6 +31,7 @@ public class IEItemsGenericSection extends AConfigSection implements IStdGuiItem
   private ItemStackBuilder choiceSelected;
   private ItemStackBuilder searchPlaceholder;
   private ItemStackBuilder back;
+  private boolean animate;
 
   @Override
   public Object defaultFor(Class<?> type, String field) {
@@ -52,5 +53,10 @@ public class IEItemsGenericSection extends AConfigSection implements IStdGuiItem
       case SUBMIT_CHOICES -> submitChoices;
       case SEARCH_PLACEHOLDER -> searchPlaceholder;
     }).build(variables);
+  }
+
+  @Override
+  public boolean areAnimationsEnabled() {
+    return animate;
   }
 }

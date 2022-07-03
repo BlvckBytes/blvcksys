@@ -68,6 +68,9 @@ public class GuiInstance<T> {
   @Getter
   private final AtomicBoolean animating;
 
+  @Setter
+  private boolean animationsEnabled;
+
   /**
    * Create a new GUI instance from a template instance
    * @param viewer Viewer of this instance
@@ -89,6 +92,7 @@ public class GuiInstance<T> {
     this.redrawListeners = new HashMap<>();
     this.pages = new ArrayList<>();
     this.animating = new AtomicBoolean(false);
+    this.animationsEnabled = true;
 
     // In order to evaluate the title supplier, this call needs to follow
     // after the instance's property assignments
@@ -255,24 +259,24 @@ public class GuiInstance<T> {
    * @param prevSlotExpr Slot of the previous button
    * @param indicatorSlotExpr Slot of the page indicator
    * @param nextSlotExpr Slot of the next button
-   * @param itemsProvider Items provider ref
+   * @param paramProvider Items provider ref
    */
   protected void addPagination(
     String prevSlotExpr,
     String indicatorSlotExpr,
     String nextSlotExpr,
-    IStdGuiItemsProvider itemsProvider
+    IStdGuiParamProvider paramProvider
   ) {
     beforePaging = () -> Bukkit.getScheduler().runTaskLater(plugin, () -> redraw(String.valueOf(indicatorSlotExpr)), 10);
 
-    fixedItem(prevSlotExpr, () -> itemsProvider.getItem(StdGuiItem.PREV_PAGE, null), e -> {
+    fixedItem(prevSlotExpr, () -> paramProvider.getItem(StdGuiItem.PREV_PAGE, null), e -> {
       previousPage(AnimationType.SLIDE_RIGHT);
       redraw(String.valueOf(indicatorSlotExpr));
     }, null);
 
     fixedItem(
       indicatorSlotExpr, () -> (
-        itemsProvider.getItem(
+        paramProvider.getItem(
           StdGuiItem.PAGE_INDICATOR,
           ConfigValue.makeEmpty()
             .withVariable("curr_page", getCurrentPage())
@@ -284,7 +288,7 @@ public class GuiInstance<T> {
         )
       ), null, null);
 
-    fixedItem(nextSlotExpr, () -> itemsProvider.getItem(StdGuiItem.NEXT_PAGE, null), e -> {
+    fixedItem(nextSlotExpr, () -> paramProvider.getItem(StdGuiItem.NEXT_PAGE, null), e -> {
       nextPage(AnimationType.SLIDE_LEFT);
       redraw(String.valueOf(indicatorSlotExpr));
     }, null);
@@ -313,9 +317,9 @@ public class GuiInstance<T> {
 
   /**
    * Adds a fill of fixed items consiting of the provided material to the GUI
-   * @param itemsProvider Items provider ref
+   * @param paramProvider Items provider ref
    */
-  protected void addFill(IStdGuiItemsProvider itemsProvider) {
+  protected void addFill(IStdGuiParamProvider paramProvider) {
     StringBuilder slotExpr = new StringBuilder();
 
     for (int i = 0; i < template.getRows() * 9; i++) {
@@ -323,14 +327,14 @@ public class GuiInstance<T> {
         slotExpr.append(i == 0 ? "" : ",").append(i);
     }
 
-    addSpacer(slotExpr.toString(), itemsProvider);
+    addSpacer(slotExpr.toString(), paramProvider);
   }
 
   /**
    * Adds a border of fixed items consiting of the provided material to the GUI
-   * @param itemsProvider Items provider ref
+   * @param paramProvider Items provider ref
    */
-  protected void addBorder(IStdGuiItemsProvider itemsProvider) {
+  protected void addBorder(IStdGuiParamProvider paramProvider) {
     StringBuilder slotExpr = new StringBuilder();
 
     for (int i = 0; i < template.getRows(); i++) {
@@ -349,16 +353,16 @@ public class GuiInstance<T> {
       slotExpr.append(lastSlot);
     }
 
-    addSpacer(slotExpr.toString(), itemsProvider);
+    addSpacer(slotExpr.toString(), paramProvider);
   }
 
   /**
    * Adds a spacer with no name to a given slot
    * @param slotExpr Where to set the item
-   * @param itemsProvider Items provider ref
+   * @param paramProvider Items provider ref
    */
-  protected void addSpacer(String slotExpr, IStdGuiItemsProvider itemsProvider) {
-    spacer = itemsProvider.getItem(StdGuiItem.BACKGROUND, null);
+  protected void addSpacer(String slotExpr, IStdGuiParamProvider paramProvider) {
+    spacer = paramProvider.getItem(StdGuiItem.BACKGROUND, null);
     fixedItem(slotExpr, () -> spacer, null, null);
   }
 
@@ -366,24 +370,24 @@ public class GuiInstance<T> {
    * Adds a back button as a fixed item to the GUI
    * @param slot Slot of the back button
    * @param clicked Event callback
-   * @param itemsProvider Items provider ref
+   * @param paramProvider Items provider ref
    */
-  protected<A> void addBack(String slot, IStdGuiItemsProvider itemsProvider, Consumer<InventoryManipulationEvent> clicked) {
-    fixedItem(slot, () -> itemsProvider.getItem(StdGuiItem.BACK, null), clicked, null);
+  protected<A> void addBack(String slot, IStdGuiParamProvider paramProvider, Consumer<InventoryManipulationEvent> clicked) {
+    fixedItem(slot, () -> paramProvider.getItem(StdGuiItem.BACK, null), clicked, null);
   }
 
   /**
    * Adds a back button as a fixed item to the GUI
    * @param slot Slot of the back button
-   * @param itemsProvider Items provider ref
+   * @param paramProvider Items provider ref
    * @param gui Gui to open on click
    * @param param Gui parameter
    * @param animation Animation to use when navigating back
    */
-  protected<A> void addBack(String slot, IStdGuiItemsProvider itemsProvider, AGui<A> gui, Supplier<A> param, @Nullable AnimationType animation) {
+  protected<A> void addBack(String slot, IStdGuiParamProvider paramProvider, AGui<A> gui, Supplier<A> param, @Nullable AnimationType animation) {
     fixedItem(
       slot,
-      () -> itemsProvider.getItem(StdGuiItem.BACK, null),
+      () -> paramProvider.getItem(StdGuiItem.BACK, null),
       e -> switchTo(animation, gui, param == null ? null : param.get()),
       null
     );
@@ -631,7 +635,7 @@ public class GuiInstance<T> {
     @Nullable List<Integer> mask,
     @Nullable Runnable ready
   ) {
-    if (animation == null)
+    if (animation == null || !animationsEnabled)
       return false;
 
     // Fastforward the currently playing animation, if any

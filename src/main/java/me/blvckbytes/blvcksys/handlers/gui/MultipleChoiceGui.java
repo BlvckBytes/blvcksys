@@ -66,19 +66,21 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
   @Override
   protected boolean opening(GuiInstance<MultipleChoiceParam> inst) {
     MultipleChoiceParam arg = inst.getArg();
-    IStdGuiItemsProvider itemsProvider = arg.itemsProvider();
+    IStdGuiParamProvider paramProvider = arg.paramProvider();
+
+    inst.setAnimationsEnabled(paramProvider.areAnimationsEnabled());
 
     if (!playerChoices.containsKey(inst))
       playerChoices.put(inst, new ArrayList<>());
 
     List<Tuple<Object, ItemStack>> choices = playerChoices.get(inst);
 
-    inst.addBorder(itemsProvider);
+    inst.addBorder(paramProvider);
 
-    inst.addPagination("38", "40", "42", itemsProvider);
+    inst.addPagination("38", "40", "42", paramProvider);
 
     // Add another choice
-    inst.fixedItem("26", () -> itemsProvider.getItem(StdGuiItem.NEW_CHOICE,
+    inst.fixedItem("26", () -> paramProvider.getItem(StdGuiItem.NEW_CHOICE,
       ConfigValue.makeEmpty()
         .withVariable("num_choices", choices.size())
         .withVariable("remaining_choices", arg.representitives().size() - choices.size())
@@ -96,7 +98,7 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
           .filter(repr -> !choices.contains(repr))
           .toList(),
 
-        itemsProvider, arg.customFilter(),
+        paramProvider, arg.customFilter(),
 
         // Add the new selection to the list of choices
         (sel, selInst) -> {
@@ -129,14 +131,14 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
 
     // Render the back button, if provided
     if (inst.getArg().backButton() != null) {
-      inst.addBack("36", itemsProvider, e -> {
+      inst.addBack("36", paramProvider, e -> {
         choices.add(null);
         inst.getArg().backButton().accept(inst);
       });
     }
 
     // Submit the list of choices
-    inst.fixedItem("44", () -> itemsProvider.getItem(StdGuiItem.SUBMIT_CHOICES,
+    inst.fixedItem("44", () -> paramProvider.getItem(StdGuiItem.SUBMIT_CHOICES,
       ConfigValue.makeEmpty()
         .withVariable("num_choices", choices.size())
         .withVariable("remaining_choices", arg.representitives().size() - choices.size())

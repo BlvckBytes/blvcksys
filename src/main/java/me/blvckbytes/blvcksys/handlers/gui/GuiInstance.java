@@ -3,10 +3,10 @@ package me.blvckbytes.blvcksys.handlers.gui;
 import lombok.Getter;
 import lombok.Setter;
 import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.events.InventoryManipulationEvent;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
-import me.blvckbytes.blvcksys.util.SymbolicHead;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -255,42 +255,36 @@ public class GuiInstance<T> {
    * @param prevSlotExpr Slot of the previous button
    * @param indicatorSlotExpr Slot of the page indicator
    * @param nextSlotExpr Slot of the next button
+   * @param itemsProvider Items provider ref
    */
-  protected void addPagination(String prevSlotExpr, String indicatorSlotExpr, String nextSlotExpr) {
+  protected void addPagination(
+    String prevSlotExpr,
+    String indicatorSlotExpr,
+    String nextSlotExpr,
+    IStdGuiItemsProvider itemsProvider
+  ) {
     beforePaging = () -> Bukkit.getScheduler().runTaskLater(plugin, () -> redraw(String.valueOf(indicatorSlotExpr)), 10);
 
-    fixedItem(prevSlotExpr, () -> (
-      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner()))
-        .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_NAME))
-        .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_LORE))
-        .build()
-    ), e -> {
+    fixedItem(prevSlotExpr, () -> itemsProvider.getItem(StdGuiItem.PREV_PAGE, null), e -> {
       previousPage(AnimationType.SLIDE_RIGHT);
       redraw(String.valueOf(indicatorSlotExpr));
     }, null);
 
-    fixedItem(indicatorSlotExpr, () -> (
-      new ItemStackBuilder(Material.PAPER)
-        .withName(
-          cfg.get(ConfigKey.GUI_GENERICS_PAGING_INDICATOR_NAME)
+    fixedItem(
+      indicatorSlotExpr, () -> (
+        itemsProvider.getItem(
+          StdGuiItem.PAGE_INDICATOR,
+          ConfigValue.makeEmpty()
             .withVariable("curr_page", getCurrentPage())
             .withVariable("num_pages", getNumPages())
-        )
-        .withLore(
-          cfg.get(ConfigKey.GUI_GENERICS_PAGING_INDICATOR_LORE)
             .withVariable("page_num_items", getCurrPageNumItems())
             .withVariable("total_num_items", getTotalNumItems())
             .withVariable("page_size", getPageSize())
+            .exportVariables()
         )
-        .build()
-    ), null, null);
+      ), null, null);
 
-    fixedItem(nextSlotExpr, () -> (
-      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_RIGHT.getOwner()))
-        .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_NAME))
-        .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_LORE))
-        .build()
-    ), e -> {
+    fixedItem(nextSlotExpr, () -> itemsProvider.getItem(StdGuiItem.NEXT_PAGE, null), e -> {
       nextPage(AnimationType.SLIDE_LEFT);
       redraw(String.valueOf(indicatorSlotExpr));
     }, null);
@@ -319,9 +313,9 @@ public class GuiInstance<T> {
 
   /**
    * Adds a fill of fixed items consiting of the provided material to the GUI
-   * @param item Item to use to fill
+   * @param itemsProvider Items provider ref
    */
-  protected void addFill(ItemStack item) {
+  protected void addFill(IStdGuiItemsProvider itemsProvider) {
     StringBuilder slotExpr = new StringBuilder();
 
     for (int i = 0; i < template.getRows() * 9; i++) {
@@ -329,14 +323,14 @@ public class GuiInstance<T> {
         slotExpr.append(i == 0 ? "" : ",").append(i);
     }
 
-    addSpacer(slotExpr.toString(), item);
+    addSpacer(slotExpr.toString(), itemsProvider);
   }
 
   /**
    * Adds a border of fixed items consiting of the provided material to the GUI
-   * @param item Item to use as a border
+   * @param itemsProvider Items provider ref
    */
-  protected void addBorder(ItemStack item) {
+  protected void addBorder(IStdGuiItemsProvider itemsProvider) {
     StringBuilder slotExpr = new StringBuilder();
 
     for (int i = 0; i < template.getRows(); i++) {
@@ -355,47 +349,44 @@ public class GuiInstance<T> {
       slotExpr.append(lastSlot);
     }
 
-    addSpacer(slotExpr.toString(), item);
+    addSpacer(slotExpr.toString(), itemsProvider);
   }
 
   /**
    * Adds a spacer with no name to a given slot
    * @param slotExpr Where to set the item
-   * @param item Item to use as a spacer
+   * @param itemsProvider Items provider ref
    */
-  protected void addSpacer(String slotExpr, ItemStack item) {
-    spacer = item;
+  protected void addSpacer(String slotExpr, IStdGuiItemsProvider itemsProvider) {
+    spacer = itemsProvider.getItem(StdGuiItem.BACKGROUND, null);
     fixedItem(slotExpr, () -> spacer, null, null);
-  }
-
-  /**
-   * Builds the standardized back button
-   */
-  private ItemStack buildBackButton() {
-    return new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner()))
-      .withName(cfg.get(ConfigKey.GUI_GENERICS_NAV_BACK_NAME))
-      .withLore(cfg.get(ConfigKey.GUI_GENERICS_NAV_BACK_LORE))
-      .build();
   }
 
   /**
    * Adds a back button as a fixed item to the GUI
    * @param slot Slot of the back button
    * @param clicked Event callback
+   * @param itemsProvider Items provider ref
    */
-  protected<A> void addBack(String slot, Consumer<InventoryManipulationEvent> clicked) {
-    fixedItem(slot, this::buildBackButton, clicked, null);
+  protected<A> void addBack(String slot, IStdGuiItemsProvider itemsProvider, Consumer<InventoryManipulationEvent> clicked) {
+    fixedItem(slot, () -> itemsProvider.getItem(StdGuiItem.BACK, null), clicked, null);
   }
 
   /**
    * Adds a back button as a fixed item to the GUI
    * @param slot Slot of the back button
+   * @param itemsProvider Items provider ref
    * @param gui Gui to open on click
    * @param param Gui parameter
    * @param animation Animation to use when navigating back
    */
-  protected<A> void addBack(String slot, AGui<A> gui, Supplier<A> param, @Nullable AnimationType animation) {
-    fixedItem(slot, this::buildBackButton, e -> switchTo(animation, gui, param == null ? null : param.get()), null);
+  protected<A> void addBack(String slot, IStdGuiItemsProvider itemsProvider, AGui<A> gui, Supplier<A> param, @Nullable AnimationType animation) {
+    fixedItem(
+      slot,
+      () -> itemsProvider.getItem(StdGuiItem.BACK, null),
+      e -> switchTo(animation, gui, param == null ? null : param.get()),
+      null
+    );
   }
 
   /**

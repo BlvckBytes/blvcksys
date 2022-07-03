@@ -48,6 +48,7 @@ public class ItemStackSection extends AConfigSection {
   private @Nullable ItemStackBaseEffectSection baseEffect;
   private ItemStackCustomEffectSection[] customEffects;
   private ItemStackBannerPatternSection[] bannerPatterns;
+  private boolean loreOverride;
 
   public ItemStackSection() {
     this.enchantments = new ItemStackEnchantmentSection[0];

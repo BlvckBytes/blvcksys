@@ -1,7 +1,6 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
-import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -23,6 +22,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 public class IgnoreDetailGui extends AGui<OfflinePlayer> {
 
   private final IIgnoreHandler ignore;
+  private final IStdGuiItemsProvider stdGuiItemsProvider;
 
   @AutoInjectLate
   private IgnoresGui ignoresGui;
@@ -31,7 +31,8 @@ public class IgnoreDetailGui extends AGui<OfflinePlayer> {
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
     @AutoInject IPlayerTextureHandler textures,
-    @AutoInject IIgnoreHandler ignore
+    @AutoInject IIgnoreHandler ignore,
+    @AutoInject IStdGuiItemsProvider stdGuiItemsProvider
   ) {
     super(4, "", i -> (
       cfg.get(ConfigKey.GUI_IGNORE_TITLE)
@@ -39,6 +40,7 @@ public class IgnoreDetailGui extends AGui<OfflinePlayer> {
     ), plugin, cfg, textures);
 
     this.ignore = ignore;
+    this.stdGuiItemsProvider = stdGuiItemsProvider;
   }
 
   @Override
@@ -50,8 +52,9 @@ public class IgnoreDetailGui extends AGui<OfflinePlayer> {
   protected boolean opening(GuiInstance<OfflinePlayer> inst) {
     Player p = inst.getViewer();
 
-    inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
-    inst.addBack("27", ignoresGui, null, AnimationType.SLIDE_RIGHT);
+    inst.addFill(stdGuiItemsProvider);
+
+    inst.addBack("27", stdGuiItemsProvider, ignoresGui, null, AnimationType.SLIDE_RIGHT);
 
     inst.fixedItem("12", () -> (
       new ItemStackBuilder(Material.NAME_TAG)

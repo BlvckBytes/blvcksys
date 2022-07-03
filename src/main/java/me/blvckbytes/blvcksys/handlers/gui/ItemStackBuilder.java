@@ -368,8 +368,12 @@ public class ItemStackBuilder {
     if (data.getName() != null)
       res.withName(data.getName());
 
-    if (data.getLore() != null)
-      res.withLore(data.getLore());
+    if (data.getLore() != null) {
+      if (data.isLoreOverride())
+        res.setLore(data.getLore());
+      else
+        res.withLore(data.getLore());
+    }
 
     if (data.getFlags() != null) {
       res.meta.getItemFlags().forEach(res.meta::removeItemFlags);

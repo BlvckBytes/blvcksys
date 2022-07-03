@@ -16,9 +16,15 @@ import java.util.function.Consumer;
 public record YesNoParam(
   // Type of yes/no to be displayed in the title
   String type,
-  ItemStack background,
+
+  IStdGuiItemsProvider itemsProvider,
+
+  // Button to display for YES
   ItemStack yesButton,
+
+  // Button to display for NO
   ItemStack noButton,
+
   // Three states: SUCC=yes, ERR=no, EMPTY=inv closed
   BiConsumer<TriResult, GuiInstance<?>> choice,
   // Back button, providing a ref to the GUI about to navigate away from

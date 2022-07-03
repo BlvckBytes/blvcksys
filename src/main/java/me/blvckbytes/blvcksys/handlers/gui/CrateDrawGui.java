@@ -2,7 +2,6 @@ package me.blvckbytes.blvcksys.handlers.gui;
 
 import me.blvckbytes.blvcksys.commands.IGiveCommand;
 import me.blvckbytes.blvcksys.config.ConfigKey;
-import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -41,6 +40,7 @@ public class CrateDrawGui extends AGui<CrateModel> {
   private final ICrateHandler crateHandler;
   private final CrateContentGui crateContentGui;
   private final IGiveCommand give;
+  private final IStdGuiItemsProvider stdGuiItemsProvider;
 
   public CrateDrawGui(
     @AutoInject IConfig cfg,
@@ -48,7 +48,8 @@ public class CrateDrawGui extends AGui<CrateModel> {
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject ICrateHandler crateHandler,
     @AutoInject CrateContentGui crateContentGui,
-    @AutoInject IGiveCommand give
+    @AutoInject IGiveCommand give,
+    @AutoInject IStdGuiItemsProvider stdGuiItemsProvider
   ) {
     super(5, "", i -> (
       cfg.get(ConfigKey.GUI_CRATE_DRAW_NAME).
@@ -58,6 +59,7 @@ public class CrateDrawGui extends AGui<CrateModel> {
     this.crateHandler = crateHandler;
     this.crateContentGui = crateContentGui;
     this.give = give;
+    this.stdGuiItemsProvider = stdGuiItemsProvider;
 
     this.drawing = new HashSet<>();
   }
@@ -137,7 +139,7 @@ public class CrateDrawGui extends AGui<CrateModel> {
 
     // Resize to only show the rows required by the layout
     inst.resize(layout.getRowsRequired(), false);
-    inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
+    inst.addFill(stdGuiItemsProvider);
 
     inst.fixedItem(layout.getMarkerSlots(), () -> (
       new ItemStackBuilder(Material.PURPLE_STAINED_GLASS_PANE)

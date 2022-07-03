@@ -11,7 +11,6 @@ import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.events.ManipulationAction;
 import me.blvckbytes.blvcksys.handlers.IAHHandler;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
-import me.blvckbytes.blvcksys.handlers.TriResult;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.SymbolicHead;
 import me.blvckbytes.blvcksys.util.TimeUtil;
@@ -64,6 +63,7 @@ public class AHCreateGui extends AGui<Object> {
   private final IGiveCommand giveCommand;
   private final Map<Player, AHCreateState> states;
   private final IAHHandler ahHandler;
+  private final IStdGuiItemsProvider stdGuiItemsProvider;
 
   public AHCreateGui(
     @AutoInject IConfig cfg,
@@ -72,7 +72,8 @@ public class AHCreateGui extends AGui<Object> {
     @AutoInject TimeUtil timeUtil,
     @AutoInject ChatUtil chatUtil,
     @AutoInject IGiveCommand giveCommand,
-    @AutoInject IAHHandler ahHandler
+    @AutoInject IAHHandler ahHandler,
+    @AutoInject IStdGuiItemsProvider stdGuiItemsProvider
   ) {
     super(3, "", i -> (
       cfg.get(ConfigKey.GUI_CREATE_AH)
@@ -84,6 +85,7 @@ public class AHCreateGui extends AGui<Object> {
     this.chatUtil = chatUtil;
     this.giveCommand = giveCommand;
     this.ahHandler = ahHandler;
+    this.stdGuiItemsProvider = stdGuiItemsProvider;
   }
 
   @Override
@@ -118,8 +120,9 @@ public class AHCreateGui extends AGui<Object> {
 
     Runnable back = () -> inst.switchTo(AnimationType.SLIDE_RIGHT, ahProfileGui, null);
 
-    inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
-    inst.addBack("18", e -> back.run());
+    inst.addFill(stdGuiItemsProvider);
+
+    inst.addBack("18", stdGuiItemsProvider, e -> back.run());
 
     // Auction item markers
     inst.fixedItem("4,22", () -> (

@@ -1,7 +1,6 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
-import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -26,13 +25,15 @@ public class FurnacesGui extends AGui<Object> {
 
   private final IVirtualFurnaceHandler furnaceHandler;
   private final VirtualFurnaceGui furnaceGui;
+  private final IStdGuiItemsProvider stdGuiItemsProvider;
 
   public FurnacesGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject IVirtualFurnaceHandler furnaceHandler,
-    @AutoInject VirtualFurnaceGui furnaceGui
+    @AutoInject VirtualFurnaceGui furnaceGui,
+    @AutoInject IStdGuiItemsProvider stdGuiItemsProvider
   ) {
     super(5, "10-16,19-25,28-34", i -> (
       cfg.get(ConfigKey.GUI_FURNACES)
@@ -41,6 +42,7 @@ public class FurnacesGui extends AGui<Object> {
 
     this.furnaceHandler = furnaceHandler;
     this.furnaceGui = furnaceGui;
+    this.stdGuiItemsProvider = stdGuiItemsProvider;
   }
 
   @Override
@@ -52,8 +54,10 @@ public class FurnacesGui extends AGui<Object> {
   protected boolean opening(GuiInstance<Object> inst) {
     Player p = inst.getViewer();
 
-    inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
-    inst.addPagination("37", "40", "43");
+    inst.addFill(stdGuiItemsProvider);
+
+    // Paginator
+    inst.addPagination("37", "40", "43", stdGuiItemsProvider);
 
     inst.setPageContents(() -> (
       furnaceHandler.listFurnaces(p).stream()

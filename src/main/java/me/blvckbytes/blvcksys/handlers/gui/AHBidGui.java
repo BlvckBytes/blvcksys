@@ -1,7 +1,6 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
-import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -38,6 +37,7 @@ public class AHBidGui extends AGui<AHAuctionModel> {
 
   private final ChatUtil chatUtil;
   private final IAHHandler ahHandler;
+  private final IStdGuiItemsProvider stdGuiItemsProvider;
 
   @AutoInjectLate
   private AHGui ahGui;
@@ -47,7 +47,8 @@ public class AHBidGui extends AGui<AHAuctionModel> {
     @AutoInject JavaPlugin plugin,
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject IAHHandler ahHandler,
-    @AutoInject ChatUtil chatUtil
+    @AutoInject ChatUtil chatUtil,
+    @AutoInject IStdGuiItemsProvider stdGuiItemsProvider
   ) {
     super(3, "", i -> (
       cfg.get(ConfigKey.GUI_BID_AH)
@@ -55,6 +56,7 @@ public class AHBidGui extends AGui<AHAuctionModel> {
 
     this.ahHandler = ahHandler;
     this.chatUtil = chatUtil;
+    this.stdGuiItemsProvider = stdGuiItemsProvider;
 
     // Redraw the GUI if it contains an auction which has just received a new bid
     ahHandler.registerBidInterest((auction, bid) -> {
@@ -83,8 +85,9 @@ public class AHBidGui extends AGui<AHAuctionModel> {
 
     Runnable back = () -> inst.switchTo(AnimationType.SLIDE_RIGHT, ahGui, null);;
 
-    inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
-    inst.addBack("18", e -> back.run());
+    inst.addFill(stdGuiItemsProvider);
+
+    inst.addBack("18", stdGuiItemsProvider, e -> back.run());
 
     // Target item status indicators
     inst.fixedItem("2,20", () -> createStatusIndicator(inst).orElse(null), null, null);

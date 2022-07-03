@@ -1,7 +1,6 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
-import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -28,14 +27,18 @@ public class ConfirmationGui extends AGui<BiConsumer<TriResult, GuiInstance<?>>>
 
   // Players which made a selection in the GUI don't trigger the callback on close
   private final Set<Player> madeSelection;
+  private final IStdGuiItemsProvider stdGuiItemsProvider;
 
   public ConfirmationGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IPlayerTextureHandler textures
+    @AutoInject IPlayerTextureHandler textures,
+    @AutoInject IStdGuiItemsProvider stdGuiItemsProvider
   ) {
     super(3, "", i -> cfg.get(ConfigKey.GUI_CONFIRMATION_TITLE), plugin, cfg, textures);
+
     this.madeSelection = new HashSet<>();
+    this.stdGuiItemsProvider = stdGuiItemsProvider;
   }
 
   @Override
@@ -49,7 +52,7 @@ public class ConfirmationGui extends AGui<BiConsumer<TriResult, GuiInstance<?>>>
   protected boolean opening(GuiInstance<BiConsumer<TriResult, GuiInstance<?>>> inst) {
     Player p = inst.getViewer();
 
-    inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
+    inst.addFill(stdGuiItemsProvider);
 
     inst.fixedItem("11", () -> (
       new ItemStackBuilder(Material.GREEN_TERRACOTTA)

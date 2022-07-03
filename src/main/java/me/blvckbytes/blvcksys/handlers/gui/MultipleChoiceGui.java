@@ -1,19 +1,19 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
-import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
-import me.blvckbytes.blvcksys.util.SymbolicHead;
 import net.minecraft.util.Tuple;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -65,27 +65,39 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
 
   @Override
   protected boolean opening(GuiInstance<MultipleChoiceParam> inst) {
+    MultipleChoiceParam arg = inst.getArg();
+    IStdGuiItemsProvider itemsProvider = arg.itemsProvider();
+
     if (!playerChoices.containsKey(inst))
       playerChoices.put(inst, new ArrayList<>());
 
     List<Tuple<Object, ItemStack>> choices = playerChoices.get(inst);
 
-    inst.addBorder(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build());
-    inst.addPagination("38", "40", "42");
+    inst.addBorder(itemsProvider);
+
+    inst.addPagination("38", "40", "42", itemsProvider);
 
     // Add another choice
-    inst.fixedItem("26", () -> (
-      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.GREEN_PLUS.getOwner()))
-        .withName(cfg.get(ConfigKey.GUI_MULTIPLECHOICE_ADD_NAME))
-        .withLore(cfg.get(ConfigKey.GUI_MULTIPLECHOICE_ADD_LORE))
-        .build()
+    inst.fixedItem("26", () -> itemsProvider.getItem(StdGuiItem.NEW_CHOICE,
+      ConfigValue.makeEmpty()
+        .withVariable("num_choices", choices.size())
+        .withVariable("remaining_choices", arg.representitives().size() - choices.size())
+        .exportVariables()
     ), e -> {
       // Allow to switch inventories temporary
       if (choices.size() == 0)
         choices.add(null);
 
       inst.switchTo(AnimationType.SLIDE_LEFT, singleChoiceGui, new SingleChoiceParam(
-        inst.getArg().type(), inst.getArg().representitives(), inst.getArg().customFilter(),
+        arg.type(),
+
+        // Filter out already selected representitives
+        arg.representitives().stream()
+          .filter(repr -> !choices.contains(repr))
+          .toList(),
+
+        itemsProvider, arg.customFilter(),
+
         // Add the new selection to the list of choices
         (sel, selInst) -> {
           choices.remove(null);
@@ -107,6 +119,7 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
           Bukkit.getScheduler().runTask(plugin, () -> inst.reopen(AnimationType.SLIDE_UP));
         },
         // Back button
+        arg.backButton() == null ? null :
         selInst -> {
           choices.remove(null);
           inst.reopen(AnimationType.SLIDE_RIGHT, selInst);
@@ -116,18 +129,18 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
 
     // Render the back button, if provided
     if (inst.getArg().backButton() != null) {
-      inst.addBack("36", e -> {
+      inst.addBack("36", itemsProvider, e -> {
         choices.add(null);
         inst.getArg().backButton().accept(inst);
       });
     }
 
     // Submit the list of choices
-    inst.fixedItem("44", () -> (
-      new ItemStackBuilder(textures.getProfileOrDefault(SymbolicHead.ARROW_RIGHT.getOwner()))
-        .withName(cfg.get(ConfigKey.GUI_MULTIPLECHOICE_SUBMIT_NAME))
-        .withLore(cfg.get(ConfigKey.GUI_MULTIPLECHOICE_SUBMIT_LORE))
-        .build()
+    inst.fixedItem("44", () -> itemsProvider.getItem(StdGuiItem.SUBMIT_CHOICES,
+      ConfigValue.makeEmpty()
+        .withVariable("num_choices", choices.size())
+        .withVariable("remaining_choices", arg.representitives().size() - choices.size())
+        .exportVariables()
     ), e -> {
       // Nothing chosen, relay to the close callback (cancelling)
       if (choices.size() == 0) {
@@ -143,12 +156,8 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
     inst.setPageContents(() -> (
       choices.stream()
         .map(choice -> new GuiItem(
-          // Override the item's lore
-          s -> (
-            new ItemStackBuilder(choice.b(), choice.b().getAmount())
-              .setLore(cfg.get(ConfigKey.GUI_MULTIPLECHOICE_SELECTED_LORE))
-              .build()
-          ),
+          // Transform selected items, if a transformer has been provided
+          s -> arg.selectionTransform() == null ? choice.b() : arg.selectionTransform().apply(choice.b()),
           // Remove choices by clicking on them
           e -> {
             choices.remove(choice);

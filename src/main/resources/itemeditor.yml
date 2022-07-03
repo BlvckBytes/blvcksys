@@ -122,10 +122,82 @@ items:
       type: BLACK_STAINED_GLASS_PANE
       name: ' '
 
+    back:
+      type: PLAYER_HEAD
+      textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTE4YTJkZDViZWYwYjA3M2IxMzI3MWE3ZWViOWNmZWE3YWZlODU5M2M1N2E5MzgyMWU0MzE3NTU3MjQ2MTgxMiJ9fX0='
+      name: '&7» &dZurück &7«'
+      lore:
+        - ' '
+        - '&7Navigiere zum &dvorherigen &7Menu.'
+
+    nextPage:
+      type: PLAYER_HEAD
+      textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZDllY2NjNWMxYzc5YWE3ODI2YTE1YTdmNWYxMmZiNDAzMjgxNTdjNTI0MjE2NGJhMmFlZjQ3ZTVkZTlhNWNmYyJ9fX0='
+      name: '&7» &dNächste Seite &7«'
+      lore:
+        - ' '
+        - '&7Navigiere zur &dnächsten &7Seite.'
+
+    previousPage:
+      type: PLAYER_HEAD
+      textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvODY0Zjc3OWE4ZTNmZmEyMzExNDNmYTY5Yjk2YjE0ZWUzNWMxNmQ2NjllMTljNzVmZDFhN2RhNGJmMzA2YyJ9fX0='
+      name: '&7» &dVorherige Seite &7«'
+      lore:
+        - ' '
+        - '&7Navigiere zur &dvorherigen &7Seite.'
+
+    currentPage:
+      type: PAPER
+      name: '&7» &dSeite {{curr_page}}&7/&d{{num_pages}} &7«'
+      lore:
+        - ' '
+        - '&7Seitengröße: &d{{page_size}}'
+        - '&7Ergebnisse: &d{{total_num_items}}'
+
+    search:
+      type: NAME_TAG
+      name: '&7» &dFreitextsuche &7«'
+      lore:
+        - ' '
+        - '&7Durchsuche die Ergebnisse in Echtzeit.'
+
+    newChoice:
+      type: PLAYER_HEAD
+      name: '&7» &aAuswahl hinzufügen &7«'
+      textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNWZmMzE0MzFkNjQ1ODdmZjZlZjk4YzA2NzU4MTA2ODFmOGMxM2JmOTZmNTFkOWNiMDdlZDc4NTJiMmZmZDEifX19'
+      lore:
+        - ' '
+        - '&7Füge eine weitere &dAuswahl &7hinzu.'
+        - '&7Anzahl ausgewählt: &d{{num_choices}}&7/&d{{remaining_choices}}'
+
+    submitChoices:
+      type: PLAYER_HEAD
+      name: '&7» &aWeiter &7«'
+      textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZDk5ZjI4MzMyYmNjMzQ5ZjQyMDIzYzI5ZTZlNjQxZjRiMTBhNmIxZTQ4NzE4Y2FlNTU3NDY2ZDUxZWI5MjIifX19'
+      lore:
+        - ' '
+        - '&7Bestätige deine aktuelle Auswahl.'
+
+    # If a available choice has been selected, it's item will be
+    # patched with the properties of this item
+    choiceSelected:
+      loreOverride: true
+      lore:
+        - ' '
+        - '&7Klicke, um diese Auswahl zu &dentfernen&7.'
+    
+    searchPlaceholder:
+      type: PURPLE_TERRACOTTA
+      name: ' '
+      lore:
+        - '&7Bitte gib den &dSuchbegriff &7in'
+        - '&7den &dAmboss &7ein, während dein'
+        - '&7Inventar die &dErgebnisse &7anzeigt.'
+
   home:
     increase:
       type: PLAYER_HEAD
-      textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOTRhMDRiMzJkMmI3NTk4ZjlkZDhlMjNmYjQwMTVjNjljM2NkOTQyYTM3YTllYTg0ZDA2ODY5ZjQ1OWYxIn19fQ=='
+      textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNmNjYmY5ODgzZGQzNTlmZGYyMzg1YzkwYTQ1OWQ3Mzc3NjUzODJlYzQxMTdiMDQ4OTVhYzRkYzRiNjBmYyJ9fX0='
       name: '&7» &dAnzahl erhöhen &7«'
       lore:
         - ' '
@@ -136,7 +208,7 @@ items:
 
     decrease:
       type: PLAYER_HEAD
-      textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMzkxMmQ0NWIxYzc4Y2MyMjQ1MjcyM2VlNjZiYTJkMTU3NzdjYzI4ODU2OGQ2YzFiNjJhNTQ1YjI5YzcxODcifX19'
+      textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNzI0MzE5MTFmNDE3OGI0ZDJiNDEzYWE3ZjVjNzhhZTQ0NDdmZTkyNDY5NDNjMzFkZjMxMTYzYzBlMDQzZTBkNiJ9fX0='
       name: '&7» &dAnzahl verringern &7«'
       lore:
         - ' '
@@ -150,7 +222,7 @@ items:
       name: ' '
 
     # If a category is locked due to missing permissions, it's item will be
-    # patched with the properties of this item (lore is extended)
+    # patched with the properties of this item
     missingPermission:
       type: BARRIER
       lore:
@@ -158,7 +230,7 @@ items:
         - '&cDu hast für diese Kategorie keine Rechte.'
 
     # If a category is not applicable, it's item will be
-    # patched with the properties of this item (lore is extended)
+    # patched with the properties of this item
     notApplicable:
       type: BARRIER
       lore:

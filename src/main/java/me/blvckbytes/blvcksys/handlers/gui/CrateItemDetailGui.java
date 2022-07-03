@@ -1,7 +1,6 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
-import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -31,6 +30,7 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
   private final ChatUtil chatUtil;
   private final ConfirmationGui confirmationGui;
   private final ItemEditorGui itemEditorGui;
+  private final IStdGuiItemsProvider stdGuiItemsProvider;
 
   @AutoInjectLate
   private CrateContentGui crateContentGui;
@@ -42,7 +42,8 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
     @AutoInject ICrateHandler crateHandler,
     @AutoInject ChatUtil chatUtil,
     @AutoInject ConfirmationGui confirmationGui,
-    @AutoInject ItemEditorGui itemEditorGui
+    @AutoInject ItemEditorGui itemEditorGui,
+    @AutoInject IStdGuiItemsProvider stdGuiItemsProvider
   ) {
     super(6, "", i -> (
       cfg.get(ConfigKey.GUI_CRATE_DETAIL_NAME).
@@ -53,6 +54,7 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
     this.chatUtil = chatUtil;
     this.confirmationGui = confirmationGui;
     this.itemEditorGui = itemEditorGui;
+    this.stdGuiItemsProvider = stdGuiItemsProvider;
   }
 
   @Override
@@ -66,10 +68,13 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
     CrateModel crate = inst.getArg().a();
     CrateItemModel item = inst.getArg().b();
 
-    inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
+    inst.addFill(stdGuiItemsProvider);
     inst.fixedItem("12,14,22", () -> new ItemStackBuilder(Material.PURPLE_STAINED_GLASS_PANE).build(), null, null);
 
-    inst.addBack("45", crateContentGui, () -> new Tuple<>(inst.getArg().a(), true), AnimationType.SLIDE_RIGHT);
+    inst.addBack(
+      "45", stdGuiItemsProvider, crateContentGui,
+      () -> new Tuple<>(inst.getArg().a(), true), AnimationType.SLIDE_RIGHT
+    );
 
     // Selected item showcase
     inst.fixedItem("13", () -> crateContentGui.appendDecoration(inst.getArg().a(), inst.getArg().b()), null, null);

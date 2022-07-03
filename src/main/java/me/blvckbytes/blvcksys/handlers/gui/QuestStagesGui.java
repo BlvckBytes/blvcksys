@@ -29,6 +29,7 @@ import java.util.*;
 public class QuestStagesGui extends AGui<QuestSection> {
 
   private final IQuestHandler quests;
+  private final IStdGuiItemsProvider stdGuiItemsProvider;
 
   @AutoInjectLate
   private QuestsGui questsGui;
@@ -37,7 +38,8 @@ public class QuestStagesGui extends AGui<QuestSection> {
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
     @AutoInject IPlayerTextureHandler textures,
-    @AutoInject IQuestHandler quests
+    @AutoInject IQuestHandler quests,
+    @AutoInject IStdGuiItemsProvider stdGuiItemsProvider
   ) {
     super(5, "10-16,19-25,28-34", i -> (
       cfg.get(ConfigKey.GUI_QUEST_STAGES_TITLE)
@@ -45,6 +47,7 @@ public class QuestStagesGui extends AGui<QuestSection> {
     ), plugin, cfg, textures);
 
     this.quests = quests;
+    this.stdGuiItemsProvider = stdGuiItemsProvider;
 
     // Refresh the page contents for the viewer that just made progress
     quests.registerProgressInterest(p -> {
@@ -61,9 +64,12 @@ public class QuestStagesGui extends AGui<QuestSection> {
   protected boolean opening(GuiInstance<QuestSection> inst) {
     Player p = inst.getViewer();
 
-    inst.addBorder(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build());
-    inst.addPagination("38", "40", "42");
-    inst.addBack("36", questsGui, null, AnimationType.SLIDE_RIGHT);
+    inst.addBorder(stdGuiItemsProvider);
+
+    // Paginator
+    inst.addPagination("38", "40", "42", stdGuiItemsProvider);
+
+    inst.addBack("36", stdGuiItemsProvider, questsGui, null, AnimationType.SLIDE_RIGHT);
 
     inst.setPageContents(() -> {
       List<GuiItem> contents = new ArrayList<>();

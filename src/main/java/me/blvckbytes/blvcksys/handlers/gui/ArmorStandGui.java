@@ -66,6 +66,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
   private final IArmorStandHandler standHandler;
   private final ItemEditorGui itemEditorGui;
   private final ChatUtil chatUtil;
+  private final IStdGuiItemsProvider stdGuiItemsProvider;
 
   public ArmorStandGui(
     @AutoInject IConfig cfg,
@@ -73,7 +74,8 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject IArmorStandHandler standHandler,
     @AutoInject ItemEditorGui itemEditorGui,
-    @AutoInject ChatUtil chatUtil
+    @AutoInject ChatUtil chatUtil,
+    @AutoInject IStdGuiItemsProvider stdGuiItemsProvider
   ) {
     super(6, "", i -> (
       cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_NAME).
@@ -84,6 +86,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
     this.standHandler = standHandler;
     this.chatUtil = chatUtil;
     this.itemEditorGui = itemEditorGui;
+    this.stdGuiItemsProvider = stdGuiItemsProvider;
   }
 
   @Override
@@ -107,7 +110,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
       return false;
     }
 
-    inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
+    inst.addFill(stdGuiItemsProvider);
 
     /////////////////////////////////// Body Columns ////////////////////////////////////
 

@@ -31,8 +31,6 @@ import java.util.function.Supplier;
 */
 public class UserInputChain {
 
-  // TODO: Add custom text/item parameters to all input types
-
   private final SingleChoiceGui singleChoiceGui;
   private final ChatUtil chatUtil;
 
@@ -158,13 +156,16 @@ public class UserInputChain {
    * @param gui GUI ref
    * @param field Name of the field
    * @param type Type of choice (part of the screen title)
+   * @param stdProvider Provider for standard GUI items
+   * @param yesButton Button to display for the YES action
+   * @param noButton Button to display for the NO action
    * @param skip Optional skip predicate
    */
   public UserInputChain withYesNo(
     YesNoGui gui,
     String field,
     ConfigValue type,
-    ItemStack background,
+    IStdGuiItemsProvider stdProvider,
     ItemStack yesButton,
     ItemStack noButton,
     @Nullable Function<Map<String, Object>, Boolean> skip
@@ -177,7 +178,7 @@ public class UserInputChain {
       }
 
       YesNoParam param = new YesNoParam(
-        type.asScalar(), background, yesButton, noButton,
+        type.asScalar(), stdProvider, yesButton, noButton,
 
         // Has chosen
         (selection, selectionInst) -> {
@@ -226,46 +227,35 @@ public class UserInputChain {
    * Add a new single choice stage
    * @param field Name of the field
    * @param type Type of choice (part of the screen title)
+   * @param stdProvider Provider for standard GUI items
    * @param representitives List of representitive items and their values
    * @param skip Optional skip predicate
    */
   public UserInputChain withChoice(
     String field,
     ConfigValue type,
+    IStdGuiItemsProvider stdProvider,
     Function<Map<String, Object>, List<Tuple<Object, ItemStack>>> representitives,
     @Nullable Function<Map<String, Object>, Boolean> skip
   ) {
-    return withChoice(null, field, type, representitives, skip);
+    return withChoice(null, null, field, type, stdProvider, representitives, skip);
   }
 
   /**
-   * Add a new single choice stage
-   * @param field Name of the field
-   * @param type Type of choice (part of the screen title)
-   * @param representitives List of representitive items and their values
-   * @param skip Optional skip predicate
-   */
-  public UserInputChain withChoice(
-    String field,
-    ConfigValue type,
-    Supplier<List<Tuple<Object, ItemStack>>> representitives,
-    @Nullable Function<Map<String, Object>, Boolean> skip
-  ) {
-    return withChoice(null, field, type, v -> representitives.get(), skip);
-  }
-
-  /**
-   * Add a new single choice stage
+   * Add a new choice stage
    * @param multipleChoiceGui Multiple choice GUI ref, leave at null for single choices
    * @param field Name of the field
    * @param type Type of choice (part of the screen title)
+   * @param stdProvider Provider for standard GUI items
    * @param representitives List of representitive items and their values
    * @param skip Optional skip predicate
    */
   public UserInputChain withChoice(
     @Nullable MultipleChoiceGui multipleChoiceGui,
+    @Nullable Function<ItemStack, ItemStack> selectionTransform,
     String field,
     ConfigValue type,
+    IStdGuiItemsProvider stdProvider,
     Function<Map<String, Object>, List<Tuple<Object, ItemStack>>> representitives,
     @Nullable Function<Map<String, Object>, Boolean> skip
   ) {
@@ -306,8 +296,8 @@ public class UserInputChain {
       // Multiple choice
       if (multipleChoiceGui != null) {
         MultipleChoiceParam param = new MultipleChoiceParam(
-          type.asScalar(), representitives.apply(values), null,
-          selected::accept, closed::accept, back::accept
+          type.asScalar(), representitives.apply(values), stdProvider, selectionTransform,
+          null, selected::accept, closed::accept, back::accept
         );
 
         // Animate between last and current
@@ -322,8 +312,8 @@ public class UserInputChain {
       // Single choice
       else {
         SingleChoiceParam param = new SingleChoiceParam(
-          type.asScalar(), representitives.apply(values), null,
-          selected::accept, closed::accept, back::accept
+          type.asScalar(), representitives.apply(values), stdProvider,
+          null, selected::accept, closed::accept, back::accept
         );
 
         // Animate between last and current

@@ -9,7 +9,6 @@ import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.persistence.models.KitModel;
 import org.apache.commons.lang.WordUtils;
-import org.bukkit.Material;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -29,15 +28,20 @@ public class KitContentGui extends AGui<KitModel> {
   @AutoInjectLate
   private KitsGui kitsGui;
 
+  private final IStdGuiItemsProvider stdGuiItemsProvider;
+
   public KitContentGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IPlayerTextureHandler textures
+    @AutoInject IPlayerTextureHandler textures,
+    @AutoInject IStdGuiItemsProvider stdGuiItemsProvider
   ) {
     super(5, "10-16,19-25,28-34", i -> (
       cfg.get(ConfigKey.GUI_KIT_CONTENT_TITLE)
         .withVariable("name", i.getArg().getName())
     ), plugin, cfg, textures);
+
+    this.stdGuiItemsProvider = stdGuiItemsProvider;
   }
 
   @Override
@@ -47,8 +51,9 @@ public class KitContentGui extends AGui<KitModel> {
 
   @Override
   protected boolean opening(GuiInstance<KitModel> inst) {
-    inst.addBorder(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build());
-    inst.addBack("36", kitsGui, null, AnimationType.SLIDE_RIGHT);
+    inst.addBorder(stdGuiItemsProvider);
+
+    inst.addBack("36", stdGuiItemsProvider, kitsGui, null, AnimationType.SLIDE_RIGHT);
 
     inst.setPageContents(() -> (
       Arrays.stream(inst.getArg().getItems().getContents())

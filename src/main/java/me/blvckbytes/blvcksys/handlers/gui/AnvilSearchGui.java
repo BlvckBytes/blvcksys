@@ -1,6 +1,5 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
-import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
@@ -18,7 +17,6 @@ import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.PacketPlayInItemName;
 import net.minecraft.util.Tuple;
 import org.bukkit.Bukkit;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -59,8 +57,7 @@ public class AnvilSearchGui extends AGui<SingleChoiceParam> implements IPacketMo
     @AutoInject IFakeItemCommunicator fakeItem
   ) {
     super(3, "", i -> (
-      cfg.get(ConfigKey.GUI_ANVILSEARCH_TITLE)
-        .withVariable("type", i.getArg().type())
+      ConfigValue.immediate(i.getArg().type())
     ), plugin, cfg, textures, InventoryType.ANVIL);
 
     this.refl = refl;
@@ -89,18 +86,17 @@ public class AnvilSearchGui extends AGui<SingleChoiceParam> implements IPacketMo
 
   @Override
   protected boolean opening(GuiInstance<SingleChoiceParam> inst) {
+    IStdGuiItemsProvider itemsProvider = inst.getArg().itemsProvider();
+
     // This item serves as a placeholder to get the typing functionality up and working, while
     // it also informes the player about the concept of filtering
     inst.fixedItem("0", () -> (
-      new ItemStackBuilder(Material.PURPLE_TERRACOTTA)
-        .withName(ConfigValue.immediate(" "))
-        .withLore(cfg.get(ConfigKey.GUI_ANVILSEARCH_ITEM_LORE))
-        .build()
+      itemsProvider.getItem(StdGuiItem.SEARCH_PLACEHOLDER, null)
     ), null, null);
 
     // Back button
     if (inst.getArg().backButton() != null) {
-      inst.addBack("1", e -> {
+      inst.addBack("1", itemsProvider, e -> {
         madeSelection.add(inst.getViewer());
         inst.getArg().backButton().accept(inst);
       });

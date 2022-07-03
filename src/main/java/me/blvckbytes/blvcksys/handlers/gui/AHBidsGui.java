@@ -1,24 +1,20 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
-import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.handlers.IAHHandler;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
-import me.blvckbytes.blvcksys.handlers.TriResult;
 import me.blvckbytes.blvcksys.persistence.models.AHAuctionModel;
 import me.blvckbytes.blvcksys.persistence.models.AHBidModel;
 import net.minecraft.util.Tuple;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 /*
@@ -33,6 +29,7 @@ public class AHBidsGui extends AGui<Object> {
 
   private final IAHHandler ahHandler;
   private final AHBidGui ahBidGui;
+  private final IStdGuiItemsProvider stdGuiItemsProvider;
 
   @AutoInjectLate
   private AHProfileGui ahProfileGui;
@@ -45,7 +42,8 @@ public class AHBidsGui extends AGui<Object> {
     @AutoInject JavaPlugin plugin,
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject IAHHandler ahHandler,
-    @AutoInject AHBidGui ahBidGui
+    @AutoInject AHBidGui ahBidGui,
+    @AutoInject IStdGuiItemsProvider stdGuiItemsProvider
   ) {
     super(5, "10-16,19-25,28-34", i -> (
       cfg.get(ConfigKey.GUI_BIDS_AH)
@@ -54,6 +52,7 @@ public class AHBidsGui extends AGui<Object> {
 
     this.ahHandler = ahHandler;
     this.ahBidGui = ahBidGui;
+    this.stdGuiItemsProvider = stdGuiItemsProvider;
   }
 
   @Override
@@ -66,9 +65,12 @@ public class AHBidsGui extends AGui<Object> {
     Player p = inst.getViewer();
     Runnable back = () -> inst.switchTo(AnimationType.SLIDE_RIGHT, ahProfileGui, null);;
 
-    inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
-    inst.addPagination("38", "40", "42");
-    inst.addBack("36", e -> back.run());
+    inst.addFill(stdGuiItemsProvider);
+
+    // Paginator
+    inst.addPagination("38", "40", "42", stdGuiItemsProvider);
+
+    inst.addBack("36", stdGuiItemsProvider, e -> back.run());
 
     inst.setPageContents(() -> {
       List<Tuple<AHAuctionModel, AHBidModel>> auctions = ahHandler.listParticipatingOrRetrievableBidAuctions(p);

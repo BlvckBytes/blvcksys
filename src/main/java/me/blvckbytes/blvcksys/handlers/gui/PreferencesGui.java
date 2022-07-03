@@ -1,7 +1,6 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
-import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
@@ -36,6 +35,7 @@ public class PreferencesGui extends AGui<Object> {
   private final IObjectiveHandler obj;
   private final SingleChoiceGui singleChoiceGui;
   private final ItemEditorGui itemEditorGui;
+  private final IStdGuiItemsProvider stdGuiItemsProvider;
 
   public PreferencesGui(
     @AutoInject IConfig cfg,
@@ -44,7 +44,8 @@ public class PreferencesGui extends AGui<Object> {
     @AutoInject IPreferencesHandler prefs,
     @AutoInject IObjectiveHandler obj,
     @AutoInject SingleChoiceGui singleChoiceGui,
-    @AutoInject ItemEditorGui itemEditorGui
+    @AutoInject ItemEditorGui itemEditorGui,
+    @AutoInject IStdGuiItemsProvider stdGuiItemsProvider
   ) {
     super(4, "", i -> (
       cfg.get(ConfigKey.GUI_PREFERENCES_TITLE)
@@ -55,6 +56,7 @@ public class PreferencesGui extends AGui<Object> {
     this.obj = obj;
     this.itemEditorGui = itemEditorGui;
     this.singleChoiceGui = singleChoiceGui;
+    this.stdGuiItemsProvider = stdGuiItemsProvider;
   }
 
   @Override
@@ -66,7 +68,7 @@ public class PreferencesGui extends AGui<Object> {
   protected boolean opening(GuiInstance<Object> inst) {
     Player p = inst.getViewer();
 
-    inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
+    inst.addFill(stdGuiItemsProvider);
 
     // Msg disable
     inst.addStateToggle("19", "10", () -> !prefs.isMsgDisabled(p), s -> prefs.setMsgDisabled(p, s));
@@ -153,13 +155,15 @@ public class PreferencesGui extends AGui<Object> {
         .withChoice(
           "particle",
           cfg.get(ConfigKey.GUI_PREFERENCES_ARROW_TRAILS_PARTICLE_TITLE),
-          () -> generateParticleReprs(p),
+          stdGuiItemsProvider,
+          values -> generateParticleReprs(p),
           null
         )
         .withChoice(
           "color",
           cfg.get(ConfigKey.GUI_PREFERENCES_ARROW_TRAILS_COLOR_TITLE),
-          () -> itemEditorGui.generateColorReprs(this::colorToMaterial),
+          stdGuiItemsProvider,
+          values -> itemEditorGui.generateColorReprs(this::colorToMaterial),
           values -> {
             // Skip whenever either the particle doesn't support color or the player hasn't yet unlocked this effect
             Particle particle = (Particle) values.get("particle");

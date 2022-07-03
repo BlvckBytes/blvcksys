@@ -22,6 +22,10 @@ public record SingleChoiceParam(
   // List of choices, objects represented by itemstacks
   List<Tuple<Object, ItemStack>> representitives,
 
+  // Provider for standard items used in GUIs
+  IStdGuiItemsProvider itemsProvider,
+
+  // Custom external filtering function
   @Nullable Function<String, List<Tuple<Object, ItemStack>>> customFilter,
 
   // Selection callback, provides the bound object and the GUI ref

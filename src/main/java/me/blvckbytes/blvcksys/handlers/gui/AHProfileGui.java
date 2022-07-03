@@ -1,7 +1,6 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
-import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -23,6 +22,7 @@ public class AHProfileGui extends AGui<Object> {
   private final AHCreateGui ahCreateGui;
   private final AHBidsGui ahBidsGui;
   private final AHAuctionsGui ahAuctionsGui;
+  private final IStdGuiItemsProvider stdGuiItemsProvider;
 
   @AutoInjectLate
   private AHGui ahGui;
@@ -33,7 +33,8 @@ public class AHProfileGui extends AGui<Object> {
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject AHCreateGui ahCreateGui,
     @AutoInject AHBidsGui ahBidsGui,
-    @AutoInject AHAuctionsGui ahAuctionsGui
+    @AutoInject AHAuctionsGui ahAuctionsGui,
+    @AutoInject IStdGuiItemsProvider stdGuiItemsProvider
   ) {
     super(3, "", i -> (
       cfg.get(ConfigKey.GUI_PROFILE_AH)
@@ -43,6 +44,7 @@ public class AHProfileGui extends AGui<Object> {
     this.ahCreateGui = ahCreateGui;
     this.ahBidsGui = ahBidsGui;
     this.ahAuctionsGui = ahAuctionsGui;
+    this.stdGuiItemsProvider = stdGuiItemsProvider;
   }
 
   @Override
@@ -53,8 +55,11 @@ public class AHProfileGui extends AGui<Object> {
   @Override
   protected boolean opening(GuiInstance<Object> inst) {
 
-    inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
-    inst.addBack("18", ahGui, null, AnimationType.SLIDE_RIGHT);
+    inst.addFill(stdGuiItemsProvider);
+
+    inst.addBack(
+      "18", stdGuiItemsProvider, ahGui, null, AnimationType.SLIDE_RIGHT
+    );
 
     // New entry
     inst.fixedItem("11", () -> (

@@ -1,7 +1,6 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import me.blvckbytes.blvcksys.config.ConfigKey;
-import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -33,6 +32,7 @@ public class HomesGui extends AGui<OfflinePlayer> {
   private final ConfirmationGui confirmationGui;
   private final SingleChoiceGui singleChoiceGui;
   private final ItemEditorGui itemEditorGui;
+  private final IStdGuiItemsProvider stdGuiItemsProvider;
 
   public HomesGui(
     @AutoInject IConfig cfg,
@@ -41,7 +41,8 @@ public class HomesGui extends AGui<OfflinePlayer> {
     @AutoInject IHomeHandler homeHandler,
     @AutoInject ConfirmationGui confirmationGui,
     @AutoInject SingleChoiceGui singleChoiceGui,
-    @AutoInject ItemEditorGui itemEditorGui
+    @AutoInject ItemEditorGui itemEditorGui,
+    @AutoInject IStdGuiItemsProvider stdGuiItemsProvider
   ) {
     super(5, "10-16,19-25,28-34", i -> (
       cfg.get(ConfigKey.GUI_HOMES)
@@ -52,6 +53,7 @@ public class HomesGui extends AGui<OfflinePlayer> {
     this.confirmationGui = confirmationGui;
     this.singleChoiceGui = singleChoiceGui;
     this.itemEditorGui = itemEditorGui;
+    this.stdGuiItemsProvider = stdGuiItemsProvider;
   }
 
   @Override
@@ -64,8 +66,10 @@ public class HomesGui extends AGui<OfflinePlayer> {
     Player p = inst.getViewer();
     boolean isSelf = inst.getArg().equals(p);
 
-    inst.addFill(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).withName(ConfigValue.immediate(" ")).build());
-    inst.addPagination("37", "40", "43");
+    inst.addFill(stdGuiItemsProvider);
+
+    // Paginator
+    inst.addPagination("37", "40", "43", stdGuiItemsProvider);
 
     inst.setPageContents(() -> {
       List<HomeModel> homes = homeHandler.listHomes(inst.getArg());
@@ -153,7 +157,8 @@ public class HomesGui extends AGui<OfflinePlayer> {
       .withChoice(
         "material",
         cfg.get(ConfigKey.GUI_HOMES_CHOICE_ICON_TITLE),
-        itemEditorGui::buildMaterialRepresentitives,
+        stdGuiItemsProvider,
+        values -> itemEditorGui.buildMaterialRepresentitives(),
         null
       )
       .start();
@@ -199,7 +204,8 @@ public class HomesGui extends AGui<OfflinePlayer> {
       .withChoice(
         "color",
         cfg.get(ConfigKey.GUI_HOMES_CHOICE_COLOR_TITLE),
-        this::buildChatColorRepresentitives,
+        stdGuiItemsProvider,
+        values -> this.buildChatColorRepresentitives(),
         null
       )
       .start();

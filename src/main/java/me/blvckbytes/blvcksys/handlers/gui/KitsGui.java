@@ -13,7 +13,6 @@ import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.KitModel;
 import me.blvckbytes.blvcksys.util.TimeUtil;
 import net.minecraft.util.Tuple;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -43,6 +42,7 @@ public class KitsGui extends AGui<Object> implements Listener {
 
   private final IPersistence pers;
   private final TimeUtil time;
+  private final IStdGuiItemsProvider stdGuiItemsProvider;
 
   @AutoInjectLate
   private KitContentGui kitContentGui;
@@ -53,7 +53,8 @@ public class KitsGui extends AGui<Object> implements Listener {
     @AutoInject IPersistence pers,
     @AutoInject TimeUtil time,
     @AutoInject IPlayerTextureHandler textures,
-    @AutoInject IKitCommand kits
+    @AutoInject IKitCommand kits,
+    @AutoInject IStdGuiItemsProvider stdGuiItemsProvider
   ) {
     super(5, "10-16,19-25,28-34", i -> (
       cfg.get(ConfigKey.GUI_KITS_TITLE)
@@ -64,6 +65,7 @@ public class KitsGui extends AGui<Object> implements Listener {
     this.time = time;
 
     this.cooldownCaches = new HashMap<>();
+    this.stdGuiItemsProvider = stdGuiItemsProvider;
 
     // Invalidate the cooldown cache whenever a kit has been requested
     kits.registerRequestInterest((p, kit) -> {
@@ -81,8 +83,10 @@ public class KitsGui extends AGui<Object> implements Listener {
   protected boolean opening(GuiInstance<Object> inst) {
     Player p = inst.getViewer();
 
-    inst.addBorder(new ItemStackBuilder(Material.BLACK_STAINED_GLASS_PANE).build());
-    inst.addPagination("37", "40", "43");
+    inst.addBorder(stdGuiItemsProvider);
+
+    // Paginator
+    inst.addPagination("37", "40", "43", stdGuiItemsProvider);
 
     List<KitModel> kits = pers.list(KitModel.class);
 

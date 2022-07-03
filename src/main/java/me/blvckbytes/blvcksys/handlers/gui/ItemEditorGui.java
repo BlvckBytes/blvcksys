@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.handlers.gui;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
+import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.sections.itemeditor.IEPerm;
@@ -13,6 +14,7 @@ import me.blvckbytes.blvcksys.packets.communicators.bookeditor.IBookEditorCommun
 import me.blvckbytes.blvcksys.persistence.models.PlayerTextureModel;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.MCReflect;
+import me.blvckbytes.blvcksys.util.SymbolicHead;
 import me.blvckbytes.blvcksys.util.Triple;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.util.Tuple;
@@ -103,7 +105,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
   @Override
   protected boolean opening(GuiInstance<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<GuiInstance<?>>>> inst) {
-    inst.addFill(ies.getItems().getGeneric().getBackground().build());
+    inst.addFill(ies.getItems().getGeneric());
 
     ItemStack item = inst.getArg().a();
     ItemMeta meta = item.getItemMeta();
@@ -122,9 +124,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     // Only render the back button if a callback has been provided
     Consumer<GuiInstance<?>> back = inst.getArg().c();
-    if (back != null) {
-      inst.addBack("45", e -> back.accept(inst));
-    }
+    if (back != null)
+      inst.addBack("45", ies.getItems().getGeneric(), e -> back.accept(inst));
 
     ///////////////////////////////////// Preview //////////////////////////////////////
 
@@ -324,7 +325,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         .withChoice(
           "material",
           ies.getTitles().getMaterialChoice(),
-          this::buildMaterialRepresentitives,
+          ies.getItems().getGeneric(),
+          values -> this.buildMaterialRepresentitives(),
           null
         )
         .start();
@@ -367,7 +369,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         .withChoice(
           "flag",
           ies.getTitles().getFlagChoice(),
-          () -> buildItemFlagRepresentitives(meta::hasItemFlag),
+          ies.getItems().getGeneric(),
+          values -> buildItemFlagRepresentitives(meta::hasItemFlag),
           null
         )
         .start();
@@ -421,7 +424,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         .withChoice(
           "enchantment",
           ies.getTitles().getEnchantmentChoice(),
-          () -> buildEnchantmentRepresentitives(
+          ies.getItems().getGeneric(),
+          values -> buildEnchantmentRepresentitives(
             ench -> ench.canEnchantItem(item),
             meta::hasEnchant,
             meta::getEnchantLevel
@@ -557,7 +561,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withChoice(
             "index",
             ies.getTitles().getLoreChoice(),
-            () -> buildLoreRepresentitives(lines),
+            ies.getItems().getGeneric(),
+            values -> buildLoreRepresentitives(lines),
             // Key 2 means push back, no index required
             // Also, if there are no lines yet, just push back too
             values -> key == 2 || lines.size() == 0
@@ -598,7 +603,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withChoice(
             "index",
             ies.getTitles().getLoreChoice(),
-            () -> buildLoreRepresentitives(lines),
+            ies.getItems().getGeneric(),
+            values -> buildLoreRepresentitives(lines),
             null
           )
           .start();
@@ -818,7 +824,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withChoice(
             "attribute",
             ies.getTitles().getAttributeChoice(),
-            () -> (
+            ies.getItems().getGeneric(),
+            values -> (
               buildAttributeRepresentitives(
                 // Create a "fake" multimap which contains an entry for every attribute with a null modifier
                 Arrays.stream(Attribute.values())
@@ -842,13 +849,15 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withChoice(
             "slot",
             ies.getTitles().getEquipmentChoice(),
-            this::buildSlotRepresentitives,
+            ies.getItems().getGeneric(),
+            values -> this.buildSlotRepresentitives(),
             null
           )
           .withChoice(
             "operation",
             ies.getTitles().getOperationChoice(),
-            this::buildOperationRepresentitives,
+            ies.getItems().getGeneric(),
+            values -> this.buildOperationRepresentitives(),
             null
           )
           .start();
@@ -901,7 +910,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withChoice(
             "attribute",
             ies.getTitles().getAttributeChoice(),
-            () -> buildAttributeRepresentitives(attrs, true),
+            ies.getItems().getGeneric(),
+            values -> buildAttributeRepresentitives(attrs, true),
             null
           )
           .start();
@@ -1008,27 +1018,32 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withChoice(
             "type",
             ies.getTitles().getFireworkTypeChoice(),
-            this::buildFireworkTypeRepresentitives,
+            ies.getItems().getGeneric(),
+            values -> this.buildFireworkTypeRepresentitives(),
             null
           )
           .withChoice(
             multipleChoiceGui,
+            i -> i, // TODO: Implement properly
             "color",
             ies.getTitles().getFireworkEffectColorChoice(),
+            ies.getItems().getGeneric(),
             v -> generateColorReprs(this::colorToMaterial),
             null
           )
           .withChoice(
             multipleChoiceGui,
+            i -> i, // TODO: Implement properly
             "fade",
             ies.getTitles().getFireworkFadeColorChoice(),
+            ies.getItems().getGeneric(),
             v -> generateColorReprs(this::colorToMaterial, true),
             null
           )
           .withYesNo(
             yesNoGui, "flicker",
             ies.getTitles().getFireworkFlickerYesNo(),
-            ies.getItems().getGeneric().getBackground().build(),
+            ies.getItems().getGeneric(),
             ies.getItems().getChoices().getFlickerYes().build(),
             ies.getItems().getChoices().getFlickerNo().build(),
             null
@@ -1036,7 +1051,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withYesNo(
             yesNoGui, "trail",
             ies.getTitles().getFireworkTrailYesNo(),
-            ies.getItems().getGeneric().getBackground().build(),
+            ies.getItems().getGeneric(),
             ies.getItems().getChoices().getTrailYes().build(),
             ies.getItems().getChoices().getTrailNo().build(),
             null
@@ -1075,7 +1090,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withChoice(
             "index",
             ies.getTitles().getFireworkEffectChoice(),
-            () -> buildFireworkEffectRepresentitives(fm.getEffects()),
+            ies.getItems().getGeneric(),
+            values -> buildFireworkEffectRepresentitives(fm.getEffects()),
             null
           )
           .start();
@@ -1300,7 +1316,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withChoice(
             "type",
             ies.getTitles().getPotionTypeChoice(),
-            this::generatePotionTypeReprs,
+            ies.getItems().getGeneric(),
+            values -> this.generatePotionTypeReprs(),
             null
           )
           .start();
@@ -1446,7 +1463,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withChoice(
             "type",
             ies.getTitles().getPotionEffectChoice(),
-            () -> buildPotionEffectRepresentitives(null),
+            ies.getItems().getGeneric(),
+            values -> buildPotionEffectRepresentitives(null),
             null
           )
           .withPrompt(
@@ -1497,7 +1515,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withChoice(
             "effect",
             ies.getTitles().getPotionEffectChoice(),
-            () -> buildPotionEffectRepresentitives(potionMeta.getCustomEffects()),
+            ies.getItems().getGeneric(),
+            values -> buildPotionEffectRepresentitives(potionMeta.getCustomEffects()),
             null
           )
           .start();
@@ -1715,7 +1734,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withChoice(
             "generation",
             ies.getTitles().getGenerationChoice(),
-            this::buildGenerationRepresentitives,
+            ies.getItems().getGeneric(),
+            values -> this.buildGenerationRepresentitives(),
             null
           )
           .start();
@@ -1778,7 +1798,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withChoice(
             "index",
             ies.getTitles().getPageChoice(),
-            () -> buildPageRepresentitives(bookMeta.getPages()),
+            ies.getItems().getGeneric(),
+            values -> buildPageRepresentitives(bookMeta.getPages()),
             null
           )
           .start();
@@ -1825,12 +1846,14 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withChoice(
             "type",
             ies.getTitles().getBannerPatternTypeChoice(),
-            () -> buildBannerPatternTypeRepresentitives(item.getType()),
+            ies.getItems().getGeneric(),
+            values -> buildBannerPatternTypeRepresentitives(item.getType()),
             null
           )
           .withChoice(
             "color",
             ies.getTitles().getBannerDyeColorChoice(),
+            ies.getItems().getGeneric(),
             v -> buildBannerDyeColorRepresentitives(item.getType(), (PatternType) v.get("type")),
             null
           )
@@ -1870,7 +1893,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withChoice(
             "index",
             ies.getTitles().getBannerPatternChoice(),
-            () -> buildBannerPatternRepresentitives(item.getType(), patterns),
+            ies.getItems().getGeneric(),
+            values -> buildBannerPatternRepresentitives(item.getType(), patterns),
             null
           )
           .start();
@@ -2059,7 +2083,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       chain.withChoice(
         "color",
         ies.getTitles().getColorChoice(),
-        () -> generateColorReprs(c -> item.getType()),
+        ies.getItems().getGeneric(),
+        values -> generateColorReprs(c -> item.getType()),
         null
       );
     }

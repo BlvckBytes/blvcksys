@@ -4,8 +4,9 @@ import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
+import me.blvckbytes.blvcksys.handlers.ICooldownHandler;
+import me.blvckbytes.blvcksys.handlers.ICooldownable;
 import me.blvckbytes.blvcksys.handlers.IObjectiveHandler;
-import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -32,7 +33,7 @@ public class HealCommand extends APlayerCommand {
   // Cooldown duration for the heal command in seconds
   private static final int CD_HEAL = 60 * 5;
 
-  private final IPersistence pers;
+  private final ICooldownHandler cooldownHandler;
   private final IObjectiveHandler obj;
 
   public HealCommand(
@@ -41,7 +42,7 @@ public class HealCommand extends APlayerCommand {
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
     @AutoInject IObjectiveHandler obj,
-    @AutoInject IPersistence pers
+    @AutoInject ICooldownHandler cooldownHandler
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -52,7 +53,7 @@ public class HealCommand extends APlayerCommand {
     );
 
     this.obj = obj;
-    this.pers = pers;
+    this.cooldownHandler = cooldownHandler;
   }
 
   //=========================================================================//
@@ -73,9 +74,20 @@ public class HealCommand extends APlayerCommand {
     boolean isSelf = target.equals(p);
 
     cooldownGuard(
-      p, pers, CT_HEAL,
-      PlayerPermission.COMMAND_HEAL_COOLDOWN.getSuffixNumber(p, false).orElse(CD_HEAL),
-      PlayerPermission.COMMAND_HEAL_COOLDOWN_BYPASS
+      p, cooldownHandler,
+      new ICooldownable() {
+        @Override
+        public String generateToken() {
+          return "cmd_heal";
+        }
+
+        @Override
+        public int getDurationSeconds() {
+          return PlayerPermission.COMMAND_HEAL_COOLDOWN.getSuffixNumber(p, false).orElse(CD_HEAL);
+        }
+      },
+      PlayerPermission.COMMAND_HEAL_COOLDOWN_BYPASS.toString(),
+      cfg.get(ConfigKey.ERR_COOLDOWN)
     );
 
     // Figure out what's the target's max health

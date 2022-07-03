@@ -14,6 +14,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+/*
+  Author: BlvckBytes <blvckbytes@gmail.com>
+  Created On: 05/17/2022
+
+  Public interfaces which the crate handler provides to other consumers.
+ */
 public interface ICrateHandler {
 
   /**

@@ -4,7 +4,8 @@ import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
-import me.blvckbytes.blvcksys.persistence.IPersistence;
+import me.blvckbytes.blvcksys.handlers.ICooldownHandler;
+import me.blvckbytes.blvcksys.handlers.ICooldownable;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
@@ -33,14 +34,14 @@ public class RepairCommand extends APlayerCommand {
   // Cooldown duration for the repair command in seconds
   private static final int CD_REPAIR = 60 * 5;
 
-  private final IPersistence pers;
+  private final ICooldownHandler cooldownHandler;
 
   public RepairCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
-    @AutoInject IPersistence pers
+    @AutoInject ICooldownHandler cooldownHandler
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -50,7 +51,7 @@ public class RepairCommand extends APlayerCommand {
       new CommandArgument("[all]", "Repair all items in your inventory", PlayerPermission.COMMAND_REPAIR_ALL)
     );
 
-    this.pers = pers;
+    this.cooldownHandler = cooldownHandler;
   }
 
   //=========================================================================//
@@ -104,9 +105,20 @@ public class RepairCommand extends APlayerCommand {
     }
 
     cooldownGuard(
-      p, pers, CT_REPAIR,
-      PlayerPermission.COMMAND_REPAIR_COOLDOWN.getSuffixNumber(p, false).orElse(CD_REPAIR),
-      PlayerPermission.COMMAND_REPAIR_COOLDOWN_BYPASS
+      p, cooldownHandler,
+      new ICooldownable() {
+        @Override
+        public String generateToken() {
+          return "cmd_repair";
+        }
+
+        @Override
+        public int getDurationSeconds() {
+          return PlayerPermission.COMMAND_REPAIR_COOLDOWN.getSuffixNumber(p, false).orElse(CD_REPAIR);
+        }
+      },
+      PlayerPermission.COMMAND_REPAIR_COOLDOWN_BYPASS.toString(),
+      cfg.get(ConfigKey.ERR_COOLDOWN)
     );
 
     // Repair and inform about the process' result

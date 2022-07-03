@@ -6,10 +6,10 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
+import me.blvckbytes.blvcksys.handlers.ICooldownHandler;
+import me.blvckbytes.blvcksys.handlers.ICooldownable;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
-import me.blvckbytes.blvcksys.persistence.models.ACooldownModel;
 import me.blvckbytes.blvcksys.persistence.models.APersistentModel;
-import me.blvckbytes.blvcksys.persistence.models.CooldownSessionModel;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.FieldQueryGroup;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
@@ -233,60 +233,32 @@ public abstract class APlayerCommand extends Command {
   //=========================================================================//
 
   /**
-   * Protect a section of code with a cooldown and allow for a
-   * bypass by providing a permission
-   * @param p Target player
-   * @param pers Persistence ref
-   * @param model Model to create the cooldown for
-   * @param message Message to display
-   */
-  protected void cooldownGuard(
-    Player p,
-    IPersistence pers,
-    ACooldownModel model,
-    ConfigValue message
-  ) throws CooldownException {
-    long cooldown = model.getCooldownRemaining(p, pers);
-
-    if (cooldown > 0) {
-      throw new CooldownException(
-        message,
-        timeUtil == null ? "?" : timeUtil.formatDuration(cooldown)
-      );
-    }
-
-    model.storeCooldownFor(p, pers);
-  }
-
-  /**
    * Protect a section of code with a cooldown
    * @param p Target player
-   * @param pers Persistence ref
-   * @param token Unique token representing this command
-   * @param duration Duration in seconds
+   * @param cooldownHandler Cooldown handler ref
+   * @param cooldownable Entity to cooldown
    * @param bypassPermission Permission that allows the user to bypass this cooldown
    */
   protected void cooldownGuard(
     Player p,
-    IPersistence pers,
-    String token,
-    int duration,
-    PlayerPermission bypassPermission
+    ICooldownHandler cooldownHandler,
+    ICooldownable cooldownable,
+    @Nullable String bypassPermission,
+    ConfigValue message
   ) throws CooldownException {
-    if (bypassPermission.has(p))
+    if (bypassPermission != null && p.hasPermission(bypassPermission))
       return;
 
-    long cooldown = CooldownSessionModel.getCooldownRemaining(p, pers, token);
+    Long cooldown = cooldownHandler.getCooldownRemaining(p, cooldownable).orElse(null);
 
-    if (cooldown > 0) {
+    if (cooldown != null) {
       throw new CooldownException(
-        cfg.get(ConfigKey.ERR_COOLDOWN)
-          .withPrefix(),
+        message.withPrefix(),
         timeUtil == null ? "?" : timeUtil.formatDuration(cooldown)
       );
     }
 
-    pers.store(new CooldownSessionModel(p, duration, token));
+    cooldownHandler.createCooldownFor(p, cooldownable);
   }
 
   //=========================================================================//

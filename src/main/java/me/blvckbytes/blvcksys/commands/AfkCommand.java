@@ -1,16 +1,15 @@
 package me.blvckbytes.blvcksys.commands;
 
 import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
-import me.blvckbytes.blvcksys.commands.exceptions.CooldownException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
-import me.blvckbytes.blvcksys.events.IAfkListener;
-import me.blvckbytes.blvcksys.persistence.IPersistence;
-import me.blvckbytes.blvcksys.persistence.models.CooldownSessionModel;
-import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.events.IAfkListener;
+import me.blvckbytes.blvcksys.handlers.ICooldownHandler;
+import me.blvckbytes.blvcksys.handlers.ICooldownable;
+import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -24,14 +23,20 @@ import org.bukkit.plugin.java.JavaPlugin;
 @AutoConstruct
 public class AfkCommand extends APlayerCommand {
 
-  // Cooldown token for the AFK cooldown
-  private static final String CT_AFK = "cmd_afk";
+  private static final ICooldownable COOLDOWNABLE = new ICooldownable() {
+    @Override
+    public String generateToken() {
+      return "cmd_afk";
+    }
 
-  // Cooldown duration for the AFK command in seconds
-  private static final int CD_AFK = 60;
+    @Override
+    public int getDurationSeconds() {
+      return 60;
+    }
+  };
 
   private final IAfkListener afk;
-  private final IPersistence pers;
+  private final ICooldownHandler cooldownHandler;
 
   public AfkCommand(
     @AutoInject JavaPlugin plugin,
@@ -39,7 +44,7 @@ public class AfkCommand extends APlayerCommand {
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
     @AutoInject IAfkListener afk,
-    @AutoInject IPersistence pers
+    @AutoInject ICooldownHandler cooldownHandler
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -49,7 +54,7 @@ public class AfkCommand extends APlayerCommand {
     );
 
     this.afk = afk;
-    this.pers = pers;
+    this.cooldownHandler = cooldownHandler;
   }
 
   @Override
@@ -64,7 +69,11 @@ public class AfkCommand extends APlayerCommand {
       return;
     }
 
-    cooldownGuard(p, pers, CT_AFK, CD_AFK, PlayerPermission.AFK_COOLDOWN_BYPASS);
+    cooldownGuard(
+      p, cooldownHandler, COOLDOWNABLE,
+      PlayerPermission.AFK_COOLDOWN_BYPASS.toString(),
+      cfg.get(ConfigKey.ERR_COOLDOWN)
+    );
 
     afk.setAFK(p);
   }

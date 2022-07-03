@@ -4,15 +4,15 @@ import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
-import me.blvckbytes.blvcksys.persistence.IPersistence;
-import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.handlers.ICooldownHandler;
+import me.blvckbytes.blvcksys.handlers.ICooldownable;
+import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.Optional;
 import java.util.stream.Stream;
 
 /*
@@ -24,20 +24,14 @@ import java.util.stream.Stream;
 @AutoConstruct
 public class FeedCommand extends APlayerCommand {
 
-  // Cooldown token for the feed cooldown
-  private static final String CT_FEED = "cmd_feed";
-
-  // Cooldown duration for the feed command in seconds
-  private static final int CD_FEED = 60;
-
-  private final IPersistence pers;
+  private final ICooldownHandler cooldownHandler;
 
   public FeedCommand(
     @AutoInject JavaPlugin plugin,
     @AutoInject ILogger logger,
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
-    @AutoInject IPersistence pers
+    @AutoInject ICooldownHandler cooldownHandler
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -47,7 +41,7 @@ public class FeedCommand extends APlayerCommand {
       new CommandArgument("[player]", "The player to feed", PlayerPermission.COMMAND_FEED_OTHERS)
     );
 
-    this.pers = pers;
+    this.cooldownHandler = cooldownHandler;
   }
 
   //=========================================================================//
@@ -68,9 +62,20 @@ public class FeedCommand extends APlayerCommand {
     boolean isSelf = target.equals(p);
 
     cooldownGuard(
-      p, pers, CT_FEED,
-      PlayerPermission.COMMAND_FEED_COOLDOWN.getSuffixNumber(p, false).orElse(CD_FEED),
-      PlayerPermission.COMMAND_FEED_COOLDOWN_BYPASS
+      p, cooldownHandler,
+      new ICooldownable() {
+        @Override
+        public String generateToken() {
+          return "cmd_feed";
+        }
+
+        @Override
+        public int getDurationSeconds() {
+          return PlayerPermission.COMMAND_FEED_COOLDOWN.getSuffixNumber(p, false).orElse(60);
+        }
+      },
+      PlayerPermission.COMMAND_FEED_COOLDOWN_BYPASS.toString(),
+      cfg.get(ConfigKey.ERR_COOLDOWN)
     );
 
     // Apply the food level increase

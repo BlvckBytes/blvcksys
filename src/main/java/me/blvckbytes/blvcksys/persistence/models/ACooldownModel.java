@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.persistence.models;
 
 import lombok.*;
+import me.blvckbytes.blvcksys.handlers.ICooldownable;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.ModelProperty;
 import me.blvckbytes.blvcksys.persistence.exceptions.PersistenceException;
@@ -19,7 +20,7 @@ import java.util.Date;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public abstract class ACooldownModel extends APersistentModel {
+public abstract class ACooldownModel extends APersistentModel implements ICooldownable {
 
   @ModelProperty
   protected int cooldownSeconds;
@@ -27,7 +28,7 @@ public abstract class ACooldownModel extends APersistentModel {
   /**
    * Generate a token which will be unique for this model instance's properties
    */
-  protected String generateToken() {
+  public String generateToken() {
     Class<?> c = getClass();
     StringBuilder token = new StringBuilder(c.getSimpleName().toLowerCase());
 
@@ -91,5 +92,12 @@ public abstract class ACooldownModel extends APersistentModel {
    */
   public long getCooldownRemaining(OfflinePlayer holder, IPersistence pers) throws PersistenceException {
     return CooldownSessionModel.getCooldownRemaining(holder, pers, generateToken());
+  }
+
+  /**
+   * Gets the number of seconds this cooldown lasts for
+   */
+  public int getDurationSeconds() {
+    return this.cooldownSeconds;
   }
 }

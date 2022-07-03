@@ -6,6 +6,7 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.handlers.ICooldownHandler;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.KitModel;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
@@ -34,6 +35,7 @@ public class KitCommand extends APlayerCommand implements IKitCommand {
 
   private final List<BiConsumer<Player, KitModel>> requestInterests;
   private final IPersistence pers;
+  private final ICooldownHandler cooldownHandler;
   private final IGiveCommand give;
 
   public KitCommand(
@@ -42,7 +44,8 @@ public class KitCommand extends APlayerCommand implements IKitCommand {
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
     @AutoInject IPersistence pers,
-    @AutoInject IGiveCommand give
+    @AutoInject IGiveCommand give,
+    @AutoInject ICooldownHandler cooldownHandler
   ) {
     super(
       plugin, logger, cfg, refl,
@@ -55,6 +58,7 @@ public class KitCommand extends APlayerCommand implements IKitCommand {
 
     this.pers = pers;
     this.give = give;
+    this.cooldownHandler = cooldownHandler;
 
     this.requestInterests = new ArrayList<>();
   }
@@ -99,9 +103,8 @@ public class KitCommand extends APlayerCommand implements IKitCommand {
     KitModel kit = kitO.get();
 
     cooldownGuard(
-      p, pers, kit,
+      p, cooldownHandler, kit, null,
       cfg.get(ConfigKey.KIT_COOLDOWN)
-        .withPrefix()
         .withVariable("name", kit.getName())
     );
 

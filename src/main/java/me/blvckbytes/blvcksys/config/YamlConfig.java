@@ -4,7 +4,6 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
-import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.util.Tuple;
 import org.bukkit.configuration.MemorySection;
@@ -34,9 +33,6 @@ public class YamlConfig implements IConfig, IAutoConstructed {
   private final Map<String, Tuple<YamlConfiguration, File>> configs;
   private final Map<String, ConfigReader> readers;
   private final JavaPlugin plugin;
-
-  @AutoInjectLate
-  private IPlayerTextureHandler textureHandler;
 
   // Global prefix string, global palette, load ahead of time as it's used quite often
   private String prefix, palette;

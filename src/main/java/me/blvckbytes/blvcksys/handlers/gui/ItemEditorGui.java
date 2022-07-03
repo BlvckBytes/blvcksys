@@ -2,7 +2,6 @@ package me.blvckbytes.blvcksys.handlers.gui;
 
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
-import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.sections.itemeditor.IEPerm;
@@ -14,7 +13,6 @@ import me.blvckbytes.blvcksys.packets.communicators.bookeditor.IBookEditorCommun
 import me.blvckbytes.blvcksys.persistence.models.PlayerTextureModel;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.MCReflect;
-import me.blvckbytes.blvcksys.util.SymbolicHead;
 import me.blvckbytes.blvcksys.util.Triple;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.util.Tuple;
@@ -54,7 +52,8 @@ import java.util.stream.Collectors;
 @AutoConstruct
 public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<GuiInstance<?>>>> {
 
-  // TODO: Cache static representitives
+  // Representitives which don't change are cached
+  private final Map<Class<?>, List<Tuple<Object, ItemStack>>> staticRepresentitiveCache;
 
   private final SingleChoiceGui singleChoiceGui;
   private final IBookEditorCommunicator bookEditor;
@@ -96,6 +95,15 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       ies.getTitles().getHome()
         .withVariable("item_type", formatConstant(i.getArg().a().getType().name()))
     ));
+
+    // Pre-load all static representitives into cache,
+    // so the user won't experience any initial lag
+    this.staticRepresentitiveCache = new HashMap<>();
+    buildSlotRepresentitives();
+    buildOperationRepresentitives();
+    buildSlotRepresentitives();
+    buildMaterialRepresentitives();
+    buildFireworkTypeRepresentitives();
   }
 
   @Override
@@ -129,10 +137,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
     ///////////////////////////////////// Preview //////////////////////////////////////
 
-    inst.fixedItem("12,14", () -> (
-      ies.getItems().getHome().getDisplayMarker()
-        .build()
-    ), null, null);
+    inst.fixedItem("12,14", () -> ies.getItems().getHome().getDisplayMarker().build(), null, null);
 
     // Always keep the edited item in sync with the player's inventory
     inst.fixedItem("13", () -> {
@@ -148,7 +153,6 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     });
 
     ///////////////////////////////// Increase Amount //////////////////////////////////
-
 
     inst.fixedItem("10", () -> (
       ies.getItems().getHome().getIncrease()
@@ -2284,6 +2288,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
    * Builds a list of representitives for all available firework types
    */
   private List<Tuple<Object, ItemStack>> buildFireworkTypeRepresentitives() {
+    if (staticRepresentitiveCache.containsKey(FireworkEffect.Type.class))
+      return staticRepresentitiveCache.get(FireworkEffect.Type.class);
+
     // Create representitive items for each firework type
     List<Tuple<Object, ItemStack>> representitives = new ArrayList<>();
 
@@ -2301,6 +2308,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       ));
     }
 
+    staticRepresentitiveCache.put(FireworkEffect.Type.class, representitives);
     return representitives;
   }
 
@@ -2308,6 +2316,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
    * Builds a list of representitives for all available book generations
    */
   private List<Tuple<Object, ItemStack>> buildGenerationRepresentitives() {
+    if (staticRepresentitiveCache.containsKey(BookMeta.Generation.class))
+      return staticRepresentitiveCache.get(BookMeta.Generation.class);
+
     // Create representitive items for each generation
     List<Tuple<Object, ItemStack>> representitives = new ArrayList<>();
 
@@ -2324,6 +2335,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       ));
     }
 
+    staticRepresentitiveCache.put(BookMeta.Generation.class, representitives);
     return representitives;
   }
 
@@ -2453,8 +2465,11 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
    * Build a list of representitives for all available materials
    */
   public List<Tuple<Object, ItemStack>> buildMaterialRepresentitives() {
+    if (staticRepresentitiveCache.containsKey(Material.class))
+      return staticRepresentitiveCache.get(Material.class);
+
     // Representitive items for each material
-    return Arrays.stream(Material.values())
+    List<Tuple<Object, ItemStack>> representitives = Arrays.stream(Material.values())
       .filter(m -> !(
         m.isAir() ||
         m.isLegacy()
@@ -2472,6 +2487,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           ))
         )
       ).toList();
+
+    staticRepresentitiveCache.put(Material.class, representitives);
+    return representitives;
   }
 
   /**
@@ -2479,10 +2497,14 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
    * {@link org.bukkit.attribute.AttributeModifier.Operation} enum entries
    */
   private List<Tuple<Object, ItemStack>> buildOperationRepresentitives() {
+    if (staticRepresentitiveCache.containsKey(AttributeModifier.Operation.class))
+      return staticRepresentitiveCache.get(AttributeModifier.Operation.class);
+
     // Create a list of all available operations
-    List<Tuple<Object, ItemStack>> opReprs = new ArrayList<>();
+    List<Tuple<Object, ItemStack>> representitives = new ArrayList<>();
+
     for (AttributeModifier.Operation op : AttributeModifier.Operation.values()) {
-      opReprs.add(new Tuple<>(
+      representitives.add(new Tuple<>(
         op,
         ies.getItems().getChoices().getOperation()
           .asItem(
@@ -2493,17 +2515,22 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .build()
       ));
     }
-    return opReprs;
+
+    staticRepresentitiveCache.put(AttributeModifier.Operation.class, representitives);
+    return representitives;
   }
 
   /**
    * Build a list of representitives for all available {@link EquipmentSlot} enum entries
    */
   private List<Tuple<Object, ItemStack>> buildSlotRepresentitives() {
+    if (staticRepresentitiveCache.containsKey(EquipmentSlot.class))
+      return staticRepresentitiveCache.get(EquipmentSlot.class);
+
     // Create a list of all available slots
-    List<Tuple<Object, ItemStack>> slotReprs = new ArrayList<>();
+    List<Tuple<Object, ItemStack>> representitives = new ArrayList<>();
     for (EquipmentSlot slot : EquipmentSlot.values()) {
-      slotReprs.add(new Tuple<>(
+      representitives.add(new Tuple<>(
         slot,
         ies.getItems().getChoices().getEquipment()
           .asItem(
@@ -2514,7 +2541,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .build()
       ));
     }
-    return slotReprs;
+
+    staticRepresentitiveCache.put(EquipmentSlot.class, representitives);
+    return representitives;
   }
 
   /**
@@ -2666,7 +2695,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     }
 
     // Representitive items for each enchantment
-    return enchantments.stream()
+    List<Tuple<Object, ItemStack>> representitives = enchantments.stream()
       // Sort by relevance
       .sorted(Comparator.comparing(t -> isNative.apply(t.b()), Comparator.reverseOrder()))
       .map(ench -> {
@@ -2690,6 +2719,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           ));
         }
       ).toList();
+
+    return representitives;
   }
 
   /**

@@ -389,8 +389,10 @@ public class ItemStackBuilder {
       Arrays.stream(data.getEnchantments())
         .forEach(e -> {
           Enchantment ench = e.getEnchantment() == null ? null : e.getEnchantment().asScalar(Enchantment.class);
-          if (ench != null)
-            res.withEnchantment(ench, e.getLevel() == null ? 1 : e.getLevel());
+          if (ench != null) {
+            Integer level = e.getLevel() == null ? null : e.getLevel().asScalar(Integer.class);
+            res.withEnchantment(ench, e.getLevel() == null ? 1 : level);
+          }
         });
     }
 

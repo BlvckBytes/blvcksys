@@ -84,7 +84,7 @@ public class ItemStackSection extends AConfigSection {
               es.getEnchantment() == null ?
                 null :
                 es.getEnchantment().copy().withVariables(variables).asScalar(Enchantment.class),
-              es.getLevel() == null ? 1 : es.getLevel()
+              es.getLevel() == null ? 1 : es.getLevel().withVariables(variables).asScalar(Integer.class)
             )
           ))
           .filter(t -> t.a() != null)
@@ -151,11 +151,13 @@ public class ItemStackSection extends AConfigSection {
         if (e == null)
           continue;
 
+        Integer level = ench.getLevel() == null ? null : ench.getLevel().asScalar(Integer.class);
+
         if (!(
           // Contains this enchantment at any levej
           meta.hasEnchant(e) &&
           // Contains at a matching level, if required
-          (ench.getLevel() == null || meta.getEnchantLevel(e) == ench.getLevel())
+          (level == null || meta.getEnchantLevel(e) == level)
         ))
           return false;
       }

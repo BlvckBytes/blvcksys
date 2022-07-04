@@ -4,8 +4,10 @@ import com.google.common.primitives.Primitives;
 import me.blvckbytes.blvcksys.config.sections.CSAlways;
 import me.blvckbytes.blvcksys.config.sections.CSIgnore;
 import me.blvckbytes.blvcksys.config.sections.ItemStackSection;
+import me.blvckbytes.blvcksys.config.sections.CSMap;
 import me.blvckbytes.blvcksys.handlers.gui.ItemStackBuilder;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
+import org.bukkit.configuration.MemorySection;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Array;
@@ -52,7 +54,7 @@ public class ConfigReader {
     if (cache && parseCache.containsKey(key))
       return Optional.of((T) parseCache.get(key));
 
-    return parseValueSub(key, type, false, false)
+    return parseValueSub(key, type, null, false, false)
       .map(v -> {
         if (cache)
           parseCache.put(key, v);
@@ -64,7 +66,7 @@ public class ConfigReader {
    * Recursive sub-routine with extra parameters
    */
   @SuppressWarnings("unchecked")
-  private<T extends Object> Optional<T> parseValueSub(@Nullable String key, Class<T> type, boolean withinArray, boolean ignoreMissing) {
+  private<T extends Object> Optional<T> parseValueSub(@Nullable String key, Class<T> type, Field f, boolean withinArray, boolean ignoreMissing) {
     boolean isSection = AConfigSection.class.isAssignableFrom(type);
 
     // Null keys mean root level scope
@@ -76,14 +78,49 @@ public class ConfigReader {
     if (cfg.get(path, key).isEmpty() && (!isSection || withinArray) && !ignoreMissing)
       return Optional.empty();
 
+    // Is a map, parse all keys of this section
+    if (Map.class.isAssignableFrom(type) && f != null) {
+      CSMap kvInfo = f.getAnnotation(CSMap.class);
+
+      MemorySection ms = get(key)
+        .map(cv -> cv.asScalar(MemorySection.class))
+        .orElse(null);
+
+      if (kvInfo == null || ms == null)
+        return Optional.empty();
+
+      Map<Object, Object> items = new HashMap<>();
+
+      // Iterate all keys of this section
+      for (String msKey : ms.getKeys(false)) {
+        // Value type unparsable
+        Object v = parseValue(join(key, msKey), kvInfo.v(), false).orElse(null);
+        if (v == null)
+          continue;
+
+        // Key type unparsable
+        Object parsedKey = ConfigValue.immediate(msKey).asScalar(kvInfo.k());
+        if (parsedKey == null)
+          continue;
+
+        items.put(parsedKey, v);
+      }
+
+      // Only set if there are actually items available
+      if (items.size() > 0)
+        return Optional.of(type.cast(items));
+
+      return Optional.empty();
+    }
+
     // Is an array, multiple elements of the same type in a sequence
-    if (type.isArray()) {
+    if (type.isArray() || List.class.isAssignableFrom(type)) {
       Class<?> arrType = type.getComponentType();
 
       // Try to fetch as many values of the list as possible, until the end is reached
       List<Object> items = new ArrayList<>();
       for (int i = 0; i < Integer.MAX_VALUE; i++) {
-        Optional<?> v = parseValueSub(key + "[" + i + "]", (Class<? extends AConfigSection>) arrType, true, false);
+        Optional<?> v = parseValueSub(key + "[" + i + "]", (Class<? extends AConfigSection>) arrType, f, true, false);
 
         // End of list reached, no more items available
         if (v.isEmpty())
@@ -94,7 +131,13 @@ public class ConfigReader {
 
       // Only set if there are actually items available
       if (items.size() > 0)
-        return Optional.of(type.cast(items.toArray((Object[]) Array.newInstance(arrType, 1))));
+        return Optional.of(
+          type.isArray() ?
+            // Store as array
+            type.cast(items.toArray((Object[]) Array.newInstance(arrType, 1))) :
+            // Store as list
+            type.cast(items)
+        );
 
       return Optional.empty();
     }
@@ -115,15 +158,15 @@ public class ConfigReader {
           })
           .toList();
 
-        for (Field f : fields) {
+        for (Field field : fields) {
           // Ignore fields marked for ignore
-          if (f.getAnnotation(CSIgnore.class) != null)
+          if (field.getAnnotation(CSIgnore.class) != null)
             continue;
 
-          f.setAccessible(true);
+          field.setAccessible(true);
 
-          String fName = f.getName();
-          Class<?> fType = f.getType();
+          String fName = field.getName();
+          Class<?> fType = field.getType();
           String fKey = join(key, fName);
 
           // Try to transform the type by letting the class decide at runtime
@@ -132,22 +175,22 @@ public class ConfigReader {
 
           // Is another config section and thus needs recursion
           if (AConfigSection.class.isAssignableFrom(fType)) {
-            Object v = parseValueSub(fKey, (Class<? extends AConfigSection>) fType, false, f.isAnnotationPresent(CSAlways.class)).orElse(null);
+            Object v = parseValueSub(fKey, (Class<? extends AConfigSection>) fType, field, false, field.isAnnotationPresent(CSAlways.class)).orElse(null);
             if (v != null)
-              f.set(res, v);
+              field.set(res, v);
             continue;
           }
 
           // Initially try to parse the value
           Class<?> ffType = fType;
-          Object v = parseValue(fKey, fType, false).orElse(null);
+          Object v = parseValueSub(fKey, fType, field, false, false).orElse(null);
 
           // Failed, try to ask for a default value
           if (v == null)
             v = res.defaultFor(ffType, fName);
 
           if (v != null)
-            f.set(res, v);
+            field.set(res, v);
         }
 
         return Optional.of(type.cast(res));

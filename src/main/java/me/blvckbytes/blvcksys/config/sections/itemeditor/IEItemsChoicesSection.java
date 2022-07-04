@@ -8,8 +8,13 @@ import me.blvckbytes.blvcksys.config.sections.CSMap;
 import me.blvckbytes.blvcksys.config.sections.ItemStackSection;
 import me.blvckbytes.blvcksys.handlers.gui.ItemStackBuilder;
 import org.bukkit.Color;
+import org.bukkit.FireworkEffect;
 import org.bukkit.Material;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.ItemFlag;
 
 import java.util.Map;
 
@@ -54,6 +59,26 @@ public class IEItemsChoicesSection extends AConfigSection {
   @CSMap(k = Enchantment.class, v = Material.class)
   private Map<Enchantment, Material> enchantmentMaterials;
 
+  @Getter(AccessLevel.PRIVATE)
+  @CSMap(k = FireworkEffect.Type.class, v = Material.class)
+  private Map<FireworkEffect.Type, Material> fireworkEffectMaterial;
+
+  @Getter(AccessLevel.PRIVATE)
+  @CSMap(k = ItemFlag.class, v = Material.class)
+  private Map<ItemFlag, Material> itemFlagMaterial;
+
+  @Getter(AccessLevel.PRIVATE)
+  @CSMap(k = Attribute.class, v = Material.class)
+  private Map<Attribute, Material> attributeMaterial;
+
+  @Getter(AccessLevel.PRIVATE)
+  @CSMap(k = EquipmentSlot.class, v = Material.class)
+  private Map<EquipmentSlot, Material> equipmentMaterial;
+
+  @Getter(AccessLevel.PRIVATE)
+  @CSMap(k = AttributeModifier.Operation.class, v = Material.class)
+  private Map<AttributeModifier.Operation, Material> operationMaterial;
+
   @Override
   public Object defaultFor(Class<?> type, String field) {
     if (type == ItemStackBuilder.class)
@@ -71,5 +96,35 @@ public class IEItemsChoicesSection extends AConfigSection {
     if (enchantmentMaterials == null)
       return Material.BARRIER;
     return enchantmentMaterials.getOrDefault(ench, Material.BARRIER);
+  }
+
+  public Material lookupFireworkEffectMaterial(FireworkEffect.Type type) {
+    if (fireworkEffectMaterial == null)
+      return Material.BARRIER;
+    return fireworkEffectMaterial.getOrDefault(type, Material.BARRIER);
+  }
+
+  public Material lookupItemFlagMaterial(ItemFlag flag) {
+    if (itemFlagMaterial == null)
+      return Material.BARRIER;
+    return itemFlagMaterial.getOrDefault(flag, Material.BARRIER);
+  }
+
+  public Material attributeMaterial(Attribute attr) {
+    if (attributeMaterial == null)
+      return Material.BARRIER;
+    return attributeMaterial.getOrDefault(attr, Material.BARRIER);
+  }
+
+  public Material equipmentMaterial(EquipmentSlot slot) {
+    if (equipmentMaterial == null)
+      return Material.BARRIER;
+    return equipmentMaterial.getOrDefault(slot, Material.BARRIER);
+  }
+
+  public Material operationMaterial(AttributeModifier.Operation op) {
+    if (operationMaterial == null)
+      return Material.BARRIER;
+    return operationMaterial.getOrDefault(op, Material.BARRIER);
   }
 }

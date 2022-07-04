@@ -2195,7 +2195,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           ies.getItems().getChoices().getFireworkEffect()
             .asItem(
               ConfigValue.makeEmpty()
-                .withVariable("icon", resolveFireworkEffectTypeIcon(effect.getType()))
+                .withVariable("icon", ies.getItems().getChoices().lookupFireworkEffectMaterial(effect.getType()))
                 .withVariable("index", effects.indexOf(effect) + 1)
                 .withVariable("type", formatConstant(effect.getType().name()))
                 .withVariable(
@@ -2224,22 +2224,6 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
   }
 
   /**
-   * Resolves a given firework effect type to it's representitive icon
-   * @param type Firework effect type
-   * @return Material to display for this effect
-   */
-  private Material resolveFireworkEffectTypeIcon(FireworkEffect.Type type) {
-    return switch (type) {
-      case STAR -> Material.NETHER_STAR;
-      case CREEPER -> Material.CREEPER_HEAD;
-      case BURST -> Material.TNT;
-      case BALL -> Material.SUNFLOWER;
-      case BALL_LARGE -> Material.SNOWBALL;
-      default -> Material.FIREWORK_STAR;
-    };
-  }
-
-  /**
    * Builds a list of representitives for all available firework types
    */
   private List<Tuple<Object, ItemStack>> buildFireworkTypeRepresentitives() {
@@ -2256,7 +2240,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .asItem(
             ConfigValue.makeEmpty()
               .withVariable("type", formatConstant(type.name()))
-              .withVariable("icon", resolveFireworkEffectTypeIcon(type))
+              .withVariable("icon", ies.getItems().getChoices().lookupFireworkEffectMaterial(type))
               .exportVariables()
           )
           .build()
@@ -2407,6 +2391,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             ies.getItems().getChoices().getFlag()
               .asItem(
                 ConfigValue.makeEmpty()
+                  .withVariable("icon", ies.getItems().getChoices().lookupItemFlagMaterial(f))
                   .withVariable("flag", formatConstant(f.name()))
                   .withVariable("state", formatConstant(String.valueOf(isActive.apply(f))))
                   .exportVariables())
@@ -2464,6 +2449,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         ies.getItems().getChoices().getOperation()
           .asItem(
             ConfigValue.makeEmpty()
+              .withVariable("icon", ies.getItems().getChoices().operationMaterial(op))
               .withVariable("operation", formatConstant(op.name()))
               .exportVariables()
           )
@@ -2490,6 +2476,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         ies.getItems().getChoices().getEquipment()
           .asItem(
             ConfigValue.makeEmpty()
+              .withVariable("icon", ies.getItems().getChoices().equipmentMaterial(slot))
               .withVariable("slot", formatConstant(slot.name()))
               .exportVariables()
           )
@@ -2571,6 +2558,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         (areExisting ? ies.getItems().getChoices().getAttributeExisting() : ies.getItems().getChoices().getAttributeNew())
           .asItem(
             ConfigValue.makeEmpty()
+              .withVariable("icon", ies.getItems().getChoices().attributeMaterial(entry.getKey()))
               .withVariable("name", mod == null ? "/" : mod.getName())
               .withVariable("attribute", formatConstant(entry.getKey().getKey().getKey()))
               .withVariable("amount", mod == null ? "/" : mod.getAmount())

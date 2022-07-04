@@ -486,13 +486,15 @@ items:
         - HIDE_POTION_EFFECTS
 
     flag:
-      type: NAME_TAG
+      type: '{{icon}}'
       name: '&d{{flag}}'
       lore:
         - ' '
         - '&7Aktueller Zustand: &d{{state}}'
         - ' '
         - '&7Klicke, um den Zustand zu wechseln.'
+      flags:
+        - HIDE_ATTRIBUTES
 
     lore:
       type: PAPER
@@ -503,14 +505,16 @@ items:
         - '&d{{content}}'
 
     attributeNew:
-      type: COMPARATOR
+      type: '{{icon}}'
       name: '&d{{attribute}}'
       lore:
         - ' '
         - '&7Klicke, um eine neue Instanz zu erstellen.'
+      flags:
+        - HIDE_ATTRIBUTES
 
     attributeExisting:
-      type: COMPARATOR
+      type: '{{icon}}'
       name: '&d{{attribute}}'
       lore:
         - ' '
@@ -518,20 +522,26 @@ items:
         - '&7Wert: &d{{amount}}'
         - '&7Operator: &d{{operation}}'
         - '&7Slot: &d{{slot}}'
+      flags:
+        - HIDE_ATTRIBUTES
 
     equipment:
-      type: CHEST
+      type: '{{icon}}'
       name: '&d{{slot}}'
       lore:
         - ' '
         - '&7Klicke, um diesen Slot zu wählen.'
+      flags:
+        - HIDE_ATTRIBUTES
 
     operation:
-      type: REDSTONE_TORCH
+      type: '{{icon}}'
       name: '&d{{operation}}'
       lore:
         - ' '
         - '&7Klicke, um diese Operation zu wählen.'
+      flags:
+        - HIDE_ATTRIBUTES
 
     potionType:
       type: POTION
@@ -561,6 +571,8 @@ items:
       lore:
         - ' '
         - '&7Klicke, um diese Farbe zu wählen.'
+      flags:
+        - HIDE_ATTRIBUTES
 
     generation:
       type: BOOK
@@ -583,6 +595,8 @@ items:
       lore:
         - ' '
         - '&7Klicke, um diesen Typ zu wählen.'
+      flags:
+        - HIDE_ATTRIBUTES
 
     fireworkEffect:
       type: '{{icon}}'
@@ -595,6 +609,8 @@ items:
         - '&7Spuren: &d{{trail}}'
         - ' '
         - '&7Klicke um diesen Effekt zu entfernen.'
+      flags:
+        - HIDE_ATTRIBUTES
 
     patternNew:
       type: '{{base}}'
@@ -718,3 +734,47 @@ items:
       MENDING: EXPERIENCE_BOTTLE
       VANISHING_CURSE: BUCKET
       SOUL_SPEED: SOUL_SAND
+
+    fireworkEffectMaterial:
+      STAR: NETHER_STAR
+      CREEPER: CREEPER_HEAD
+      BURST: TNT
+      BALL: SUNFLOWER
+      BALL_LARGE: SNOWBALL
+
+    itemFlagMaterial:
+      HIDE_ENCHANTS: ENCHANTING_TABLE
+      HIDE_ATTRIBUTES: NAME_TAG
+      HIDE_UNBREAKABLE: ANVIL
+      HIDE_DESTROYS: DIAMOND_PICKAXE
+      HIDE_PLACED_ON: GRASS_BLOCK
+      HIDE_POTION_EFFECTS: BREWING_STAND
+      HIDE_DYE: PURPLE_DYE
+
+    attributeMaterial:
+      GENERIC_MAX_HEALTH: GOLDEN_APPLE
+      GENERIC_FOLLOW_RANGE: LEAD
+      GENERIC_KNOCKBACK_RESISTANCE: STONE
+      GENERIC_MOVEMENT_SPEED: GOLDEN_BOOTS
+      GENERIC_FLYING_SPEED: FEATHER
+      GENERIC_ATTACK_DAMAGE: DIAMOND_SWORD
+      GENERIC_ATTACK_KNOCKBACK: STICK
+      GENERIC_ATTACK_SPEED: IRON_AXE
+      GENERIC_ARMOR: CHAINMAIL_CHESTPLATE
+      GENERIC_ARMOR_TOUGHNESS: BONE
+      GENERIC_LUCK: FISHING_ROD
+      HORSE_JUMP_STRENGTH: RABBIT_FOOT
+      ZOMBIE_SPAWN_REINFORCEMENTS: ZOMBIE_HEAD
+
+    equipmentMaterial:
+      HAND: GOLDEN_SWORD
+      OFF_HAND: CHEST
+      FEET: GOLDEN_BOOTS
+      LEGS: GOLDEN_LEGGINGS
+      CHEST: GOLDEN_CHESTPLATE
+      HEAD: GOLDEN_HELMET
+
+    operationMaterial:
+      ADD_NUMBER: HOPPER
+      ADD_SCALAR: REDSTONE
+      MULTIPLY_SCALAR_1: REDSTONE_TORCH

@@ -61,7 +61,7 @@ public class IEItemsChoicesSection extends AConfigSection {
 
   @Getter(AccessLevel.PRIVATE)
   @CSMap(k = FireworkEffect.Type.class, v = Material.class)
-  private Map<FireworkEffect.Type, Material> fireworkEffectMaterial;
+  private Map<FireworkEffect.Type, Material> fireworkEffectTypeMaterial;
 
   @Getter(AccessLevel.PRIVATE)
   @CSMap(k = ItemFlag.class, v = Material.class)
@@ -98,10 +98,10 @@ public class IEItemsChoicesSection extends AConfigSection {
     return enchantmentMaterials.getOrDefault(ench, Material.BARRIER);
   }
 
-  public Material lookupFireworkEffectMaterial(FireworkEffect.Type type) {
-    if (fireworkEffectMaterial == null)
+  public Material lookupFireworkEffectTypeMaterial(FireworkEffect.Type type) {
+    if (fireworkEffectTypeMaterial == null)
       return Material.BARRIER;
-    return fireworkEffectMaterial.getOrDefault(type, Material.BARRIER);
+    return fireworkEffectTypeMaterial.getOrDefault(type, Material.BARRIER);
   }
 
   public Material lookupItemFlagMaterial(ItemFlag flag) {

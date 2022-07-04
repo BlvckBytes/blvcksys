@@ -2313,7 +2313,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           ies.getItems().getChoices().getFireworkEffect()
             .asItem(
               ConfigValue.makeEmpty()
-                .withVariable("icon", ies.getItems().getChoices().lookupFireworkEffectMaterial(effect.getType()))
+                .withVariable("icon", ies.getItems().getChoices().lookupFireworkEffectTypeMaterial(effect.getType()))
                 .withVariable("index", effects.indexOf(effect) + 1)
                 .withVariable("type", formatConstant(effect.getType().name()))
                 .withVariable(
@@ -2358,7 +2358,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .asItem(
             ConfigValue.makeEmpty()
               .withVariable("type", formatConstant(type.name()))
-              .withVariable("icon", ies.getItems().getChoices().lookupFireworkEffectMaterial(type))
+              .withVariable("icon", ies.getItems().getChoices().lookupFireworkEffectTypeMaterial(type))
               .exportVariables()
           )
           .build()

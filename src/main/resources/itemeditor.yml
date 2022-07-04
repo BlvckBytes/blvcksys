@@ -85,7 +85,7 @@ myLayout:
   fill: true
   # Whether to create a border using the "items.generic.background" item
   border: false
-  # Whether to play animations in this GUI or when navigating to this GUI
+  # Whether to play animations within this GUI or when navigating to this GUI
   animated: true
   # Slot assignments, mapping item names found in the "items" section to a slot expression
   # Slot expressions may be just a single number, or a more complex notation, as shown in the example
@@ -305,6 +305,9 @@ items:
         - '&7Bereits auf der &cersten Seite&7.'
 
     # Current page indicator
+    # Variables:
+    # - page_size         Size of one page
+    # - total_num_items   Total number of items spread across pages
     currentPage:
       type: PAPER
       name: '&7» &dSeite {{curr_page}}&7/&d{{num_pages}} &7«'
@@ -322,6 +325,9 @@ items:
         - '&dDurchsuche &7die Ergebnisse in Echtzeit.'
 
     # Add another choice in multiple choice GUIs
+    # Variables:
+    # - num_choices         Number of choices made already
+    # - remaining_choices   Number of choices remaining to be made
     newChoice:
       type: PLAYER_HEAD
       name: '&7» &aAuswahl hinzufügen &7«'
@@ -411,6 +417,8 @@ items:
         - '&cDiese Konfiguration ist nicht auf'
         - '&cdas aktuell gewählte Item anwendbar.'
 
+    # Variables:
+    # - custom_model_data         Current custom model data value
     customModelData:
       type: ITEM_FRAME
       name: '&7» &dCustom Model Data &7«'
@@ -429,6 +437,8 @@ items:
         - ' '
         - '&7Ändere das &dMaterial &7dieses Items.'
 
+    # Variables:
+    # - count         Current count of activated flags
     flags:
       type: NAME_TAG
       name: '&7» &dFlags &7«'
@@ -438,6 +448,8 @@ items:
         - ' '
         - '&7Aktive Flags: &d{{count}}'
 
+    # Variables:
+    # - count         Current count of added enchantments
     enchantments:
       type: ENCHANTED_BOOK
       name: '&7» &dVerzauberungen &7«'
@@ -470,6 +482,8 @@ items:
         - '&7[&d3&7]: &dZeile wählen und entfernen'
         - '&7[&d4&7]: &dLore leeren'
 
+    # Variables:
+    # - durability         Current durability value
     durability:
       type: ANVIL
       name: '&7» &dHaltbarkeit &7«'
@@ -496,6 +510,8 @@ items:
         - '&7[&d2&7]: &dAttribut wählen und entfernen'
         - '&7[&d3&7]: &dAttribute leeren'
 
+    # Variables:
+    # - power         Current power value
     fireworks:
       type: FIREWORK_ROCKET
       name: '&7» &dFeuerwerk &7«'
@@ -511,6 +527,8 @@ items:
         - '&7[&d3&7]: &dEffekt entfernen'
         - '&7[&d4&7]: &dEffekte leeren'
 
+    # Variables:
+    # - location         Current target location value
     compass:
       type: COMPASS
       name: '&7» &dKompass &7«'
@@ -523,6 +541,8 @@ items:
         - '&7[&d1&7]: &dZiel setzen'
         - '&7[&d2&7]: &dZiel entfernen'
 
+    # Variables:
+    # - owner         Current head owner name
     headOwner:
       type: PLAYER_HEAD
       name: '&7» &dKopfbesitzer &7«'
@@ -532,6 +552,8 @@ items:
         - ' '
         - '&7Aktueller Besitzer: &d{{owner}}'
 
+    # Variables:
+    # - color         Current leather color
     leatherColor:
       type: LEATHER
       name: '&7» &dLederfarbe &7«'
@@ -605,6 +627,9 @@ items:
 
     # //////////////// Material Choice ////////////////
 
+    # Variables:
+    # - material         Material enum value
+    # - material_hr      Human readable material enum value
     material:
       type: '{{material}}'
       name: '&7» &d{{material_hr}}'
@@ -614,6 +639,12 @@ items:
 
     # //////////////// Enchantment Add/Remove ////////////////
 
+    # Variables:
+    # - icon                Material enum value from the lookup table at items.choices.enchantmentMaterials
+    # - enchantment_hr      Human readable enchantment enum value
+    # - enchantment         Enchantment enum value
+    # - state               Applied state boolean
+    # - level               Applied level
     enchantmentActive:
       type: '{{icon}}'
       name: '&7» &d{{enchantment_hr}}'
@@ -626,7 +657,7 @@ items:
       enchantments:
         -
           enchantment: '{{enchantment}}'
-          level: 1
+          level: '{{level}}'
       flags:
         - HIDE_ATTRIBUTES
         - HIDE_DESTROYS
@@ -634,6 +665,11 @@ items:
         - HIDE_PLACED_ON
         - HIDE_POTION_EFFECTS
 
+    # Variables:
+    # - icon                Material enum value from the lookup table at items.choices.enchantmentMaterials
+    # - enchantment_hr      Human readable enchantment enum value
+    # - enchantment         Enchantment enum value
+    # - state               Applied state boolean
     enchantmentInactive:
       type: '{{icon}}'
       name: '&7» &d{{enchantment_hr}}'
@@ -655,6 +691,10 @@ items:
 
     # //////////////// Item Flag Activate/Deactivate ////////////////
 
+    # Variables:
+    # - icon                Material enum value from the lookup table at items.choices.itemFlagMaterial
+    # - flag                Human readable flag enum value
+    # - state               Applied state boolean
     flag:
       type: '{{icon}}'
       name: '&7» &d{{flag}}'
@@ -668,6 +708,9 @@ items:
 
     # //////////////// Lore Line Choice ////////////////
 
+    # Variables:
+    # - line                Line number
+    # - content             Line content
     lore:
       type: PAPER
       name: '&7» &7Zeile &d{{line}}'
@@ -678,6 +721,9 @@ items:
 
     # //////////////// Attribute Add/Remove ////////////////
 
+    # Variables:
+    # - icon                Material enum value from the lookup table at items.choices.attributeMaterial
+    # - attribute           Human readable attribute enum value
     attributeNew:
       type: '{{icon}}'
       name: '&7» &d{{attribute}}'
@@ -687,6 +733,13 @@ items:
       flags:
         - HIDE_ATTRIBUTES
 
+    # Variables:
+    # - icon                Material enum value from the lookup table at items.choices.attributeMaterial
+    # - attribute           Human readable attribute enum value
+    # - name                Auto-generated name of the attribute instance
+    # - amount              Numeric attribute value
+    # - operation           Operation applied
+    # - slot                Slot which activates this attribute
     attributeExisting:
       type: '{{icon}}'
       name: '&7» &d{{attribute}}'
@@ -701,6 +754,9 @@ items:
 
     # //////////////// Equipment Slot Choice ////////////////
 
+    # Variables:
+    # - icon                Material enum value from the lookup table at items.choices.equipmentMaterial
+    # - slot                Human readable EquipmentSlot enum value
     equipment:
       type: '{{icon}}'
       name: '&7» &d{{slot}}'
@@ -712,6 +768,9 @@ items:
 
     # //////////////// Operation Choice ////////////////
 
+    # Variables:
+    # - icon                Material enum value from the lookup table at items.choices.equipmentMaterial
+    # - operation           Human readable Operation enum value
     operation:
       type: '{{icon}}'
       name: '&7» &d{{operation}}'
@@ -723,6 +782,9 @@ items:
 
     # //////////////// Potion Type Choice ////////////////
 
+    # Variables:
+    # - type_hr             Human readable potion type enum value
+    # - type                Potion type enum value
     potionType:
       type: POTION
       name: '&7» &d{{type_hr}}'
@@ -734,12 +796,17 @@ items:
 
     # //////////////// Potion Effect Deletion Choice ////////////////
 
+    # Variables:
+    # - effect_hr             Human readable potion effect type enum value
+    # - effect                Potion effect type enum value
+    # - duration              Applied duration in ticks
+    # - amplifier             Applied amplifier enum value
     potionEffect:
       type: POTION
       name: '&7» &d{{effect_hr}}'
       lore:
         - ' '
-        - '&7Klicke, um diesen &dEffekt &7zu wählen.'
+        - '&7Klicke, um diesen Effekt zu &centfernen&7.'
       customEffects:
         -
           effect: '{{effect}}'
@@ -748,6 +815,10 @@ items:
 
     # //////////////// Color Choice ////////////////
 
+    # Variables:
+    # - icon                Material enum value from the lookup table at items.choices.colorMaterials
+    # - color_hr            Human readable color enum value
+    # - color               Color enum value
     color:
       type: '{{icon}}'
       name: '&7» &d{{color_hr}}'
@@ -760,6 +831,8 @@ items:
 
     # //////////////// Book Generation Choice ////////////////
 
+    # Variables:
+    # - generation            Human readable generation enum value
     generation:
       type: BOOK
       name: '&7» &d{{generation}}'
@@ -769,6 +842,9 @@ items:
 
     # //////////////// Book Page Deletion Choice ////////////////
 
+    # Variables:
+    # - number              Page number
+    # - content             Page content
     page:
       type: PAPER
       name: '&7» &7Seite &d{{number}}'
@@ -779,6 +855,9 @@ items:
 
     # //////////////// Firework Type Choice ////////////////
 
+    # Variables:
+    # - icon                Material enum value from the lookup table at items.choices.fireworkEffectTypeMaterial
+    # - type                Human readable FireworkEffect.Type enum value
     fireworkType:
       type: '{{icon}}'
       name: '&7» &d{{type}}'
@@ -790,6 +869,11 @@ items:
 
     # //////////////// Banner Pattern Choice ////////////////
 
+    # Variables:
+    # - base                Banner base material (plain colored banner)
+    # - type_hr             Human readable pattern type enum value
+    # - type                Pattern type enum value
+    # - color               DyeColor enum value
     patternNew:
       type: '{{base}}'
       name: '&7» &d{{type_hr}}'
@@ -803,6 +887,12 @@ items:
 
     # //////////////// Banner Pattern Deletion Choice ////////////////
 
+    # Variables:
+    # - base                Banner base material (plain colored banner)
+    # - type_hr             Human readable pattern type enum value
+    # - color_hr            Human readable DyeColor enum value
+    # - type                Pattern type enum value
+    # - color               DyeColor enum value
     patternExisting:
       type: '{{base}}'
       name: '&7» &7Muster &dNr. {{index}}'
@@ -819,6 +909,11 @@ items:
 
     # //////////////// Banner Pattern Color Choice ////////////////
 
+    # Variables:
+    # - base                Banner base material (plain colored banner)
+    # - color_hr            Human readable DyeColor enum value
+    # - type                Pattern type enum value
+    # - color               DyeColor enum value
     bannerDyeColor:
       type: '{{base}}'
       name: '&7» &d{{color_hr}}'
@@ -832,6 +927,14 @@ items:
 
     # //////////////// Firework Effect Choice ////////////////
 
+    # Variables:
+    # - icon                Material enum value from the lookup table at items.choices.fireworkEffectTypeMaterial
+    # - index               Index within the list of applied effects
+    # - type                Human readable FireworkEffect.Type enum value
+    # - colors              Human readable list of DyeColor enum values
+    # - fades               Human readable list of DyeColor enum values
+    # - flicker             Flicker state boolean
+    # - trail               Trail state boolean
     fireworkEffect:
       type: '{{icon}}'
       name: '&7» &7Effekt &dNr. {{index}}'
@@ -941,9 +1044,9 @@ items:
       VANISHING_CURSE: BUCKET
       SOUL_SPEED: SOUL_SAND
 
-    # //////////////// Firework Effect Representitives ////////////////
+    # //////////////// Firework Effect Type Representitives ////////////////
 
-    fireworkEffectMaterial:
+    fireworkEffectTypeMaterial:
       STAR: NETHER_STAR
       CREEPER: CREEPER_HEAD
       BURST: TNT

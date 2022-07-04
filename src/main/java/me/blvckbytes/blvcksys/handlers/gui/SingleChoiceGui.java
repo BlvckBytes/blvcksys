@@ -59,8 +59,6 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
     SingleChoiceParam arg = inst.getArg();
     IStdGuiParamProvider paramProvider = arg.paramProvider();
 
-    inst.setAnimationsEnabled(paramProvider.areAnimationsEnabled());
-
     inst.addBorder(paramProvider);
 
     inst.addPagination("38", "40", "42", paramProvider);

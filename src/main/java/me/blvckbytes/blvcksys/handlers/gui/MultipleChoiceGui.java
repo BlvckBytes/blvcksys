@@ -66,8 +66,6 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
     MultipleChoiceParam arg = inst.getArg();
     IStdGuiParamProvider paramProvider = arg.paramProvider();
 
-    inst.setAnimationsEnabled(paramProvider.areAnimationsEnabled());
-
     if (!playerChoices.containsKey(inst))
       playerChoices.put(inst, new ArrayList<>());
 

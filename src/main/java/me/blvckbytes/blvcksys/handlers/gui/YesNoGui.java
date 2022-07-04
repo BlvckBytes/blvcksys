@@ -48,7 +48,6 @@ public class YesNoGui extends AGui<YesNoParam> {
     Player p = inst.getViewer();
     IStdGuiParamProvider paramProvider = inst.getArg().paramProvider();
 
-    inst.setAnimationsEnabled(paramProvider.areAnimationsEnabled());
     inst.addFill(paramProvider);
 
     // Render the back button, if a callback has been set

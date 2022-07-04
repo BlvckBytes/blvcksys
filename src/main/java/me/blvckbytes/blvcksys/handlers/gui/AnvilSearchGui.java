@@ -87,7 +87,6 @@ public class AnvilSearchGui extends AGui<SingleChoiceParam> implements IPacketMo
   @Override
   protected boolean opening(GuiInstance<SingleChoiceParam> inst) {
     IStdGuiParamProvider paramProvider = inst.getArg().paramProvider();
-    inst.setAnimationsEnabled(paramProvider.areAnimationsEnabled());
 
     // This item serves as a placeholder to get the typing functionality up and working, while
     // it also informes the player about the concept of filtering

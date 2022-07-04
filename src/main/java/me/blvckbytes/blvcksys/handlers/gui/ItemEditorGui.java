@@ -4,6 +4,7 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.config.sections.GuiLayoutSection;
 import me.blvckbytes.blvcksys.config.sections.itemeditor.IEPerm;
 import me.blvckbytes.blvcksys.config.sections.itemeditor.IESection;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
@@ -55,6 +56,16 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
   // Representitives which don't change are cached
   private final Map<Class<?>, List<Tuple<Object, ItemStack>>> staticRepresentitiveCache;
 
+  /**
+   * Represents GUI item wrapper functions
+   */
+  @FunctionalInterface
+  private interface GuiItemWrapper {
+    void apply(GuiInstance<?> inst, ItemStack item, String slotExpr, String displaySlotExpr);
+  }
+
+  private final Map<String, GuiItemWrapper> guiItems;
+
   private final SingleChoiceGui singleChoiceGui;
   private final IBookEditorCommunicator bookEditor;
   private final ILogger logger;
@@ -96,6 +107,10 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         .withVariable("item_type", formatConstant(i.getArg().a().getType().name()))
     ));
 
+    // Create a map of available GUI items
+    this.guiItems = new HashMap<>();
+    this.registerGuiItems();
+
     // Pre-load all static representitives into cache,
     // so the user won't experience any initial lag
     this.staticRepresentitiveCache = new HashMap<>();
@@ -113,14 +128,11 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
   @Override
   protected boolean opening(GuiInstance<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<GuiInstance<?>>>> inst) {
-    inst.setAnimationsEnabled(ies.getItems().getGeneric().areAnimationsEnabled());
-    inst.addFill(ies.getItems().getGeneric());
-
     ItemStack item = inst.getArg().a();
-    ItemMeta meta = item.getItemMeta();
     Player p = inst.getViewer();
 
-    if (meta == null) {
+    // Could not load meta, item is not editable
+    if (item.getItemMeta() == null) {
       p.sendMessage(
         ies.getMessages().getMetaUnavailable()
           .withPrefix()
@@ -129,38 +141,79 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       return false;
     }
 
-    /////////////////////////////////// Back Button ////////////////////////////////////
+    GuiLayoutSection layout = ies.getLayouts().getHome();
+    inst.resize(layout.getRows(), false);
+    inst.setAnimationsEnabled(layout.isAnimated());
 
-    // Only render the back button if a callback has been provided
-    Consumer<GuiInstance<?>> back = inst.getArg().c();
-    if (back != null)
-      inst.addBack("45", ies.getItems().getGeneric(), e -> back.accept(inst));
+    if (layout.isFill())
+      inst.addFill(ies.getItems().getGeneric());
+    else if (layout.isBorder())
+      inst.addBorder(ies.getItems().getGeneric());
 
-    ///////////////////////////////////// Preview //////////////////////////////////////
+    // Render all item wrappers as specified in the GUI layout for the home screen
+    String displaySlotExpr = layout.getSlots().getOrDefault("display", "0");
+    layout.getSlots().forEach((slotItem, slotExpr) -> {
+      GuiItemWrapper wrapper = this.guiItems.get(slotItem);
 
-    inst.fixedItem("12,14", () -> ies.getItems().getHome().getDisplayMarker().build(), null, null);
-
-    // Always keep the edited item in sync with the player's inventory
-    inst.fixedItem("13", () -> {
-      p.getInventory().setItemInMainHand(item);
-      return item;
-    }, null, null);
+      if (wrapper != null)
+        wrapper.apply(inst, item, slotExpr, displaySlotExpr);
+    });
 
     // Fire the item update callback whenever the preview slot changes
-    inst.onRedrawing(13, () -> {
+    inst.onRedrawing(displaySlotExpr, () -> {
       Consumer<ItemStack> cb = inst.getArg().b();
       if (cb != null)
         cb.accept(item);
     });
 
-    ///////////////////////////////// Increase Amount //////////////////////////////////
+    return true;
+  }
 
-    inst.fixedItem("10", () -> (
+  //=========================================================================//
+  //                                  Items                                  //
+  //=========================================================================//
+
+  private void registerGuiItems() {
+    this.guiItems.put("displayMarker", this::itemDisplayMarker);
+    this.guiItems.put("display", this::itemDisplay);
+    this.guiItems.put("increase", this::itemIncrease);
+    this.guiItems.put("decrease", this::itemDecrease);
+    this.guiItems.put("customModelData", this::itemCustomModelData);
+    this.guiItems.put("material", this::itemMaterial);
+    this.guiItems.put("flags", this::itemFlags);
+    this.guiItems.put("enchantments", this::itemEnchantments);
+    this.guiItems.put("displayname", this::itemDisplayname);
+    this.guiItems.put("lore", this::itemLore);
+    this.guiItems.put("durability", this::itemDurability);
+    this.guiItems.put("attributes", this::itemAttributes);
+    this.guiItems.put("fireworks", this::itemFireworks);
+    this.guiItems.put("compass", this::itemCompass);
+    this.guiItems.put("headOwner", this::itemHeadOwner);
+    this.guiItems.put("leatherColor", this::itemLeatherColor);
+    this.guiItems.put("potionEffects", this::itemPotionEffects);
+    this.guiItems.put("maps", this::itemMaps);
+    this.guiItems.put("books", this::itemBooks);
+    this.guiItems.put("banners", this::itemBanners);
+  }
+
+  private void itemDisplayMarker(GuiInstance<?> inst, ItemStack item, String slotExpr, String displaySlotExpr) {
+    inst.fixedItem(slotExpr, () -> ies.getItems().getHome().getDisplayMarker().build(), null, null);
+  }
+
+  private void itemDisplay(GuiInstance<?> inst, ItemStack item, String slotExpr, String displaySlotExpr) {
+    inst.fixedItem(slotExpr, () -> {
+      inst.getViewer().getInventory().setItemInMainHand(item);
+      return item;
+    }, null, null);
+  }
+
+  private void itemIncrease(GuiInstance<?> inst, ItemStack item, String slotExpr, String displaySlotExpr) {
+    inst.fixedItem(slotExpr, () -> (
       ies.getItems().getHome().getIncrease()
-        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.INCREASE.has(p))
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.INCREASE.has(inst.getViewer()))
         .build()
     ), e -> {
-      if (!checkPermission(IEPerm.INCREASE, p))
+      if (missingPermission(IEPerm.INCREASE, inst.getViewer()))
         return;
 
       Integer key = e.getHotbarKey().orElse(null);
@@ -183,24 +236,24 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
       // Set the amount and redraw the display
       item.setAmount(amount);
-      inst.redraw("13");
+      inst.redraw(displaySlotExpr);
 
-      p.sendMessage(
+      inst.getViewer().sendMessage(
         ies.getMessages().getAmountChanged()
           .withPrefix()
           .withVariable("amount", amount)
           .asScalar()
       );
     }, null);
+  }
 
-    ///////////////////////////////// Decrease Amount //////////////////////////////////
-
-    inst.fixedItem("16", () -> (
+  private void itemDecrease(GuiInstance<?> inst, ItemStack item, String slotExpr, String displaySlotExpr) {
+    inst.fixedItem(slotExpr, () -> (
       ies.getItems().getHome().getDecrease()
-        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.DECREASE.has(p))
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.DECREASE.has(inst.getViewer()))
         .build()
     ), e -> {
-      if (!checkPermission(IEPerm.DECREASE, p))
+      if (missingPermission(IEPerm.DECREASE, inst.getViewer()))
         return;
 
       Integer key = e.getHotbarKey().orElse(null);
@@ -224,28 +277,32 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       // Set the amount and redraw the display
       amount = Math.max(1, amount);
       item.setAmount(amount);
-      inst.redraw("13");
+      inst.redraw(displaySlotExpr);
 
-      p.sendMessage(
+      inst.getViewer().sendMessage(
         ies.getMessages().getAmountChanged()
           .withPrefix()
           .withVariable("amount", amount)
           .asScalar()
       );
     }, null);
+  }
 
-    //////////////////////////////// Custom Model Data //////////////////////////////////
+  private void itemCustomModelData(GuiInstance<?> inst, ItemStack item, String slotExpr, String displaySlotExpr) {
+    ItemMeta meta = item.getItemMeta();
+    if (meta == null)
+      return;
 
-    inst.fixedItem("27", () -> (
+    inst.fixedItem(slotExpr, () -> (
       ies.getItems().getHome().getCustomModelData()
-        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.CUSTOMMODELDATA.has(p))
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.CUSTOMMODELDATA.has(inst.getViewer()))
         .build(
           ConfigValue.makeEmpty()
             .withVariable("custom_model_data", meta.hasCustomModelData() ? meta.getCustomModelData() : "/")
             .exportVariables()
         )
     ), e -> {
-      if (!checkPermission(IEPerm.CUSTOMMODELDATA, p))
+      if (missingPermission(IEPerm.CUSTOMMODELDATA, inst.getViewer()))
         return;
 
       Integer key = e.getHotbarKey().orElse(null);
@@ -259,9 +316,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
           meta.setCustomModelData(data);
           item.setItemMeta(meta);
-          inst.redraw("13,27");
+          inst.redraw(slotExpr + "," + displaySlotExpr);
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getCustomModelDataSet()
               .withPrefix()
               .withVariable("custom_model_data", data)
@@ -282,7 +339,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       // Remove the custom model data
       if (key == 2) {
         if (!meta.hasCustomModelData()) {
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getPotioneffectCustomNone()
               .withPrefix()
               .asScalar()
@@ -292,9 +349,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
         meta.setCustomModelData(null);
         item.setItemMeta(meta);
-        inst.redraw("13,27");
+        inst.redraw(slotExpr + "," + displaySlotExpr);
 
-        p.sendMessage(
+        inst.getViewer().sendMessage(
           ies.getMessages().getCustomModelDataReset()
             .withPrefix()
             .asScalar()
@@ -303,15 +360,15 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         return;
       }
     }, null);
+  }
 
-    ///////////////////////////////////// Material /////////////////////////////////////
-
-    inst.fixedItem("28", () -> (
+  private void itemMaterial(GuiInstance<?> inst, ItemStack item, String slotExpr, String displaySlotExpr) {
+    inst.fixedItem(slotExpr, () -> (
       ies.getItems().getHome().getMaterial()
-        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.MATERIAL.has(p))
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.MATERIAL.has(inst.getViewer()))
         .build()
     ), e -> {
-      if (!checkPermission(IEPerm.MATERIAL, p))
+      if (missingPermission(IEPerm.MATERIAL, inst.getViewer()))
         return;
 
       new UserInputChain(inst, values -> {
@@ -319,7 +376,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         Material mat = (Material) values.get("material");
         item.setType(mat);
 
-        p.sendMessage(
+        inst.getViewer().sendMessage(
           ies.getMessages().getMaterialChanged()
             .withPrefix()
             .withVariable("current", formatConstant(mat.name()))
@@ -336,19 +393,23 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         )
         .start();
     }, null);
+  }
 
-    /////////////////////////////////// Item Flags ///////////////////////////////////
+  private void itemFlags(GuiInstance<?> inst, ItemStack item, String slotExpr, String displaySlotExpr) {
+    ItemMeta meta = item.getItemMeta();
+    if (meta == null)
+      return;
 
-    inst.fixedItem("29", () -> (
+    inst.fixedItem(slotExpr, () -> (
       ies.getItems().getHome().getFlags()
-        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.FLAGS.has(p))
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.FLAGS.has(inst.getViewer()))
         .build(
           ConfigValue.makeEmpty()
             .withVariable("count", meta.getItemFlags().size())
             .exportVariables()
         )
     ), e -> {
-      if (!checkPermission(IEPerm.FLAGS, p))
+      if (missingPermission(IEPerm.FLAGS, inst.getViewer()))
         return;
 
       new UserInputChain(inst, values -> {
@@ -363,7 +424,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
         item.setItemMeta(meta);
 
-        p.sendMessage(
+        inst.getViewer().sendMessage(
           ies.getMessages().getFlagChanged()
             .withPrefix()
             .withVariable("flag", formatConstant(flag.name()))
@@ -380,19 +441,23 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         )
         .start();
     }, null);
+  }
 
-    //////////////////////////////////// Enchantments ////////////////////////////////////
+  private void itemEnchantments(GuiInstance<?> inst, ItemStack item, String slotExpr, String displaySlotExpr) {
+    ItemMeta meta = item.getItemMeta();
+    if (meta == null)
+      return;
 
-    inst.fixedItem("30", () -> (
+    inst.fixedItem(slotExpr, () -> (
       ies.getItems().getHome().getEnchantments()
-        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.ENCHANTMENTS.has(p))
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.ENCHANTMENTS.has(inst.getViewer()))
         .build(
           ConfigValue.makeEmpty()
             .withVariable("count", meta.getEnchants().size())
             .exportVariables()
         )
     ), e -> {
-      if (!checkPermission(IEPerm.ENCHANTMENTS, p))
+      if (missingPermission(IEPerm.ENCHANTMENTS, inst.getViewer()))
         return;
 
       new UserInputChain(inst, values -> {
@@ -404,7 +469,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           meta.removeEnchant(enchantment);
           item.setItemMeta(meta);
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getEnchantmentRemoved()
               .withPrefix()
               .withVariable("enchantment", formatConstant(enchantment.getKey().getKey()))
@@ -418,7 +483,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         meta.addEnchant(enchantment, level, true);
         item.setItemMeta(meta);
 
-        p.sendMessage(
+        inst.getViewer().sendMessage(
           ies.getMessages().getEnchantmentAdded()
             .withPrefix()
             .withVariable("enchantment", formatConstant(enchantment.getKey().getKey()))
@@ -450,15 +515,19 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         )
         .start();
     }, null);
+  }
 
-    //////////////////////////////////// Displayname ////////////////////////////////////
+  private void itemDisplayname(GuiInstance<?> inst, ItemStack item, String slotExpr, String displaySlotExpr) {
+    ItemMeta meta = item.getItemMeta();
+    if (meta == null)
+      return;
 
-    inst.fixedItem("31", () -> (
+    inst.fixedItem(slotExpr, () -> (
       ies.getItems().getHome().getDisplayname()
-        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.DISPLAYNAME.has(p))
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.DISPLAYNAME.has(inst.getViewer()))
         .build()
     ), e -> {
-      if (!checkPermission(IEPerm.DISPLAYNAME, p))
+      if (missingPermission(IEPerm.DISPLAYNAME, inst.getViewer()))
         return;
 
       Integer key = e.getHotbarKey().orElse(null);
@@ -473,7 +542,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           meta.setDisplayName(name);
           item.setItemMeta(meta);
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getDisplaynameSet()
               .withPrefix()
               .withVariable("name", name)
@@ -492,7 +561,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       // Reset an existing name
       if (key == 2) {
         if (meta.getDisplayName().isBlank()) {
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getDisplaynameNone()
               .withPrefixes()
               .asScalar()
@@ -502,9 +571,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
         meta.setDisplayName(null);
         item.setItemMeta(meta);
-        inst.redraw("13");
+        inst.redraw(displaySlotExpr);
 
-        p.sendMessage(
+        inst.getViewer().sendMessage(
           ies.getMessages().getDisplaynameReset()
             .withPrefixes()
             .asScalar()
@@ -512,15 +581,19 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         return;
       }
     }, null);
+  }
 
-    //////////////////////////////////// Lore Lines ////////////////////////////////////
+  private void itemLore(GuiInstance<?> inst, ItemStack item, String slotExpr, String displaySlotExpr) {
+    ItemMeta meta = item.getItemMeta();
+    if (meta == null)
+      return;
 
-    inst.fixedItem("32", () -> (
+    inst.fixedItem(slotExpr, () -> (
       ies.getItems().getHome().getLore()
-        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.LORE.has(p))
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.LORE.has(inst.getViewer()))
         .build()
     ), e -> {
-      if (!checkPermission(IEPerm.LORE, p))
+      if (missingPermission(IEPerm.LORE, inst.getViewer()))
         return;
 
       Integer key = e.getHotbarKey().orElse(null);
@@ -551,7 +624,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           meta.setLore(lines);
           item.setItemMeta(meta);
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getLoreAdded()
               .withPrefix()
               .withVariable("content", line)
@@ -582,7 +655,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
         // Has no lore yet
         if (lines == null) {
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getLoreNone()
               .withPrefix()
               .asScalar()
@@ -597,7 +670,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           meta.setLore(lines);
           item.setItemMeta(meta);
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getLoreLineRemoved()
               .withPrefix()
               .withVariable("line", index + 1)
@@ -622,7 +695,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
         // Has no lore yet
         if (meta.getLore() == null || meta.getLore().size() == 0) {
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getLoreNone()
               .withPrefix()
               .asScalar()
@@ -633,9 +706,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         // Set the lore and redraw the display
         meta.setLore(null);
         item.setItemMeta(meta);
-        inst.redraw("13");
+        inst.redraw(displaySlotExpr);
 
-        p.sendMessage(
+        inst.getViewer().sendMessage(
           ies.getMessages().getLoreReset()
             .withPrefix()
             .asScalar()
@@ -644,17 +717,21 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         return;
       }
     }, null);
+  }
 
-    //////////////////////////////////// Durability ////////////////////////////////////
+  private void itemDurability(GuiInstance<?> inst, ItemStack item, String slotExpr, String displaySlotExpr) {
+    ItemMeta meta = item.getItemMeta();
+    if (meta == null)
+      return;
 
-    inst.fixedItem("33", () -> {
+    inst.fixedItem(slotExpr, () -> {
       boolean isDamageable = (meta instanceof Damageable && item.getType().getMaxDurability() > 0);
       int currDur = item.getType().getMaxDurability() - ((meta instanceof Damageable d) ? d.getDamage() : 0);
       int maxDur = item.getType().getMaxDurability();
 
       return ies.getItems().getHome().getDurability()
         .patch(ies.getItems().getHome().getNotApplicable(), !isDamageable)
-        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.DURABILITY.has(p))
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.DURABILITY.has(inst.getViewer()))
         .build(
           ConfigValue.makeEmpty()
             .withVariable(
@@ -670,7 +747,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
       // This item cannot take any damage
       if (!(meta instanceof Damageable d) || maxDur <= 0) {
-        p.sendMessage(
+        inst.getViewer().sendMessage(
           ies.getMessages().getDurabilityNone()
             .withPrefix()
             .asScalar()
@@ -687,7 +764,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
       // Increase durability
       if (key == 1) {
-        if (!checkPermission(IEPerm.DURABILITY_CHANGE, p))
+        if (missingPermission(IEPerm.DURABILITY_CHANGE, inst.getViewer()))
           return;
 
         // Apply the constrained damage
@@ -696,9 +773,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         item.setItemMeta(meta);
 
         // Redraw the display and the durability icon
-        inst.redraw("13," + e.getTargetSlot());
+        inst.redraw(displaySlotExpr + "," + slotExpr);
 
-        p.sendMessage(
+        inst.getViewer().sendMessage(
           ies.getMessages().getDurabilityChanged()
             .withPrefix()
             .withVariable("current_durability", maxDur - damage)
@@ -710,11 +787,11 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
       // Set unbreakable
       if (key == 2) {
-        if (!checkPermission(IEPerm.DURABILITY_UNBREAKABLE, p))
+        if (missingPermission(IEPerm.DURABILITY_UNBREAKABLE, inst.getViewer()))
           return;
 
         if (meta.isUnbreakable()) {
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getDurabilityUnbreakableAlready()
               .withPrefix()
               .asScalar()
@@ -726,9 +803,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         item.setItemMeta(meta);
 
         // Redraw the display and the durability icon
-        inst.redraw("13," + e.getTargetSlot());
+        inst.redraw(displaySlotExpr + "," + slotExpr);
 
-        p.sendMessage(
+        inst.getViewer().sendMessage(
           ies.getMessages().getDurabilityUnbreakableSet()
             .withPrefix()
             .asScalar()
@@ -738,7 +815,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
       // Decrease durability
       if (key == 3) {
-        if (!checkPermission(IEPerm.DURABILITY_CHANGE, p))
+        if (missingPermission(IEPerm.DURABILITY_CHANGE, inst.getViewer()))
           return;
 
         // Apply the constrained damage
@@ -747,9 +824,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         item.setItemMeta(meta);
 
         // Redraw the display and the durability icon
-        inst.redraw("13," + e.getTargetSlot());
+        inst.redraw(displaySlotExpr + "," + slotExpr);
 
-        p.sendMessage(
+        inst.getViewer().sendMessage(
           ies.getMessages().getDurabilityChanged()
             .withPrefix()
             .withVariable("current_durability", maxDur - damage)
@@ -761,11 +838,11 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
       // Remove unbreakability
       if (key == 4) {
-        if (!checkPermission(IEPerm.DURABILITY_UNBREAKABLE, p))
+        if (missingPermission(IEPerm.DURABILITY_UNBREAKABLE, inst.getViewer()))
           return;
 
         if (!meta.isUnbreakable()) {
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getDurabilityUnbreakableNone()
               .withPrefix()
               .asScalar()
@@ -777,9 +854,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         item.setItemMeta(meta);
 
         // Redraw the display and the durability icon
-        inst.redraw("13," + e.getTargetSlot());
+        inst.redraw(displaySlotExpr + "," + slotExpr);
 
-        p.sendMessage(
+        inst.getViewer().sendMessage(
           ies.getMessages().getDurabilityUnbreakableReset()
             .withPrefix()
             .asScalar()
@@ -787,15 +864,19 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         return;
       }
     }, null);
+  }
 
-    ////////////////////////////////////// Attributes //////////////////////////////////////
+  private void itemAttributes(GuiInstance<?> inst, ItemStack item, String slotExpr, String displaySlotExpr) {
+    ItemMeta meta = item.getItemMeta();
+    if (meta == null)
+      return;
 
-    inst.fixedItem("34", () -> (
+    inst.fixedItem(slotExpr, () -> (
       ies.getItems().getHome().getAttributes()
-        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.ATTRIBUTES.has(p))
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.ATTRIBUTES.has(inst.getViewer()))
         .build()
     ), e -> {
-      if (!checkPermission(IEPerm.ATTRIBUTES, p))
+      if (missingPermission(IEPerm.ATTRIBUTES, inst.getViewer()))
         return;
 
       Integer key = e.getHotbarKey().orElse(null);
@@ -819,7 +900,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
           item.setItemMeta(meta);
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getAttributeAdded()
               .withPrefix()
               .withVariable("attribute", formatConstant(attr.a().name()))
@@ -872,7 +953,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       if (key == 2 || key == 3) {
         Multimap<Attribute, AttributeModifier> attrs = meta.getAttributeModifiers();
         if (attrs == null) {
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getAttributesNone()
               .withPrefix()
               .asScalar()
@@ -887,9 +968,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
           // Set and redraw the item
           item.setItemMeta(meta);
-          inst.redraw("13");
+          inst.redraw(displaySlotExpr);
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getAttributesReset()
               .withPrefix()
               .asScalar()
@@ -905,7 +986,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           meta.removeAttributeModifier(attr.a(), attr.b());
           item.setItemMeta(meta);
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getAttributeRemoved()
               .withPrefix()
               .withVariable("attribute", formatConstant(attr.a().getKey().getKey()))
@@ -924,21 +1005,25 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         return;
       }
     }, null);
+  }
 
-    ////////////////////////////////////// Fireworks //////////////////////////////////////
+  private void itemFireworks(GuiInstance<?> inst, ItemStack item, String slotExpr, String displaySlotExpr) {
+    ItemMeta meta = item.getItemMeta();
+    if(meta == null)
+      return;
 
-    inst.fixedItem("35", () -> {
+    inst.fixedItem(slotExpr, () -> {
       FireworkMeta fMeta = meta instanceof FireworkMeta fm ? fm : null;
       return ies.getItems().getHome().getFireworks()
         .patch(ies.getItems().getHome().getNotApplicable(), fMeta == null)
-        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.FIREWORKS.has(p))
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.FIREWORKS.has(inst.getViewer()))
         .build(
           ConfigValue.makeEmpty()
             .withVariable("power", fMeta == null ? "/" : fMeta.getPower())
             .exportVariables()
         );
     }, e -> {
-      if (!checkPermission(IEPerm.FIREWORKS, p))
+      if (missingPermission(IEPerm.FIREWORKS, inst.getViewer()))
         return;
 
       if (!(meta instanceof FireworkMeta fm))
@@ -955,9 +1040,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
           fm.setPower(power);
           item.setItemMeta(meta);
-          inst.redraw("13,35");
+          inst.redraw(displaySlotExpr + "," + slotExpr);
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getFireworkPowerSet()
               .withPrefix()
               .withVariable("power", power)
@@ -995,9 +1080,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
           fm.addEffect(b.build());
           item.setItemMeta(fm);
-          inst.redraw("13");
+          inst.redraw(displaySlotExpr);
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getFireworkEffectsAdded()
               .withPrefix()
               .withVariable("type", formatConstant(type.name()))
@@ -1076,7 +1161,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       // Remove an existing effect
       if (key == 3) {
         if (fm.getEffects().size() == 0) {
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getFireworkEffectsNone()
               .withPrefix()
               .asScalar()
@@ -1090,9 +1175,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           FireworkEffect eff = fm.getEffects().get(index);
           fm.removeEffect(index);
           item.setItemMeta(fm);
-          inst.redraw("13");
+          inst.redraw(displaySlotExpr);
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getFireworkEffectsRemoved()
               .withPrefix()
               .withVariable("index", index + 1)
@@ -1114,7 +1199,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       // Remove all effects
       if (key == 4) {
         if (fm.getEffects().size() == 0) {
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getFireworkEffectsNone()
               .withPrefix()
               .asScalar()
@@ -1124,9 +1209,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
         fm.clearEffects();
         item.setItemMeta(fm);
-        inst.redraw("13,35");
+        inst.redraw(displaySlotExpr + "," + slotExpr);
 
-        p.sendMessage(
+        inst.getViewer().sendMessage(
           ies.getMessages().getFireworkEffectsReset()
             .withPrefix()
             .asScalar()
@@ -1134,14 +1219,18 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         return;
       }
     }, null);
+  }
 
-    ////////////////////////////////////// Compasses //////////////////////////////////////
+  private void itemCompass(GuiInstance<?> inst, ItemStack item, String slotExpr, String displaySlotExpr) {
+    ItemMeta meta = item.getItemMeta();
+    if (meta == null)
+      return;
 
-    inst.fixedItem("37", () -> {
+    inst.fixedItem(slotExpr, () -> {
       CompassMeta cm = meta instanceof CompassMeta x ? x : null;
       return ies.getItems().getHome().getCompass()
         .patch(ies.getItems().getHome().getNotApplicable(), cm == null)
-        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.COMPASS.has(p))
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.COMPASS.has(inst.getViewer()))
         .build(
           ConfigValue.makeEmpty()
             .withVariable(
@@ -1153,7 +1242,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             .exportVariables()
         );
     }, e -> {
-      if (!checkPermission(IEPerm.COMPASS, p))
+      if (missingPermission(IEPerm.COMPASS, inst.getViewer()))
         return;
 
       if (!(meta instanceof CompassMeta cm))
@@ -1165,14 +1254,14 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
       // Set the target location
       if (key == 1) {
-        cm.setLodestone(p.getLocation());
+        cm.setLodestone(inst.getViewer().getLocation());
         item.setItemMeta(meta);
-        inst.redraw("13,37");
+        inst.redraw(slotExpr + "," + displaySlotExpr);
 
-        p.sendMessage(
+        inst.getViewer().sendMessage(
           ies.getMessages().getCompassLocationSet()
             .withPrefix()
-            .withVariable("location", stringifyLocation(p.getLocation()))
+            .withVariable("location", stringifyLocation(inst.getViewer().getLocation()))
             .asScalar()
         );
         return;
@@ -1181,7 +1270,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       // Remove the target location
       if (key == 2) {
         if (!cm.hasLodestone()) {
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getCompassLocationNone()
               .withPrefix()
               .asScalar()
@@ -1191,9 +1280,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
         cm.setLodestone(null);
         item.setItemMeta(meta);
-        inst.redraw("13,37");
+        inst.redraw(slotExpr + "," + displaySlotExpr);
 
-        p.sendMessage(
+        inst.getViewer().sendMessage(
           ies.getMessages().getCompassLocationReset()
             .withPrefix()
             .asScalar()
@@ -1201,21 +1290,25 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         return;
       }
     }, null);
+  }
 
-    ///////////////////////////////////// Skull Owner /////////////////////////////////////
+  private void itemHeadOwner(GuiInstance<?> inst, ItemStack item, String slotExpr, String displaySlotExpr) {
+    ItemMeta meta = item.getItemMeta();
+    if (meta == null)
+      return;
 
-    inst.fixedItem("38", () -> {
+    inst.fixedItem(slotExpr, () -> {
       SkullMeta sm = meta instanceof SkullMeta x ? x : null;
       return ies.getItems().getHome().getHeadOwner()
         .patch(ies.getItems().getHome().getNotApplicable(), sm == null)
-        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.HEAD_OWNER.has(p))
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.HEAD_OWNER.has(inst.getViewer()))
         .build(
           ConfigValue.makeEmpty()
             .withVariable("owner", (sm == null || sm.getOwnerProfile() == null) ? "/" : sm.getOwnerProfile().getName())
             .exportVariables()
         );
     }, e -> {
-      if (!checkPermission(IEPerm.HEAD_OWNER, p))
+      if (missingPermission(IEPerm.HEAD_OWNER, inst.getViewer()))
         return;
 
       // Not an item which will have skull meta
@@ -1228,7 +1321,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         // Load the corresponding textures
         PlayerTextureModel ownerTextures = textures.getTextures(owner, false).orElse(null);
         if (ownerTextures == null) {
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getSkullownerNotLoadable()
               .withPrefix()
               .withVariable("owner", owner)
@@ -1249,7 +1342,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
         item.setItemMeta(skullMeta);
 
-        p.sendMessage(
+        inst.getViewer().sendMessage(
           ies.getMessages().getSkullownerSet()
             .withPrefix()
             .withVariable("owner", ownerTextures.getName())
@@ -1263,21 +1356,25 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         )
         .start();
     }, null);
+  }
 
-    ///////////////////////////////////// Leather Color /////////////////////////////////////
+  private void itemLeatherColor(GuiInstance<?> inst, ItemStack item, String slotExpr, String displaySlotExpr) {
+    ItemMeta meta = item.getItemMeta();
+    if (meta == null)
+      return;
 
-    inst.fixedItem("39", () -> {
+    inst.fixedItem(slotExpr, () -> {
       LeatherArmorMeta lam = meta instanceof LeatherArmorMeta x ? x : null;
       return ies.getItems().getHome().getLeatherColor()
         .patch(ies.getItems().getHome().getNotApplicable(), lam == null)
-        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.LEATHER_COLOR.has(p))
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.LEATHER_COLOR.has(inst.getViewer()))
         .build(
           ConfigValue.makeEmpty()
             .withVariable("color", lam == null ? "/" : stringifyColor(lam.getColor()))
             .exportVariables()
         );
     }, e -> {
-      if (!checkPermission(IEPerm.LEATHER_COLOR, p))
+      if (missingPermission(IEPerm.LEATHER_COLOR, inst.getViewer()))
         return;
 
       // Not an item which will have leather armor meta
@@ -1289,25 +1386,29 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         return;
 
       if (key == 1 || key == 2) {
-        promptForColor(inst, key == 2, item, meta);
+        promptForColor(inst, key == 2, item, meta, displaySlotExpr);
         return;
       }
 
       if (key == 3) {
-        resetColor(inst, item, meta);
+        resetColor(inst, item, meta, displaySlotExpr);
         return;
       }
     }, null);
+  }
 
-    ///////////////////////////////////// Potion Effects /////////////////////////////////////
+  private void itemPotionEffects(GuiInstance<?> inst, ItemStack item, String slotExpr, String displaySlotExpr) {
+    ItemMeta meta = item.getItemMeta();
+    if (meta == null)
+      return;
 
-    inst.fixedItem("40", () -> (
+    inst.fixedItem(slotExpr, () -> (
       ies.getItems().getHome().getPotionEffects()
         .patch(ies.getItems().getHome().getNotApplicable(), !(meta instanceof PotionMeta))
-        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.POTION_EFFECTS.has(p))
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.POTION_EFFECTS.has(inst.getViewer()))
         .build()
     ), e -> {
-      if (!checkPermission(IEPerm.POTION_EFFECTS, p))
+      if (missingPermission(IEPerm.POTION_EFFECTS, inst.getViewer()))
         return;
 
       // Not an item which will have potion meta
@@ -1346,7 +1447,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         if (data.isUpgraded()) {
           // Not extendable, upgrading is the only thing possible
           if (!data.getType().isExtendable()) {
-            p.sendMessage(
+            inst.getViewer().sendMessage(
               ies.getMessages().getPotioneffectUpgradedAlready()
                 .withPrefix()
                 .asScalar()
@@ -1356,7 +1457,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
           potionMeta.setBasePotionData(new PotionData(data.getType(), true, false));
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getPotioneffectExtended()
               .withPrefix()
               .asScalar()
@@ -1367,7 +1468,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         else if (data.isExtended()) {
           // Not upgradable, extending is the only thing possible
           if (!data.getType().isUpgradeable()) {
-            p.sendMessage(
+            inst.getViewer().sendMessage(
               ies.getMessages().getPotioneffectExtendedAlready()
                 .withPrefix()
                 .asScalar()
@@ -1377,7 +1478,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
           potionMeta.setBasePotionData(new PotionData(data.getType(), false, true));
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getPotioneffectUpgraded()
               .withPrefix()
               .asScalar()
@@ -1390,7 +1491,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           if (data.getType().isExtendable()) {
             potionMeta.setBasePotionData(new PotionData(data.getType(), true, false));
 
-            p.sendMessage(
+            inst.getViewer().sendMessage(
               ies.getMessages().getPotioneffectExtended()
                 .withPrefix()
                 .asScalar()
@@ -1401,7 +1502,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           else if (data.getType().isUpgradeable()) {
             potionMeta.setBasePotionData(new PotionData(data.getType(), false, true));
 
-            p.sendMessage(
+            inst.getViewer().sendMessage(
               ies.getMessages().getPotioneffectUpgraded()
                 .withPrefix()
                 .asScalar()
@@ -1410,7 +1511,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
           // No enhancements are supported
           else {
-            p.sendMessage(
+            inst.getViewer().sendMessage(
               ies.getMessages().getPotioneffectEnhancementUnsupported()
                 .withPrefix()
                 .asScalar()
@@ -1419,7 +1520,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         }
 
         item.setItemMeta(potionMeta);
-        inst.redraw("13");
+        inst.redraw(displaySlotExpr);
         return;
       }
 
@@ -1428,7 +1529,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         PotionData data = potionMeta.getBasePotionData();
 
         if (!(data.isExtended() || data.isUpgraded())) {
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getPotioneffectEnhancementNone()
               .withPrefixes()
               .asScalar()
@@ -1438,9 +1539,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
         potionMeta.setBasePotionData(new PotionData(data.getType(), false, false));
         item.setItemMeta(potionMeta);
-        inst.redraw("13");
+        inst.redraw(displaySlotExpr);
 
-        p.sendMessage(
+        inst.getViewer().sendMessage(
           ies.getMessages().getPotioneffectEnhancementRemove()
             .withPrefixes()
             .asScalar()
@@ -1464,7 +1565,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           potionMeta.addCustomEffect(new PotionEffect(type, duration, amplifier), true);
           item.setItemMeta(meta);
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getPotioneffectCustomAdded()
               .withPrefix()
               .withVariable("effect", formatConstant(type.getName()))
@@ -1504,7 +1605,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         List<PotionEffect> secondaries = potionMeta.getCustomEffects();
 
         if (secondaries.size() == 0) {
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getPotioneffectCustomNone()
               .withPrefixes()
               .asScalar()
@@ -1518,7 +1619,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           potionMeta.removeCustomEffect(effect.getType());
           item.setItemMeta(meta);
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getPotioneffectCustomRemove()
               .withPrefix()
               .withVariable("effect", formatConstant(effect.getType().getName()))
@@ -1540,7 +1641,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       // Clear all secondary effects
       if (key == 6) {
         if (!potionMeta.clearCustomEffects()) {
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getPotioneffectCustomNone()
               .withPrefix()
               .asScalar()
@@ -1549,9 +1650,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         }
 
         item.setItemMeta(meta);
-        inst.redraw("13");
+        inst.redraw(displaySlotExpr);
 
-        p.sendMessage(
+        inst.getViewer().sendMessage(
           ies.getMessages().getPotioneffectCustomReset()
             .withPrefix()
             .asScalar()
@@ -1560,26 +1661,30 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
       // Change color
       if (key == 7 || key == 8) {
-        promptForColor(inst, key == 8, item, meta);
+        promptForColor(inst, key == 8, item, meta, displaySlotExpr);
         return;
       }
 
       // Reset color
       if (key == 9) {
-        resetColor(inst, item, meta);
+        resetColor(inst, item, meta, displaySlotExpr);
         return;
       }
     }, null);
+  }
 
-    //////////////////////////////////////// Maps ////////////////////////////////////////
+  private void itemMaps(GuiInstance<?> inst, ItemStack item, String slotExpr, String displaySlotExpr) {
+    ItemMeta meta = item.getItemMeta();
+    if (meta == null)
+      return;
 
-    inst.fixedItem("41", () -> (
+    inst.fixedItem(slotExpr, () -> (
       ies.getItems().getHome().getMaps()
         .patch(ies.getItems().getHome().getNotApplicable(), !(meta instanceof MapMeta))
-        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.MAPS.has(p))
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.MAPS.has(inst.getViewer()))
         .build()
     ), e -> {
-      if (!checkPermission(IEPerm.MAPS, p))
+      if (missingPermission(IEPerm.MAPS, inst.getViewer()))
         return;
 
       // Not an item which will have map meta
@@ -1592,26 +1697,30 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
       // Change color
       if (key == 1 || key == 2) {
-        promptForColor(inst, key == 2, item, meta);
+        promptForColor(inst, key == 2, item, meta, displaySlotExpr);
         return;
       }
 
       // Reset color
       if (key == 3) {
-        resetColor(inst, item, meta);
+        resetColor(inst, item, meta, displaySlotExpr);
         return;
       }
     }, null);
+  }
 
-    //////////////////////////////////////// Books ////////////////////////////////////////
+  private void itemBooks(GuiInstance<?> inst, ItemStack item, String slotExpr, String displaySlotExpr) {
+    ItemMeta meta = item.getItemMeta();
+    if (meta == null)
+      return;
 
-    inst.fixedItem("42", () -> (
+    inst.fixedItem(slotExpr, () -> (
       ies.getItems().getHome().getBooks()
         .patch(ies.getItems().getHome().getNotApplicable(), !(meta instanceof BookMeta))
-        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.BOOKS.has(p))
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.BOOKS.has(inst.getViewer()))
         .build()
     ), e -> {
-      if (!checkPermission(IEPerm.BOOKS, p))
+      if (missingPermission(IEPerm.BOOKS, inst.getViewer()))
         return;
 
       // Not an item which will have book meta
@@ -1627,7 +1736,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         // Reset
         if (key == 2) {
           if (bookMeta.getTitle() == null) {
-            p.sendMessage(
+            inst.getViewer().sendMessage(
               ies.getMessages().getBookTitleNone()
                 .withPrefix()
                 .asScalar()
@@ -1637,9 +1746,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
           bookMeta.setTitle(null);
           item.setItemMeta(bookMeta);
-          inst.redraw("13");
+          inst.redraw(displaySlotExpr);
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getBookTitleReset()
               .withPrefix()
               .asScalar()
@@ -1651,9 +1760,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         promptPlainText(inst, ies.getMessages().getBookTitlePrompt().withPrefix(), title -> {
           bookMeta.setTitle(title);
           item.setItemMeta(bookMeta);
-          inst.redraw("13");
+          inst.redraw(displaySlotExpr);
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getBookTitleSet()
               .withPrefix()
               .withVariable("title", title)
@@ -1668,7 +1777,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         // Reset
         if (key == 4) {
           if (bookMeta.getAuthor() == null) {
-            p.sendMessage(
+            inst.getViewer().sendMessage(
               ies.getMessages().getBookAuthorNone()
                 .withPrefix()
                 .asScalar()
@@ -1678,9 +1787,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
           bookMeta.setAuthor(null);
           item.setItemMeta(bookMeta);
-          inst.redraw("13");
+          inst.redraw(displaySlotExpr);
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getBookAuthorReset()
               .withPrefix()
               .asScalar()
@@ -1692,9 +1801,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         promptPlainText(inst, ies.getMessages().getBookAuthorPrompt().withPrefix(), author -> {
           bookMeta.setAuthor(author);
           item.setItemMeta(bookMeta);
-          inst.redraw("13");
+          inst.redraw(displaySlotExpr);
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getBookAuthorSet()
               .withPrefix()
               .withVariable("author", author)
@@ -1709,7 +1818,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         // Reset
         if (key == 6) {
           if (bookMeta.getGeneration() == null) {
-            p.sendMessage(
+            inst.getViewer().sendMessage(
               ies.getMessages().getBookGenerationNone()
                 .withPrefix()
                 .asScalar()
@@ -1719,9 +1828,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
           bookMeta.setGeneration(null);
           item.setItemMeta(bookMeta);
-          inst.redraw("13");
+          inst.redraw(displaySlotExpr);
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getBookGenerationReset()
               .withPrefix()
               .asScalar()
@@ -1735,9 +1844,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
           bookMeta.setGeneration(gen);
           item.setItemMeta(bookMeta);
-          inst.redraw("13");
+          inst.redraw(displaySlotExpr);
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getBookGenerationSet()
               .withPrefix()
               .withVariable("generation", formatConstant(gen.name()))
@@ -1763,9 +1872,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
           bookMeta.setPages(result);
           item.setItemMeta(meta);
-          inst.redraw("13");
+          inst.redraw(displaySlotExpr);
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getBookEdited()
               .withPrefix()
               .asScalar()
@@ -1786,7 +1895,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
         // Cannot remove the only page
         if (pages.size() <= 1) {
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getBookPageSingle()
               .withPrefixes()
               .asScalar()
@@ -1801,7 +1910,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           bookMeta.setPages(pages);
           item.setItemMeta(meta);
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getBookPageRemoved()
               .withPrefix()
               .withVariable("page_number", index + 1)
@@ -1819,16 +1928,20 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         return;
       }
     }, null);
+  }
 
-    //////////////////////////////////////// Banners ////////////////////////////////////////
+  private void itemBanners(GuiInstance<?> inst, ItemStack item, String slotExpr, String displaySlotExpr) {
+    ItemMeta meta = item.getItemMeta();
+    if (meta == null)
+      return;
 
-    inst.fixedItem("43", () -> (
+    inst.fixedItem(slotExpr, () -> (
       ies.getItems().getHome().getBanners()
         .patch(ies.getItems().getHome().getNotApplicable(), !(meta instanceof BannerMeta))
-        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.BANNERS.has(p))
+        .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.BANNERS.has(inst.getViewer()))
         .build()
     ), e -> {
-      if (!checkPermission(IEPerm.BANNERS, p))
+      if (missingPermission(IEPerm.BANNERS, inst.getViewer()))
         return;
 
       if (!(meta instanceof BannerMeta bm))
@@ -1846,9 +1959,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
           bm.addPattern(new Pattern(color, type));
           item.setItemMeta(meta);
-          inst.redraw("13");
+          inst.redraw(displaySlotExpr);
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getBannerPatternsAdded()
               .withPrefix()
               .withVariable("type", formatConstant(type.name()))
@@ -1879,7 +1992,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         List<Pattern> patterns = new ArrayList<>(bm.getPatterns());
 
         if (patterns.size() == 0) {
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getBannerPatternsNone()
               .withPrefixes()
               .asScalar()
@@ -1893,9 +2006,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           Pattern patt = patterns.remove(index);
           bm.setPatterns(patterns);
           item.setItemMeta(meta);
-          inst.redraw("13");
+          inst.redraw(displaySlotExpr);
 
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getBannerPatternsRemoved()
               .withPrefix()
               .withVariable("index", index + 1)
@@ -1917,7 +2030,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       // Delete all pattern
       if (key == 3) {
         if (bm.getPatterns().size() == 0) {
-          p.sendMessage(
+          inst.getViewer().sendMessage(
             ies.getMessages().getBannerPatternsNone()
               .withPrefixes()
               .asScalar()
@@ -1927,9 +2040,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
         bm.setPatterns(new ArrayList<>());
         item.setItemMeta(meta);
-        inst.redraw("13");
+        inst.redraw(displaySlotExpr);
 
-        p.sendMessage(
+        inst.getViewer().sendMessage(
           ies.getMessages().getBannerPatternsCleared()
             .withPrefix()
             .asScalar()
@@ -1937,9 +2050,11 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         return;
       }
     }, null);
-
-    return true;
   }
+
+  //=========================================================================//
+  //                                Utilities                                //
+  //=========================================================================//
 
   /**
    * Wraps a given text on multiple lines by counting the chars per line
@@ -1992,12 +2107,13 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
    * @param item Target item
    * @param meta Target item's meta
    * @param color Color to set
+   * @param displaySlotExpr Slot of the display item
    */
-  private void setColor(GuiInstance<?> inst, ItemStack item, ItemMeta meta, Tuple<Color, String> color) {
+  private void setColor(GuiInstance<?> inst, ItemStack item, ItemMeta meta, Tuple<Color, String> color, String displaySlotExpr) {
     try {
       refl.invokeMethodByName(meta, "setColor", new Class[]{ Color.class }, color == null ? null : color.a());
       item.setItemMeta(meta);
-      inst.redraw("13");
+      inst.redraw(displaySlotExpr);
 
       if (color == null) {
         inst.getViewer().sendMessage(
@@ -2027,8 +2143,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
    * @param inst GUI instance
    * @param item Target item
    * @param meta Target item's meta
+   * @param displaySlotExpr Slot of the display item
    */
-  private void resetColor(GuiInstance<?> inst, ItemStack item, ItemMeta meta) {
+  private void resetColor(GuiInstance<?> inst, ItemStack item, ItemMeta meta, String displaySlotExpr) {
     try {
       Color color = (Color) refl.invokeMethodByName(meta, "getColor", new Class<?>[]{});
 
@@ -2043,7 +2160,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       }
 
       // Reset the color
-      setColor(inst, item, meta, null);
+      setColor(inst, item, meta, null, displaySlotExpr);
     }
 
     // Cannot change the color of this item, do nothing
@@ -2058,12 +2175,13 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
    * @param custom Whether to prompt for RGB
    * @param item Target item
    * @param meta Target item's meta
+   * @param displaySlotExpr Slot of the display item
    */
   @SuppressWarnings("unchecked")
-  private void promptForColor(GuiInstance<?> inst, boolean custom, ItemStack item, ItemMeta meta) {
+  private void promptForColor(GuiInstance<?> inst, boolean custom, ItemStack item, ItemMeta meta, String displaySlotExpr) {
     UserInputChain chain = new UserInputChain(inst, values -> {
       Tuple<Color, String> color = (Tuple<Color, String>) values.get("color");
-      setColor(inst, item, meta, color);
+      setColor(inst, item, meta, color, displaySlotExpr);
     }, singleChoiceGui, chatUtil);
 
     // Custom RGB color input by prompt
@@ -2699,14 +2817,14 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
   }
 
   /**
-   * Check if a player has a required permission and notify otherwise
+   * Check if a player is missing a required permission and notify if that's the case
    * @param perm Permission to check for
    * @param p Target player
-   * @return True if has, false otherwise
+   * @return True if hasn't, false otherwise
    */
-  private boolean checkPermission(IEPerm perm, Player p) {
+  private boolean missingPermission(IEPerm perm, Player p) {
     if (perm.has(p))
-      return true;
+      return false;
 
     p.sendMessage(
       ies.getMessages().getMissingPermission()
@@ -2714,6 +2832,6 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         .asScalar()
     );
 
-    return false;
+    return true;
   }
 }

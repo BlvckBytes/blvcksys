@@ -85,6 +85,8 @@ myLayout:
   fill: true
   # Whether to create a border using the "items.generic.background" item
   border: false
+  # Whether to play animations in this GUI or when navigating to this GUI
+  animated: true
   # Slot assignments, mapping item names found in the "items" section to a slot expression
   # Slot expressions may be just a single number, or a more complex notation, as shown in the example
   slots:
@@ -216,6 +218,7 @@ titles:
 
 layouts:
   home:
+    animated: true
     rows: 6
     fill: true
     slots:
@@ -248,7 +251,6 @@ items:
 
   # Generic items are re-used accross multiple GUIs
   generic:
-    animate: true
 
     # Background item used for filling or for borders
     background:

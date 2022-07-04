@@ -17,5 +17,6 @@ public class IESection extends AConfigSection {
   private IEMessagesSection messages;
   private IETitlesSection titles;
   private IEItemsSection items;
+  private IELayoutsSection layouts;
 
 }

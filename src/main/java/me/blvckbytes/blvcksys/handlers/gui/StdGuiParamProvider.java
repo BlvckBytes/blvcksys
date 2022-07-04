@@ -85,9 +85,4 @@ public class StdGuiParamProvider implements IStdGuiParamProvider {
 
     };
   }
-
-  @Override
-  public boolean areAnimationsEnabled() {
-    return true;
-  }
 }

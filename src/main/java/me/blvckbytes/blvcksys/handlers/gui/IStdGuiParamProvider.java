@@ -20,9 +20,4 @@ public interface IStdGuiParamProvider {
    */
   ItemStack getItem(StdGuiItem item, @Nullable Map<String, String> variables);
 
-  /**
-   * Checks whether to play animations
-   */
-  boolean areAnimationsEnabled();
-
 }

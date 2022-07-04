@@ -35,7 +35,6 @@ public class IEItemsGenericSection extends AConfigSection implements IStdGuiPara
   private ItemStackSection choiceSelected;
   private ItemStackBuilder searchPlaceholder;
   private ItemStackBuilder back;
-  private boolean animate;
 
   @Override
   public Object defaultFor(Class<?> type, String field) {
@@ -60,10 +59,5 @@ public class IEItemsGenericSection extends AConfigSection implements IStdGuiPara
       case SUBMIT_CHOICES_DISABLED -> submitChoicesDisabled;
       case SEARCH_PLACEHOLDER -> searchPlaceholder;
     }).build(variables);
-  }
-
-  @Override
-  public boolean areAnimationsEnabled() {
-    return animate;
   }
 }

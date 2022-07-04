@@ -448,13 +448,15 @@ public class GuiInstance<T> {
 
   /**
    * Register a new listener for a specific slot's redraw events
-   * @param slot Target slot
+   * @param slotExpr Target slot expression
    * @param callback Event listener
    */
-  public void onRedrawing(int slot, Runnable callback) {
-    if (!this.redrawListeners.containsKey(slot))
-      this.redrawListeners.put(slot, new ArrayList<>());
-    this.redrawListeners.get(slot).add(callback);
+  public void onRedrawing(String slotExpr, Runnable callback) {
+    template.slotExprToSlots(slotExpr).forEach(slot -> {
+      if (!this.redrawListeners.containsKey(slot))
+        this.redrawListeners.put(slot, new ArrayList<>());
+      this.redrawListeners.get(slot).add(callback);
+    });
   }
 
   /**

@@ -2413,7 +2413,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       .filter(m -> !(
         m.isAir() ||
         m.isLegacy()
-      ))
+      ) && m.isItem())
       .map(m -> (
           new Tuple<>((Object) m, (
             ies.getItems().getChoices().getMaterial()

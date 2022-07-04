@@ -96,7 +96,7 @@ public class FurnacesGui extends AGui<Object> {
       inst.refreshPageContents();
 
       // Go to the last page to make sure the new furnace is visible
-      inst.lastPage(AnimationType.SLIDE_LEFT);
+      inst.nextPage(AnimationType.SLIDE_LEFT, true);
 
       // Redraw the new button to update the slot indicator
       inst.redraw("26");

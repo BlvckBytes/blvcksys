@@ -24,7 +24,9 @@ public class IEItemsGenericSection extends AConfigSection implements IStdGuiPara
 
   private ItemStackBuilder background;
   private ItemStackBuilder nextPage;
+  private ItemStackBuilder nextPageDisabled;
   private ItemStackBuilder previousPage;
+  private ItemStackBuilder previousPageDisabled;
   private ItemStackBuilder currentPage;
   private ItemStackBuilder search;
   private ItemStackBuilder newChoice;
@@ -48,7 +50,9 @@ public class IEItemsGenericSection extends AConfigSection implements IStdGuiPara
       case BACK -> back;
       case SEARCH -> search;
       case NEXT_PAGE -> nextPage;
+      case NEXT_PAGE_DISABLED -> nextPageDisabled;
       case PREV_PAGE -> previousPage;
+      case PREV_PAGE_DISABLED -> previousPageDisabled;
       case BACKGROUND -> background;
       case NEW_CHOICE -> newChoice;
       case PAGE_INDICATOR -> currentPage;

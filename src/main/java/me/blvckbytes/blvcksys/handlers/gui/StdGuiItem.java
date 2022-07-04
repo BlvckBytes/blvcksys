@@ -31,8 +31,14 @@ public enum StdGuiItem {
   // Previous page of pagination
   PREV_PAGE,
 
+  // Previous page of pagination, button disabled
+  PREV_PAGE_DISABLED,
+
   // Next page of pagination
   NEXT_PAGE,
+
+  // Next page of pagination, button disabled
+  NEXT_PAGE_DISABLED,
 
   // Current page indicator of pagination
   PAGE_INDICATOR

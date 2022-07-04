@@ -267,12 +267,27 @@ public class GuiInstance<T> {
     String nextSlotExpr,
     IStdGuiParamProvider paramProvider
   ) {
-    beforePaging = () -> Bukkit.getScheduler().runTaskLater(plugin, () -> redraw(String.valueOf(indicatorSlotExpr)), 10);
+    beforePaging = () -> Bukkit.getScheduler().runTaskLater(plugin, () -> {
+      redraw(indicatorSlotExpr + "," + nextSlotExpr + "," + prevSlotExpr);
+    }, 10);
 
-    fixedItem(prevSlotExpr, () -> paramProvider.getItem(StdGuiItem.PREV_PAGE, null), e -> {
-      previousPage(AnimationType.SLIDE_RIGHT);
-      redraw(String.valueOf(indicatorSlotExpr));
-    }, null);
+    fixedItem(
+      prevSlotExpr,
+      () -> (
+        paramProvider.getItem(
+          currPage == 0 ?
+            StdGuiItem.PREV_PAGE_DISABLED :
+            StdGuiItem.PREV_PAGE, null)
+      ),
+      e -> {
+        if (!e.getClick().isLeftClick())
+          return;
+
+        previousPage(AnimationType.SLIDE_RIGHT, e.getClick().isShiftClick());
+        redraw(indicatorSlotExpr + "," + nextSlotExpr + "," + prevSlotExpr);
+      },
+      null
+    );
 
     fixedItem(
       indicatorSlotExpr, () -> (
@@ -288,10 +303,23 @@ public class GuiInstance<T> {
         )
       ), null, null);
 
-    fixedItem(nextSlotExpr, () -> paramProvider.getItem(StdGuiItem.NEXT_PAGE, null), e -> {
-      nextPage(AnimationType.SLIDE_LEFT);
-      redraw(String.valueOf(indicatorSlotExpr));
-    }, null);
+    fixedItem(
+      nextSlotExpr,
+      () -> (
+        paramProvider.getItem(
+          currPage == pages.size() - 1 ?
+            StdGuiItem.NEXT_PAGE_DISABLED :
+            StdGuiItem.NEXT_PAGE, null)
+      ),
+      e -> {
+        if (!e.getClick().isLeftClick())
+          return;
+
+        nextPage(AnimationType.SLIDE_LEFT, e.getClick().isShiftClick());
+        redraw(indicatorSlotExpr + "," + nextSlotExpr + "," + prevSlotExpr);
+      },
+      null
+    );
   }
 
   /**
@@ -463,39 +491,20 @@ public class GuiInstance<T> {
   }
 
   /**
-   * Navigate to the last page
-   */
-  public void lastPage(@Nullable AnimationType animation) {
-    if (beforePaging != null)
-      beforePaging.run();
-
-    // Already at last page
-    if (!hasNextPage())
-      return;
-
-    ItemStack[] before = inv.getContents().clone();
-
-    // Advance to the last page and force an update
-    currPage = pages.size() - 1;
-    updatePage(null);
-    playAnimation(animation, before, template.getPageSlots(), null);
-  }
-
-  /**
    * Navigate to the next page
    * @return True on success, false if there was no next page
    */
-  public boolean nextPage(@Nullable AnimationType animation) {
-    if (beforePaging != null)
-      beforePaging.run();
-
+  public boolean nextPage(@Nullable AnimationType animation, boolean last) {
     if (!hasNextPage())
       return false;
 
+    if (beforePaging != null)
+      beforePaging.run();
+
     ItemStack[] before = inv.getContents().clone();
 
-    // Advance to the next page and force an update
-    currPage++;
+    // Advance to the next page (or last page) and force an update
+    currPage = last ? pages.size() - 1 : currPage + 1;
     updatePage(null);
     playAnimation(animation, before, template.getPageSlots(), null);
     return true;
@@ -512,7 +521,7 @@ public class GuiInstance<T> {
    * Navigate to the previous page
    * @return True on success, false if there was no previous page
    */
-  public boolean previousPage(@Nullable AnimationType animation) {
+  public boolean previousPage(@Nullable AnimationType animation, boolean first) {
     if (beforePaging != null)
       beforePaging.run();
 
@@ -522,7 +531,7 @@ public class GuiInstance<T> {
     ItemStack[] before = inv.getContents().clone();
 
     // Advance to the previous page and force an update
-    currPage--;
+    currPage = first ? 0 : currPage - 1;
     updatePage(null);
     playAnimation(animation, before, template.getPageSlots(), null);
     return true;

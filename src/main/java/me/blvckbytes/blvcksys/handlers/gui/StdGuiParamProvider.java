@@ -48,7 +48,7 @@ public class StdGuiParamProvider implements IStdGuiParamProvider {
           .withLore(cfg.get(ConfigKey.GUI_ANVILSEARCH_ITEM_LORE))
           .build();
 
-      case PREV_PAGE -> new ItemStackBuilder(textureHandler.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner()))
+      case PREV_PAGE_DISABLED, PREV_PAGE -> new ItemStackBuilder(textureHandler.getProfileOrDefault(SymbolicHead.ARROW_LEFT.getOwner()))
           .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_NAME))
           .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_PREV_LORE))
           .build();
@@ -58,7 +58,7 @@ public class StdGuiParamProvider implements IStdGuiParamProvider {
           .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_INDICATOR_LORE).withVariables(variables))
           .build();
 
-      case NEXT_PAGE -> new ItemStackBuilder(textureHandler.getProfileOrDefault(SymbolicHead.ARROW_RIGHT.getOwner()))
+      case NEXT_PAGE, NEXT_PAGE_DISABLED -> new ItemStackBuilder(textureHandler.getProfileOrDefault(SymbolicHead.ARROW_RIGHT.getOwner()))
           .withName(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_NAME))
           .withLore(cfg.get(ConfigKey.GUI_GENERICS_PAGING_NEXT_LORE))
           .build();

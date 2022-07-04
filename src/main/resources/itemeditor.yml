@@ -138,7 +138,16 @@ items:
       name: '&7» &dNächste Seite &7«'
       lore:
         - ' '
-        - '&7Navigiere zur &dnächsten &7Seite.'
+        - '&7Linksklick: &dnächste Seite'
+        - '&7Shift + Linksklick: &dletzte Seite'
+
+    nextPageDisabled:
+      type: PLAYER_HEAD
+      textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYWJhZTg5ZTkyYWMzNjI2MzViYTNlOWZiN2MxMmI3ZGRkOWIzOGFkYjExZGY4YWExYWZmM2U1MWFjNDI4YTQifX19'
+      name: '&7» &dNächste Seite &7«'
+      lore:
+        - ' '
+        - '&7Bereits auf der &cletzten Seite&7.'
 
     previousPage:
       type: PLAYER_HEAD
@@ -146,7 +155,16 @@ items:
       name: '&7» &dVorherige Seite &7«'
       lore:
         - ' '
-        - '&7Navigiere zur &dvorherigen &7Seite.'
+        - '&7Linksklick: &dvorherige Seite'
+        - '&7Shift + Linksklick: &derste Seite'
+
+    previousPageDisabled:
+      type: PLAYER_HEAD
+      textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZWRmNWMyZjg5M2JkM2Y4OWNhNDA3MDNkZWQzZTQyZGQwZmJkYmE2ZjY3NjhjODc4OWFmZGZmMWZhNzhiZjYifX19'
+      name: '&7» &dVorherige Seite &7«'
+      lore:
+        - ' '
+        - '&7Bereits auf der &cersten Seite&7.'
 
     currentPage:
       type: PAPER
@@ -441,14 +459,14 @@ items:
 
     material:
       type: '{{material}}'
-      name: '&d{{material_hr}}'
+      name: '&7» &d{{material_hr}}'
       lore:
         - ' '
-        - '&7Klicke, um dieses Material zu wählen.'
+        - '&7Klicke, um dieses &dMaterial &7zu wählen.'
 
     enchantmentActive:
       type: '{{icon}}'
-      name: '&d{{enchantment_hr}}'
+      name: '&7» &d{{enchantment_hr}}'
       lore:
         - ' '
         - '&7Aktueller Zustand: &d{{state}}'
@@ -468,7 +486,7 @@ items:
 
     enchantmentInactive:
       type: '{{icon}}'
-      name: '&d{{enchantment_hr}}'
+      name: '&7» &d{{enchantment_hr}}'
       lore:
         - ' '
         - '&7Aktueller Zustand: &d{{state}}'
@@ -487,18 +505,18 @@ items:
 
     flag:
       type: '{{icon}}'
-      name: '&d{{flag}}'
+      name: '&7» &d{{flag}}'
       lore:
         - ' '
         - '&7Aktueller Zustand: &d{{state}}'
         - ' '
-        - '&7Klicke, um den Zustand zu wechseln.'
+        - '&7Klicke, um den Zustand zu &dwechseln&7.'
       flags:
         - HIDE_ATTRIBUTES
 
     lore:
       type: PAPER
-      name: '&7Zeile &d{{line}}'
+      name: '&7» &7Zeile &d{{line}}'
       lore:
         - ' '
         - '&7Inhalt:'
@@ -506,16 +524,16 @@ items:
 
     attributeNew:
       type: '{{icon}}'
-      name: '&d{{attribute}}'
+      name: '&7» &d{{attribute}}'
       lore:
         - ' '
-        - '&7Klicke, um eine neue Instanz zu erstellen.'
+        - '&7Klicke, um eine &dneue Instanz &7zu erstellen.'
       flags:
         - HIDE_ATTRIBUTES
 
     attributeExisting:
       type: '{{icon}}'
-      name: '&d{{attribute}}'
+      name: '&7» &d{{attribute}}'
       lore:
         - ' '
         - '&7Name: &d{{name}}'
@@ -527,37 +545,37 @@ items:
 
     equipment:
       type: '{{icon}}'
-      name: '&d{{slot}}'
+      name: '&7» &d{{slot}}'
       lore:
         - ' '
-        - '&7Klicke, um diesen Slot zu wählen.'
+        - '&7Klicke, um diesen &dSlot &7zu wählen.'
       flags:
         - HIDE_ATTRIBUTES
 
     operation:
       type: '{{icon}}'
-      name: '&d{{operation}}'
+      name: '&7» &d{{operation}}'
       lore:
         - ' '
-        - '&7Klicke, um diese Operation zu wählen.'
+        - '&7Klicke, um diese &dOperation &7zu wählen.'
       flags:
         - HIDE_ATTRIBUTES
 
     potionType:
       type: POTION
-      name: '&d{{type_hr}}'
+      name: '&7» &d{{type_hr}}'
       lore:
         - ' '
-        - '&7Klicke, um diesen Typ zu wählen.'
+        - '&7Klicke, um diesen &dTyp &7zu wählen.'
       baseEffect:
         type: '{{type}}'
 
     potionEffect:
       type: POTION
-      name: '&d{{effect_hr}}'
+      name: '&7» &d{{effect_hr}}'
       lore:
         - ' '
-        - '&7Klicke, um diesen Effekt zu wählen.'
+        - '&7Klicke, um diesen &dEffekt &7zu wählen.'
       customEffects:
         -
           effect: '{{effect}}'
@@ -566,24 +584,24 @@ items:
 
     color:
       type: '{{icon}}'
-      name: '&d{{color_hr}}'
+      name: '&7» &d{{color_hr}}'
       color: '{{color}}'
       lore:
         - ' '
-        - '&7Klicke, um diese Farbe zu wählen.'
+        - '&7Klicke, um diese &dFarbe &7zu wählen.'
       flags:
         - HIDE_ATTRIBUTES
 
     generation:
       type: BOOK
-      name: '&d{{generation}}'
+      name: '&7» &d{{generation}}'
       lore:
         - ' '
-        - '&7Klicke, um diese Generation zu wählen.'
+        - '&7Klicke, um diese &dGeneration &7zu wählen.'
 
     page:
       type: PAPER
-      name: '&7Seite &d{{number}}'
+      name: '&7» &7Seite &d{{number}}'
       lore:
         - ' '
         - '&7Inhalt:'
@@ -591,16 +609,16 @@ items:
 
     fireworkType:
       type: '{{icon}}'
-      name: '&d{{type}}'
+      name: '&7» &d{{type}}'
       lore:
         - ' '
-        - '&7Klicke, um diesen Typ zu wählen.'
+        - '&7Klicke, um diesen &dTyp &7zu wählen.'
       flags:
         - HIDE_ATTRIBUTES
 
     fireworkEffect:
       type: '{{icon}}'
-      name: '&7Effekt &dNr. {{index}}'
+      name: '&7» &7Effekt &dNr. {{index}}'
       lore:
         - '&7Typ: &d{{type}}'
         - '&7Effektfarbe(n): &d{{colors}}'
@@ -608,16 +626,16 @@ items:
         - '&7Flackern: &d{{flicker}}'
         - '&7Spuren: &d{{trail}}'
         - ' '
-        - '&7Klicke um diesen Effekt zu entfernen.'
+        - '&7Klicke um diesen Effekt zu &centfernen&7.'
       flags:
         - HIDE_ATTRIBUTES
 
     patternNew:
       type: '{{base}}'
-      name: '&d{{type_hr}}'
+      name: '&7» &d{{type_hr}}'
       lore:
         - ' '
-        - '&7Klicke, um dieses Muster zu wählen.'
+        - '&7Klicke, um dieses &dMuster &7zu wählen.'
       bannerPatterns:
         -
           pattern: '{{type}}'
@@ -625,13 +643,13 @@ items:
 
     patternExisting:
       type: '{{base}}'
-      name: '&7Muster &dNr. {{index}}'
+      name: '&7» &7Muster &dNr. {{index}}'
       lore:
         - ' '
         - '&7Typ: &d{{type_hr}}'
         - '&7Farbe: &d{{color_hr}}'
         - ' '
-        - '&7Klicke, um dieses Muster zu wählen.'
+        - '&7Klicke, um dieses Muster zu &centfernen&7.'
       bannerPatterns:
         -
           pattern: '{{type}}'
@@ -639,7 +657,7 @@ items:
 
     bannerDyeColor:
       type: '{{base}}'
-      name: '&d{{color_hr}}'
+      name: '&7» &d{{color_hr}}'
       lore:
         - ' '
         - '&7Klicke, um diese Farbe zu wählen.'
@@ -650,28 +668,28 @@ items:
 
     flickerYes:
       type: GREEN_TERRACOTTA
-      name: '&aMit Flackern'
+      name: '&7» &aMit Flackern'
       lore:
         - ' '
         - '&7Aktiviert den Flackereffekt.'
 
     flickerNo:
       type: RED_TERRACOTTA
-      name: '&cOhne Flackern'
+      name: '&7» &cOhne Flackern'
       lore:
         - ' '
         - '&7Deaktiviert den Flackereffekt.'
 
     trailYes:
       type: GREEN_TERRACOTTA
-      name: '&aMit Spuren'
+      name: '&7» &aMit Spuren'
       lore:
         - ' '
         - '&7Aktiviert den Spureneffekt.'
 
     trailNo:
       type: RED_TERRACOTTA
-      name: '&cOhne Spuren'
+      name: '&7» &cOhne Spuren'
       lore:
         - ' '
         - '&7Deaktiviert den Spureneffekt.'

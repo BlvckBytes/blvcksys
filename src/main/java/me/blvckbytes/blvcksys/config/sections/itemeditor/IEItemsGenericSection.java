@@ -29,6 +29,7 @@ public class IEItemsGenericSection extends AConfigSection implements IStdGuiPara
   private ItemStackBuilder search;
   private ItemStackBuilder newChoice;
   private ItemStackBuilder submitChoices;
+  private ItemStackBuilder submitChoicesDisabled;
   private ItemStackSection choiceSelected;
   private ItemStackBuilder searchPlaceholder;
   private ItemStackBuilder back;
@@ -51,7 +52,8 @@ public class IEItemsGenericSection extends AConfigSection implements IStdGuiPara
       case BACKGROUND -> background;
       case NEW_CHOICE -> newChoice;
       case PAGE_INDICATOR -> currentPage;
-      case SUBMIT_CHOICES -> submitChoices;
+      case SUBMIT_CHOICES_ACTIVE -> submitChoices;
+      case SUBMIT_CHOICES_DISABLED -> submitChoicesDisabled;
       case SEARCH_PLACEHOLDER -> searchPlaceholder;
     }).build(variables);
   }

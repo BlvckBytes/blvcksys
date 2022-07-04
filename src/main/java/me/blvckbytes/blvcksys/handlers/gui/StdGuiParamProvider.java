@@ -73,9 +73,14 @@ public class StdGuiParamProvider implements IStdGuiParamProvider {
         .withLore(cfg.get(ConfigKey.GUI_MULTIPLECHOICE_ADD_LORE))
         .build();
 
-      case SUBMIT_CHOICES -> new ItemStackBuilder(textureHandler.getProfileOrDefault(SymbolicHead.ARROW_RIGHT.getOwner()))
+      case SUBMIT_CHOICES_ACTIVE -> new ItemStackBuilder(textureHandler.getProfileOrDefault(SymbolicHead.ARROW_RIGHT.getOwner()))
         .withName(cfg.get(ConfigKey.GUI_MULTIPLECHOICE_SUBMIT_NAME))
         .withLore(cfg.get(ConfigKey.GUI_MULTIPLECHOICE_SUBMIT_LORE))
+        .build();
+
+      case SUBMIT_CHOICES_DISABLED -> new ItemStackBuilder(textureHandler.getProfileOrDefault(SymbolicHead.ARROW_RIGHT.getOwner()))
+        .withName(cfg.get(ConfigKey.GUI_MULTIPLECHOICE_SUBMIT_DISABLED_NAME))
+        .withLore(cfg.get(ConfigKey.GUI_MULTIPLECHOICE_SUBMIT_DISABLED_LORE))
         .build();
 
     };

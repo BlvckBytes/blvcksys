@@ -1455,6 +1455,12 @@ public enum ConfigKey {
     " ",
     "$0Schließe die Auswahl ab."
   ),
+  GUI_MULTIPLECHOICE_SUBMIT_DISABLED_NAME("gui.multiplechoice.submit_disabled.name", "$0» &cWeiter $0«"),
+  GUI_MULTIPLECHOICE_SUBMIT_DISABLED_LORE(
+    "gui.multiplechoice.submit_disabled.lore",
+    " ",
+    "$0Triff &czuerst &7eine Auswahl."
+  ),
 
   //=========================================================================//
   //                            SingleChoice GUI                             //

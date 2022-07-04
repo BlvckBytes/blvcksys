@@ -23,7 +23,10 @@ public enum StdGuiItem {
   NEW_CHOICE,
 
   // Submit choices when in multiple choice GUI
-  SUBMIT_CHOICES,
+  SUBMIT_CHOICES_ACTIVE,
+
+  // Submit choices when in multiple choice GUI, button disabled
+  SUBMIT_CHOICES_DISABLED,
 
   // Previous page of pagination
   PREV_PAGE,

@@ -172,13 +172,21 @@ items:
         - '&7Füge eine weitere &dAuswahl &7hinzu.'
         - '&7Anzahl ausgewählt: &d{{num_choices}}&7/&d{{remaining_choices}}'
 
-    submitChoices:
+    submitChoicesDisabled:
       type: PLAYER_HEAD
-      name: '&7» &dWeiter &7«'
-      textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZDk5ZjI4MzMyYmNjMzQ5ZjQyMDIzYzI5ZTZlNjQxZjRiMTBhNmIxZTQ4NzE4Y2FlNTU3NDY2ZDUxZWI5MjIifX19'
+      name: '&7» &cWeiter &7«'
+      textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZDM5MDViZmZjNjdjZDQwNDE2ODVmYmQzNTU4YTkxOWM4MjY3NWZkM2Y5MTEwNjI4ZjljNTMzMWM5YmJkODc5NCJ9fX0='
       lore:
         - ' '
-        - '&dBestätige &7deine aktuelle Auswahl.'
+        - '&7Bitte triff &czuerst &7eine Auswahl.'
+
+    submitChoices:
+      type: PLAYER_HEAD
+      name: '&7» &aWeiter &7«'
+      textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZmI0YzFkYmQ4NTQ0Y2ZhZWQ5NjNkZjRkMTM5YmM4YmFjNGI3NmFjNGJiYjMwYWI4NmY3NmZiYzMxYWI5YTcwIn19fQ=='
+      lore:
+        - ' '
+        - '&aBestätige &7deine aktuelle Auswahl.'
 
     # If a available choice has been selected, it's item will be
     # patched with the properties of this item

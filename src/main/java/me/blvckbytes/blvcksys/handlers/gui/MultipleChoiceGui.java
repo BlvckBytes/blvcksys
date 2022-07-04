@@ -10,10 +10,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -27,9 +24,8 @@ import java.util.stream.Collectors;
 @AutoConstruct
 public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
 
-  // TODO: Call closed except when clicking next
-
   private final Map<GuiInstance<MultipleChoiceParam>, List<Tuple<Object, ItemStack>>> playerChoices;
+  private final Set<GuiInstance<MultipleChoiceParam>> tookAction;
   private final SingleChoiceGui singleChoiceGui;
 
   public MultipleChoiceGui(
@@ -43,22 +39,22 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
     ), plugin, cfg, textures);
 
     this.playerChoices = new HashMap<>();
+    this.tookAction = new HashSet<>();
     this.singleChoiceGui = singleChoiceGui;
   }
 
   @Override
   protected boolean closed(GuiInstance<MultipleChoiceParam> inst) {
-    List<Tuple<Object, ItemStack>> choices = playerChoices.get(inst);
     Consumer<GuiInstance<MultipleChoiceParam>> closed = inst.getArg().closed();
 
-    // Not registered, ignore
-    if (choices == null)
-      return false;
-
-    // Made no choices, fire close callback (cancelling)
-    if (choices.size() == 0 && closed != null) {
+    // Took no valid action
+    if (!tookAction.remove(inst)) {
       playerChoices.remove(inst);
-      closed.accept(inst);
+
+      // Fire close callback (cancelling)
+      if (closed != null)
+        closed.accept(inst);
+
       return false;
     }
 
@@ -89,8 +85,7 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
         .exportVariables()
     ), e -> {
       // Allow to switch inventories temporary
-      if (choices.size() == 0)
-        choices.add(null);
+      tookAction.add(inst);
 
       inst.switchTo(AnimationType.SLIDE_LEFT, singleChoiceGui, new SingleChoiceParam(
         arg.type(),
@@ -104,7 +99,7 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
 
         // Add the new selection to the list of choices
         (sel, selInst) -> {
-          choices.remove(null);
+          tookAction.remove(inst);
 
           inst.getArg().representitives().stream()
             .filter(r -> r.a().equals(sel))
@@ -119,38 +114,38 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
         },
         // Closed
         selInst -> {
-          choices.remove(null);
+          tookAction.remove(inst);
           Bukkit.getScheduler().runTask(plugin, () -> inst.reopen(AnimationType.SLIDE_UP));
         },
         // Back button
         arg.backButton() == null ? null :
-        selInst -> {
-          choices.remove(null);
-          inst.reopen(AnimationType.SLIDE_RIGHT, selInst);
-        }
+        selInst -> inst.reopen(AnimationType.SLIDE_RIGHT, selInst)
       ));
     }, null);
 
     // Render the back button, if provided
     if (inst.getArg().backButton() != null) {
       inst.addBack("36", paramProvider, e -> {
-        choices.add(null);
+        tookAction.add(inst);
         inst.getArg().backButton().accept(inst);
       });
     }
 
     // Submit the list of choices
-    inst.fixedItem("44", () -> paramProvider.getItem(StdGuiItem.SUBMIT_CHOICES,
-      ConfigValue.makeEmpty()
-        .withVariable("num_choices", choices.size())
-        .withVariable("remaining_choices", arg.representitives().size() - choices.size())
-        .exportVariables()
+    inst.fixedItem("44", () -> (
+      paramProvider.getItem(
+        choices.size() == 0 ? StdGuiItem.SUBMIT_CHOICES_DISABLED : StdGuiItem.SUBMIT_CHOICES_ACTIVE,
+        ConfigValue.makeEmpty()
+          .withVariable("num_choices", choices.size())
+          .withVariable("remaining_choices", arg.representitives().size() - choices.size())
+          .exportVariables()
+      )
     ), e -> {
-      // Nothing chosen, relay to the close callback (cancelling)
-      if (choices.size() == 0) {
-        inst.close();
+      // Nothing chosen, ignore interactions
+      if (choices.size() == 0)
         return;
-      }
+
+      tookAction.add(inst);
 
       // Call selection callback
       inst.getArg().selected().accept(choices.stream().map(Tuple::a).toList(), inst);
@@ -166,6 +161,10 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
           e -> {
             choices.remove(choice);
             inst.refreshPageContents();
+
+            // Redraw the submit button, in case the last choice
+            // has been removed and it's rendered inactive again
+            inst.redraw("44");
           },
           null
         ))

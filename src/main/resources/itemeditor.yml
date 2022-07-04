@@ -6,6 +6,96 @@
 #
 # BBItemEditor - Developed by BlvckBytes <blvckbytes@gmail.com>
 
+##########################################################
+#            Full Itemstack Section Example              #
+#   This dummy section does nothing and can be deleted   #
+##########################################################
+
+myStack:
+  # Any of: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Material.html
+  type: STONE
+  # Stack size
+  amount: 5
+  # Displayed name
+  name: '&6My Stack'
+  # Lines of text below the name
+  lore:
+    - '&bThis is line 1'
+    - '&bThis is line 2'
+  # Any of: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/inventory/ItemFlag.html
+  flags:
+    - HIDE_ATTRIBUTES
+  # Color, any of: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/Color.html
+  # Or alternatively: 'R G B', where each color ranges from 0 to 255
+  # Applied to the item as the type dictates: leather color, potion color, map color, ...
+  color: ORANGE
+  # List of enchantments
+  enchantments:
+    -
+      # Enchantment, any of: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/enchantments/Enchantment.html
+      enchantment: ARROW_DAMAGE
+      # Level of the enchantment
+      level: 5
+  # Player head textures, a Base64 value
+  # Can be easily retrieved through a helper-site like https://minecraft-heads.com
+  textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvODY0Zjc3OWE4ZTNmZmEyMzExNDNmYTY5Yjk2YjE0ZWUzNWMxNmQ2NjllMTljNzVmZDFhN2RhNGJmMzA2YyJ9fX0='
+  # A potion's base (main) effect
+  baseEffect:
+    # Type, any of: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/potion/PotionType.html
+    type: FIRE_RESISTANCE
+    # Whether the effect duration is extended
+    extended: true
+    # Whether the effect level is upgraded
+    upgraded: false
+  # List of custom potion effects, next to the main effect
+  customEffects:
+    -
+      # Effect, any of: https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/potion/PotionEffectType.html
+      effect: REGENERATION
+      # Duration of this effect in ticks (1 second = 20 ticks)
+      duration: 600
+      # Amplifier, 0 means no amplification, 1 means II, 2 means III, ...
+      amplifier: 1
+      # True makes the potion effect produce more translucent particles
+      ambient: true
+      # Whether the effect has particles
+      particles: true
+      # Whether this effect has an icon
+      icon: true
+  # List of patterns applied to a banner
+  bannerPatterns:
+    -
+      # Pattern, any of: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/block/banner/PatternType.html
+      pattern: CROSS
+      # Color, any of: https://hub.spigotmc.org/javadocs/spigot/org/bukkit/DyeColor.html
+      color: RED
+  # When patching, this flag indicates whether the lore of the patched item is being
+  # overridden (true) or extended (false) by the current lore
+  loreOverride: false
+
+##########################################################
+#            Full Gui Layout Section Example             #
+#   This dummy section does nothing and can be deleted   #
+##########################################################
+
+myLayout:
+  # Number of rows the GUI has
+  rows: 5
+  # Whether to fill all remaining slots using the "items.generic.background" item
+  fill: true
+  # Whether to create a border using the "items.generic.background" item
+  border: false
+  # Slot assignments, mapping item names found in the "items" section to a slot expression
+  # Slot expressions may be just a single number, or a more complex notation, as shown in the example
+  slots:
+    itemOne: 3
+    itemTwo: 8
+    itemThree: '9-12,13,40'
+
+##########################################################
+#                     Chat Messages                      #
+##########################################################
+
 messages:
   metaUnavailable: '&7Auf die ItemMeta dieses Items konnte &cnicht &7zugegriffen werden.'
   missingPermission: '&cDu hast für diese Aktion keine Rechte.'
@@ -92,6 +182,10 @@ messages:
   bannerPatternsNone: '&7Dieser Banner hat noch &ckeine Muster&7.'
   bannerPatternsCleared: '&7Alle &dMuster &7dieses Banners wurden &dentfernt.'
 
+##########################################################
+#                       GUI Titles                       #
+##########################################################
+
 titles:
   home: '&8IE &5{{item_type}}'
   materialChoice: '&8Auswahl &5Material'
@@ -116,14 +210,52 @@ titles:
   bannerPatternTypeChoice: '&8Auswahl &5Mustertyp'
   bannerDyeColorChoice: '&8Auswahl &5Musterfarbe'
 
+##########################################################
+#                      GUI Layouts                       #
+##########################################################
+
+layouts:
+  home:
+    rows: 6
+    fill: true
+    slots:
+      increase: 10
+      displayMarker: '12,14'
+      display: 13
+      decrease: 16
+      customModelData: 27
+      material: 28
+      flags: 29
+      enchantments: 30
+      displayname: 31
+      lore: 32
+      durability: 33
+      attributes: 34
+      fireworks: 35
+      compass: 37
+      headOwner: 38
+      leatherColor: 39
+      potionEffects: 40
+      maps: 41
+      books: 42
+      banners: 43
+
+##########################################################
+#                       GUI Items                        #
+##########################################################
+
 items:
+
+  # Generic items are re-used accross multiple GUIs
   generic:
     animate: true
 
+    # Background item used for filling or for borders
     background:
       type: BLACK_STAINED_GLASS_PANE
       name: ' '
 
+    # Back button, going to the previous GUI
     back:
       type: PLAYER_HEAD
       textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvMTE4YTJkZDViZWYwYjA3M2IxMzI3MWE3ZWViOWNmZWE3YWZlODU5M2M1N2E5MzgyMWU0MzE3NTU3MjQ2MTgxMiJ9fX0='
@@ -132,6 +264,7 @@ items:
         - ' '
         - '&7Navigiere zum &dvorherigen &7Menu.'
 
+    # Next page button
     nextPage:
       type: PLAYER_HEAD
       textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZDllY2NjNWMxYzc5YWE3ODI2YTE1YTdmNWYxMmZiNDAzMjgxNTdjNTI0MjE2NGJhMmFlZjQ3ZTVkZTlhNWNmYyJ9fX0='
@@ -141,6 +274,7 @@ items:
         - '&7Linksklick: &dnächste Seite'
         - '&7Shift + Linksklick: &dletzte Seite'
 
+    # Next page button disabled (no next page available)
     nextPageDisabled:
       type: PLAYER_HEAD
       textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYWJhZTg5ZTkyYWMzNjI2MzViYTNlOWZiN2MxMmI3ZGRkOWIzOGFkYjExZGY4YWExYWZmM2U1MWFjNDI4YTQifX19'
@@ -149,6 +283,7 @@ items:
         - ' '
         - '&7Bereits auf der &cletzten Seite&7.'
 
+    # Previous page button
     previousPage:
       type: PLAYER_HEAD
       textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvODY0Zjc3OWE4ZTNmZmEyMzExNDNmYTY5Yjk2YjE0ZWUzNWMxNmQ2NjllMTljNzVmZDFhN2RhNGJmMzA2YyJ9fX0='
@@ -158,6 +293,7 @@ items:
         - '&7Linksklick: &dvorherige Seite'
         - '&7Shift + Linksklick: &derste Seite'
 
+    # Previous page button disabled (no previous page available)
     previousPageDisabled:
       type: PLAYER_HEAD
       textures: 'eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvZWRmNWMyZjg5M2JkM2Y4OWNhNDA3MDNkZWQzZTQyZGQwZmJkYmE2ZjY3NjhjODc4OWFmZGZmMWZhNzhiZjYifX19'
@@ -166,6 +302,7 @@ items:
         - ' '
         - '&7Bereits auf der &cersten Seite&7.'
 
+    # Current page indicator
     currentPage:
       type: PAPER
       name: '&7» &dSeite {{curr_page}}&7/&d{{num_pages}} &7«'
@@ -174,6 +311,7 @@ items:
         - '&7Seitengröße: &d{{page_size}}'
         - '&7Ergebnisse: &d{{total_num_items}}'
 
+    # Text search item shown in choice GUIs
     search:
       type: NAME_TAG
       name: '&7» &dFreitextsuche &7«'
@@ -181,6 +319,7 @@ items:
         - ' '
         - '&dDurchsuche &7die Ergebnisse in Echtzeit.'
 
+    # Add another choice in multiple choice GUIs
     newChoice:
       type: PLAYER_HEAD
       name: '&7» &aAuswahl hinzufügen &7«'
@@ -190,6 +329,7 @@ items:
         - '&7Füge eine weitere &dAuswahl &7hinzu.'
         - '&7Anzahl ausgewählt: &d{{num_choices}}&7/&d{{remaining_choices}}'
 
+    # Submit selected choices in multiple choice GUIs disabled (no choices made yet)
     submitChoicesDisabled:
       type: PLAYER_HEAD
       name: '&7» &cWeiter &7«'
@@ -198,6 +338,7 @@ items:
         - ' '
         - '&7Bitte triff &czuerst &7eine Auswahl.'
 
+    # Submit selected choices in multiple choice GUIs
     submitChoices:
       type: PLAYER_HEAD
       name: '&7» &aWeiter &7«'
@@ -213,7 +354,8 @@ items:
       lore:
         - ' '
         - '&7Klicke, um diese Auswahl zu &dentfernen&7.'
-    
+
+    # Placeholder in the anvil GUI used when searching
     searchPlaceholder:
       type: PURPLE_TERRACOTTA
       name: ' '
@@ -222,6 +364,7 @@ items:
         - '&7den &dAmboss &7ein, während dein'
         - '&7Inventar die &dErgebnisse &7anzeigt.'
 
+  # Homescreen, the GUI shown immediately after running /ie
   home:
     increase:
       type: PLAYER_HEAD
@@ -455,7 +598,10 @@ items:
         - '&7[&d2&7]: &dMuster entfernen'
         - '&7[&d3&7]: &dMuster leeren'
 
+  # Choice prompts: Single choice, multiple choice or yes/no
   choices:
+
+    # //////////////// Material Choice ////////////////
 
     material:
       type: '{{material}}'
@@ -463,6 +609,8 @@ items:
       lore:
         - ' '
         - '&7Klicke, um dieses &dMaterial &7zu wählen.'
+
+    # //////////////// Enchantment Add/Remove ////////////////
 
     enchantmentActive:
       type: '{{icon}}'
@@ -503,6 +651,8 @@ items:
         - HIDE_PLACED_ON
         - HIDE_POTION_EFFECTS
 
+    # //////////////// Item Flag Activate/Deactivate ////////////////
+
     flag:
       type: '{{icon}}'
       name: '&7» &d{{flag}}'
@@ -514,6 +664,8 @@ items:
       flags:
         - HIDE_ATTRIBUTES
 
+    # //////////////// Lore Line Choice ////////////////
+
     lore:
       type: PAPER
       name: '&7» &7Zeile &d{{line}}'
@@ -521,6 +673,8 @@ items:
         - ' '
         - '&7Inhalt:'
         - '&d{{content}}'
+
+    # //////////////// Attribute Add/Remove ////////////////
 
     attributeNew:
       type: '{{icon}}'
@@ -543,6 +697,8 @@ items:
       flags:
         - HIDE_ATTRIBUTES
 
+    # //////////////// Equipment Slot Choice ////////////////
+
     equipment:
       type: '{{icon}}'
       name: '&7» &d{{slot}}'
@@ -551,6 +707,8 @@ items:
         - '&7Klicke, um diesen &dSlot &7zu wählen.'
       flags:
         - HIDE_ATTRIBUTES
+
+    # //////////////// Operation Choice ////////////////
 
     operation:
       type: '{{icon}}'
@@ -561,6 +719,8 @@ items:
       flags:
         - HIDE_ATTRIBUTES
 
+    # //////////////// Potion Type Choice ////////////////
+
     potionType:
       type: POTION
       name: '&7» &d{{type_hr}}'
@@ -569,6 +729,8 @@ items:
         - '&7Klicke, um diesen &dTyp &7zu wählen.'
       baseEffect:
         type: '{{type}}'
+
+    # //////////////// Potion Effect Deletion Choice ////////////////
 
     potionEffect:
       type: POTION
@@ -582,6 +744,8 @@ items:
           duration: '{{duration}}'
           amplifier: '{{amplifier}}'
 
+    # //////////////// Color Choice ////////////////
+
     color:
       type: '{{icon}}'
       name: '&7» &d{{color_hr}}'
@@ -592,12 +756,16 @@ items:
       flags:
         - HIDE_ATTRIBUTES
 
+    # //////////////// Book Generation Choice ////////////////
+
     generation:
       type: BOOK
       name: '&7» &d{{generation}}'
       lore:
         - ' '
         - '&7Klicke, um diese &dGeneration &7zu wählen.'
+
+    # //////////////// Book Page Deletion Choice ////////////////
 
     page:
       type: PAPER
@@ -606,6 +774,8 @@ items:
         - ' '
         - '&7Inhalt:'
         - '&d{{content}}'
+
+    # //////////////// Firework Type Choice ////////////////
 
     fireworkType:
       type: '{{icon}}'
@@ -616,19 +786,7 @@ items:
       flags:
         - HIDE_ATTRIBUTES
 
-    fireworkEffect:
-      type: '{{icon}}'
-      name: '&7» &7Effekt &dNr. {{index}}'
-      lore:
-        - '&7Typ: &d{{type}}'
-        - '&7Effektfarbe(n): &d{{colors}}'
-        - '&7Glimmfarbe(n): &d{{fades}}'
-        - '&7Flackern: &d{{flicker}}'
-        - '&7Spuren: &d{{trail}}'
-        - ' '
-        - '&7Klicke um diesen Effekt zu &centfernen&7.'
-      flags:
-        - HIDE_ATTRIBUTES
+    # //////////////// Banner Pattern Choice ////////////////
 
     patternNew:
       type: '{{base}}'
@@ -640,6 +798,8 @@ items:
         -
           pattern: '{{type}}'
           color: '{{color}}'
+
+    # //////////////// Banner Pattern Deletion Choice ////////////////
 
     patternExisting:
       type: '{{base}}'
@@ -655,6 +815,8 @@ items:
           pattern: '{{type}}'
           color: '{{color}}'
 
+    # //////////////// Banner Pattern Color Choice ////////////////
+
     bannerDyeColor:
       type: '{{base}}'
       name: '&7» &d{{color_hr}}'
@@ -665,6 +827,24 @@ items:
         -
           pattern: '{{type}}'
           color: '{{color}}'
+
+    # //////////////// Firework Effect Choice ////////////////
+
+    fireworkEffect:
+      type: '{{icon}}'
+      name: '&7» &7Effekt &dNr. {{index}}'
+      lore:
+        - '&7Typ: &d{{type}}'
+        - '&7Effektfarbe(n): &d{{colors}}'
+        - '&7Glimmfarbe(n): &d{{fades}}'
+        - '&7Flackern: &d{{flicker}}'
+        - '&7Spuren: &d{{trail}}'
+        - ' '
+        - '&7Klicke um diesen Effekt zu &centfernen&7.'
+      flags:
+        - HIDE_ATTRIBUTES
+
+    # //////////////// Firework Flicker Yes/No ////////////////
 
     flickerYes:
       type: GREEN_TERRACOTTA
@@ -680,6 +860,8 @@ items:
         - ' '
         - '&7Deaktiviert den Flackereffekt.'
 
+    # //////////////// Firework Trail Yes/No ////////////////
+
     trailYes:
       type: GREEN_TERRACOTTA
       name: '&7» &aMit Spuren'
@@ -693,6 +875,8 @@ items:
       lore:
         - ' '
         - '&7Deaktiviert den Spureneffekt.'
+
+    # //////////////// Color Representitives ////////////////
 
     colorMaterials:
       WHITE: WHITE_TERRACOTTA
@@ -712,6 +896,8 @@ items:
       FUCHSIA: BROWN_TERRACOTTA
       PURPLE: PURPLE_TERRACOTTA
       ORANGE: ORANGE_TERRACOTTA
+
+    # //////////////// Enchantment Representitives ////////////////
 
     enchantmentMaterials:
       PROTECTION_ENVIRONMENTAL: DIAMOND_CHESTPLATE
@@ -753,12 +939,16 @@ items:
       VANISHING_CURSE: BUCKET
       SOUL_SPEED: SOUL_SAND
 
+    # //////////////// Firework Effect Representitives ////////////////
+
     fireworkEffectMaterial:
       STAR: NETHER_STAR
       CREEPER: CREEPER_HEAD
       BURST: TNT
       BALL: SUNFLOWER
       BALL_LARGE: SNOWBALL
+
+    # //////////////// Item Flag Representitives ////////////////
 
     itemFlagMaterial:
       HIDE_ENCHANTS: ENCHANTING_TABLE
@@ -768,6 +958,8 @@ items:
       HIDE_PLACED_ON: GRASS_BLOCK
       HIDE_POTION_EFFECTS: BREWING_STAND
       HIDE_DYE: PURPLE_DYE
+
+    # //////////////// Attribute Representitives ////////////////
 
     attributeMaterial:
       GENERIC_MAX_HEALTH: GOLDEN_APPLE
@@ -784,6 +976,8 @@ items:
       HORSE_JUMP_STRENGTH: RABBIT_FOOT
       ZOMBIE_SPAWN_REINFORCEMENTS: ZOMBIE_HEAD
 
+    # //////////////// Equipment Slot Representitives ////////////////
+
     equipmentMaterial:
       HAND: GOLDEN_SWORD
       OFF_HAND: CHEST
@@ -791,6 +985,8 @@ items:
       LEGS: GOLDEN_LEGGINGS
       CHEST: GOLDEN_CHESTPLATE
       HEAD: GOLDEN_HELMET
+
+    # //////////////// Operation Representitives ////////////////
 
     operationMaterial:
       ADD_NUMBER: HOPPER

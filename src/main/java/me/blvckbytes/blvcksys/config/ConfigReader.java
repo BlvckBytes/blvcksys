@@ -175,9 +175,13 @@ public class ConfigReader {
 
           // Is another config section and thus needs recursion
           if (AConfigSection.class.isAssignableFrom(fType)) {
-            Object v = parseValueSub(fKey, (Class<? extends AConfigSection>) fType, field, false, field.isAnnotationPresent(CSAlways.class)).orElse(null);
+            // A field is marked as always by either being directly marked, or by being the member of a marked class
+            boolean isAlways = field.isAnnotationPresent(CSAlways.class) || type.isAnnotationPresent(CSAlways.class);
+
+            Object v = parseValueSub(fKey, (Class<? extends AConfigSection>) fType, field, false, isAlways).orElse(null);
             if (v != null)
               field.set(res, v);
+
             continue;
           }
 

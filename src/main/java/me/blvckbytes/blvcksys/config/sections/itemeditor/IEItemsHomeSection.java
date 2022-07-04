@@ -15,12 +15,10 @@ import org.bukkit.Material;
   Represents a section containing all items on the IE home screen.
 */
 @Getter
+@CSAlways
 public class IEItemsHomeSection extends AConfigSection {
 
-  @CSAlways
   private ItemStackSection notApplicable;
-
-  @CSAlways
   private ItemStackSection missingPermission;
 
   private ItemStackBuilder increase;

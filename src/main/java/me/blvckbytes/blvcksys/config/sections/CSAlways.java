@@ -12,6 +12,6 @@ import java.lang.annotation.Target;
   Marks a class' field to always be present, no matter if the config
   had the required key. If it's missing, an empty default is still created.
 */
-@Target({ ElementType.FIELD })
+@Target({ ElementType.FIELD, ElementType.TYPE })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface CSAlways {}

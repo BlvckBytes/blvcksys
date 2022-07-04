@@ -11,15 +11,11 @@ import me.blvckbytes.blvcksys.config.sections.CSAlways;
   Represents the root section of the config file.
 */
 @Getter
+@CSAlways
 public class IESection extends AConfigSection {
 
-  @CSAlways
   private IEMessagesSection messages;
-
-  @CSAlways
   private IETitlesSection titles;
-
-  @CSAlways
   private IEItemsSection items;
 
 }

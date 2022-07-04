@@ -1,11 +1,17 @@
 package me.blvckbytes.blvcksys.config.sections.itemeditor;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import me.blvckbytes.blvcksys.config.AConfigSection;
 import me.blvckbytes.blvcksys.config.ConfigValue;
+import me.blvckbytes.blvcksys.config.sections.CSMap;
 import me.blvckbytes.blvcksys.config.sections.ItemStackSection;
 import me.blvckbytes.blvcksys.handlers.gui.ItemStackBuilder;
+import org.bukkit.Color;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
+
+import java.util.Map;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -40,10 +46,30 @@ public class IEItemsChoicesSection extends AConfigSection {
   private ItemStackBuilder trailYes;
   private ItemStackBuilder trailNo;
 
+  @Getter(AccessLevel.PRIVATE)
+  @CSMap(k = Color.class, v = Material.class)
+  private Map<Color, Material> colorMaterials;
+
+  @Getter(AccessLevel.PRIVATE)
+  @CSMap(k = Enchantment.class, v = Material.class)
+  private Map<Enchantment, Material> enchantmentMaterials;
+
   @Override
   public Object defaultFor(Class<?> type, String field) {
     if (type == ItemStackBuilder.class)
       return new ItemStackBuilder(Material.BARRIER).withName(ConfigValue.immediate("&cundefined"));
     return super.defaultFor(type, field);
+  }
+
+  public Material lookupColorMaterial(Color color) {
+    if (colorMaterials == null)
+      return Material.BARRIER;
+    return colorMaterials.getOrDefault(color, Material.BARRIER);
+  }
+
+  public Material lookupEnchantmentMaterial(Enchantment ench) {
+    if (enchantmentMaterials == null)
+      return Material.BARRIER;
+    return enchantmentMaterials.getOrDefault(ench, Material.BARRIER);
   }
 }

@@ -1037,7 +1037,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "color",
             ies.getTitles().getFireworkEffectColorChoice(),
             ies.getItems().getGeneric(),
-            v -> generateColorReprs(this::colorToMaterial),
+            v -> generateColorReprs(ies.getItems().getChoices()::lookupColorMaterial),
             null
           )
           .withChoice(
@@ -1050,7 +1050,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "fade",
             ies.getTitles().getFireworkFadeColorChoice(),
             ies.getItems().getGeneric(),
-            v -> generateColorReprs(this::colorToMaterial, true),
+            v -> generateColorReprs(ies.getItems().getChoices()::lookupColorMaterial, true),
             null
           )
           .withYesNo(
@@ -2106,60 +2106,6 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
   }
 
   /**
-   * Maps pre-defined bukkit colors to somewhat matching materials to use as icons.
-   * @param c Color to map
-   * @return Displayable material
-   */
-  private Material colorToMaterial(Color c) {
-    if (c == Color.WHITE)
-      return Material.WHITE_TERRACOTTA;
-
-    if (c == Color.SILVER)
-      return Material.LIGHT_GRAY_TERRACOTTA;
-
-    if (c == Color.GRAY)
-      return Material.GRAY_TERRACOTTA;
-
-    if (c == Color.BLACK)
-      return Material.BLACK_TERRACOTTA;
-
-    if (c == Color.RED)
-      return Material.RED_TERRACOTTA;
-
-    if (c == Color.MAROON)
-      return Material.PINK_TERRACOTTA;
-
-    if (c == Color.YELLOW)
-      return Material.YELLOW_TERRACOTTA;
-
-    if (c == Color.OLIVE)
-      return Material.CYAN_TERRACOTTA;
-
-    if (c == Color.LIME)
-      return Material.LIME_TERRACOTTA;
-
-    if (c == Color.GREEN)
-      return Material.GREEN_TERRACOTTA;
-
-    if (c == Color.AQUA || c == Color.TEAL)
-      return Material.LIGHT_BLUE_TERRACOTTA;
-
-    if (c == Color.NAVY || c == Color.BLUE)
-      return Material.BLUE_TERRACOTTA;
-
-    if (c == Color.FUCHSIA)
-      return Material.BROWN_TERRACOTTA;
-
-    if (c == Color.PURPLE)
-      return Material.PURPLE_TERRACOTTA;
-
-    if (c == Color.ORANGE)
-      return Material.ORANGE_TERRACOTTA;
-
-    return Material.LIGHT_GRAY_TERRACOTTA;
-  }
-
-  /**
    * Builds a list of representitives for all available banner pattern types
    * @param base Base material to lay patterns onto for representitives
    */
@@ -2556,129 +2502,6 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
   }
 
   /**
-   * Maps enchantments to representitive icon materials
-   * @param ench Enchantment to map
-   * @return Icon material to display
-   */
-  private Material enchantmentToMaterial(Enchantment ench) {
-    if (ench == Enchantment.PROTECTION_ENVIRONMENTAL)
-      return Material.DIAMOND_CHESTPLATE;
-
-    if (ench == Enchantment.PROTECTION_FIRE)
-      return Material.GOLDEN_LEGGINGS;
-
-    if (ench == Enchantment.PROTECTION_EXPLOSIONS)
-      return Material.TNT;
-
-    if (ench == Enchantment.PROTECTION_FALL)
-      return Material.FEATHER;
-
-    if (ench == Enchantment.PROTECTION_PROJECTILE)
-      return Material.ARROW;
-
-    if (ench == Enchantment.BINDING_CURSE)
-      return Material.CHAIN;
-
-    if (ench == Enchantment.OXYGEN)
-      return Material.GLASS_BOTTLE;
-
-    if (ench == Enchantment.WATER_WORKER)
-      return Material.WATER_BUCKET;
-
-    if (ench == Enchantment.THORNS)
-      return Material.POPPY;
-
-    if (ench == Enchantment.DEPTH_STRIDER)
-      return Material.DIAMOND_BOOTS;
-
-    if (ench == Enchantment.FROST_WALKER)
-      return Material.PACKED_ICE;
-
-    if (ench == Enchantment.DAMAGE_ALL)
-      return Material.DIAMOND_SWORD;
-
-    if (ench == Enchantment.DAMAGE_UNDEAD)
-      return Material.ZOMBIE_HEAD;
-
-    if (ench == Enchantment.DAMAGE_ARTHROPODS)
-      return Material.WOODEN_SWORD;
-
-    if (ench == Enchantment.FIRE_ASPECT)
-      return Material.FLINT_AND_STEEL;
-
-    if (ench == Enchantment.KNOCKBACK)
-      return Material.STICK;
-
-    if (ench == Enchantment.LOOT_BONUS_MOBS)
-      return Material.GUNPOWDER;
-
-    if (ench == Enchantment.LOOT_BONUS_BLOCKS)
-      return Material.DIAMOND;
-
-    if (ench == Enchantment.SWEEPING_EDGE)
-      return Material.LEAD;
-
-    if (ench == Enchantment.DIG_SPEED)
-      return Material.IRON_PICKAXE;
-
-    if (ench == Enchantment.SILK_TOUCH)
-      return Material.YELLOW_STAINED_GLASS;
-
-    if (ench == Enchantment.DURABILITY)
-      return Material.ANVIL;
-
-    if (ench == Enchantment.ARROW_DAMAGE)
-      return Material.BOW;
-
-    if (ench == Enchantment.ARROW_FIRE)
-      return Material.CANDLE;
-
-    if (ench == Enchantment.ARROW_INFINITE)
-      return Material.ARROW;
-
-    if (ench == Enchantment.ARROW_KNOCKBACK)
-      return Material.STICK;
-
-    if (ench == Enchantment.LURE)
-      return Material.FISHING_ROD;
-
-    if (ench == Enchantment.LUCK)
-      return Material.PUFFERFISH;
-
-    if (ench == Enchantment.LOYALTY)
-      return Material.TRIDENT;
-
-    if (ench == Enchantment.IMPALING)
-      return Material.TIPPED_ARROW;
-
-    if (ench == Enchantment.RIPTIDE)
-      return Material.ENDER_PEARL;
-
-    if (ench == Enchantment.MULTISHOT)
-      return Material.FIREWORK_ROCKET;
-
-    if (ench == Enchantment.CHANNELING)
-      return Material.IRON_BARS;
-
-    if (ench == Enchantment.QUICK_CHARGE)
-      return Material.CROSSBOW;
-
-    if (ench == Enchantment.PIERCING)
-      return Material.IRON_BLOCK;
-
-    if (ench == Enchantment.MENDING)
-      return Material.EXPERIENCE_BOTTLE;
-
-    if (ench == Enchantment.VANISHING_CURSE)
-      return Material.BUCKET;
-
-    if (ench == Enchantment.SOUL_SPEED)
-      return Material.SOUL_SAND;
-
-    return Material.BOOK;
-  }
-
-  /**
    * Build a list of representitives for all available {@link Enchantment} constants
    * @param isNative Function used to check whether this enchantment is native to the target item
    * @param isActive Function used to check whether this enchantment is active on the target item
@@ -2719,7 +2542,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
               .asItem(
                 ConfigValue.makeEmpty()
                   .withVariable("enchantment", ench.a())
-                  .withVariable("icon", enchantmentToMaterial(ench.b()).name())
+                  .withVariable("icon", ies.getItems().getChoices().lookupEnchantmentMaterial(ench.b()).name())
                   .withVariable("enchantment_hr", formatConstant(ench.b().getKey().getKey()))
                   .withVariable("state", formatConstant(String.valueOf(has)))
                   .withVariable("level", level)

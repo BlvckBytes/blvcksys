@@ -4,7 +4,7 @@ import lombok.Getter;
 import me.blvckbytes.blvcksys.config.AConfigSection;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.sections.ItemStackSection;
-import me.blvckbytes.blvcksys.handlers.gui.IStdGuiParamProvider;
+import me.blvckbytes.blvcksys.handlers.gui.IStdGuiItemProvider;
 import me.blvckbytes.blvcksys.handlers.gui.ItemStackBuilder;
 import me.blvckbytes.blvcksys.handlers.gui.StdGuiItem;
 import org.bukkit.Material;
@@ -20,7 +20,7 @@ import java.util.Map;
   Represents a section containing all shared GUI items.
 */
 @Getter
-public class IEItemsGenericSection extends AConfigSection implements IStdGuiParamProvider {
+public class IEItemsGenericSection extends AConfigSection implements IStdGuiItemProvider {
 
   private ItemStackBuilder background;
   private ItemStackBuilder nextPage;

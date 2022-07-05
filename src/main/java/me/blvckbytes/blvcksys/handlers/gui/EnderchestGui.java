@@ -48,7 +48,7 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
   private final Map<OfflinePlayer, EnderchestInstance> cache;
   private final IPersistence pers;
   private final ILogger logger;
-  private final IStdGuiParamProvider stdGuiParamProvider;
+  private final IStdGuiItemProvider stdGuiItemProvider;
 
   public EnderchestGui(
     @AutoInject IConfig cfg,
@@ -56,7 +56,7 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject IPersistence pers,
     @AutoInject ILogger logger,
-    @AutoInject IStdGuiParamProvider stdGuiParamProvider
+    @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
     super(6, "0-44", i -> (
       cfg.get(ConfigKey.GUI_ENDERCHEST_TITLE)
@@ -65,7 +65,7 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
 
     this.pers = pers;
     this.logger = logger;
-    this.stdGuiParamProvider = stdGuiParamProvider;
+    this.stdGuiItemProvider = stdGuiItemProvider;
 
     this.cache = new HashMap<>();
   }
@@ -110,7 +110,7 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
     ), null, null);
     
     // Paginator
-    inst.addPagination("46", "49", "52", stdGuiParamProvider);
+    inst.addPagination("46", "49", "52", stdGuiItemProvider);
 
     EnderchestInstance chestInst = getOrCreate(inst.getArg());
     EnderchestModel model = chestInst.getModel();

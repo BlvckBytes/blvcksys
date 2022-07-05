@@ -20,12 +20,12 @@ import java.util.Map;
   Uses as a standard GUI items provider for all internal playgrounds.
 */
 @AutoConstruct
-public class StdGuiParamProvider implements IStdGuiParamProvider {
+public class StdGuiItemProvider implements IStdGuiItemProvider {
 
   private final IConfig cfg;
   private final IPlayerTextureHandler textureHandler;
 
-  public StdGuiParamProvider(
+  public StdGuiItemProvider(
     @AutoInject IConfig cfg,
     @AutoInject IPlayerTextureHandler textureHandler
   ) {

@@ -24,7 +24,7 @@ public record MultipleChoiceParam(
   List<Tuple<Object, ItemStack>> representitives,
 
   // Provider for standard parameters used in GUIs
-  IStdGuiParamProvider paramProvider,
+  IStdGuiItemProvider itemProvider,
 
   // Optional custom GUI layout specification
   // Available slots: prevPage, currPage, nextPage, back, submit, newChoice

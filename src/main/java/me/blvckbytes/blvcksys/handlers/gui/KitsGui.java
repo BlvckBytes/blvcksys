@@ -42,7 +42,7 @@ public class KitsGui extends AGui<Object> implements Listener {
 
   private final IPersistence pers;
   private final TimeUtil time;
-  private final IStdGuiParamProvider stdGuiParamProvider;
+  private final IStdGuiItemProvider stdGuiItemProvider;
 
   @AutoInjectLate
   private KitContentGui kitContentGui;
@@ -54,7 +54,7 @@ public class KitsGui extends AGui<Object> implements Listener {
     @AutoInject TimeUtil time,
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject IKitCommand kits,
-    @AutoInject IStdGuiParamProvider stdGuiParamProvider
+    @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
     super(5, "10-16,19-25,28-34", i -> (
       cfg.get(ConfigKey.GUI_KITS_TITLE)
@@ -65,7 +65,7 @@ public class KitsGui extends AGui<Object> implements Listener {
     this.time = time;
 
     this.cooldownCaches = new HashMap<>();
-    this.stdGuiParamProvider = stdGuiParamProvider;
+    this.stdGuiItemProvider = stdGuiItemProvider;
 
     // Invalidate the cooldown cache whenever a kit has been requested
     kits.registerRequestInterest((p, kit) -> {
@@ -83,10 +83,10 @@ public class KitsGui extends AGui<Object> implements Listener {
   protected boolean opening(GuiInstance<Object> inst) {
     Player p = inst.getViewer();
 
-    inst.addBorder(stdGuiParamProvider);
+    inst.addBorder(stdGuiItemProvider);
 
     // Paginator
-    inst.addPagination("37", "40", "43", stdGuiParamProvider);
+    inst.addPagination("37", "40", "43", stdGuiItemProvider);
 
     List<KitModel> kits = pers.list(KitModel.class);
 

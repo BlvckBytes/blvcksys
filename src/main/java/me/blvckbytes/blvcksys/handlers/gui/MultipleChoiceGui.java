@@ -65,11 +65,11 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
   @Override
   protected boolean opening(GuiInstance<MultipleChoiceParam> inst) {
     MultipleChoiceParam arg = inst.getArg();
-    IStdGuiParamProvider paramProvider = arg.paramProvider();
+    IStdGuiItemProvider itemProvider = arg.itemProvider();
     GuiLayoutSection layout = arg.layout();
 
-    if (!inst.applyLayoutParameters(layout, paramProvider))
-      inst.addBorder(paramProvider);
+    if (!inst.applyLayoutParameters(layout, itemProvider))
+      inst.addBorder(itemProvider);
 
     Map<String, String> slots = layout != null ? layout.getSlots() : new HashMap<>();
 
@@ -82,13 +82,13 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
       slots.getOrDefault("prevPage", "38"),
       slots.getOrDefault("currentPage", "40"),
       slots.getOrDefault("nextPage", "42"),
-      paramProvider
+      itemProvider
     );
 
     // Add another choice
     inst.fixedItem(
       slots.getOrDefault("newChoice", "26"),
-      () -> paramProvider.getItem(StdGuiItem.NEW_CHOICE,
+      () -> itemProvider.getItem(StdGuiItem.NEW_CHOICE,
         ConfigValue.makeEmpty()
           .withVariable("num_choices", choices.size())
           .withVariable("remaining_choices", arg.representitives().size() - choices.size())
@@ -106,7 +106,7 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
             .filter(repr -> !choices.contains(repr))
             .toList(),
 
-          paramProvider, arg.choiceLayout(), arg.customFilter(),
+          itemProvider, arg.choiceLayout(), arg.customFilter(),
 
           // Add the new selection to the list of choices
           (sel, selInst) -> {
@@ -138,7 +138,7 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
     if (inst.getArg().backButton() != null) {
       inst.addBack(
         slots.getOrDefault("back", "36"),
-        paramProvider, e -> {
+        itemProvider, e -> {
           tookAction.add(inst);
           inst.getArg().backButton().accept(inst);
         }
@@ -149,7 +149,7 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
     inst.fixedItem(
       slots.getOrDefault("submit", "44"),
       () -> (
-        paramProvider.getItem(
+        itemProvider.getItem(
           choices.size() == 0 ? StdGuiItem.SUBMIT_CHOICES_DISABLED : StdGuiItem.SUBMIT_CHOICES_ACTIVE,
           ConfigValue.makeEmpty()
             .withVariable("num_choices", choices.size())

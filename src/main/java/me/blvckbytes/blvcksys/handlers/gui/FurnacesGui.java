@@ -25,7 +25,7 @@ public class FurnacesGui extends AGui<Object> {
 
   private final IVirtualFurnaceHandler furnaceHandler;
   private final VirtualFurnaceGui furnaceGui;
-  private final IStdGuiParamProvider stdGuiParamProvider;
+  private final IStdGuiItemProvider stdGuiItemProvider;
 
   public FurnacesGui(
     @AutoInject IConfig cfg,
@@ -33,7 +33,7 @@ public class FurnacesGui extends AGui<Object> {
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject IVirtualFurnaceHandler furnaceHandler,
     @AutoInject VirtualFurnaceGui furnaceGui,
-    @AutoInject IStdGuiParamProvider stdGuiParamProvider
+    @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
     super(5, "10-16,19-25,28-34", i -> (
       cfg.get(ConfigKey.GUI_FURNACES)
@@ -42,7 +42,7 @@ public class FurnacesGui extends AGui<Object> {
 
     this.furnaceHandler = furnaceHandler;
     this.furnaceGui = furnaceGui;
-    this.stdGuiParamProvider = stdGuiParamProvider;
+    this.stdGuiItemProvider = stdGuiItemProvider;
   }
 
   @Override
@@ -54,10 +54,10 @@ public class FurnacesGui extends AGui<Object> {
   protected boolean opening(GuiInstance<Object> inst) {
     Player p = inst.getViewer();
 
-    inst.addFill(stdGuiParamProvider);
+    inst.addFill(stdGuiItemProvider);
 
     // Paginator
-    inst.addPagination("37", "40", "43", stdGuiParamProvider);
+    inst.addPagination("37", "40", "43", stdGuiItemProvider);
 
     inst.setPageContents(() -> (
       furnaceHandler.listFurnaces(p).stream()

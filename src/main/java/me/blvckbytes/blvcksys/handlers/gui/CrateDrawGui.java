@@ -40,7 +40,7 @@ public class CrateDrawGui extends AGui<CrateModel> {
   private final ICrateHandler crateHandler;
   private final CrateContentGui crateContentGui;
   private final IGiveCommand give;
-  private final IStdGuiParamProvider stdGuiParamProvider;
+  private final IStdGuiItemProvider stdGuiItemProvider;
 
   public CrateDrawGui(
     @AutoInject IConfig cfg,
@@ -49,7 +49,7 @@ public class CrateDrawGui extends AGui<CrateModel> {
     @AutoInject ICrateHandler crateHandler,
     @AutoInject CrateContentGui crateContentGui,
     @AutoInject IGiveCommand give,
-    @AutoInject IStdGuiParamProvider stdGuiParamProvider
+    @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
     super(5, "", i -> (
       cfg.get(ConfigKey.GUI_CRATE_DRAW_NAME).
@@ -59,7 +59,7 @@ public class CrateDrawGui extends AGui<CrateModel> {
     this.crateHandler = crateHandler;
     this.crateContentGui = crateContentGui;
     this.give = give;
-    this.stdGuiParamProvider = stdGuiParamProvider;
+    this.stdGuiItemProvider = stdGuiItemProvider;
 
     this.drawing = new HashSet<>();
   }
@@ -139,7 +139,7 @@ public class CrateDrawGui extends AGui<CrateModel> {
 
     // Resize to only show the rows required by the layout
     inst.resize(layout.getRowsRequired(), false);
-    inst.addFill(stdGuiParamProvider);
+    inst.addFill(stdGuiItemProvider);
 
     inst.fixedItem(layout.getMarkerSlots(), () -> (
       new ItemStackBuilder(Material.PURPLE_STAINED_GLASS_PANE)

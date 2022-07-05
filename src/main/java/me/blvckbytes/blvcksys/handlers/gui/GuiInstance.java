@@ -271,13 +271,13 @@ public class GuiInstance<T> {
    * @param prevSlotExpr Slot of the previous button
    * @param indicatorSlotExpr Slot of the page indicator
    * @param nextSlotExpr Slot of the next button
-   * @param paramProvider Items provider ref
+   * @param itemProvider Items provider ref
    */
   protected void addPagination(
     String prevSlotExpr,
     String indicatorSlotExpr,
     String nextSlotExpr,
-    IStdGuiParamProvider paramProvider
+    IStdGuiItemProvider itemProvider
   ) {
     beforePaging = () -> Bukkit.getScheduler().runTaskLater(plugin, () -> {
       redraw(indicatorSlotExpr + "," + nextSlotExpr + "," + prevSlotExpr);
@@ -286,7 +286,7 @@ public class GuiInstance<T> {
     fixedItem(
       prevSlotExpr,
       () -> (
-        paramProvider.getItem(
+        itemProvider.getItem(
           currPage == 0 ?
             StdGuiItem.PREV_PAGE_DISABLED :
             StdGuiItem.PREV_PAGE, null)
@@ -303,7 +303,7 @@ public class GuiInstance<T> {
 
     fixedItem(
       indicatorSlotExpr, () -> (
-        paramProvider.getItem(
+        itemProvider.getItem(
           StdGuiItem.PAGE_INDICATOR,
           ConfigValue.makeEmpty()
             .withVariable("curr_page", getCurrentPage())
@@ -318,7 +318,7 @@ public class GuiInstance<T> {
     fixedItem(
       nextSlotExpr,
       () -> (
-        paramProvider.getItem(
+        itemProvider.getItem(
           currPage == pages.size() - 1 ?
             StdGuiItem.NEXT_PAGE_DISABLED :
             StdGuiItem.NEXT_PAGE, null)
@@ -357,9 +357,9 @@ public class GuiInstance<T> {
 
   /**
    * Adds a fill of fixed items consiting of the provided material to the GUI
-   * @param paramProvider Items provider ref
+   * @param itemProvider Items provider ref
    */
-  protected void addFill(IStdGuiParamProvider paramProvider) {
+  protected void addFill(IStdGuiItemProvider itemProvider) {
     StringBuilder slotExpr = new StringBuilder();
 
     for (int i = 0; i < rows * 9; i++) {
@@ -367,14 +367,14 @@ public class GuiInstance<T> {
         slotExpr.append(i == 0 ? "" : ",").append(i);
     }
 
-    addSpacer(slotExpr.toString(), paramProvider);
+    addSpacer(slotExpr.toString(), itemProvider);
   }
 
   /**
    * Adds a border of fixed items consiting of the provided material to the GUI
-   * @param paramProvider Items provider ref
+   * @param itemProvider Items provider ref
    */
-  protected void addBorder(IStdGuiParamProvider paramProvider) {
+  protected void addBorder(IStdGuiItemProvider itemProvider) {
     StringBuilder slotExpr = new StringBuilder();
 
     for (int i = 0; i < rows; i++) {
@@ -393,16 +393,16 @@ public class GuiInstance<T> {
       slotExpr.append(lastSlot);
     }
 
-    addSpacer(slotExpr.toString(), paramProvider);
+    addSpacer(slotExpr.toString(), itemProvider);
   }
 
   /**
    * Adds a spacer with no name to a given slot
    * @param slotExpr Where to set the item
-   * @param paramProvider Items provider ref
+   * @param itemProvider Items provider ref
    */
-  protected void addSpacer(String slotExpr, IStdGuiParamProvider paramProvider) {
-    spacer = paramProvider.getItem(StdGuiItem.BACKGROUND, null);
+  protected void addSpacer(String slotExpr, IStdGuiItemProvider itemProvider) {
+    spacer = itemProvider.getItem(StdGuiItem.BACKGROUND, null);
     fixedItem(slotExpr, () -> spacer, null, null);
   }
 
@@ -410,24 +410,24 @@ public class GuiInstance<T> {
    * Adds a back button as a fixed item to the GUI
    * @param slot Slot of the back button
    * @param clicked Event callback
-   * @param paramProvider Items provider ref
+   * @param itemProvider Items provider ref
    */
-  protected<A> void addBack(String slot, IStdGuiParamProvider paramProvider, Consumer<InventoryManipulationEvent> clicked) {
-    fixedItem(slot, () -> paramProvider.getItem(StdGuiItem.BACK, null), clicked, null);
+  protected<A> void addBack(String slot, IStdGuiItemProvider itemProvider, Consumer<InventoryManipulationEvent> clicked) {
+    fixedItem(slot, () -> itemProvider.getItem(StdGuiItem.BACK, null), clicked, null);
   }
 
   /**
    * Adds a back button as a fixed item to the GUI
    * @param slot Slot of the back button
-   * @param paramProvider Items provider ref
+   * @param itemProvider Items provider ref
    * @param gui Gui to open on click
    * @param param Gui parameter
    * @param animation Animation to use when navigating back
    */
-  protected<A> void addBack(String slot, IStdGuiParamProvider paramProvider, AGui<A> gui, Supplier<A> param, @Nullable AnimationType animation) {
+  protected<A> void addBack(String slot, IStdGuiItemProvider itemProvider, AGui<A> gui, Supplier<A> param, @Nullable AnimationType animation) {
     fixedItem(
       slot,
-      () -> paramProvider.getItem(StdGuiItem.BACK, null),
+      () -> itemProvider.getItem(StdGuiItem.BACK, null),
       e -> switchTo(animation, gui, param == null ? null : param.get()),
       null
     );
@@ -646,10 +646,10 @@ public class GuiInstance<T> {
   /**
    * Applies all basic parameters of a layout, if the layout is provided
    * @param layout Layout to apply
-   * @param paramProvider Parameter provider ref
+   * @param itemProvider Parameter provider ref
    * @return True if applied, false otherwise
    */
-  public boolean applyLayoutParameters(@Nullable GuiLayoutSection layout, IStdGuiParamProvider paramProvider) {
+  public boolean applyLayoutParameters(@Nullable GuiLayoutSection layout, IStdGuiItemProvider itemProvider) {
     if (layout == null)
       return false;
 
@@ -657,9 +657,9 @@ public class GuiInstance<T> {
     resize(layout.getRows(), false);
 
     if (layout.isFill())
-      addFill(paramProvider);
+      addFill(itemProvider);
     else if (layout.isBorder())
-      addBorder(paramProvider);
+      addBorder(itemProvider);
 
     setPageSlots(template.slotExprToSlots(layout.getPaginated(), rows));
     return true;

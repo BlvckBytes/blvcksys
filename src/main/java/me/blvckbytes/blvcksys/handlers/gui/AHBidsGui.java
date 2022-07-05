@@ -29,7 +29,7 @@ public class AHBidsGui extends AGui<Object> {
 
   private final IAHHandler ahHandler;
   private final AHBidGui ahBidGui;
-  private final IStdGuiParamProvider stdGuiParamProvider;
+  private final IStdGuiItemProvider stdGuiItemProvider;
 
   @AutoInjectLate
   private AHProfileGui ahProfileGui;
@@ -43,7 +43,7 @@ public class AHBidsGui extends AGui<Object> {
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject IAHHandler ahHandler,
     @AutoInject AHBidGui ahBidGui,
-    @AutoInject IStdGuiParamProvider stdGuiParamProvider
+    @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
     super(5, "10-16,19-25,28-34", i -> (
       cfg.get(ConfigKey.GUI_BIDS_AH)
@@ -52,7 +52,7 @@ public class AHBidsGui extends AGui<Object> {
 
     this.ahHandler = ahHandler;
     this.ahBidGui = ahBidGui;
-    this.stdGuiParamProvider = stdGuiParamProvider;
+    this.stdGuiItemProvider = stdGuiItemProvider;
   }
 
   @Override
@@ -65,12 +65,12 @@ public class AHBidsGui extends AGui<Object> {
     Player p = inst.getViewer();
     Runnable back = () -> inst.switchTo(AnimationType.SLIDE_RIGHT, ahProfileGui, null);;
 
-    inst.addFill(stdGuiParamProvider);
+    inst.addFill(stdGuiItemProvider);
 
     // Paginator
-    inst.addPagination("38", "40", "42", stdGuiParamProvider);
+    inst.addPagination("38", "40", "42", stdGuiItemProvider);
 
-    inst.addBack("36", stdGuiParamProvider, e -> back.run());
+    inst.addBack("36", stdGuiItemProvider, e -> back.run());
 
     inst.setPageContents(() -> {
       List<Tuple<AHAuctionModel, AHBidModel>> auctions = ahHandler.listParticipatingOrRetrievableBidAuctions(p);

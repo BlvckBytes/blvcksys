@@ -42,7 +42,7 @@ public class AHGui extends AGui<Object> {
   private final AHProfileGui ahProfileGui;
   private final TimeUtil timeUtil;
   private final AHBidGui ahBidGui;
-  private final IStdGuiParamProvider stdGuiParamProvider;
+  private final IStdGuiItemProvider stdGuiItemProvider;
 
   public AHGui(
     @AutoInject IConfig cfg,
@@ -54,7 +54,7 @@ public class AHGui extends AGui<Object> {
     @AutoInject AHProfileGui ahProfileGui,
     @AutoInject TimeUtil timeUtil,
     @AutoInject AHBidGui ahBidGui,
-    @AutoInject IStdGuiParamProvider stdGuiParamProvider
+    @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
     super(6, "2-8,11-17,20-26,29-35,38-44", i -> (
       cfg.get(ConfigKey.GUI_AH)
@@ -66,7 +66,7 @@ public class AHGui extends AGui<Object> {
     this.ahProfileGui = ahProfileGui;
     this.timeUtil = timeUtil;
     this.ahBidGui = ahBidGui;
-    this.stdGuiParamProvider = stdGuiParamProvider;
+    this.stdGuiItemProvider = stdGuiItemProvider;
 
     // Refresh page contents of all AH GUI instances after an auction delta
     this.ahHandler.registerAuctionDeltaInterest(() -> {
@@ -106,10 +106,10 @@ public class AHGui extends AGui<Object> {
     ), e -> inst.switchTo(AnimationType.SLIDE_LEFT, ahProfileGui, null), null);
 
     // Spacer
-    inst.addSpacer("50", stdGuiParamProvider);
+    inst.addSpacer("50", stdGuiItemProvider);
 
     // Paginator
-    inst.addPagination("51", "52", "53", stdGuiParamProvider);
+    inst.addPagination("51", "52", "53", stdGuiItemProvider);
 
     inst.setPageContents(() -> {
       // List all auctions based on the currently applied filters

@@ -32,7 +32,7 @@ public class CrateContentGui extends AGui<Tuple<CrateModel, Boolean>> {
 
   private final ICrateHandler crateHandler;
   private final CrateItemDetailGui detailGui;
-  private final IStdGuiParamProvider stdGuiParamProvider;
+  private final IStdGuiItemProvider stdGuiItemProvider;
 
   public CrateContentGui(
     @AutoInject IConfig cfg,
@@ -40,7 +40,7 @@ public class CrateContentGui extends AGui<Tuple<CrateModel, Boolean>> {
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject ICrateHandler crateHandler,
     @AutoInject CrateItemDetailGui detailGui,
-    @AutoInject IStdGuiParamProvider stdGuiParamProvider
+    @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
     super(6, "10-16,19-25,28-34,37-43", i -> (
       cfg.get(ConfigKey.GUI_CRATE_CONTENT_NAME)
@@ -49,7 +49,7 @@ public class CrateContentGui extends AGui<Tuple<CrateModel, Boolean>> {
 
     this.crateHandler = crateHandler;
     this.detailGui = detailGui;
-    this.stdGuiParamProvider = stdGuiParamProvider;
+    this.stdGuiItemProvider = stdGuiItemProvider;
   }
 
   @Override
@@ -59,10 +59,10 @@ public class CrateContentGui extends AGui<Tuple<CrateModel, Boolean>> {
 
   @Override
   protected boolean opening(GuiInstance<Tuple<CrateModel, Boolean>> inst) {
-    inst.addBorder(stdGuiParamProvider);
+    inst.addBorder(stdGuiItemProvider);
 
     // Paginator
-    inst.addPagination("46", "49", "52", stdGuiParamProvider);
+    inst.addPagination("46", "49", "52", stdGuiItemProvider);
 
     CrateModel crate = inst.getArg().a();
     boolean editMode = inst.getArg().b();

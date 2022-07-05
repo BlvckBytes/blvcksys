@@ -22,7 +22,7 @@ public class AHProfileGui extends AGui<Object> {
   private final AHCreateGui ahCreateGui;
   private final AHBidsGui ahBidsGui;
   private final AHAuctionsGui ahAuctionsGui;
-  private final IStdGuiParamProvider stdGuiParamProvider;
+  private final IStdGuiItemProvider stdGuiItemProvider;
 
   @AutoInjectLate
   private AHGui ahGui;
@@ -34,7 +34,7 @@ public class AHProfileGui extends AGui<Object> {
     @AutoInject AHCreateGui ahCreateGui,
     @AutoInject AHBidsGui ahBidsGui,
     @AutoInject AHAuctionsGui ahAuctionsGui,
-    @AutoInject IStdGuiParamProvider stdGuiParamProvider
+    @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
     super(3, "", i -> (
       cfg.get(ConfigKey.GUI_PROFILE_AH)
@@ -44,7 +44,7 @@ public class AHProfileGui extends AGui<Object> {
     this.ahCreateGui = ahCreateGui;
     this.ahBidsGui = ahBidsGui;
     this.ahAuctionsGui = ahAuctionsGui;
-    this.stdGuiParamProvider = stdGuiParamProvider;
+    this.stdGuiItemProvider = stdGuiItemProvider;
   }
 
   @Override
@@ -55,10 +55,10 @@ public class AHProfileGui extends AGui<Object> {
   @Override
   protected boolean opening(GuiInstance<Object> inst) {
 
-    inst.addFill(stdGuiParamProvider);
+    inst.addFill(stdGuiItemProvider);
 
     inst.addBack(
-      "18", stdGuiParamProvider, ahGui, null, AnimationType.SLIDE_RIGHT
+      "18", stdGuiItemProvider, ahGui, null, AnimationType.SLIDE_RIGHT
     );
 
     // New entry

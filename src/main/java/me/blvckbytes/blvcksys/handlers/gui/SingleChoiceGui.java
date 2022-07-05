@@ -60,11 +60,11 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
   protected boolean opening(GuiInstance<SingleChoiceParam> inst) {
     Player p = inst.getViewer();
     SingleChoiceParam arg = inst.getArg();
-    IStdGuiParamProvider paramProvider = arg.paramProvider();
+    IStdGuiItemProvider itemProvider = arg.itemProvider();
     GuiLayoutSection layout = arg.layout();
 
-    if (!inst.applyLayoutParameters(layout, paramProvider))
-      inst.addBorder(paramProvider);
+    if (!inst.applyLayoutParameters(layout, itemProvider))
+      inst.addBorder(itemProvider);
 
     Map<String, String> slots = layout != null ? layout.getSlots() : new HashMap<>();
 
@@ -72,7 +72,7 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
       slots.getOrDefault("prevPage", "38"),
       slots.getOrDefault("currentPage", "40"),
       slots.getOrDefault("nextPage", "42"),
-      paramProvider
+      itemProvider
     );
 
     // Reopens this instance on the next tick when called
@@ -81,11 +81,11 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
     // Search button
     inst.fixedItem(
       slots.getOrDefault("search", "44"),
-      () -> paramProvider.getItem(StdGuiItem.SEARCH, null),
+      () -> itemProvider.getItem(StdGuiItem.SEARCH, null),
       e -> {
         // Create a carbon copy of the param and re-route callbacks
         SingleChoiceParam scp = new SingleChoiceParam(
-          arg.type(), arg.representitives(), paramProvider, arg.layout(),
+          arg.type(), arg.representitives(), itemProvider, arg.layout(),
           arg.customFilter(), arg.selected(),
 
           // Re-open the choice if nothing was chosen or back was clicked
@@ -103,7 +103,7 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
     if (inst.getArg().backButton() != null) {
       inst.addBack(
         slots.getOrDefault("back", "36"),
-        paramProvider, e -> {
+        itemProvider, e -> {
           haveChosen.add(p);
           inst.getArg().backButton().accept(inst);
         }

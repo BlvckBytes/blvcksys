@@ -166,7 +166,7 @@ public class UserInputChain {
     YesNoGui gui,
     String field,
     ConfigValue type,
-    IStdGuiParamProvider stdProvider,
+    IStdGuiItemProvider stdProvider,
     @Nullable GuiLayoutSection layout,
     ItemStack yesButton,
     ItemStack noButton,
@@ -237,7 +237,7 @@ public class UserInputChain {
   public UserInputChain withChoice(
     String field,
     ConfigValue type,
-    IStdGuiParamProvider stdProvider,
+    IStdGuiItemProvider stdProvider,
     @Nullable GuiLayoutSection layout,
     Function<Map<String, Object>, List<Tuple<Object, ItemStack>>> representitives,
     @Nullable Function<Map<String, Object>, Boolean> skip
@@ -261,7 +261,7 @@ public class UserInputChain {
     @Nullable Function<ItemStack, ItemStack> selectionTransform,
     String field,
     ConfigValue type,
-    IStdGuiParamProvider stdProvider,
+    IStdGuiItemProvider stdProvider,
     @Nullable GuiLayoutSection layout,
     @Nullable GuiLayoutSection choiceLayout,
     Function<Map<String, Object>, List<Tuple<Object, ItemStack>>> representitives,

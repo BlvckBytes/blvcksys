@@ -11,7 +11,7 @@ import java.util.Map;
 
   Provides all available standard GUI items with templating abilities.
 */
-public interface IStdGuiParamProvider {
+public interface IStdGuiItemProvider {
 
   /**
    * Get a standard GUI item

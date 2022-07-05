@@ -28,20 +28,20 @@ public class KitContentGui extends AGui<KitModel> {
   @AutoInjectLate
   private KitsGui kitsGui;
 
-  private final IStdGuiParamProvider stdGuiParamProvider;
+  private final IStdGuiItemProvider stdGuiItemProvider;
 
   public KitContentGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
     @AutoInject IPlayerTextureHandler textures,
-    @AutoInject IStdGuiParamProvider stdGuiParamProvider
+    @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
     super(5, "10-16,19-25,28-34", i -> (
       cfg.get(ConfigKey.GUI_KIT_CONTENT_TITLE)
         .withVariable("name", i.getArg().getName())
     ), plugin, cfg, textures);
 
-    this.stdGuiParamProvider = stdGuiParamProvider;
+    this.stdGuiItemProvider = stdGuiItemProvider;
   }
 
   @Override
@@ -51,9 +51,9 @@ public class KitContentGui extends AGui<KitModel> {
 
   @Override
   protected boolean opening(GuiInstance<KitModel> inst) {
-    inst.addBorder(stdGuiParamProvider);
+    inst.addBorder(stdGuiItemProvider);
 
-    inst.addBack("36", stdGuiParamProvider, kitsGui, null, AnimationType.SLIDE_RIGHT);
+    inst.addBack("36", stdGuiItemProvider, kitsGui, null, AnimationType.SLIDE_RIGHT);
 
     inst.setPageContents(() -> (
       Arrays.stream(inst.getArg().getItems().getContents())

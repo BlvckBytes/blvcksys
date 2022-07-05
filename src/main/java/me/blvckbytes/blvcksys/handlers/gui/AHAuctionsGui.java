@@ -36,7 +36,7 @@ public class AHAuctionsGui extends AGui<Object> {
   private final ConfirmationGui confirmationGui;
   private final IGiveCommand giveCommand;
   private final IPlayerStatsHandler playerStatsHandler;
-  private final IStdGuiParamProvider stdGuiParamProvider;
+  private final IStdGuiItemProvider stdGuiItemProvider;
 
   @AutoInjectLate
   private AHGui ahGui;
@@ -52,7 +52,7 @@ public class AHAuctionsGui extends AGui<Object> {
     @AutoInject ConfirmationGui confirmationGui,
     @AutoInject IGiveCommand giveCommand,
     @AutoInject IPlayerStatsHandler playerStatsHandler,
-    @AutoInject IStdGuiParamProvider stdGuiParamProvider
+    @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
     super(5, "10-16,19-25,28-34", i -> (
       cfg.get(ConfigKey.GUI_AUCTIONS_AH)
@@ -63,7 +63,7 @@ public class AHAuctionsGui extends AGui<Object> {
     this.confirmationGui = confirmationGui;
     this.giveCommand = giveCommand;
     this.playerStatsHandler = playerStatsHandler;
-    this.stdGuiParamProvider = stdGuiParamProvider;
+    this.stdGuiItemProvider = stdGuiItemProvider;
   }
 
   @Override
@@ -76,12 +76,12 @@ public class AHAuctionsGui extends AGui<Object> {
     Player p = inst.getViewer();
     Runnable back = () -> inst.switchTo(AnimationType.SLIDE_RIGHT, ahProfileGui, null);;
 
-    inst.addFill(stdGuiParamProvider);
+    inst.addFill(stdGuiItemProvider);
 
     // Paginator
-    inst.addPagination("38", "40", "42", stdGuiParamProvider);
+    inst.addPagination("38", "40", "42", stdGuiItemProvider);
 
-    inst.addBack("36", stdGuiParamProvider, e -> back.run());
+    inst.addBack("36", stdGuiItemProvider, e -> back.run());
 
     inst.setPageContents(() -> {
       // List all auctions that are either active or require final interaction

@@ -49,18 +49,18 @@ public class YesNoGui extends AGui<YesNoParam> {
   @Override
   protected boolean opening(GuiInstance<YesNoParam> inst) {
     Player p = inst.getViewer();
-    IStdGuiParamProvider paramProvider = inst.getArg().paramProvider();
+    IStdGuiItemProvider itemProvider = inst.getArg().itemProvider();
     GuiLayoutSection layout = inst.getArg().layout();
 
-    if (!inst.applyLayoutParameters(layout, paramProvider))
-      inst.addFill(paramProvider);
+    if (!inst.applyLayoutParameters(layout, itemProvider))
+      inst.addFill(itemProvider);
 
     Map<String, String> slots = layout != null ? layout.getSlots() : new HashMap<>();
 
     // Render the back button, if a callback has been set
     if (inst.getArg().backButton() != null) {
       inst.addBack(
-        slots.getOrDefault("back", "18"), paramProvider,
+        slots.getOrDefault("back", "18"), itemProvider,
         e -> {
           madeSelection.add(p);
           inst.getArg().backButton().accept(inst);

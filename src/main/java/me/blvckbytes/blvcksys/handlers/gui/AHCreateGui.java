@@ -63,7 +63,7 @@ public class AHCreateGui extends AGui<Object> {
   private final IGiveCommand giveCommand;
   private final Map<Player, AHCreateState> states;
   private final IAHHandler ahHandler;
-  private final IStdGuiParamProvider stdGuiParamProvider;
+  private final IStdGuiItemProvider stdGuiItemProvider;
 
   public AHCreateGui(
     @AutoInject IConfig cfg,
@@ -73,7 +73,7 @@ public class AHCreateGui extends AGui<Object> {
     @AutoInject ChatUtil chatUtil,
     @AutoInject IGiveCommand giveCommand,
     @AutoInject IAHHandler ahHandler,
-    @AutoInject IStdGuiParamProvider stdGuiParamProvider
+    @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
     super(3, "", i -> (
       cfg.get(ConfigKey.GUI_CREATE_AH)
@@ -85,7 +85,7 @@ public class AHCreateGui extends AGui<Object> {
     this.chatUtil = chatUtil;
     this.giveCommand = giveCommand;
     this.ahHandler = ahHandler;
-    this.stdGuiParamProvider = stdGuiParamProvider;
+    this.stdGuiItemProvider = stdGuiItemProvider;
   }
 
   @Override
@@ -120,9 +120,9 @@ public class AHCreateGui extends AGui<Object> {
 
     Runnable back = () -> inst.switchTo(AnimationType.SLIDE_RIGHT, ahProfileGui, null);
 
-    inst.addFill(stdGuiParamProvider);
+    inst.addFill(stdGuiItemProvider);
 
-    inst.addBack("18", stdGuiParamProvider, e -> back.run());
+    inst.addBack("18", stdGuiItemProvider, e -> back.run());
 
     // Auction item markers
     inst.fixedItem("4,22", () -> (

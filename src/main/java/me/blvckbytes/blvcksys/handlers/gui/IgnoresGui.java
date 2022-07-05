@@ -25,7 +25,7 @@ public class IgnoresGui extends AGui<Object> {
 
   private final IIgnoreHandler ignore;
   private final IgnoreDetailGui ignoreDetailGui;
-  private final IStdGuiParamProvider stdGuiParamProvider;
+  private final IStdGuiItemProvider stdGuiItemProvider;
 
   public IgnoresGui(
     @AutoInject IConfig cfg,
@@ -33,7 +33,7 @@ public class IgnoresGui extends AGui<Object> {
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject IIgnoreHandler ignore,
     @AutoInject IgnoreDetailGui ignoreDetailGui,
-    @AutoInject IStdGuiParamProvider stdGuiParamProvider
+    @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
     super(4, "10-16,19-25", i -> (
       cfg.get(ConfigKey.GUI_IGNORES_TITLE)
@@ -42,7 +42,7 @@ public class IgnoresGui extends AGui<Object> {
 
     this.ignore = ignore;
     this.ignoreDetailGui = ignoreDetailGui;
-    this.stdGuiParamProvider = stdGuiParamProvider;
+    this.stdGuiItemProvider = stdGuiItemProvider;
   }
 
   @Override
@@ -54,10 +54,10 @@ public class IgnoresGui extends AGui<Object> {
   protected boolean opening(GuiInstance<Object> inst) {
     Player p = inst.getViewer();
 
-    inst.addFill(stdGuiParamProvider);
+    inst.addFill(stdGuiItemProvider);
 
     // Paginator
-    inst.addPagination("28", "31", "34", stdGuiParamProvider);
+    inst.addPagination("28", "31", "34", stdGuiItemProvider);
 
     inst.setPageContents(() -> {
       List<PlayerIgnoreModel> active = ignore.listActiveIgnores(p);

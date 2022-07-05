@@ -35,7 +35,7 @@ public class PreferencesGui extends AGui<Object> {
   private final IObjectiveHandler obj;
   private final SingleChoiceGui singleChoiceGui;
   private final ItemEditorGui itemEditorGui;
-  private final IStdGuiParamProvider stdGuiParamProvider;
+  private final IStdGuiItemProvider stdGuiItemProvider;
 
   public PreferencesGui(
     @AutoInject IConfig cfg,
@@ -45,7 +45,7 @@ public class PreferencesGui extends AGui<Object> {
     @AutoInject IObjectiveHandler obj,
     @AutoInject SingleChoiceGui singleChoiceGui,
     @AutoInject ItemEditorGui itemEditorGui,
-    @AutoInject IStdGuiParamProvider stdGuiParamProvider
+    @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
     super(4, "", i -> (
       cfg.get(ConfigKey.GUI_PREFERENCES_TITLE)
@@ -56,7 +56,7 @@ public class PreferencesGui extends AGui<Object> {
     this.obj = obj;
     this.itemEditorGui = itemEditorGui;
     this.singleChoiceGui = singleChoiceGui;
-    this.stdGuiParamProvider = stdGuiParamProvider;
+    this.stdGuiItemProvider = stdGuiItemProvider;
   }
 
   @Override
@@ -68,7 +68,7 @@ public class PreferencesGui extends AGui<Object> {
   protected boolean opening(GuiInstance<Object> inst) {
     Player p = inst.getViewer();
 
-    inst.addFill(stdGuiParamProvider);
+    inst.addFill(stdGuiItemProvider);
 
     // Msg disable
     inst.addStateToggle("19", "10", () -> !prefs.isMsgDisabled(p), s -> prefs.setMsgDisabled(p, s));
@@ -155,14 +155,14 @@ public class PreferencesGui extends AGui<Object> {
         .withChoice(
           "particle",
           cfg.get(ConfigKey.GUI_PREFERENCES_ARROW_TRAILS_PARTICLE_TITLE),
-          stdGuiParamProvider, null,
+          stdGuiItemProvider, null,
           values -> generateParticleReprs(p),
           null
         )
         .withChoice(
           "color",
           cfg.get(ConfigKey.GUI_PREFERENCES_ARROW_TRAILS_COLOR_TITLE),
-          stdGuiParamProvider, null,
+          stdGuiItemProvider, null,
           values -> itemEditorGui.generateColorReprs(this::colorToMaterial),
           values -> {
             // Skip whenever either the particle doesn't support color or the player hasn't yet unlocked this effect

@@ -66,7 +66,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
   private final IArmorStandHandler standHandler;
   private final ItemEditorGui itemEditorGui;
   private final ChatUtil chatUtil;
-  private final IStdGuiParamProvider stdGuiParamProvider;
+  private final IStdGuiItemProvider stdGuiItemProvider;
 
   public ArmorStandGui(
     @AutoInject IConfig cfg,
@@ -75,7 +75,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
     @AutoInject IArmorStandHandler standHandler,
     @AutoInject ItemEditorGui itemEditorGui,
     @AutoInject ChatUtil chatUtil,
-    @AutoInject IStdGuiParamProvider stdGuiParamProvider
+    @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
     super(6, "", i -> (
       cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_NAME).
@@ -86,7 +86,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
     this.standHandler = standHandler;
     this.chatUtil = chatUtil;
     this.itemEditorGui = itemEditorGui;
-    this.stdGuiParamProvider = stdGuiParamProvider;
+    this.stdGuiItemProvider = stdGuiItemProvider;
   }
 
   @Override
@@ -110,7 +110,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
       return false;
     }
 
-    inst.addFill(stdGuiParamProvider);
+    inst.addFill(stdGuiItemProvider);
 
     /////////////////////////////////// Body Columns ////////////////////////////////////
 

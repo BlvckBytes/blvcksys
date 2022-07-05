@@ -37,7 +37,7 @@ public class AHBidGui extends AGui<AHAuctionModel> {
 
   private final ChatUtil chatUtil;
   private final IAHHandler ahHandler;
-  private final IStdGuiParamProvider stdGuiParamProvider;
+  private final IStdGuiItemProvider stdGuiItemProvider;
 
   @AutoInjectLate
   private AHGui ahGui;
@@ -48,7 +48,7 @@ public class AHBidGui extends AGui<AHAuctionModel> {
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject IAHHandler ahHandler,
     @AutoInject ChatUtil chatUtil,
-    @AutoInject IStdGuiParamProvider stdGuiParamProvider
+    @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
     super(3, "", i -> (
       cfg.get(ConfigKey.GUI_BID_AH)
@@ -56,7 +56,7 @@ public class AHBidGui extends AGui<AHAuctionModel> {
 
     this.ahHandler = ahHandler;
     this.chatUtil = chatUtil;
-    this.stdGuiParamProvider = stdGuiParamProvider;
+    this.stdGuiItemProvider = stdGuiItemProvider;
 
     // Redraw the GUI if it contains an auction which has just received a new bid
     ahHandler.registerBidInterest((auction, bid) -> {
@@ -85,9 +85,9 @@ public class AHBidGui extends AGui<AHAuctionModel> {
 
     Runnable back = () -> inst.switchTo(AnimationType.SLIDE_RIGHT, ahGui, null);;
 
-    inst.addFill(stdGuiParamProvider);
+    inst.addFill(stdGuiItemProvider);
 
-    inst.addBack("18", stdGuiParamProvider, e -> back.run());
+    inst.addBack("18", stdGuiItemProvider, e -> back.run());
 
     // Target item status indicators
     inst.fixedItem("2,20", () -> createStatusIndicator(inst).orElse(null), null, null);

@@ -86,17 +86,17 @@ public class AnvilSearchGui extends AGui<SingleChoiceParam> implements IPacketMo
 
   @Override
   protected boolean opening(GuiInstance<SingleChoiceParam> inst) {
-    IStdGuiParamProvider paramProvider = inst.getArg().paramProvider();
+    IStdGuiItemProvider itemProvider = inst.getArg().itemProvider();
 
     // This item serves as a placeholder to get the typing functionality up and working, while
     // it also informes the player about the concept of filtering
     inst.fixedItem("0", () -> (
-      paramProvider.getItem(StdGuiItem.SEARCH_PLACEHOLDER, null)
+      itemProvider.getItem(StdGuiItem.SEARCH_PLACEHOLDER, null)
     ), null, null);
 
     // Back button
     if (inst.getArg().backButton() != null) {
-      inst.addBack("1", paramProvider, e -> {
+      inst.addBack("1", itemProvider, e -> {
         madeSelection.add(inst.getViewer());
         inst.getArg().backButton().accept(inst);
       });

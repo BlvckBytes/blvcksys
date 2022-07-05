@@ -27,18 +27,18 @@ public class ConfirmationGui extends AGui<BiConsumer<TriResult, GuiInstance<?>>>
 
   // Players which made a selection in the GUI don't trigger the callback on close
   private final Set<Player> madeSelection;
-  private final IStdGuiParamProvider stdGuiParamProvider;
+  private final IStdGuiItemProvider stdGuiItemProvider;
 
   public ConfirmationGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
     @AutoInject IPlayerTextureHandler textures,
-    @AutoInject IStdGuiParamProvider stdGuiParamProvider
+    @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
     super(3, "", i -> cfg.get(ConfigKey.GUI_CONFIRMATION_TITLE), plugin, cfg, textures);
 
     this.madeSelection = new HashSet<>();
-    this.stdGuiParamProvider = stdGuiParamProvider;
+    this.stdGuiItemProvider = stdGuiItemProvider;
   }
 
   @Override
@@ -52,7 +52,7 @@ public class ConfirmationGui extends AGui<BiConsumer<TriResult, GuiInstance<?>>>
   protected boolean opening(GuiInstance<BiConsumer<TriResult, GuiInstance<?>>> inst) {
     Player p = inst.getViewer();
 
-    inst.addFill(stdGuiParamProvider);
+    inst.addFill(stdGuiItemProvider);
 
     inst.fixedItem("11", () -> (
       new ItemStackBuilder(Material.GREEN_TERRACOTTA)

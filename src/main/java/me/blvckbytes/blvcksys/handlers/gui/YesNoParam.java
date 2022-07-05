@@ -19,7 +19,7 @@ public record YesNoParam(
   String type,
 
   // Provider for standard parameters used in GUIs
-  IStdGuiParamProvider paramProvider,
+  IStdGuiItemProvider itemProvider,
 
   // Optional custom GUI layout specification
   @Nullable GuiLayoutSection layout,

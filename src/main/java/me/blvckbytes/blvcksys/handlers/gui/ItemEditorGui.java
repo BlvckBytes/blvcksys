@@ -332,6 +332,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withPrompt(
             "data",
             values -> ies.getMessages().getCustomModelDataPrompt().withPrefix(),
+            ies.getMessages().getChatbuttonExpired().withPrefix(),
+            ies.getMessages().getChatbuttonCancel(),
+            ies.getMessages().getChatbuttonBack(),
             Integer::parseInt,
             input -> ies.getMessages().getInvalidInteger().withVariable("number", input).withPrefix(),
             null
@@ -534,6 +537,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
                 .withVariable("enchantment", formatConstant(((Enchantment) values.get("enchantment")).getKey().getKey()))
                 .withPrefix()
             ),
+            ies.getMessages().getChatbuttonExpired().withPrefix(),
+            ies.getMessages().getChatbuttonCancel(),
+            ies.getMessages().getChatbuttonBack(),
             Integer::parseInt,
             input -> ies.getMessages().getInvalidInteger().withVariable("number", input).withPrefix(),
             values -> meta.hasEnchant((Enchantment) values.get("enchantment"))
@@ -594,6 +600,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withPrompt(
             "name",
             values -> ies.getMessages().getDisplaynamePrompt().withPrefix(),
+            ies.getMessages().getChatbuttonExpired().withPrefix(),
+            ies.getMessages().getChatbuttonCancel(),
+            ies.getMessages().getChatbuttonBack(),
             s -> s, null, null
           )
           .start();
@@ -676,6 +685,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withPrompt(
             "line",
             values -> ies.getMessages().getLoreLinePrompt().withPrefix(),
+            ies.getMessages().getChatbuttonExpired().withPrefix(),
+            ies.getMessages().getChatbuttonCancel(),
+            ies.getMessages().getChatbuttonBack(),
             s -> s, null, null
           )
           .withChoice(
@@ -972,6 +984,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withPrompt(
             "amount",
             values -> ies.getMessages().getAttributeAmountPrompt().withPrefix(),
+            ies.getMessages().getChatbuttonExpired().withPrefix(),
+            ies.getMessages().getChatbuttonCancel(),
+            ies.getMessages().getChatbuttonBack(),
             Double::parseDouble,
             inp -> (
               ies.getMessages().getInvalidFloat()
@@ -1103,6 +1118,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withPrompt(
             "power",
             values -> ies.getMessages().getFireworkPowerPrompt().withPrefix(),
+            ies.getMessages().getChatbuttonExpired().withPrefix(),
+            ies.getMessages().getChatbuttonCancel(),
+            ies.getMessages().getChatbuttonBack(),
             Integer::parseInt,
             input -> ies.getMessages().getInvalidInteger().withVariable("number", input).withPrefix(),
             null
@@ -1411,10 +1429,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         });
 
       }, singleChoiceGui, chatUtil)
-        // TODO: Add buttons to config
         .withPrompt(
           "owner",
           values -> ies.getMessages().getSkullownerPrompt().withPrefix(),
+          ies.getMessages().getChatbuttonExpired().withPrefix(),
+          ies.getMessages().getChatbuttonCancel(),
+          ies.getMessages().getChatbuttonBack(),
           s -> s, null, null
         )
         .start();
@@ -1654,6 +1674,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withPrompt(
             "duration",
             values -> ies.getMessages().getPotioneffectDurationPrompt().withPrefix(),
+            ies.getMessages().getChatbuttonExpired().withPrefix(),
+            ies.getMessages().getChatbuttonCancel(),
+            ies.getMessages().getChatbuttonBack(),
             Integer::parseInt,
             input -> ies.getMessages().getInvalidInteger().withVariable("number", input).withPrefix(),
             null
@@ -1661,6 +1684,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           .withPrompt(
             "amplifier",
             values -> ies.getMessages().getPotioneffectAmplifierPrompt().withPrefix(),
+            ies.getMessages().getChatbuttonExpired().withPrefix(),
+            ies.getMessages().getChatbuttonCancel(),
+            ies.getMessages().getChatbuttonBack(),
             Integer::parseInt,
             input -> ies.getMessages().getInvalidInteger().withVariable("number", input).withPrefix(),
             null
@@ -2177,6 +2203,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       .withPrompt(
         "value",
         values -> prompt,
+        ies.getMessages().getChatbuttonExpired().withPrefix(),
+        ies.getMessages().getChatbuttonCancel(),
+        ies.getMessages().getChatbuttonBack(),
         s -> ChatColor.translateAlternateColorCodes('&', s), null, null
       )
       .start();
@@ -2271,6 +2300,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       chain.withPrompt(
         "color",
         values -> ies.getMessages().getColorPrompt().withPrefix(),
+        ies.getMessages().getChatbuttonExpired().withPrefix(),
+        ies.getMessages().getChatbuttonCancel(),
+        ies.getMessages().getChatbuttonBack(),
         s -> {
           String[] data = s.split(" ");
           return new Tuple<>(

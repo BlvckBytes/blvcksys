@@ -5,12 +5,12 @@ import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
-import me.blvckbytes.blvcksys.util.ChatButtons;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
+import me.blvckbytes.blvcksys.util.Triple;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -23,6 +23,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /*
@@ -141,11 +142,66 @@ public class TrashCommand extends APlayerCommand implements Listener, IAutoConst
     if (can.inv.isEmpty())
       return;
 
-    // Send deletion confirmation prompt
-    // after creating a auto-delete timeout
-    chat.sendButtons(
-      p, createConfirmationTimeout(p, can)
+    ChatUtil.ChatPrompt prompt = chat.beginPrompt(
+      p, null,
+      cfg.get(ConfigKey.TRASH_CONFIRMATION)
+        .withPrefixes()
+        .withVariable("timeout", TRASH_TIMEOUT_S),
+      cfg.get(ConfigKey.CHATBUTTONS_EXPIRED),
+      List.of(
+        new Triple<>(cfg.get(ConfigKey.CHATBUTTONS_YES), null, () -> {
+          // Cancel the deletion timeout
+          Bukkit.getScheduler().cancelTask(can.deletionTimeout);
+
+          // Re-open the inventory
+          p.openInventory(can.inv);
+
+          // Inform about the clear cancel
+          p.sendMessage(
+            cfg.get(ConfigKey.TRASH_CLEARED_CANCELLED)
+              .withPrefix()
+              .asScalar()
+          );
+        }),
+        new Triple<>(cfg.get(ConfigKey.CHATBUTTONS_NO), null, () -> {
+          // Cancel the deletion timeout
+          Bukkit.getScheduler().cancelTask(can.deletionTimeout);
+
+          // Clear the inventory
+          can.inv.clear();
+
+          // Inform about manual-clear
+          p.sendMessage(
+            cfg.get(ConfigKey.TRASH_CLEARED_MANUAL)
+              .withPrefix()
+              .asScalar()
+          );
+        })
+      )
     );
+
+    // Stop previous timeout
+    if (can.deletionTimeout > 0)
+      Bukkit.getScheduler().cancelTask(can.deletionTimeout);
+
+    // Create deletion timeout
+    can.deletionTimeout = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+      // Re-set the timeout handle
+      can.deletionTimeout = -1;
+
+      // Inform about auto-clear
+      p.sendMessage(
+        cfg.get(ConfigKey.TRASH_CLEARED_AUTOMATIC)
+          .withPrefix()
+          .asScalar()
+      );
+
+      // Invalidate buttons
+      chat.expirePrompt(prompt);
+
+      // Clear the inventory
+      can.inv.clear();
+    }, TRASH_TIMEOUT_S * 20);
   }
 
   //=========================================================================//
@@ -166,79 +222,6 @@ public class TrashCommand extends APlayerCommand implements Listener, IAutoConst
       cfg.get(ConfigKey.TRASH_INV_TITLE)
         .withVariable("owner", p.getName())
         .asScalar()
-    );
-  }
-
-  private ChatButtons createConfirmationTimeout(Player p, TrashCan can) {
-    ChatButtons buttons = buildConfirmationButtons(p, can);
-
-    // Stop previous timeout
-    if (can.deletionTimeout > 0)
-      Bukkit.getScheduler().cancelTask(can.deletionTimeout);
-
-    // Create deletion timeout
-    can.deletionTimeout = Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
-      // Re-set the timeout handle
-      can.deletionTimeout = -1;
-
-      // Inform about auto-clear
-      p.sendMessage(
-        cfg.get(ConfigKey.TRASH_CLEARED_AUTOMATIC)
-          .withPrefix()
-          .asScalar()
-      );
-
-      // Invalidate buttons
-      chat.removeButtons(p, buttons);
-
-      // Clear the inventory
-      can.inv.clear();
-    }, TRASH_TIMEOUT_S * 20);
-
-    return buttons;
-  }
-
-  private ChatButtons buildConfirmationButtons(Player p, TrashCan can) {
-    return ChatButtons.buildYesNo(
-      cfg.get(ConfigKey.TRASH_CONFIRMATION)
-        .withPrefixes()
-        .withVariable("timeout", TRASH_TIMEOUT_S)
-        .asScalar(),
-      plugin, cfg,
-
-      // Yes, re-open inventory
-      () -> {
-        // Cancel the deletion timeout
-        Bukkit.getScheduler().cancelTask(can.deletionTimeout);
-
-        // Re-open the inventory
-        p.openInventory(can.inv);
-
-        // Inform about the clear cancel
-        p.sendMessage(
-          cfg.get(ConfigKey.TRASH_CLEARED_CANCELLED)
-            .withPrefix()
-            .asScalar()
-        );
-      },
-
-      // No, delete instantly
-      () -> {
-        // Cancel the deletion timeout
-        Bukkit.getScheduler().cancelTask(can.deletionTimeout);
-
-        // Clear the inventory
-        can.inv.clear();
-
-        // Inform about manual-clear
-        p.sendMessage(
-          cfg.get(ConfigKey.TRASH_CLEARED_MANUAL)
-            .withPrefix()
-            .asScalar()
-        );
-      },
-
-      null
     );
   }
 }

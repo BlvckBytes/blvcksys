@@ -8,9 +8,9 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.handlers.ITeleportationHandler;
-import me.blvckbytes.blvcksys.util.ChatButtons;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.MCReflect;
+import me.blvckbytes.blvcksys.util.Triple;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -36,14 +36,11 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener,
    *
    * target Target player
    * timeoutHandle Timeout task handle
-   * acceptPrompt Used to prompt the target to accept/deny
-   * moveListener Move listener subscription ref
    */
   @AllArgsConstructor
   private static class TeleportRequest {
     Player target;
     int timeoutHandle;
-    ChatButtons acceptPrompt;
   }
 
   // Timeout in ticks for a pending teleport request
@@ -124,25 +121,20 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener,
       REQUEST_TIMEOUT
     );
 
-    // Create buttons to accept/deny
-    ChatButtons buttons = ChatButtons.buildYesNo(
-        cfg.get(ConfigKey.TPA_RECEIVED_PREFIX)
-          .withPrefix()
-          .withVariable("sender", p.getName())
-          .asScalar(),
-        plugin, cfg,
-
-        // Yes
-        () -> acceptRequest(p, target),
-
-        // No
-        () -> denyRequest(p, target),
-
-        null
-      );
+    chat.beginPrompt(
+      p, null,
+      cfg.get(ConfigKey.TPA_RECEIVED_PREFIX)
+        .withPrefix()
+        .withVariable("sender", p.getName()),
+      cfg.get(ConfigKey.CHATBUTTONS_EXPIRED).withPrefix(),
+      List.of(
+        new Triple<>(cfg.get(ConfigKey.CHATBUTTONS_YES), null, () -> acceptRequest(p, target)),
+        new Triple<>(cfg.get(ConfigKey.CHATBUTTONS_NO), null, () -> denyRequest(p, target))
+      )
+    );
 
     // Register the new request
-    pendingRequests.get(p).add(new TeleportRequest(target, timeoutHandle, buttons));
+    pendingRequests.get(p).add(new TeleportRequest(target, timeoutHandle));
 
     // Inform sender
     p.sendMessage(
@@ -151,9 +143,6 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener,
         .withVariable("target", target.getName())
         .asScalar()
     );
-
-    // Display action screen to the target
-    this.chat.sendButtons(target, buttons);
   }
 
   //=========================================================================//
@@ -279,9 +268,6 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener,
     TeleportRequest telReq = req.get();
     deleteRequest(sender, telReq);
 
-    // Invalidate the buttons that prompted the target
-    chat.removeButtons(target, telReq.acceptPrompt);
-
     // Inform sender about cancel
     sender.sendMessage(
       cfg.get(ConfigKey.TPA_CANCELLED_SENDER)
@@ -326,9 +312,6 @@ public class TpaCommand extends APlayerCommand implements ITpaCommand, Listener,
       for (TeleportRequest req : sentRequests) {
         // Cancel teleport timeout
         Bukkit.getScheduler().cancelTask(req.timeoutHandle);
-
-        // Invalidate the buttons that prompted the target
-        chat.removeButtons(req.target, req.acceptPrompt);
 
         // Inform the target
         req.target.sendMessage(

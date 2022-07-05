@@ -12,7 +12,6 @@ import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.handlers.MoveablePart;
 import me.blvckbytes.blvcksys.packets.communicators.armorstand.ArmorStandProperties;
 import me.blvckbytes.blvcksys.persistence.models.ArmorStandModel;
-import me.blvckbytes.blvcksys.util.ChatButtons;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.SymbolicHead;
 import me.blvckbytes.blvcksys.util.Triple;
@@ -34,6 +33,7 @@ import org.bukkit.scheduler.BukkitTask;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
@@ -263,14 +263,8 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
       // Close the instance and spawn a new chat prompt for the name
       inst.close();
 
-      chatUtil.registerPrompt(
-        inst.getViewer(),
-        cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_DISPLAYNAME_PROMPT)
-          .withPrefix()
-          .asScalar(),
-
-        // Name entered, change, store and reopen
-        name -> {
+      chatUtil.beginPrompt(
+        inst.getViewer(), name -> {
           props.setName(ChatColor.translateAlternateColorCodes('&', name));
           standHandler.setProperties(model.getName(), props, true);
           inst.redraw("37");
@@ -283,12 +277,13 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
 
           inst.reopen(AnimationType.SLIDE_UP);
         },
-
-        // Cancellation reopens the editor
-        () -> inst.reopen(AnimationType.SLIDE_UP),
-
-        // No back button
-        null
+        cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_DISPLAYNAME_PROMPT).withPrefix(),
+        cfg.get(ConfigKey.CHATBUTTONS_EXPIRED).withPrefix(),
+        List.of(
+          new Triple<>(cfg.get(ConfigKey.CHATBUTTONS_CANCEL), null, () -> {
+            inst.reopen(AnimationType.SLIDE_UP);
+          })
+        )
       );
     }, null);
 
@@ -554,20 +549,19 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
    * @param cancel Called when cancel has been pressed
    */
   private void promptForDone(GuiInstance<ArmorStandModel> inst, ConfigValue prefix, Runnable done, @Nullable Runnable cancel) {
-    chatUtil.sendButtons(
-      inst.getViewer(),
-      new ChatButtons(prefix.asScalar(), true, plugin, cfg, null)
-        .addButton(cfg.get(ConfigKey.CHATBUTTONS_DONE), () -> {
+    chatUtil.beginPrompt(
+      inst.getViewer(), null, prefix, cfg.get(ConfigKey.CHATBUTTONS_EXPIRED),
+      List.of(
+        new Triple<>(cfg.get(ConfigKey.CHATBUTTONS_DONE), null, () -> {
           done.run();
           inst.reopen(AnimationType.SLIDE_UP);
-        })
-
-        // Re-open the GUI on cancellation
-        .addButton(cfg.get(ConfigKey.CHATBUTTONS_CANCEL), () -> {
+        }),
+        new Triple<>(cfg.get(ConfigKey.CHATBUTTONS_CANCEL), null, () -> {
           if (cancel != null)
             cancel.run();
           inst.reopen(AnimationType.SLIDE_UP);
         })
+      )
     );
   }
 }

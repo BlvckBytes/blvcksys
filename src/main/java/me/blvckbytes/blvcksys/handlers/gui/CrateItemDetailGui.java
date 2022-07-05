@@ -16,6 +16,8 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.List;
+
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 05/27/2022
@@ -85,14 +87,8 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
         .build()
     ), e -> {
 
-      chatUtil.registerPrompt(
-        p,
-        cfg.get(ConfigKey.GUI_CRATE_DETAIL_PROBABILITY_PROMPT)
-          .withPrefix()
-          .asScalar(),
-
-        // Probability entered
-        probabilityStr -> {
+      chatUtil.beginPrompt(
+        p, probabilityStr -> {
           try {
             // Parse the probability
             float probability = Float.parseFloat(probabilityStr);
@@ -129,12 +125,14 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
 
           inst.reopen(AnimationType.SLIDE_UP);
         },
-
-        // Cancelled
-        () -> inst.reopen(AnimationType.SLIDE_UP),
-
-        // Back
-        null
+        cfg.get(ConfigKey.GUI_CRATE_DETAIL_PROBABILITY_PROMPT)
+          .withPrefix(),
+        cfg.get(ConfigKey.CHATBUTTONS_EXPIRED).withPrefix(),
+        List.of(
+          new Triple<>(cfg.get(ConfigKey.CHATBUTTONS_CANCEL), null, () -> {
+            inst.reopen(AnimationType.SLIDE_UP);
+          })
+        )
       );
 
       p.closeInventory();

@@ -1,23 +1,22 @@
 package me.blvckbytes.blvcksys.util;
 
-import me.blvckbytes.blvcksys.config.ConfigKey;
-import me.blvckbytes.blvcksys.config.IConfig;
+import lombok.AllArgsConstructor;
+import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
-import me.blvckbytes.blvcksys.di.AutoInject;
-import net.minecraft.util.Tuple;
-import org.bukkit.Bukkit;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.api.chat.hover.content.Text;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.AsyncPlayerChatEvent;
 import org.bukkit.event.player.PlayerCommandPreprocessEvent;
-import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
@@ -33,101 +32,95 @@ public class ChatUtil implements Listener {
   // Pattern to check if a command matches the UUID format (and thus is a temporary command)
   private static final Pattern UUID_PATTERN = Pattern.compile("[a-f\\d]{8}(?:-[a-f\\d]{4}){4}[a-f\\d]{8}");
 
-  // A player can have multiple sessions of buttons to choose from
-  private final Map<Player, List<ChatButtons>> buttonSessions;
+  @AllArgsConstructor
+  public static class ChatPrompt {
+    @Nullable Consumer<String> chat;
+    Map<String, Runnable> actions;
+    @Nullable ConfigValue expiredMessage;
+    boolean expired;
+  }
 
-  private final Map<Player, Tuple<Consumer<String>, ChatButtons>> prompts;
+  private final Map<Player, List<ChatPrompt>> chatPrompts;
 
-  private final JavaPlugin plugin;
-  private final IConfig cfg;
+  public ChatUtil() {
+    this.chatPrompts = new HashMap<>();
+  }
 
-  public ChatUtil(
-    @AutoInject IConfig cfg,
-    @AutoInject JavaPlugin plugin
+  //=========================================================================//
+  //                                    API                                  //
+  //=========================================================================//
+
+  /**
+   * Begin a new prompt session for a given player
+   * @param p Target player
+   * @param chat Chat message listener, null if no chat message is required
+   * @param prepend Message to prepend to the buttons
+   * @param expired Message to print if the prompt already expired
+   * @param actions Action buttons to append to the message (text, hover, action)
+   * @return Prompt handle
+   */
+  public ChatPrompt beginPrompt(
+    Player p,
+    @Nullable Consumer<String> chat,
+    ConfigValue prepend,
+    @Nullable ConfigValue expired,
+    @Nullable List<Triple<ConfigValue, @Nullable ConfigValue, Runnable>> actions
   ) {
-    this.cfg = cfg;
-    this.plugin = plugin;
+    TextComponent head = new TextComponent(prepend.asScalar());
+    Map<String, Runnable> actionButtons = new HashMap<>();
 
-    this.buttonSessions = new HashMap<>();
-    this.prompts = new HashMap<>();
-  }
+    if (actions == null)
+      actions = new ArrayList<>();
 
-  /**
-   * Register buttons for a player
-   * @param p Target player
-   * @param btns Previously built set of buttons
-   */
-  public void registerButtons(Player p, ChatButtons btns) {
-    // Register this instance of buttons
-    if (!buttonSessions.containsKey(p))
-      buttonSessions.put(p, new ArrayList<>());
-    buttonSessions.get(p).add(btns);
-  }
+    for (Triple<ConfigValue, @Nullable ConfigValue, Runnable> action : actions) {
+      // Create the component from it's displayed text, space buttons out
+      TextComponent btn = new TextComponent(" " + action.a().asScalar());
+      String actionCommand = UUID.randomUUID().toString();
 
-  /**
-   * Register a new chat prompt for a player
-   * @param p Target player
-   * @param prompt Prompt message, cancel button is appended with a space
-   * @param input Input callback
-   * @param cancelled Cancel button callback
-   * @param back Back button callback
-   */
-  public void registerPrompt(Player p, String prompt, Consumer<String> input, @Nullable Runnable cancelled, @Nullable Runnable back) {
-    ChatButtons buttons = new ChatButtons(prompt + " ", true, plugin, cfg, null);
+      // Bind the temporary command to it's click listener
+      btn.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/" + actionCommand));
 
-    if (cancelled != null) {
-      buttons.addButton(cfg.get(ConfigKey.CHATBUTTONS_CANCEL), () -> {
-        p.sendMessage(
-          cfg.get(ConfigKey.CHATBUTTONS_PROMPT_CANCELLED)
-            .withPrefix()
-            .asScalar()
-        );
+      // Show hover text, if provided
+      if (action.b() != null)
+        btn.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new Text(action.b().asScalar())));
 
-        Bukkit.getScheduler().runTask(plugin, cancelled);
-      });
+      // Append to head
+      head.addExtra(btn);
+
+      actionButtons.put(actionCommand, action.c());
     }
 
-    if (back != null) {
-      buttons.addButton(cfg.get(ConfigKey.CHATBUTTONS_BACK), () -> {
-        Bukkit.getScheduler().runTask(plugin, back);
-      });
-    }
+    // Register the prompt
+    if (!chatPrompts.containsKey(p))
+      chatPrompts.put(p, new ArrayList<>());
 
-    prompts.put(p, new Tuple<>(input, buttons));
-    sendButtons(p, buttons);
+    ChatPrompt prompt = new ChatPrompt(chat, actionButtons, expired, false);
+    chatPrompts.get(p).add(prompt);
+
+    // Send out the prompt component
+    p.spigot().sendMessage(head);
+    return prompt;
   }
 
   /**
-   * Checks whether the player currently has an active, waiting chat prompt
+   * Expire a previously started prompt
+   * @param prompt Prompt handle
+   */
+  public void expirePrompt(ChatPrompt prompt) {
+    prompt.expired = true;
+  }
+
+  /**
+   * Checks whether the given player has any active (pending) prompts
    * @param p Target player
    */
   public boolean hasActivePrompt(Player p) {
-    return prompts.containsKey(p);
+    return chatPrompts.getOrDefault(p, new ArrayList<>()).stream().anyMatch(prompt -> !prompt.expired);
   }
 
-  /**
-   * Register and send buttons to a player
-   * @param p Target player
-   * @param btns Previously built set of buttons
-   */
-  public void sendButtons(Player p, ChatButtons btns) {
-    registerButtons(p, btns);
-    p.spigot().sendMessage(btns.buildComponent());
-  }
-
-  /**
-   * Remove a previously added set of buttons again
-   * @param p Target player
-   * @param btns Previously added set of buttons
-   */
-  public void removeButtons(Player p, ChatButtons btns) {
-    // Player not even known
-    if (!buttonSessions.containsKey(p))
-      return;
-
-    // Remove element
-    buttonSessions.get(p).remove(btns);
-  }
+  //=========================================================================//
+  //                                 Listener                                //
+  //=========================================================================//
 
   @EventHandler(priority = EventPriority.HIGHEST)
   public void onPreCommand(PlayerCommandPreprocessEvent e) {
@@ -147,38 +140,66 @@ public class ChatUtil implements Listener {
     // Cancel all commands that are UUIDs - they're only internal
     e.setCancelled(true);
 
-    // Try to find the target button and dispatch it
-    List<ChatButtons> sessions = buttonSessions.get(p);
-    if (sessions != null) {
-      for (ChatButtons session : sessions) {
-        if (session.processInvocation(p, command))
-          return;
+    // Has no active prompts yet
+    List<ChatPrompt> prompts = chatPrompts.get(p);
+    if (prompts == null)
+      return;
+
+    // Search target prompt by command string
+    ChatPrompt target = prompts.stream()
+      .filter(prompt -> prompt.actions.containsKey(command))
+      .findFirst()
+      .orElse(null);
+
+    // Command didn't target an existing prompt
+    if (target == null)
+      return;
+
+    // Prompt already expired
+    if (target.expired) {
+      if (target.expiredMessage != null) {
+        p.sendMessage(
+          target.expiredMessage
+            .withPrefix()
+            .asScalar()
+        );
       }
+      return;
     }
 
-    // Inform about expiry
-    p.sendMessage(
-      cfg.get(ConfigKey.CHATBUTTONS_EXPIRED)
-        .withPrefix()
-        .asScalar()
-    );
+    // Dispatch the callback and expire the prompt
+    target.actions.get(command).run();
+    target.expired = true;
   }
 
-  /**
-   * Processes a pending chat prompt, if available
-   * @param p Sending player
-   * @param message Message entered into the chat
-   * @return True if a chat prompt has been completed, false otherwise
-   */
-  public boolean processPrompt(Player p, String message) {
-    // Check for an active prompt
-    Tuple<Consumer<String>, ChatButtons> prompt = prompts.remove(p);
-    if (prompt == null)
-      return false;
+  @EventHandler(priority = EventPriority.LOWEST)
+  public void onChat(AsyncPlayerChatEvent e) {
+    String message = e.getMessage();
+    Player p = e.getPlayer();
 
-    // Invalidate the cancel button and call the callback with the message
-    removeButtons(p, prompt.b());
-    Bukkit.getScheduler().runTask(plugin, () -> prompt.a().accept(message));
-    return true;
+    // Has no active prompts yet
+    List<ChatPrompt> prompts = chatPrompts.get(p);
+    if (prompts == null)
+      return;
+
+    // Search the first non-expired chat prompt
+    ChatPrompt target = prompts.stream()
+      .filter(prompt -> !prompt.expired && prompt.chat != null)
+      .findFirst().orElse(null);
+
+    // No pending prompt remaining
+    if (target == null || target.chat == null)
+      return;
+
+    // Dispatch the callback and expire the prompt
+    e.setCancelled(true);
+    target.expired = true;
+    target.chat.accept(message);
+  }
+
+  @EventHandler
+  public void onQuit(PlayerQuitEvent e) {
+    // Unregister all prompts on quit
+    chatPrompts.remove(e.getPlayer());
   }
 }

@@ -5,6 +5,7 @@ import me.blvckbytes.blvcksys.config.sections.GuiLayoutSection;
 import me.blvckbytes.blvcksys.handlers.TriResult;
 import me.blvckbytes.blvcksys.packets.communicators.bookeditor.IBookEditorCommunicator;
 import me.blvckbytes.blvcksys.util.ChatUtil;
+import me.blvckbytes.blvcksys.util.Triple;
 import me.blvckbytes.blvcksys.util.UnsafeFunction;
 import net.minecraft.util.Tuple;
 import org.bukkit.inventory.ItemStack;
@@ -81,6 +82,9 @@ public class UserInputChain {
   public UserInputChain withPrompt(
     String field,
     Function<Map<String, Object>, ConfigValue> prompt,
+    ConfigValue expired,
+    ConfigValue cancel,
+    ConfigValue back,
     UnsafeFunction<String, Object> transformer,
     @Nullable Function<String, ConfigValue> errorMessage,
     @Nullable Function<Map<String, Object>, Boolean> skip
@@ -94,12 +98,8 @@ public class UserInputChain {
 
       lastWasGui = false;
 
-      chatUtil.registerPrompt(
-        main.getViewer(),
-        prompt.apply(values).asScalar(),
-
-        // Answer entered
-        input -> {
+      chatUtil.beginPrompt(
+        main.getViewer(), input -> {
           if (isCancelled) return;
 
           // Try to transform the value into the required format
@@ -126,21 +126,20 @@ public class UserInputChain {
           values.put(field, result);
           nextStage();
         },
+        prompt.apply(values), expired,
+        List.of(
+          new Triple<>(cancel, null, () -> {
+            if (isCancelled) return;
 
-        // Cancelled
-        () -> {
-          if (isCancelled) return;
-
-          // Reopen the main GUI and cancel the whole chain
-          isCancelled = true;
-          main.reopen(AnimationType.SLIDE_UP);
-        },
-
-        // Back
-        currStage > 1 ? () -> {
-          if (isCancelled) return;
-          previousStage();
-        } : null
+            // Reopen the main GUI and cancel the whole chain
+            isCancelled = true;
+            main.reopen(AnimationType.SLIDE_UP);
+          }),
+          new Triple<>(back, null, () -> {
+            if (isCancelled) return;
+            previousStage();
+          })
+        )
       );
 
       // Close the current inventory to be able to type into the chat

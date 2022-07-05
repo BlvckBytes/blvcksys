@@ -102,6 +102,7 @@ myLayout:
 
 messages:
   prefix: '&5&lIE &8| '
+  chatbuttonExpired: '&7Dieser Button ist bereits &cabgelaufen&7.'
   chatbuttonCancel: '&7[&cAbbrechen&7]'
   chatbuttonBack: '&7[&bZurück&7]'
   itemEmpty: '&7Es wurde &ckein Item &7zur Verfügung gestellt.'

@@ -134,6 +134,9 @@ public class AHBidGui extends AGui<AHAuctionModel> {
           .withPrompt(
             "startBid",
             values -> cfg.get(ConfigKey.GUI_BID_AH_CUSTOM_BID_PROMPT_MESSAGE),
+            cfg.get(ConfigKey.CHATBUTTONS_EXPIRED).withPrefix(),
+            cfg.get(ConfigKey.CHATBUTTONS_CANCEL),
+            cfg.get(ConfigKey.CHATBUTTONS_BACK),
             // Has to be an integer number
             Integer::parseInt,
             input -> cfg.get(ConfigKey.ERR_INTPARSE)

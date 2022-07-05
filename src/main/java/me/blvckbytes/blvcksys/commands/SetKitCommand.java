@@ -10,15 +10,16 @@ import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.KitModel;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
 import me.blvckbytes.blvcksys.persistence.query.QueryBuilder;
-import me.blvckbytes.blvcksys.util.ChatButtons;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.MCReflect;
+import me.blvckbytes.blvcksys.util.Triple;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.List;
 import java.util.stream.Stream;
 
 /*
@@ -106,60 +107,55 @@ public class SetKitCommand extends APlayerCommand {
 
     if (exists) {
       // Send out an overwrite confirmation prompt
-      chat.sendButtons(p, ChatButtons.buildYesNo(
+      chat.beginPrompt(
+        p, null,
         cfg.get(ConfigKey.KIT_OVERWRITE_PREFIX)
           .withVariable("name", name)
-          .withPrefixes()
-          .asScalar(),
-        plugin, cfg,
+          .withPrefixes(),
+        cfg.get(ConfigKey.CHATBUTTONS_EXPIRED),
+        List.of(
+          new Triple<>(cfg.get(ConfigKey.CHATBUTTONS_YES), null, () -> {
+            // Get the existing model
+            KitModel existing = pers.findFirst(
+              new QueryBuilder<>(
+                KitModel.class,
+                "name", EqualityOperation.EQ, name
+              )
+            ).orElse(null);
 
-        // Yes
-        () -> {
+            // Got deleted in the meantime
+            if (existing == null) {
+              p.sendMessage(
+                cfg.get(ConfigKey.KIT_NOT_EXISTING)
+                  .withPrefix()
+                  .withVariable("name", name)
+                  .asScalar()
+              );
 
-          // Get the existing model
-          KitModel existing = pers.findFirst(
-            new QueryBuilder<>(
-              KitModel.class,
-              "name", EqualityOperation.EQ, name
-            )
-          ).orElse(null);
+              return;
+            }
 
-          // Got deleted in the meantime
-          if (existing == null) {
+            // Update the items
+            existing.setItems(p.getInventory());
+            pers.store(existing);
+
             p.sendMessage(
-              cfg.get(ConfigKey.KIT_NOT_EXISTING)
+              cfg.get(ConfigKey.KIT_OVERWRITE_SAVED)
                 .withPrefix()
                 .withVariable("name", name)
+                .withVariable("num_items", existing.getNumItems())
                 .asScalar()
             );
-
-            return;
-          }
-
-          // Update the items
-          existing.setItems(p.getInventory());
-          pers.store(existing);
-
-          p.sendMessage(
-            cfg.get(ConfigKey.KIT_OVERWRITE_SAVED)
-              .withPrefix()
-              .withVariable("name", name)
-              .withVariable("num_items", existing.getNumItems())
-              .asScalar()
-          );
-        },
-
-        // No
-        () -> {
-          p.sendMessage(
-            cfg.get(ConfigKey.KIT_OVERWRITE_CANCELLED)
-              .withPrefix()
-              .asScalar()
-          );
-        },
-
-        null
-      ));
+          }),
+          new Triple<>(cfg.get(ConfigKey.CHATBUTTONS_NO), null, () -> {
+            p.sendMessage(
+              cfg.get(ConfigKey.KIT_OVERWRITE_CANCELLED)
+                .withPrefix()
+                .asScalar()
+            );
+          })
+        )
+      );
 
       return;
     }

@@ -7,18 +7,15 @@ import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IWarnHandler;
-import me.blvckbytes.blvcksys.persistence.IPersistence;
-import me.blvckbytes.blvcksys.persistence.models.WarnModel;
-import me.blvckbytes.blvcksys.util.ChatButtons;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.MCReflect;
+import me.blvckbytes.blvcksys.util.Triple;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.Optional;
-import java.util.UUID;
+import java.util.List;
 import java.util.stream.Stream;
 
 /*
@@ -32,7 +29,6 @@ public class ClearWarnsCommand extends APlayerCommand {
 
   private final IWarnHandler warns;
   private final ChatUtil chat;
-  private final IPersistence pers;
 
   public ClearWarnsCommand(
     @AutoInject JavaPlugin plugin,
@@ -40,7 +36,6 @@ public class ClearWarnsCommand extends APlayerCommand {
     @AutoInject IConfig cfg,
     @AutoInject MCReflect refl,
     @AutoInject IWarnHandler warns,
-    @AutoInject IPersistence pers,
     @AutoInject ChatUtil chat
   ) {
     super(
@@ -52,7 +47,6 @@ public class ClearWarnsCommand extends APlayerCommand {
     );
 
     this.warns = warns;
-    this.pers = pers;
     this.chat = chat;
   }
 
@@ -83,30 +77,26 @@ public class ClearWarnsCommand extends APlayerCommand {
       return;
     }
 
-    chat.sendButtons(p, ChatButtons.buildYesNo(
+    chat.beginPrompt(
+      p, null,
       cfg.get(ConfigKey.WARN_CLEAR_CONFIRMATION)
         .withPrefix()
         .withVariable("target", target.getName())
-        .withVariable("num_warns", numWarns)
-        .asScalar(),
-      plugin, cfg,
-
-      // Confirmed
-      () -> {
-        warns.clearWarns(target);
-        warns.broadcastClear(target, numWarns);
-      },
-
-      // Cancelled
-      () -> {
-        p.sendMessage(
-          cfg.get(ConfigKey.WARN_CLEAR_CANCELLED)
-            .withPrefix()
-            .asScalar()
-        );
-      },
-
-      null
-    ));
+        .withVariable("num_warns", numWarns),
+      cfg.get(ConfigKey.CHATBUTTONS_EXPIRED).withPrefix(),
+      List.of(
+        new Triple<>(cfg.get(ConfigKey.CHATBUTTONS_YES), null, () -> {
+          warns.clearWarns(target);
+          warns.broadcastClear(target, numWarns);
+        }),
+        new Triple<>(cfg.get(ConfigKey.CHATBUTTONS_NO), null, () -> {
+          p.sendMessage(
+            cfg.get(ConfigKey.WARN_CLEAR_CANCELLED)
+              .withPrefix()
+              .asScalar()
+          );
+        })
+      )
+    );
   }
 }

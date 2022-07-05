@@ -7,13 +7,15 @@ import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IWarpHandler;
-import me.blvckbytes.blvcksys.util.ChatButtons;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.MCReflect;
+import me.blvckbytes.blvcksys.util.Triple;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.List;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -61,50 +63,41 @@ public class SetwarpCommand extends APlayerCommand {
     // Warp already existed
     if (!res) {
       // Send out an overwrite confirmation prompt
-      chat.sendButtons(p, ChatButtons.buildYesNo(
+      chat.beginPrompt(
+        p, null,
         cfg.get(ConfigKey.WARP_OVERWRITE_PREFIX)
           .withVariable("name", name)
-          .withPrefixes()
-          .asScalar(),
-        plugin, cfg,
+          .withPrefixes(),
+        cfg.get(ConfigKey.CHATBUTTONS_EXPIRED),
+        List.of(
+          new Triple<>(cfg.get(ConfigKey.CHATBUTTONS_YES), null, () -> {
+            boolean changed = warps.moveWarp(name, p, l);
+            if (!changed) {
+              p.sendMessage(
+                cfg.get(ConfigKey.WARP_NOT_EXISTING)
+                  .withPrefix()
+                  .withVariable("name", name)
+                  .asScalar()
+              );
+              return;
+            }
 
-        // Yes
-        () -> {
-
-          boolean changed = warps.moveWarp(name, p, l);
-
-          // Got deleted in the meantime
-          if (!changed) {
             p.sendMessage(
-              cfg.get(ConfigKey.WARP_NOT_EXISTING)
+              cfg.get(ConfigKey.WARP_OVERWRITE_SAVED)
                 .withPrefix()
                 .withVariable("name", name)
                 .asScalar()
             );
-
-            return;
-          }
-
-          p.sendMessage(
-            cfg.get(ConfigKey.WARP_OVERWRITE_SAVED)
-              .withPrefix()
-              .withVariable("name", name)
-              .asScalar()
-          );
-        },
-
-        // No
-        () -> {
-          p.sendMessage(
-            cfg.get(ConfigKey.WARP_OVERWRITE_CANCELLED)
-              .withPrefix()
-              .asScalar()
-          );
-        },
-
-        null
-      ));
-
+          }),
+          new Triple<>(cfg.get(ConfigKey.CHATBUTTONS_NO), null, () -> {
+            p.sendMessage(
+              cfg.get(ConfigKey.WARP_OVERWRITE_CANCELLED)
+                .withPrefix()
+                .asScalar()
+            );
+          })
+        )
+      );
       return;
     }
 

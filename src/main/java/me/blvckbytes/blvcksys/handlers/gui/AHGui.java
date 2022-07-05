@@ -254,6 +254,9 @@ public class AHGui extends AGui<Object> {
       .withPrompt(
         "search",
         values -> cfg.get(ConfigKey.GUI_AH_SEARCH_PROMPT).withPrefix(),
+        cfg.get(ConfigKey.CHATBUTTONS_EXPIRED).withPrefix(),
+        cfg.get(ConfigKey.CHATBUTTONS_CANCEL),
+        cfg.get(ConfigKey.CHATBUTTONS_BACK),
         ChatColor::stripColor, null, null
       )
       .start();

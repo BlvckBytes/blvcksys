@@ -2,19 +2,21 @@ package me.blvckbytes.blvcksys.commands;
 
 import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
 import me.blvckbytes.blvcksys.config.ConfigKey;
+import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.events.IChatListener;
 import me.blvckbytes.blvcksys.packets.communicators.bookeditor.IBookEditorCommunicator;
-import me.blvckbytes.blvcksys.util.ChatButtons;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.util.Triple;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -104,20 +106,13 @@ public class LongChatCommand extends APlayerCommand {
     String message = joinPages(pages);
     boolean canSend = message.length() <= MAX_LEN || PlayerPermission.COMMAND_LONGCHAT_LIMITLESS.has(p);
 
-    // Send buttons to send, edit or cancel
-    ChatButtons buttons = new ChatButtons(
-      cfg.get(canSend ? ConfigKey.LONGCHAT_CONFIRM : ConfigKey.LONGCHAT_LENGTH_EXCEEDED)
-        .withPrefix()
-        .withVariable("max_len", MAX_LEN)
-        .asScalar(),
-      true, plugin, cfg, null
-    );
+    List<Triple<ConfigValue, @Nullable ConfigValue, Runnable>> buttons = new ArrayList<>();
 
     // Send this message
     if (canSend) {
-      buttons.addButton(cfg.get(ConfigKey.CHATBUTTONS_YES), () -> {
+      buttons.add(new Triple<>(cfg.get(ConfigKey.CHATBUTTONS_YES), null, () -> {
         chat.sendChatMessage(p, Bukkit.getOnlinePlayers(), message);
-      });
+      }));
 
       // Send message preview
       p.sendMessage(
@@ -129,20 +124,27 @@ public class LongChatCommand extends APlayerCommand {
     }
 
     // Edit this message
-    buttons.addButton(cfg.get(ConfigKey.CHATBUTTONS_EDIT), () -> {
+    buttons.add(new Triple<>(cfg.get(ConfigKey.CHATBUTTONS_EDIT), null, () -> {
       handleEditor(p, pages);
-    });
+    }));
 
-      // Cancel sending
-    buttons.addButton(cfg.get(ConfigKey.CHATBUTTONS_CANCEL), () -> {
+    // Cancel sending
+    buttons.add(new Triple<>(cfg.get(ConfigKey.CHATBUTTONS_CANCEL), null, () -> {
       p.sendMessage(
         cfg.get(ConfigKey.LONGCHAT_CANCELLED)
           .withPrefix()
           .asScalar()
       );
-    });
+    }));
 
-    chatUtil.sendButtons(p, buttons);
+    chatUtil.beginPrompt(
+      p, null,
+      cfg.get(canSend ? ConfigKey.LONGCHAT_CONFIRM : ConfigKey.LONGCHAT_LENGTH_EXCEEDED)
+        .withPrefix()
+        .withVariable("max_len", MAX_LEN),
+      cfg.get(ConfigKey.CHATBUTTONS_EXPIRED),
+      buttons
+    );
   }
 
   /**

@@ -17,6 +17,9 @@ import java.util.List;
 public class IEMessagesSection extends AConfigSection {
 
   private ConfigValue prefix;
+  private ConfigValue chatbuttonExpired;
+  private ConfigValue chatbuttonCancel;
+  private ConfigValue chatbuttonBack;
   private ConfigValue itemEmpty;
   private ConfigValue missingPermission;
   private ConfigValue invalidInteger;

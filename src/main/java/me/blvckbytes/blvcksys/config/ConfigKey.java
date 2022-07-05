@@ -1312,7 +1312,8 @@ public enum ConfigKey {
   WARP_OVERWRITE_SAVED("warp.overwrite.saved", "$0Du hast den Warp $3{{name}} $0überschrieben."),
   WARP_LIST_PREFIX("warp.list.prefix", "$0Verfügbare Warps ($3{{count}}$0): "),
   WARP_LIST_NO_ITEMS("warp.list.no_items", "$4Keine Warps verfügbar"),
-  WARP_LIST_ITEM_FORMAT("warp.list.item_format", "$3{{name}}$1"),
+  WARP_LIST_ITEM_FORMAT("warp.list.item_format", "$3{{name}}$1{{sep}}"),
+  WARP_LIST_TELEPORTED("warp.list.teleported", "$0Du wurdest zum Warp $3{{name}} $0teleportiert."),
   WARP_LIST_HOVER(
     "warp.list.hover",
     "$0Erstellt am: $3{{created_at}}",

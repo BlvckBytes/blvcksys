@@ -167,6 +167,9 @@ public class AHCreateGui extends AGui<Object> {
         .withPrompt(
           "startBid",
           values -> cfg.get(ConfigKey.GUI_CREATE_AH_START_PROMPT_MESSAGE),
+          cfg.get(ConfigKey.CHATBUTTONS_EXPIRED).withPrefix(),
+          cfg.get(ConfigKey.CHATBUTTONS_CANCEL),
+          cfg.get(ConfigKey.CHATBUTTONS_BACK),
           // Has to be an integer number
           Integer::parseInt,
           input -> cfg.get(ConfigKey.ERR_INTPARSE)

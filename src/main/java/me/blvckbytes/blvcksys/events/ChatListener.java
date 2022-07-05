@@ -12,12 +12,12 @@ import me.blvckbytes.blvcksys.packets.communicators.team.TeamGroup;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.persistence.models.MuteModel;
-import me.blvckbytes.blvcksys.util.ChatUtil;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
 
@@ -42,7 +42,6 @@ public class ChatListener implements Listener, IChatListener {
   private final ITeamHandler teams;
   private final IPreferencesHandler prefs;
   private final IIgnoreHandler ignores;
-  private final ChatUtil chatUtil;
 
   @AutoInjectLate
   private IMuteHandler mutes;
@@ -51,14 +50,12 @@ public class ChatListener implements Listener, IChatListener {
     @AutoInject IConfig cfg,
     @AutoInject ITeamHandler teams,
     @AutoInject IPreferencesHandler prefs,
-    @AutoInject IIgnoreHandler ignores,
-    @AutoInject ChatUtil chatUtil
+    @AutoInject IIgnoreHandler ignores
   ) {
     this.cfg = cfg;
     this.teams = teams;
     this.prefs = prefs;
     this.ignores = ignores;
-    this.chatUtil = chatUtil;
   }
 
   //=========================================================================//
@@ -162,16 +159,15 @@ public class ChatListener implements Listener, IChatListener {
   //                                Listeners                                //
   //=========================================================================//
 
-  @EventHandler
+  @EventHandler(priority = EventPriority.MONITOR)
   public void onChat(AsyncPlayerChatEvent e) {
     Player p = e.getPlayer();
 
+    if (e.isCancelled())
+      return;
+
     // Cancel the vanilla event
     e.setCancelled(true);
-
-    // The sender was in a chat prompt
-    if (chatUtil.processPrompt(p, e.getMessage()))
-      return;
 
     if (mutes != null) {
 

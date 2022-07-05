@@ -2,6 +2,9 @@ package me.blvckbytes.blvcksys.config;
 
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Field;
+import java.util.List;
+
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 06/24/2022
@@ -37,4 +40,10 @@ public abstract class AConfigSection {
   public @Nullable Object defaultFor(Class<?> type, String field) {
     return null;
   }
+
+  /**
+   * Called when parsing of the section is completed
+   * and no more changes will be applied
+   */
+  public void afterParsing(List<Field> fields) {}
 }

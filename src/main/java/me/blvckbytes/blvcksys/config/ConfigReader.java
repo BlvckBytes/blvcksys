@@ -197,6 +197,9 @@ public class ConfigReader {
             field.set(res, v);
         }
 
+        // Done, no more changes are to be made
+        res.afterParsing(fields);
+
         return Optional.of(type.cast(res));
       } catch (Exception e) {
         if (logger == null)

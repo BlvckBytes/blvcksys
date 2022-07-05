@@ -131,10 +131,10 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     ItemStack item = inst.getArg().a();
     Player p = inst.getViewer();
 
-    // Could not load meta, item is not editable
-    if (item.getItemMeta() == null) {
+    // Invalid item provided
+    if (item.getType().isAir() || item.getItemMeta() == null) {
       p.sendMessage(
-        ies.getMessages().getMetaUnavailable()
+        ies.getMessages().getItemEmpty()
           .withPrefix()
           .asScalar()
       );

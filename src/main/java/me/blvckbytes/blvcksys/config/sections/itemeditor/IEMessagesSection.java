@@ -13,7 +13,7 @@ import me.blvckbytes.blvcksys.config.ConfigValue;
 @Getter
 public class IEMessagesSection extends AConfigSection {
 
-  private ConfigValue metaUnavailable;
+  private ConfigValue itemEmpty;
   private ConfigValue missingPermission;
   private ConfigValue invalidInteger;
   private ConfigValue invalidFloat;

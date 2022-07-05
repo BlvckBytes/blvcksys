@@ -1,7 +1,6 @@
 package me.blvckbytes.blvcksys.commands;
 
 import me.blvckbytes.blvcksys.commands.exceptions.CommandException;
-import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
@@ -11,9 +10,7 @@ import me.blvckbytes.blvcksys.handlers.gui.ItemEditorGui;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.Triple;
 import me.blvckbytes.blvcksys.util.logging.ILogger;
-import org.bukkit.Material;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /*
@@ -46,18 +43,10 @@ public class ItemEditorCommand extends APlayerCommand {
 
   @Override
   protected void invoke(Player p, String label, String[] args) throws CommandException {
-    ItemStack stack = p.getInventory().getItemInMainHand();
-
-    // Has to have something in their hand
-    if (stack.getType() == Material.AIR) {
-      p.sendMessage(
-        cfg.get(ConfigKey.ITEMEDITOR_NO_ITEM)
-          .withPrefix()
-          .asScalar()
-      );
-      return;
-    }
-
-    itemEditorGui.show(p, new Triple<>(stack, null, null), AnimationType.SLIDE_UP);
+    itemEditorGui.show(
+      p,
+      new Triple<>(p.getInventory().getItemInMainHand(), null, null),
+      AnimationType.SLIDE_UP
+    );
   }
 }

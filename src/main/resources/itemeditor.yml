@@ -101,7 +101,7 @@ myLayout:
 ##########################################################
 
 messages:
-  metaUnavailable: '&7Auf die ItemMeta dieses Items konnte &cnicht &7zugegriffen werden.'
+  itemEmpty: '&7Es wurde &ckein Item &7zur Verfügung gestellt.'
   missingPermission: '&cDu hast für diese Aktion keine Rechte.'
   invalidInteger: '&7Die Eingabe &c{{number}} &7ist keine &cGanzzahl&7.'
   invalidFloat: '&7Die Eingabe &c{{number}} &7ist keine &cKommazahl&7.'

@@ -346,6 +346,10 @@ public class UserInputChain {
   public UserInputChain withBookEditor(
     IBookEditorCommunicator bookEditor,
     String field,
+    ConfigValue expired,
+    ConfigValue cancel,
+    ConfigValue back,
+    @Nullable ConfigValue cancelled,
     Function<Map<String, Object>, ConfigValue> prompt,
     Function<Map<String, Object>, List<String>> content
   ) {
@@ -356,25 +360,46 @@ public class UserInputChain {
       if (lastScreen != null)
         lastScreen.close();
 
+      Runnable onCancel = () -> {
+        if (isCancelled) return;
+
+        // Send cancel message, if provided
+        if (cancelled != null)
+          main.getViewer().sendMessage(cancelled.asScalar());
+
+        // Reopen the main GUI and cancel the whole chain
+        isCancelled = true;
+        bookEditor.quitBookEditor(main.getViewer());
+        main.reopen(AnimationType.SLIDE_UP);
+      };
+
+      ChatUtil.ChatPrompt chatPrompt = chatUtil.beginPrompt(
+        main.getViewer(), null,
+        prompt.apply(values),
+        expired,
+        List.of(
+          new Triple<>(cancel, null, onCancel),
+          new Triple<>(back, null, () -> {
+            if (isCancelled) return;
+            previousStage();
+          })
+        )
+      );
+
       bookEditor.initBookEditor(main.getViewer(), content.apply(values), submit -> {
         if (isCancelled) return;
 
         // Cancelled
         if (submit == null) {
-          if (isCancelled) return;
-
           // Reopen the main GUI and cancel the whole chain
-          isCancelled = true;
-          main.reopen(AnimationType.SLIDE_UP);
+          chatUtil.expirePrompt(chatPrompt);
+          onCancel.run();
           return;
         }
 
         values.put(field, submit);
         nextStage();
       });
-
-      // Send the prompt
-      main.getViewer().sendMessage(prompt.apply(values).asScalar());
     });
 
     return this;

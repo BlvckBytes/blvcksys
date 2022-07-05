@@ -100,13 +100,22 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
       book.setItemMeta(bookMeta);
     }
 
-    // Set the book as a fake slot item
-    int slot = p.getInventory().getHeldItemSlot();
-    Bukkit.getScheduler().runTaskLater(plugin, () -> fakeItem.setFakeSlot(p, book, (slot + 36) % 36), 1);
+    Bukkit.getScheduler().runTask(plugin, () -> {
+      // Set the book as a fake slot item
+      int slot = p.getInventory().getHeldItemSlot();
+      fakeItem.setFakeSlot(p, book, (slot + 36) % 36);
 
-    // Register the request
-    this.bookeditRequests.put(p, new BookEditRequest(book, slot, submit));
+      // Register the request
+      this.bookeditRequests.put(p, new BookEditRequest(book, slot, submit));
+    });
+
     return true;
+  }
+
+  @Override
+  public void quitBookEditor(Player p) {
+    bookeditRequests.remove(p);
+    undoFakeHand(p, false);
   }
 
   @Override
@@ -178,10 +187,8 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
       return;
 
     // Undo this fake hand if the player decides to quit writing and clicks in their inventory
-    undoFakeHand(p, true);
-
-    // Don't allow to get anything on the cursor
     e.setCancelled(true);
+    undoFakeHand(p, true);
   }
 
   @EventHandler
@@ -193,6 +200,7 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
       return;
 
     // Undo this fake hand if the player decides to quit writing and selects another slot
+    e.setCancelled(true);
     undoFakeHand(p, true);
   }
 
@@ -205,10 +213,8 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
       return;
 
     // Undo this fake hand if the player decides to quit writing and drop the book
-    undoFakeHand(p, true);
-
-    // Don't actually drop anything
     e.setCancelled(true);
+    undoFakeHand(p, true);
   }
 
   //=========================================================================//
@@ -243,6 +249,7 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
 
     try {
       bookEditReceived(p, refl.getGenericFieldByType(bookEdit, List.class, String.class, 0));
+      undoFakeHand(p, false);
     } catch (Exception e) {
       logger.logError(e);
     }
@@ -279,9 +286,6 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
     } catch (Exception e) {
       logger.logError(e);
     }
-
-    // Undo the fake hand in non-cancel mode
-    undoFakeHand(p, false);
   }
 
   /**
@@ -290,7 +294,7 @@ public class BookEditorCommunicator implements IBookEditorCommunicator, IPacketM
    * @param isCancel Whether or not this is a cancel call
    */
   private void undoFakeHand(Player p, boolean isCancel) {
-    p.getInventory().setItemInMainHand(p.getInventory().getItemInMainHand());
+    p.updateInventory();
 
     // Just has been cancelled
     if (isCancel)

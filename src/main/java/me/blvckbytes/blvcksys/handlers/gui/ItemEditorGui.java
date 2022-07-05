@@ -1973,7 +1973,13 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           @SuppressWarnings("unchecked")
           List<String> result = (List<String>) values.get("result");
 
-          bookMeta.setPages(result);
+          // Support for color within books
+          bookMeta.setPages(
+            result.stream()
+              .map(line -> ChatColor.translateAlternateColorCodes('&', line))
+              .toList()
+          );
+
           item.setItemMeta(meta);
           inst.redraw(displaySlotExpr);
 
@@ -1983,9 +1989,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
               .asScalar()
           );
         }, singleChoiceGui, chatUtil)
-          // TODO: Fix this thing up
           .withBookEditor(
             bookEditor, "result",
+            ies.getMessages().getChatbuttonExpired(),
+            ies.getMessages().getChatbuttonCancel(),
+            ies.getMessages().getChatbuttonBack(),
+            ies.getMessages().getBookEditCancelled().withPrefix(),
             values -> ies.getMessages().getBookEditPrompt().withPrefix(),
             values -> bookMeta.getPages()
           )

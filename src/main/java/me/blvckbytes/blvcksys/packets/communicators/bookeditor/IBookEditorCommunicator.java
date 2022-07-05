@@ -21,4 +21,10 @@ public interface IBookEditorCommunicator {
    * @return Success state
    */
   boolean initBookEditor(Player p, List<String> pages, Consumer<List<String>> submit);
+
+  /**
+   * Quit an existing book editor session silently
+   * @param p Target player
+   */
+  void quitBookEditor(Player p);
 }

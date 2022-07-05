@@ -87,6 +87,7 @@ public class IEMessagesSection extends AConfigSection {
   private ConfigValue bookPageRemoved;
   private ConfigValue bookEdited;
   private ConfigValue bookEditPrompt;
+  private ConfigValue bookEditCancelled;
   private ConfigValue customModelDataSet;
   private ConfigValue customModelDataReset;
   private ConfigValue customModelDataNone;

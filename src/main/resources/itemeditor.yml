@@ -173,6 +173,7 @@ messages:
   bookPageRemoved: '&7Die &dSeite {{page_number}} &7wurde aus dem Buch &dentfernt&7.'
   bookEdited: '&7Die Änderung des &dBuchinhaltes &7wurden gespeichert.'
   bookEditPrompt: '&7Editiere das &dBuch &7in deiner Hand und &dsigniere &7es danach, um zu speichern.'
+  bookEditCancelled: '&7Die Änderung des Buchinhaltes wurde &cabgebrochen&7.'
   customModelDataSet: '&7Die &dCustom Model Data &7des Items wurde auf &d{{custom_model_data}} &7gesetzt.'
   customModelDataReset: '&7Die &dCustom Model Data &7des Items wurde &dzurückgesetzt&7.'
   customModelDataNone: '&7Dieses Item besitzt noch &ckeine Custom Model Data&7.'

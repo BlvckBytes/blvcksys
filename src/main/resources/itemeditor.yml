@@ -108,6 +108,8 @@ messages:
   flagChanged: '&7Der Flag &d{{flag}} &7des Items wurde auf &d{{state}} &7geändert.'
   enchantmentAdded: '&7Die Verzauberung &d{{enchantment}} &7auf Level &d{{level}} &7wurde dem Item &dhinzugefügt&7.'
   enchantmentRemoved: '&7Die Verzauberung &d{{enchantment}} &7wurde vom Item &dentfernt&7.'
+  enchantmentNone: '&7Dieses Item besitzt noch &ckeine Verzauberungen&7.'
+  enchantmentReset: '&7Die Verzauberungen des Items wurden &dzurückgesetzt&7.'
   enchantmentLevelPrompt: '&7Gib das &dVerzauberungslevel &7für die Verzauberung &d{{enchantment}} &7in den &dChat &7ein.'
   displaynameSet: '&7Der Anzeigename des Items wurde auf &d{{name}} &7gesetzt.'
   displaynameReset: '&7Der Anzeigename des Items wurde &dzurückgesetzt&7.'
@@ -168,8 +170,6 @@ messages:
   customModelDataSet: '&7Die &dCustom Model Data &7des Items wurde auf &d{{custom_model_data}} &7gesetzt.'
   customModelDataReset: '&7Die &dCustom Model Data &7des Items wurde &dzurückgesetzt&7.'
   customModelDataNone: '&7Dieses Item besitzt noch &ckeine Custom Model Data&7.'
-  customModelDataPrompt: '&7Gib einen Wert für die &dCustom Model Data &7in den &dChat &7ein.'
-  fireworkPowerPrompt: '&7Gib einen Wert für die &dPower &7in den &dChat &7ein.'
   fireworkPowerSet: '&7Die &dPower &7des Feuerwerks wurde auf &d{{power}} &7gesetzt.'
   fireworkEffectsNone: '&7Dieses Feuerwerk besitzt &ckeine Effekte&7.'
   fireworkEffectsReset: '&7Die &dEffekte &7dieses Feuerwerks wurden &dzurückgesetzt&7.'
@@ -459,6 +459,10 @@ items:
         - '&7entferne bestehende &dEinträge&7.'
         - ' '
         - '&7Aktive Verzauberungen: &d{{count}}'
+        - ' '
+        - '&7[&d1&7]: &dVerzauberung hinzufügen'
+        - '&7[&d2&7]: &dVerzauberung entfernen'
+        - '&7[&d3&7]: &dVerzauberungen zurücksetzen'
 
     displayname:
       type: PAPER

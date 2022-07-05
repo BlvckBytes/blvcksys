@@ -21,6 +21,8 @@ public class IEMessagesSection extends AConfigSection {
   private ConfigValue flagChanged;
   private ConfigValue enchantmentAdded;
   private ConfigValue enchantmentRemoved;
+  private ConfigValue enchantmentNone;
+  private ConfigValue enchantmentReset;
   private ConfigValue enchantmentLevelPrompt;
   private ConfigValue displaynameSet;
   private ConfigValue displaynameReset;

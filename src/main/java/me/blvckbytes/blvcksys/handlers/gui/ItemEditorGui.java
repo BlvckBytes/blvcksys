@@ -460,60 +460,95 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       if (missingPermission(IEPerm.ENCHANTMENTS, inst.getViewer()))
         return;
 
-      new UserInputChain(inst, values -> {
-        Enchantment enchantment = (Enchantment) values.get("enchantment");
-        boolean has = meta.hasEnchant(enchantment);
+      Integer key = e.getHotbarKey().orElse(null);
+      if (key == null)
+        return;
 
-        // Undo the enchantment
-        if (has) {
-          meta.removeEnchant(enchantment);
+      Map<Enchantment, Integer> enchants = meta.getEnchants();
+
+      if ((key == 2 || key == 3) && enchants.size() == 0) {
+        inst.getViewer().sendMessage(
+          ies.getMessages().getEnchantmentNone()
+            .withPrefix()
+            .asScalar()
+        );
+        return;
+      }
+
+      // Add or remove an enchantment
+      if (key == 1 || key == 2) {
+        new UserInputChain(inst, values -> {
+          Enchantment enchantment = (Enchantment) values.get("enchantment");
+          boolean has = meta.hasEnchant(enchantment);
+
+          // Undo the enchantment
+          if (has) {
+            meta.removeEnchant(enchantment);
+            item.setItemMeta(meta);
+
+            inst.getViewer().sendMessage(
+              ies.getMessages().getEnchantmentRemoved()
+                .withPrefix()
+                .withVariable("enchantment", formatConstant(enchantment.getKey().getKey()))
+                .asScalar()
+            );
+            return;
+          }
+
+          // Add the enchantment
+          int level = (int) values.get("level");
+          meta.addEnchant(enchantment, level, true);
           item.setItemMeta(meta);
 
           inst.getViewer().sendMessage(
-            ies.getMessages().getEnchantmentRemoved()
+            ies.getMessages().getEnchantmentAdded()
               .withPrefix()
               .withVariable("enchantment", formatConstant(enchantment.getKey().getKey()))
+              .withVariable("level", level)
               .asScalar()
           );
-          return;
-        }
+        }, singleChoiceGui, chatUtil)
+          .withChoice(
+            "enchantment",
+            ies.getTitles().getEnchantmentChoice(),
+            ies.getItems().getGeneric(),
+            values -> buildEnchantmentRepresentitives(
+              ench -> ench.canEnchantItem(item),
+              meta::hasEnchant,
+              meta::getEnchantLevel,
+              key == 1
+            ),
+            null
+          )
+          .withPrompt(
+            "level",
+            values -> (
+              ies.getMessages().getEnchantmentLevelPrompt()
+                .withVariable("enchantment", formatConstant(((Enchantment) values.get("enchantment")).getKey().getKey()))
+                .withPrefix()
+            ),
+            Integer::parseInt,
+            input -> ies.getMessages().getInvalidInteger().withVariable("number", input).withPrefix(),
+            values -> meta.hasEnchant((Enchantment) values.get("enchantment"))
+          )
+          .start();
+        return;
+      }
 
-        // Add the enchantment
-        int level = (int) values.get("level");
-        meta.addEnchant(enchantment, level, true);
+      // Clear all enchantments
+      if (key == 3) {
+        meta.getEnchants().forEach((ench, lvl) -> meta.removeEnchant(ench));
         item.setItemMeta(meta);
+        inst.redraw(displaySlotExpr + "," + slotExpr);
 
         inst.getViewer().sendMessage(
-          ies.getMessages().getEnchantmentAdded()
+          ies.getMessages().getLoreReset()
             .withPrefix()
-            .withVariable("enchantment", formatConstant(enchantment.getKey().getKey()))
-            .withVariable("level", level)
             .asScalar()
         );
-      }, singleChoiceGui, chatUtil)
-        .withChoice(
-          "enchantment",
-          ies.getTitles().getEnchantmentChoice(),
-          ies.getItems().getGeneric(),
-          values -> buildEnchantmentRepresentitives(
-            ench -> ench.canEnchantItem(item),
-            meta::hasEnchant,
-            meta::getEnchantLevel
-          ),
-          null
-        )
-        .withPrompt(
-          "level",
-          values -> (
-            ies.getMessages().getEnchantmentLevelPrompt()
-              .withVariable("enchantment", formatConstant(((Enchantment) values.get("enchantment")).getKey().getKey()))
-              .withPrefix()
-          ),
-          Integer::parseInt,
-          input -> ies.getMessages().getInvalidInteger().withVariable("number", input).withPrefix(),
-          values -> meta.hasEnchant((Enchantment) values.get("enchantment"))
-        )
-        .start();
+
+        return;
+      }
     }, null);
   }
 
@@ -2611,11 +2646,13 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
    * @param isNative Function used to check whether this enchantment is native to the target item
    * @param isActive Function used to check whether this enchantment is active on the target item
    * @param activeLevel Function used to get the currently active level of this enchantment on the target item
+   * @param addingMode Whether in adding mode (true=adding, false=removing)
    */
   private List<Tuple<Object, ItemStack>> buildEnchantmentRepresentitives(
     Function<Enchantment, Boolean> isNative,
     Function<Enchantment, Boolean> isActive,
-    Function<Enchantment, Integer> activeLevel
+    Function<Enchantment, Integer> activeLevel,
+    boolean addingMode
   ) {
     List<Tuple<String, Enchantment>> enchantments = new ArrayList<>();
 
@@ -2635,6 +2672,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     List<Tuple<Object, ItemStack>> representitives = enchantments.stream()
       // Sort by relevance
       .sorted(Comparator.comparing(t -> isNative.apply(t.b()), Comparator.reverseOrder()))
+      // Only show inactives when adding and actives when removing
+      .filter(ench -> isActive.apply(ench.b()) == !addingMode)
       .map(ench -> {
           boolean has = isActive.apply(ench.b());
           int level = -1;
@@ -2642,7 +2681,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           if (has)
             level = activeLevel.apply(ench.b());
 
-          return new Tuple<>((Object) ench, (
+          return new Tuple<>((Object) ench.b(), (
             (has ? ies.getItems().getChoices().getEnchantmentActive() : ies.getItems().getChoices().getEnchantmentInactive())
               .asItem(
                 ConfigValue.makeEmpty()

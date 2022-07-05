@@ -10,9 +10,7 @@ import me.blvckbytes.blvcksys.config.sections.itemeditor.IESection;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IGameProfileResolver;
-import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.packets.communicators.bookeditor.IBookEditorCommunicator;
-import me.blvckbytes.blvcksys.persistence.models.PlayerTextureModel;
 import me.blvckbytes.blvcksys.util.ChatUtil;
 import me.blvckbytes.blvcksys.util.MCReflect;
 import me.blvckbytes.blvcksys.util.Triple;
@@ -84,8 +82,6 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
   public ItemEditorGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
-    // TODO: Remove this dependency from GUIs
-    @AutoInject IPlayerTextureHandler textures,
     @AutoInject SingleChoiceGui singleChoiceGui,
     @AutoInject ILogger logger,
     @AutoInject ChatUtil chatUtil,
@@ -95,7 +91,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     @AutoInject MultipleChoiceGui multipleChoiceGui,
     @AutoInject IGameProfileResolver profileResolver
   ) {
-    super(6, "", null, plugin, cfg, textures);
+    super(6, "", null, plugin, cfg);
 
     this.singleChoiceGui = singleChoiceGui;
     this.logger = logger;

@@ -7,7 +7,6 @@ import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.sections.GuiLayoutSection;
 import me.blvckbytes.blvcksys.events.InventoryManipulationEvent;
-import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -37,7 +36,6 @@ public class GuiInstance<T> {
   private final List<Map<Integer, GuiItem>> pages;
   private final Map<Integer, List<Runnable>> redrawListeners;
   private final JavaPlugin plugin;
-  private final IPlayerTextureHandler textures;
   private final IConfig cfg;
 
   private int currPage;
@@ -62,17 +60,15 @@ public class GuiInstance<T> {
    * @param viewer Viewer of this instance
    * @param template Template instance
    * @param arg Argument of this instance
-   * @param textures Texture handler ref
    * @param cfg Config ref
    * @param plugin JavaPlugin ref
    */
-  public GuiInstance(Player viewer, AGui<T> template, T arg, IPlayerTextureHandler textures, IConfig cfg, JavaPlugin plugin) {
+  public GuiInstance(Player viewer, AGui<T> template, T arg, IConfig cfg, JavaPlugin plugin) {
     this.viewer = viewer;
     this.template = template;
     this.arg = arg;
     this.plugin = plugin;
     this.cfg = cfg;
-    this.textures = textures;
 
     this.fixedItems = new HashMap<>();
     this.redrawListeners = new HashMap<>();

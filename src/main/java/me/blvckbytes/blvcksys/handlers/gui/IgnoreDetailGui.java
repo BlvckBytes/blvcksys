@@ -6,7 +6,6 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.handlers.IIgnoreHandler;
-import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -30,14 +29,13 @@ public class IgnoreDetailGui extends AGui<OfflinePlayer> {
   public IgnoreDetailGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IPlayerTextureHandler textures,
     @AutoInject IIgnoreHandler ignore,
     @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
     super(4, "", i -> (
       cfg.get(ConfigKey.GUI_IGNORE_TITLE)
         .withVariable("target", i.getArg().getName())
-    ), plugin, cfg, textures);
+    ), plugin, cfg);
 
     this.ignore = ignore;
     this.stdGuiItemProvider = stdGuiItemProvider;

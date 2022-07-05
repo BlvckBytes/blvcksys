@@ -67,6 +67,7 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
   private final ItemEditorGui itemEditorGui;
   private final ChatUtil chatUtil;
   private final IStdGuiItemProvider stdGuiItemProvider;
+  private final IPlayerTextureHandler textures;
 
   public ArmorStandGui(
     @AutoInject IConfig cfg,
@@ -80,13 +81,14 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
     super(6, "", i -> (
       cfg.get(ConfigKey.GUI_AS_CUSTOMIZE_NAME).
         withVariable("name", i.getArg().getName())
-    ), plugin, cfg, textures);
+    ), plugin, cfg);
 
     this.moving = new HashMap<>();
     this.standHandler = standHandler;
     this.chatUtil = chatUtil;
     this.itemEditorGui = itemEditorGui;
     this.stdGuiItemProvider = stdGuiItemProvider;
+    this.textures = textures;
   }
 
   @Override

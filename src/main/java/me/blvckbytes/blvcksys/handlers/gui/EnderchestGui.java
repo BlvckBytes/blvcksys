@@ -7,7 +7,6 @@ import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.events.ManipulationAction;
-import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.EnderchestModel;
 import me.blvckbytes.blvcksys.persistence.query.EqualityOperation;
@@ -53,7 +52,6 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
   public EnderchestGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IPlayerTextureHandler textures,
     @AutoInject IPersistence pers,
     @AutoInject ILogger logger,
     @AutoInject IStdGuiItemProvider stdGuiItemProvider
@@ -61,7 +59,7 @@ public class EnderchestGui extends AGui<OfflinePlayer> {
     super(6, "0-44", i -> (
       cfg.get(ConfigKey.GUI_ENDERCHEST_TITLE)
         .withVariable("viewer", i.getArg().getName())
-    ), plugin, cfg, textures);
+    ), plugin, cfg);
 
     this.pers = pers;
     this.logger = logger;

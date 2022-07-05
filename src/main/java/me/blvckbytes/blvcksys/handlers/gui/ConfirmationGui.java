@@ -4,7 +4,6 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
-import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.handlers.TriResult;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -32,10 +31,9 @@ public class ConfirmationGui extends AGui<BiConsumer<TriResult, GuiInstance<?>>>
   public ConfirmationGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IPlayerTextureHandler textures,
     @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
-    super(3, "", i -> cfg.get(ConfigKey.GUI_CONFIRMATION_TITLE), plugin, cfg, textures);
+    super(3, "", i -> cfg.get(ConfigKey.GUI_CONFIRMATION_TITLE), plugin, cfg);
 
     this.madeSelection = new HashSet<>();
     this.stdGuiItemProvider = stdGuiItemProvider;

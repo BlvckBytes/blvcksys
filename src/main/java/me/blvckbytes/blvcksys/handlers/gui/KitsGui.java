@@ -8,7 +8,6 @@ import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.events.NpcInteractEvent;
 import me.blvckbytes.blvcksys.events.NpcInteraction;
-import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.persistence.IPersistence;
 import me.blvckbytes.blvcksys.persistence.models.KitModel;
 import me.blvckbytes.blvcksys.util.TimeUtil;
@@ -52,14 +51,13 @@ public class KitsGui extends AGui<Object> implements Listener {
     @AutoInject JavaPlugin plugin,
     @AutoInject IPersistence pers,
     @AutoInject TimeUtil time,
-    @AutoInject IPlayerTextureHandler textures,
     @AutoInject IKitCommand kits,
     @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
     super(5, "10-16,19-25,28-34", i -> (
       cfg.get(ConfigKey.GUI_KITS_TITLE)
         .withVariable("viewer", i.getViewer().getName())
-    ), plugin, cfg, textures);
+    ), plugin, cfg);
 
     this.pers = pers;
     this.time = time;

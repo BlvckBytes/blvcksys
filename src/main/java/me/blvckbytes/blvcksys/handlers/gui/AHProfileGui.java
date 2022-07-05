@@ -23,6 +23,7 @@ public class AHProfileGui extends AGui<Object> {
   private final AHBidsGui ahBidsGui;
   private final AHAuctionsGui ahAuctionsGui;
   private final IStdGuiItemProvider stdGuiItemProvider;
+  private final IPlayerTextureHandler textures;
 
   @AutoInjectLate
   private AHGui ahGui;
@@ -39,8 +40,9 @@ public class AHProfileGui extends AGui<Object> {
     super(3, "", i -> (
       cfg.get(ConfigKey.GUI_PROFILE_AH)
         .withVariable("name", i.getViewer().getName())
-    ), plugin, cfg, textures);
+    ), plugin, cfg);
 
+    this.textures = textures;
     this.ahCreateGui = ahCreateGui;
     this.ahBidsGui = ahBidsGui;
     this.ahAuctionsGui = ahAuctionsGui;

@@ -6,7 +6,6 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.sections.QuestSection;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
-import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.handlers.quests.IQuestHandler;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
@@ -33,7 +32,6 @@ public class QuestsGui extends AGui<Object> {
   public QuestsGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IPlayerTextureHandler textures,
     @AutoInject IQuestHandler quests,
     @AutoInject QuestStagesGui stagesGui,
     @AutoInject IStdGuiItemProvider stdGuiItemProvider
@@ -41,7 +39,7 @@ public class QuestsGui extends AGui<Object> {
     super(5, "10-16,19-25,28-34", i -> (
       cfg.get(ConfigKey.GUI_QUESTS_TITLE)
         .withVariable("viewer", i.getViewer().getName())
-    ), plugin, cfg, textures);
+    ), plugin, cfg);
 
     this.quests = quests;
     this.stagesGui = stagesGui;

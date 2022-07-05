@@ -64,6 +64,7 @@ public class AHCreateGui extends AGui<Object> {
   private final Map<Player, AHCreateState> states;
   private final IAHHandler ahHandler;
   private final IStdGuiItemProvider stdGuiItemProvider;
+  private final IPlayerTextureHandler textures;
 
   public AHCreateGui(
     @AutoInject IConfig cfg,
@@ -77,10 +78,11 @@ public class AHCreateGui extends AGui<Object> {
   ) {
     super(3, "", i -> (
       cfg.get(ConfigKey.GUI_CREATE_AH)
-    ), plugin, cfg, textures);
+    ), plugin, cfg);
 
     this.states = new HashMap<>();
 
+    this.textures = textures;
     this.timeUtil = timeUtil;
     this.chatUtil = chatUtil;
     this.giveCommand = giveCommand;

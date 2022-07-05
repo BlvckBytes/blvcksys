@@ -9,7 +9,6 @@ import me.blvckbytes.blvcksys.config.sections.QuestTaskSection;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
-import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.handlers.quests.IQuestHandler;
 import net.minecraft.util.Tuple;
 import org.bukkit.Material;
@@ -37,14 +36,13 @@ public class QuestStagesGui extends AGui<QuestSection> {
   public QuestStagesGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IPlayerTextureHandler textures,
     @AutoInject IQuestHandler quests,
     @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
     super(5, "10-16,19-25,28-34", i -> (
       cfg.get(ConfigKey.GUI_QUEST_STAGES_TITLE)
         .withVariable("quest", i.getArg().getName().asScalar())
-    ), plugin, cfg, textures);
+    ), plugin, cfg);
 
     this.quests = quests;
     this.stdGuiItemProvider = stdGuiItemProvider;

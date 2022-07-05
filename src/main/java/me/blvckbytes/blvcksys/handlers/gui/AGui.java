@@ -8,7 +8,6 @@ import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.IAutoConstructed;
 import me.blvckbytes.blvcksys.events.InventoryManipulationEvent;
-import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
@@ -35,7 +34,6 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
 
   protected final JavaPlugin plugin;
   protected final IConfig cfg;
-  protected final IPlayerTextureHandler textures;
 
   // Mapping players to their active instances
   @Getter
@@ -70,10 +68,9 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     String pageSlotExpr,
     Function<GuiInstance<T>, ConfigValue> title,
     JavaPlugin plugin,
-    IConfig cfg,
-    IPlayerTextureHandler textures
+    IConfig cfg
   ) {
-    this(rows, pageSlotExpr, title, plugin, cfg, textures, InventoryType.CHEST);
+    this(rows, pageSlotExpr, title, plugin, cfg, InventoryType.CHEST);
   }
 
   /**
@@ -89,14 +86,12 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     Function<GuiInstance<T>, ConfigValue> title,
     JavaPlugin plugin,
     IConfig cfg,
-    IPlayerTextureHandler textures,
     InventoryType type
   ) {
     this.rows = rows;
     this.title = title;
     this.plugin = plugin;
     this.cfg = cfg;
-    this.textures = textures;
     this.type = type;
 
     this.pageSlots = slotExprToSlots(pageSlotExpr, rows);
@@ -125,7 +120,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
       activeInstances.put(viewer, new HashSet<>());
 
     // Create and register a new GUI instance
-    GuiInstance<T> inst = new GuiInstance<>(viewer, this, arg, textures, cfg, plugin);
+    GuiInstance<T> inst = new GuiInstance<>(viewer, this, arg, cfg, plugin);
 
     // Call the opening event before actually opening
     if (!opening(inst))

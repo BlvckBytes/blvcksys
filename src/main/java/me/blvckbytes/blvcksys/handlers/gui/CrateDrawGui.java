@@ -6,7 +6,6 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.ICrateHandler;
-import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.persistence.models.CrateItemModel;
 import me.blvckbytes.blvcksys.persistence.models.CrateKeyModel;
 import me.blvckbytes.blvcksys.persistence.models.CrateModel;
@@ -45,7 +44,6 @@ public class CrateDrawGui extends AGui<CrateModel> {
   public CrateDrawGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IPlayerTextureHandler textures,
     @AutoInject ICrateHandler crateHandler,
     @AutoInject CrateContentGui crateContentGui,
     @AutoInject IGiveCommand give,
@@ -54,7 +52,7 @@ public class CrateDrawGui extends AGui<CrateModel> {
     super(5, "", i -> (
       cfg.get(ConfigKey.GUI_CRATE_DRAW_NAME).
         withVariable("name", i.getArg().getName())
-    ), plugin, cfg, textures);
+    ), plugin, cfg);
 
     this.crateHandler = crateHandler;
     this.crateContentGui = crateContentGui;

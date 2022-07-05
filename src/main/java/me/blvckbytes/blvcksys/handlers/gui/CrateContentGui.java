@@ -6,7 +6,6 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.ICrateHandler;
-import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.persistence.models.CrateItemModel;
 import me.blvckbytes.blvcksys.persistence.models.CrateModel;
 import net.minecraft.util.Tuple;
@@ -37,7 +36,6 @@ public class CrateContentGui extends AGui<Tuple<CrateModel, Boolean>> {
   public CrateContentGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IPlayerTextureHandler textures,
     @AutoInject ICrateHandler crateHandler,
     @AutoInject CrateItemDetailGui detailGui,
     @AutoInject IStdGuiItemProvider stdGuiItemProvider
@@ -45,7 +43,7 @@ public class CrateContentGui extends AGui<Tuple<CrateModel, Boolean>> {
     super(6, "10-16,19-25,28-34,37-43", i -> (
       cfg.get(ConfigKey.GUI_CRATE_CONTENT_NAME)
         .withVariable("name", i.getArg().a().getName())
-    ), plugin, cfg, textures);
+    ), plugin, cfg);
 
     this.crateHandler = crateHandler;
     this.detailGui = detailGui;

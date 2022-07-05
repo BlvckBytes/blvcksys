@@ -6,7 +6,6 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.handlers.IAHHandler;
-import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.handlers.TriResult;
 import me.blvckbytes.blvcksys.persistence.models.AHAuctionModel;
 import me.blvckbytes.blvcksys.persistence.models.AHBidModel;
@@ -45,14 +44,13 @@ public class AHBidGui extends AGui<AHAuctionModel> {
   public AHBidGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IPlayerTextureHandler textures,
     @AutoInject IAHHandler ahHandler,
     @AutoInject ChatUtil chatUtil,
     @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
     super(3, "", i -> (
       cfg.get(ConfigKey.GUI_BID_AH)
-    ), plugin, cfg, textures);
+    ), plugin, cfg);
 
     this.ahHandler = ahHandler;
     this.chatUtil = chatUtil;

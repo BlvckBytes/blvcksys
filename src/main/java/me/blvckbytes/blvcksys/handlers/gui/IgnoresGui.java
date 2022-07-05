@@ -26,6 +26,7 @@ public class IgnoresGui extends AGui<Object> {
   private final IIgnoreHandler ignore;
   private final IgnoreDetailGui ignoreDetailGui;
   private final IStdGuiItemProvider stdGuiItemProvider;
+  private final IPlayerTextureHandler textures;
 
   public IgnoresGui(
     @AutoInject IConfig cfg,
@@ -38,11 +39,12 @@ public class IgnoresGui extends AGui<Object> {
     super(4, "10-16,19-25", i -> (
       cfg.get(ConfigKey.GUI_IGNORES_TITLE)
         .withVariable("viewer", i.getViewer().getName())
-    ), plugin, cfg, textures);
+    ), plugin, cfg);
 
     this.ignore = ignore;
     this.ignoreDetailGui = ignoreDetailGui;
     this.stdGuiItemProvider = stdGuiItemProvider;
+    this.textures = textures;
   }
 
   @Override

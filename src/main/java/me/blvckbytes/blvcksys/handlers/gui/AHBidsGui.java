@@ -6,7 +6,6 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
 import me.blvckbytes.blvcksys.handlers.IAHHandler;
-import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.persistence.models.AHAuctionModel;
 import me.blvckbytes.blvcksys.persistence.models.AHBidModel;
 import net.minecraft.util.Tuple;
@@ -40,7 +39,6 @@ public class AHBidsGui extends AGui<Object> {
   public AHBidsGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IPlayerTextureHandler textures,
     @AutoInject IAHHandler ahHandler,
     @AutoInject AHBidGui ahBidGui,
     @AutoInject IStdGuiItemProvider stdGuiItemProvider
@@ -48,7 +46,7 @@ public class AHBidsGui extends AGui<Object> {
     super(5, "10-16,19-25,28-34", i -> (
       cfg.get(ConfigKey.GUI_BIDS_AH)
         .withVariable("name", i.getViewer().getName())
-    ), plugin, cfg, textures);
+    ), plugin, cfg);
 
     this.ahHandler = ahHandler;
     this.ahBidGui = ahBidGui;

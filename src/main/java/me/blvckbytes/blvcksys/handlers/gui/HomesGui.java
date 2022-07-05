@@ -5,7 +5,6 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IHomeHandler;
-import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.handlers.TriResult;
 import me.blvckbytes.blvcksys.persistence.models.HomeModel;
 import net.minecraft.util.Tuple;
@@ -37,7 +36,6 @@ public class HomesGui extends AGui<OfflinePlayer> {
   public HomesGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IPlayerTextureHandler textures,
     @AutoInject IHomeHandler homeHandler,
     @AutoInject ConfirmationGui confirmationGui,
     @AutoInject SingleChoiceGui singleChoiceGui,
@@ -47,7 +45,7 @@ public class HomesGui extends AGui<OfflinePlayer> {
     super(5, "10-16,19-25,28-34", i -> (
       cfg.get(ConfigKey.GUI_HOMES)
         .withVariable("name", i.getArg().getName())
-    ), plugin, cfg, textures);
+    ), plugin, cfg);
 
     this.homeHandler = homeHandler;
     this.confirmationGui = confirmationGui;

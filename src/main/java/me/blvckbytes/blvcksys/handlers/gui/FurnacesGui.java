@@ -26,6 +26,7 @@ public class FurnacesGui extends AGui<Object> {
   private final IVirtualFurnaceHandler furnaceHandler;
   private final VirtualFurnaceGui furnaceGui;
   private final IStdGuiItemProvider stdGuiItemProvider;
+  private final IPlayerTextureHandler textures;
 
   public FurnacesGui(
     @AutoInject IConfig cfg,
@@ -38,11 +39,12 @@ public class FurnacesGui extends AGui<Object> {
     super(5, "10-16,19-25,28-34", i -> (
       cfg.get(ConfigKey.GUI_FURNACES)
         .withVariable("name", i.getViewer().getName())
-    ), plugin, cfg, textures);
+    ), plugin, cfg);
 
     this.furnaceHandler = furnaceHandler;
     this.furnaceGui = furnaceGui;
     this.stdGuiItemProvider = stdGuiItemProvider;
+    this.textures = textures;
   }
 
   @Override

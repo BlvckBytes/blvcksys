@@ -6,7 +6,6 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.di.AutoInjectLate;
-import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.persistence.models.KitModel;
 import org.apache.commons.lang.WordUtils;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -33,13 +32,12 @@ public class KitContentGui extends AGui<KitModel> {
   public KitContentGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IPlayerTextureHandler textures,
     @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
     super(5, "10-16,19-25,28-34", i -> (
       cfg.get(ConfigKey.GUI_KIT_CONTENT_TITLE)
         .withVariable("name", i.getArg().getName())
-    ), plugin, cfg, textures);
+    ), plugin, cfg);
 
     this.stdGuiItemProvider = stdGuiItemProvider;
   }

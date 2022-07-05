@@ -4,7 +4,6 @@ import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
-import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.packets.modifiers.WindowOpenSniffer;
 import org.bukkit.Bukkit;
 import org.bukkit.event.inventory.InventoryType;
@@ -18,13 +17,12 @@ public class VirtualFurnaceGui extends AGui<VirtualFurnace> {
   public VirtualFurnaceGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IPlayerTextureHandler textures,
     @AutoInject WindowOpenSniffer windowSniffer
   ) {
     super(1, "", i -> (
       cfg.get(ConfigKey.GUI_VFURNACE_TITLE)
         .withVariable("name", "#" + i.getArg().getIndex())
-    ), plugin, cfg, textures, InventoryType.FURNACE);
+    ), plugin, cfg, InventoryType.FURNACE);
 
     this.windowSniffer = windowSniffer;
   }

@@ -6,7 +6,6 @@ import me.blvckbytes.blvcksys.config.PlayerPermission;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IObjectiveHandler;
-import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.handlers.IPreferencesHandler;
 import net.minecraft.util.Tuple;
 import org.bukkit.Color;
@@ -40,7 +39,6 @@ public class PreferencesGui extends AGui<Object> {
   public PreferencesGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IPlayerTextureHandler textures,
     @AutoInject IPreferencesHandler prefs,
     @AutoInject IObjectiveHandler obj,
     @AutoInject SingleChoiceGui singleChoiceGui,
@@ -50,7 +48,7 @@ public class PreferencesGui extends AGui<Object> {
     super(4, "", i -> (
       cfg.get(ConfigKey.GUI_PREFERENCES_TITLE)
         .withVariable("viewer", i.getViewer().getName())
-    ), plugin, cfg, textures);
+    ), plugin, cfg);
 
     this.prefs = prefs;
     this.obj = obj;

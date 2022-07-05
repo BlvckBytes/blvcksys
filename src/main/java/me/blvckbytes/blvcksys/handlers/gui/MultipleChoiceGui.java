@@ -5,7 +5,6 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.sections.GuiLayoutSection;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
-import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import net.minecraft.util.Tuple;
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.ItemStack;
@@ -32,12 +31,11 @@ public class MultipleChoiceGui extends AGui<MultipleChoiceParam> {
   public MultipleChoiceGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IPlayerTextureHandler textures,
     @AutoInject SingleChoiceGui singleChoiceGui
   ) {
     super(5, "10-16,19-25,28-34", i -> (
       ConfigValue.immediate(i.getArg().type())
-    ), plugin, cfg, textures);
+    ), plugin, cfg);
 
     this.playerChoices = new HashMap<>();
     this.tookAction = new HashSet<>();

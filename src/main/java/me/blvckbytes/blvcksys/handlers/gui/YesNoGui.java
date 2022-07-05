@@ -5,7 +5,6 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.sections.GuiLayoutSection;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
-import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.handlers.TriResult;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -29,12 +28,11 @@ public class YesNoGui extends AGui<YesNoParam> {
 
   public YesNoGui(
     @AutoInject IConfig cfg,
-    @AutoInject JavaPlugin plugin,
-    @AutoInject IPlayerTextureHandler textures
+    @AutoInject JavaPlugin plugin
   ) {
     super(3, "", i -> (
       ConfigValue.immediate(i.getArg().type())
-    ), plugin, cfg, textures);
+    ), plugin, cfg);
 
     this.madeSelection = new HashSet<>();
   }

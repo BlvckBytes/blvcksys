@@ -5,7 +5,6 @@ import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.config.sections.GuiLayoutSection;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
-import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -35,12 +34,11 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
   public SingleChoiceGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IPlayerTextureHandler textures,
     @AutoInject AnvilSearchGui searchGui
   ) {
     super(5, "10-16,19-25,28-34", i -> (
       ConfigValue.immediate(i.getArg().type())
-    ), plugin, cfg, textures);
+    ), plugin, cfg);
 
     this.haveChosen = new HashSet<>();
     this.searchGui = searchGui;

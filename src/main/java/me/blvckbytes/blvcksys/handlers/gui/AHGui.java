@@ -43,6 +43,7 @@ public class AHGui extends AGui<Object> {
   private final TimeUtil timeUtil;
   private final AHBidGui ahBidGui;
   private final IStdGuiItemProvider stdGuiItemProvider;
+  private final IPlayerTextureHandler textures;
 
   public AHGui(
     @AutoInject IConfig cfg,
@@ -58,8 +59,9 @@ public class AHGui extends AGui<Object> {
   ) {
     super(6, "2-8,11-17,20-26,29-35,38-44", i -> (
       cfg.get(ConfigKey.GUI_AH)
-    ), plugin, cfg, textures);
+    ), plugin, cfg);
 
+    this.textures = textures;
     this.ahHandler = ahHandler;
     this.singleChoiceGui = singleChoiceGui;
     this.chatUtil = chatUtil;

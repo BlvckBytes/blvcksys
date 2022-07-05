@@ -4,7 +4,6 @@ import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
-import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.packets.IPacketInterceptor;
 import me.blvckbytes.blvcksys.packets.IPacketModifier;
 import me.blvckbytes.blvcksys.packets.ModificationPriority;
@@ -50,7 +49,6 @@ public class AnvilSearchGui extends AGui<SingleChoiceParam> implements IPacketMo
   public AnvilSearchGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
-    @AutoInject IPlayerTextureHandler textures,
     @AutoInject IPacketInterceptor packetInterceptor,
     @AutoInject MCReflect refl,
     @AutoInject ILogger logger,
@@ -58,7 +56,7 @@ public class AnvilSearchGui extends AGui<SingleChoiceParam> implements IPacketMo
   ) {
     super(3, "", i -> (
       ConfigValue.immediate(i.getArg().type())
-    ), plugin, cfg, textures, InventoryType.ANVIL);
+    ), plugin, cfg, InventoryType.ANVIL);
 
     this.refl = refl;
     this.logger = logger;

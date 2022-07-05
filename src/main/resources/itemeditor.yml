@@ -87,7 +87,9 @@ myLayout:
   border: false
   # Whether to play animations within this GUI or when navigating to this GUI
   animated: true
-  # Slot assignments, mapping item names found in the "items" section to a slot expression
+  # List of paginated slots, used only in GUIs which have pagination
+  paginated: '10-16,19-25,28-34'
+  # Slot assignments, mapping item names to a slot expression
   # Slot expressions may be just a single number, or a more complex notation, as shown in the example
   slots:
     itemOne: 3
@@ -217,10 +219,16 @@ titles:
 ##########################################################
 
 layouts:
+
+  # Home screen, immediately rendered after running /ie
   home:
     animated: true
     rows: 6
     fill: true
+    
+    # Available slots: increase, displayMarker, display, decrease, customModelData,
+    # material, flags, enchantments, displayname, lore, durability, attributes, fireworks,
+    # compass, headOwner, leatherColor, potionEffects, maps, books, banners
     slots:
       increase: 10
       displayMarker: '12,14'
@@ -242,6 +250,49 @@ layouts:
       maps: 41
       books: 42
       banners: 43
+
+  # Single choice screen, rendered as soon as a single choice is to be made
+  singleChoice:
+    animated: true
+    rows: 5
+    border: true
+    paginated: '10-16,19-25,28-34'
+
+    # Available slots: back, prevPage, currentPage, nextPage, search
+    slots:
+      back: 36
+      prevPage: 38
+      currentPage: 40
+      nextPage: 42
+      search: 44
+
+  # Multiple choice screen, rendered as soon as multiple choices are to be made
+  multipleChoice:
+    animated: true
+    rows: 5
+    border: true
+    paginated: '10-16,19-25,28-34'
+
+    # Available slots: back, prevPage, currentPage, nextPage, newChoice, submit
+    slots:
+      back: 36
+      prevPage: 38
+      currentPage: 40
+      nextPage: 42
+      newChoice: 26
+      submit: 44
+
+  # Yes/No choice screen, rendered as soon as a boolean decision is to be made
+  yesNo:
+    animated: true
+    rows: 3
+    fill: true
+
+    # Available slots: back, yes, no
+    slots:
+      back: 18
+      yes: 11
+      no: 15
 
 ##########################################################
 #                       GUI Items                        #

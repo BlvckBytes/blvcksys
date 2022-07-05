@@ -388,6 +388,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           "material",
           ies.getTitles().getMaterialChoice(),
           ies.getItems().getGeneric(),
+          ies.getLayouts().getSingleChoice(),
           values -> this.buildMaterialRepresentitives(),
           null
         )
@@ -436,6 +437,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
           "flag",
           ies.getTitles().getFlagChoice(),
           ies.getItems().getGeneric(),
+          ies.getLayouts().getSingleChoice(),
           values -> buildItemFlagRepresentitives(meta::hasItemFlag),
           null
         )
@@ -512,6 +514,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "enchantment",
             ies.getTitles().getEnchantmentChoice(),
             ies.getItems().getGeneric(),
+            ies.getLayouts().getSingleChoice(),
             values -> buildEnchantmentRepresentitives(
               ench -> ench.canEnchantItem(item),
               meta::hasEnchant,
@@ -675,6 +678,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "index",
             ies.getTitles().getLoreChoice(),
             ies.getItems().getGeneric(),
+            ies.getLayouts().getSingleChoice(),
             values -> buildLoreRepresentitives(lines),
             // Key 2 means push back, no index required
             // Also, if there are no lines yet, just push back too
@@ -717,6 +721,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "index",
             ies.getTitles().getLoreChoice(),
             ies.getItems().getGeneric(),
+            ies.getLayouts().getSingleChoice(),
             values -> buildLoreRepresentitives(lines),
             null
           )
@@ -946,6 +951,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "attribute",
             ies.getTitles().getAttributeChoice(),
             ies.getItems().getGeneric(),
+            ies.getLayouts().getSingleChoice(),
             values -> (
               buildAttributeRepresentitives(
                 // Create a "fake" multimap which contains an entry for every attribute with a null modifier
@@ -971,6 +977,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "slot",
             ies.getTitles().getEquipmentChoice(),
             ies.getItems().getGeneric(),
+            ies.getLayouts().getSingleChoice(),
             values -> this.buildSlotRepresentitives(),
             null
           )
@@ -978,6 +985,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "operation",
             ies.getTitles().getOperationChoice(),
             ies.getItems().getGeneric(),
+            ies.getLayouts().getSingleChoice(),
             values -> this.buildOperationRepresentitives(),
             null
           )
@@ -1032,6 +1040,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "attribute",
             ies.getTitles().getAttributeChoice(),
             ies.getItems().getGeneric(),
+            ies.getLayouts().getSingleChoice(),
             values -> buildAttributeRepresentitives(attrs, true),
             null
           )
@@ -1144,6 +1153,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "type",
             ies.getTitles().getFireworkTypeChoice(),
             ies.getItems().getGeneric(),
+            ies.getLayouts().getSingleChoice(),
             values -> this.buildFireworkTypeRepresentitives(),
             null
           )
@@ -1157,6 +1167,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "color",
             ies.getTitles().getFireworkEffectColorChoice(),
             ies.getItems().getGeneric(),
+            ies.getLayouts().getMultipleChoice(),
+            ies.getLayouts().getSingleChoice(),
             v -> generateColorReprs(ies.getItems().getChoices()::lookupColorMaterial),
             null
           )
@@ -1170,6 +1182,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "fade",
             ies.getTitles().getFireworkFadeColorChoice(),
             ies.getItems().getGeneric(),
+            ies.getLayouts().getMultipleChoice(),
+            ies.getLayouts().getSingleChoice(),
             v -> generateColorReprs(ies.getItems().getChoices()::lookupColorMaterial, true),
             null
           )
@@ -1177,6 +1191,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             yesNoGui, "flicker",
             ies.getTitles().getFireworkFlickerYesNo(),
             ies.getItems().getGeneric(),
+            ies.getLayouts().getYesNo(),
             ies.getItems().getChoices().getFlickerYes().build(),
             ies.getItems().getChoices().getFlickerNo().build(),
             null
@@ -1185,6 +1200,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             yesNoGui, "trail",
             ies.getTitles().getFireworkTrailYesNo(),
             ies.getItems().getGeneric(),
+            ies.getLayouts().getYesNo(),
             ies.getItems().getChoices().getTrailYes().build(),
             ies.getItems().getChoices().getTrailNo().build(),
             null
@@ -1224,6 +1240,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "index",
             ies.getTitles().getFireworkEffectChoice(),
             ies.getItems().getGeneric(),
+            ies.getLayouts().getSingleChoice(),
             values -> buildFireworkEffectRepresentitives(fm.getEffects()),
             null
           )
@@ -1466,6 +1483,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "type",
             ies.getTitles().getPotionTypeChoice(),
             ies.getItems().getGeneric(),
+            ies.getLayouts().getSingleChoice(),
             values -> this.generatePotionTypeReprs(),
             null
           )
@@ -1613,6 +1631,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "type",
             ies.getTitles().getPotionEffectChoice(),
             ies.getItems().getGeneric(),
+            ies.getLayouts().getSingleChoice(),
             values -> buildPotionEffectRepresentitives(null),
             null
           )
@@ -1665,6 +1684,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "effect",
             ies.getTitles().getPotionEffectChoice(),
             ies.getItems().getGeneric(),
+            ies.getLayouts().getSingleChoice(),
             values -> buildPotionEffectRepresentitives(potionMeta.getCustomEffects()),
             null
           )
@@ -1892,6 +1912,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "generation",
             ies.getTitles().getGenerationChoice(),
             ies.getItems().getGeneric(),
+            ies.getLayouts().getSingleChoice(),
             values -> this.buildGenerationRepresentitives(),
             null
           )
@@ -1956,6 +1977,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "index",
             ies.getTitles().getPageChoice(),
             ies.getItems().getGeneric(),
+            ies.getLayouts().getSingleChoice(),
             values -> buildPageRepresentitives(bookMeta.getPages()),
             null
           )
@@ -2008,6 +2030,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "type",
             ies.getTitles().getBannerPatternTypeChoice(),
             ies.getItems().getGeneric(),
+            ies.getLayouts().getSingleChoice(),
             values -> buildBannerPatternTypeRepresentitives(item.getType()),
             null
           )
@@ -2015,6 +2038,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "color",
             ies.getTitles().getBannerDyeColorChoice(),
             ies.getItems().getGeneric(),
+            ies.getLayouts().getSingleChoice(),
             v -> buildBannerDyeColorRepresentitives(item.getType(), (PatternType) v.get("type")),
             null
           )
@@ -2055,6 +2079,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             "index",
             ies.getTitles().getBannerPatternChoice(),
             ies.getItems().getGeneric(),
+            ies.getLayouts().getSingleChoice(),
             values -> buildBannerPatternRepresentitives(item.getType(), patterns),
             null
           )
@@ -2250,6 +2275,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         "color",
         ies.getTitles().getColorChoice(),
         ies.getItems().getGeneric(),
+        ies.getLayouts().getSingleChoice(),
         values -> generateColorReprs(c -> item.getType()),
         null
       );

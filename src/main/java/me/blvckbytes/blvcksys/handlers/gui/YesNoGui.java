@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.handlers.gui;
 
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.config.sections.GuiLayoutSection;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
@@ -9,7 +10,9 @@ import me.blvckbytes.blvcksys.handlers.TriResult;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 /*
@@ -47,13 +50,17 @@ public class YesNoGui extends AGui<YesNoParam> {
   protected boolean opening(GuiInstance<YesNoParam> inst) {
     Player p = inst.getViewer();
     IStdGuiParamProvider paramProvider = inst.getArg().paramProvider();
+    GuiLayoutSection layout = inst.getArg().layout();
 
-    inst.addFill(paramProvider);
+    if (!inst.applyLayoutParameters(layout, paramProvider))
+      inst.addFill(paramProvider);
+
+    Map<String, String> slots = layout != null ? layout.getSlots() : new HashMap<>();
 
     // Render the back button, if a callback has been set
     if (inst.getArg().backButton() != null) {
       inst.addBack(
-        "18", paramProvider,
+        slots.getOrDefault("back", "18"), paramProvider,
         e -> {
           madeSelection.add(p);
           inst.getArg().backButton().accept(inst);
@@ -62,16 +69,25 @@ public class YesNoGui extends AGui<YesNoParam> {
     }
 
     // Yes button
-    inst.fixedItem("11", () -> inst.getArg().yesButton(), e -> {
-      madeSelection.add(p);
-      inst.getArg().choice().accept(TriResult.SUCC, inst);
-    }, null);
+    inst.fixedItem(
+      slots.getOrDefault("yes", "11"),
+      () -> inst.getArg().yesButton(), e -> {
+        madeSelection.add(p);
+        inst.getArg().choice().accept(TriResult.SUCC, inst);
+      },
+      null
+    );
 
     // No button
-    inst.fixedItem("15", () -> inst.getArg().noButton(), e -> {
-      madeSelection.add(p);
-      inst.getArg().choice().accept(TriResult.ERR, inst);
-    }, null);
+    inst.fixedItem(
+      slots.getOrDefault("no", "15"),
+      () -> inst.getArg().noButton(),
+      e -> {
+        madeSelection.add(p);
+        inst.getArg().choice().accept(TriResult.ERR, inst);
+      },
+      null
+    );
 
     return true;
   }

@@ -157,7 +157,7 @@ public class HomesGui extends AGui<OfflinePlayer> {
       .withChoice(
         "material",
         cfg.get(ConfigKey.GUI_HOMES_CHOICE_ICON_TITLE),
-        stdGuiParamProvider,
+        stdGuiParamProvider, null,
         values -> itemEditorGui.buildMaterialRepresentitives(),
         null
       )
@@ -204,7 +204,7 @@ public class HomesGui extends AGui<OfflinePlayer> {
       .withChoice(
         "color",
         cfg.get(ConfigKey.GUI_HOMES_CHOICE_COLOR_TITLE),
-        stdGuiParamProvider,
+        stdGuiParamProvider, null,
         values -> this.buildChatColorRepresentitives(),
         null
       )

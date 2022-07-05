@@ -5,6 +5,7 @@ import lombok.Setter;
 import me.blvckbytes.blvcksys.config.ConfigKey;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.config.sections.GuiLayoutSection;
 import me.blvckbytes.blvcksys.events.InventoryManipulationEvent;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import org.bukkit.Bukkit;
@@ -29,47 +30,31 @@ import java.util.function.Supplier;
 */
 public class GuiInstance<T> {
 
-  @Getter
-  private final Player viewer;
-
-  @Getter
-  private Inventory inv;
-
-  @Getter
-  private final T arg;
-
   // Items which are on fixed slots
   private final Map<Integer, GuiItem> fixedItems;
 
   // A list of pages, where each page maps a used page slot to an item
   private final List<Map<Integer, GuiItem>> pages;
-
-  // Mapping slots to their redrawing listeners
   private final Map<Integer, List<Runnable>> redrawListeners;
+  private final JavaPlugin plugin;
+  private final IPlayerTextureHandler textures;
+  private final IConfig cfg;
 
   private int currPage;
   private GuiAnimation currAnimation;
   private ItemStack spacer;
   private Runnable beforePaging;
 
-  @Setter
-  private Supplier<List<GuiItem>> pageContents;
-
-  @Setter
-  private Consumer<Long> tickReceiver;
-
-  private final JavaPlugin plugin;
-
-  @Getter
-  private final AGui<T> template;
-  private final IPlayerTextureHandler textures;
-  private final IConfig cfg;
-
-  @Getter
-  private final AtomicBoolean animating;
-
-  @Setter
-  private boolean animationsEnabled;
+  @Setter private Supplier<List<GuiItem>> pageContents;
+  @Setter private Consumer<Long> tickReceiver;
+  @Setter private boolean animationsEnabled;
+  @Setter private List<Integer> pageSlots;
+  @Getter private int rows;
+  @Getter private final AGui<T> template;
+  @Getter private final AtomicBoolean animating;
+  @Getter private final Player viewer;
+  @Getter private Inventory inv;
+  @Getter private final T arg;
 
   /**
    * Create a new GUI instance from a template instance
@@ -91,8 +76,10 @@ public class GuiInstance<T> {
     this.fixedItems = new HashMap<>();
     this.redrawListeners = new HashMap<>();
     this.pages = new ArrayList<>();
+    this.pageSlots = new ArrayList<>(template.getPageSlots());
     this.animating = new AtomicBoolean(false);
     this.animationsEnabled = true;
+    this.rows = template.getRows();
 
     // In order to evaluate the title supplier, this call needs to follow
     // after the instance's property assignments
@@ -162,6 +149,7 @@ public class GuiInstance<T> {
    * @param update Whether to directly open the new inventory to the viewer
    */
   public void resize(int rows, boolean update) {
+    this.rows = rows;
     Inventory newInv = Bukkit.createInventory(null, rows * 9, template.getTitle().apply(this).asScalar());
 
     // Copy over contents
@@ -213,17 +201,21 @@ public class GuiInstance<T> {
     if (this.pageContents == null)
       return;
 
+    // Got no pages to display on
+    if (this.pageSlots.size() == 0)
+      return;
+
     // Clear pages
     pages.clear();
 
     for (GuiItem item : this.pageContents.get()) {
       // Create a new page either initially or if the last page is already fully used
-      if (pages.isEmpty() || pages.get(pages.size() - 1).size() >= template.getPageSlots().size())
+      if (pages.isEmpty() || pages.get(pages.size() - 1).size() >= pageSlots.size())
         pages.add(new HashMap<>());
 
       // Add the new item to the last page and determine it's slot
       Map<Integer, GuiItem> targetPage = pages.get(pages.size() - 1);
-      int slot = template.getPageSlots().get(targetPage.size());
+      int slot = pageSlots.get(targetPage.size());
       targetPage.put(slot, item);
     }
 
@@ -249,7 +241,7 @@ public class GuiInstance<T> {
     @Nullable Consumer<InventoryManipulationEvent> onClick,
     Integer updatePeriod
   ) {
-    for (int slotNumber : template.slotExprToSlots(slotExpr))
+    for (int slotNumber : template.slotExprToSlots(slotExpr, rows))
       fixedItems.put(slotNumber, new GuiItem(s -> item.get(), onClick, updatePeriod));
   }
 
@@ -350,8 +342,8 @@ public class GuiInstance<T> {
   protected void addFill(IStdGuiParamProvider paramProvider) {
     StringBuilder slotExpr = new StringBuilder();
 
-    for (int i = 0; i < template.getRows() * 9; i++) {
-      if (!template.getPageSlots().contains(i))
+    for (int i = 0; i < rows * 9; i++) {
+      if (!pageSlots.contains(i))
         slotExpr.append(i == 0 ? "" : ",").append(i);
     }
 
@@ -365,13 +357,13 @@ public class GuiInstance<T> {
   protected void addBorder(IStdGuiParamProvider paramProvider) {
     StringBuilder slotExpr = new StringBuilder();
 
-    for (int i = 0; i < template.getRows(); i++) {
+    for (int i = 0; i < rows; i++) {
       int firstSlot = 9 * i, lastSlot = firstSlot + 8;
 
       slotExpr.append(i == 0 ? "" : ",").append(firstSlot);
 
       // First or last, use full range
-      if (i == 0 || i == template.getRows() - 1)
+      if (i == 0 || i == rows - 1)
         slotExpr.append('-');
 
       // Inbetween, only use first and last
@@ -434,7 +426,7 @@ public class GuiInstance<T> {
    */
   public void redraw(String slotExpr) {
     // Iterate all slots which should be redrawn
-    for (int slot : template.slotExprToSlots(slotExpr)) {
+    for (int slot : template.slotExprToSlots(slotExpr, rows)) {
 
       // Vacant slot, skip
       GuiItem target = getItem(slot).orElse(null);
@@ -452,7 +444,7 @@ public class GuiInstance<T> {
    * @param callback Event listener
    */
   public void onRedrawing(String slotExpr, Runnable callback) {
-    template.slotExprToSlots(slotExpr).forEach(slot -> {
+    template.slotExprToSlots(slotExpr, rows).forEach(slot -> {
       if (!this.redrawListeners.containsKey(slot))
         this.redrawListeners.put(slot, new ArrayList<>());
       this.redrawListeners.get(slot).add(callback);
@@ -508,7 +500,7 @@ public class GuiInstance<T> {
     // Advance to the next page (or last page) and force an update
     currPage = last ? pages.size() - 1 : currPage + 1;
     updatePage(null);
-    playAnimation(animation, before, template.getPageSlots(), null);
+    playAnimation(animation, before, pageSlots, null);
     return true;
   }
 
@@ -535,7 +527,7 @@ public class GuiInstance<T> {
     // Advance to the previous page and force an update
     currPage = first ? 0 : currPage - 1;
     updatePage(null);
-    playAnimation(animation, before, template.getPageSlots(), null);
+    playAnimation(animation, before, pageSlots, null);
     return true;
   }
 
@@ -557,7 +549,7 @@ public class GuiInstance<T> {
    * Get the size of a page
    */
   public int getPageSize() {
-    return template.getPageSlots().size();
+    return pageSlots.size();
   }
 
   /**
@@ -583,18 +575,18 @@ public class GuiInstance<T> {
   public void updatePage(@Nullable Long time) {
     // There are no pages yet, clear all page slots
     if (pages.size() == 0) {
-      for (int pageSlot : template.getPageSlots())
+      for (int pageSlot : pageSlots)
         setItem(pageSlot, null);
       return;
     }
 
     // Start out with all available page slots and remove used slots one at a time
-    List<Integer> pageSlots = new ArrayList<>(template.getPageSlots());
+    List<Integer> remaining = new ArrayList<>(this.pageSlots);
 
     // Loop all items of the current page
     for (Map.Entry<Integer, GuiItem> pageItem : pages.get(currPage).entrySet()) {
       GuiItem item = pageItem.getValue();
-      pageSlots.remove(pageItem.getKey());
+      remaining.remove(pageItem.getKey());
 
       // Only update on force updates or if the time is a multiple of the item's period
       if (time == null || (item.updatePeriod() != null && item.updatePeriod() > 0 && time % item.updatePeriod() == 0))
@@ -602,7 +594,7 @@ public class GuiInstance<T> {
     }
 
     // Clear unused page slots if they're not already vacant
-    for (Integer vacantPageSlot : pageSlots) {
+    for (Integer vacantPageSlot : remaining) {
       if (inv.getItem(vacantPageSlot) != null)
         setItem(vacantPageSlot, null);
     }
@@ -629,6 +621,28 @@ public class GuiInstance<T> {
 
     // Tick all page items
     updatePage(time);
+  }
+
+  /**
+   * Applies all basic parameters of a layout, if the layout is provided
+   * @param layout Layout to apply
+   * @param paramProvider Parameter provider ref
+   * @return True if applied, false otherwise
+   */
+  public boolean applyLayoutParameters(@Nullable GuiLayoutSection layout, IStdGuiParamProvider paramProvider) {
+    if (layout == null)
+      return false;
+
+    setAnimationsEnabled(layout.isAnimated());
+    resize(layout.getRows(), false);
+
+    if (layout.isFill())
+      addFill(paramProvider);
+    else if (layout.isBorder())
+      addBorder(paramProvider);
+
+    setPageSlots(template.slotExprToSlots(layout.getPaginated(), rows));
+    return true;
   }
 
   /**

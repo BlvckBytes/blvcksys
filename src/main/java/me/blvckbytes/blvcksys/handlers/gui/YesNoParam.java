@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
+import me.blvckbytes.blvcksys.config.sections.GuiLayoutSection;
 import me.blvckbytes.blvcksys.handlers.TriResult;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +18,11 @@ public record YesNoParam(
   // Type of yes/no to be displayed in the title
   String type,
 
+  // Provider for standard parameters used in GUIs
   IStdGuiParamProvider paramProvider,
+
+  // Optional custom GUI layout specification
+  @Nullable GuiLayoutSection layout,
 
   // Button to display for YES
   ItemStack yesButton,

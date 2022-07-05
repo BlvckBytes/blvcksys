@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
+import me.blvckbytes.blvcksys.config.sections.GuiLayoutSection;
 import net.minecraft.util.Tuple;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,10 @@ public record SingleChoiceParam(
 
   // Provider for standard parameters used in GUIs
   IStdGuiParamProvider paramProvider,
+
+  // Optional custom GUI layout specification
+  // Available slots: prevPage, currPage, nextPage, search, back
+  @Nullable GuiLayoutSection layout,
 
   // Custom external filtering function
   @Nullable Function<String, List<Tuple<Object, ItemStack>>> customFilter,

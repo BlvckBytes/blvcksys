@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.handlers.gui;
 
 import me.blvckbytes.blvcksys.config.ConfigValue;
 import me.blvckbytes.blvcksys.config.IConfig;
+import me.blvckbytes.blvcksys.config.sections.GuiLayoutSection;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
@@ -9,7 +10,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
@@ -58,22 +61,31 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
     Player p = inst.getViewer();
     SingleChoiceParam arg = inst.getArg();
     IStdGuiParamProvider paramProvider = arg.paramProvider();
+    GuiLayoutSection layout = arg.layout();
 
-    inst.addBorder(paramProvider);
+    if (!inst.applyLayoutParameters(layout, paramProvider))
+      inst.addBorder(paramProvider);
 
-    inst.addPagination("38", "40", "42", paramProvider);
+    Map<String, String> slots = layout != null ? layout.getSlots() : new HashMap<>();
+
+    inst.addPagination(
+      slots.getOrDefault("prevPage", "38"),
+      slots.getOrDefault("currentPage", "40"),
+      slots.getOrDefault("nextPage", "42"),
+      paramProvider
+    );
 
     // Reopens this instance on the next tick when called
     Runnable reopen = () -> Bukkit.getScheduler().runTask(plugin, () -> inst.reopen(AnimationType.SLIDE_UP));
 
     // Search button
     inst.fixedItem(
-      "44",
+      slots.getOrDefault("search", "44"),
       () -> paramProvider.getItem(StdGuiItem.SEARCH, null),
       e -> {
         // Create a carbon copy of the param and re-route callbacks
         SingleChoiceParam scp = new SingleChoiceParam(
-          arg.type(), arg.representitives(), paramProvider,
+          arg.type(), arg.representitives(), paramProvider, arg.layout(),
           arg.customFilter(), arg.selected(),
 
           // Re-open the choice if nothing was chosen or back was clicked
@@ -89,10 +101,13 @@ public class SingleChoiceGui extends AGui<SingleChoiceParam> {
     );
 
     if (inst.getArg().backButton() != null) {
-      inst.addBack("36", paramProvider, e -> {
-        haveChosen.add(p);
-        inst.getArg().backButton().accept(inst);
-      });
+      inst.addBack(
+        slots.getOrDefault("back", "36"),
+        paramProvider, e -> {
+          haveChosen.add(p);
+          inst.getArg().backButton().accept(inst);
+        }
+      );
     }
 
     inst.setPageContents(() -> (

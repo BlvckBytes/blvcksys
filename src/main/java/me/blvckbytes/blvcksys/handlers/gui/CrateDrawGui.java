@@ -120,7 +120,7 @@ public class CrateDrawGui extends AGui<CrateModel> {
         .asScalar()
     );
 
-    List<Integer> animSlots = inst.getTemplate().slotExprToSlots(layout.getItemSlots());
+    List<Integer> animSlots = inst.getTemplate().slotExprToSlots(layout.getItemSlots(), inst.getRows());
     int relOut = animSlots.indexOf(layout.getOutputSlot());
 
     Tuple<List<ItemStack>, CrateItemModel> loopData = createItemLoop(crate, itemModels, animSlots.size(), relOut);

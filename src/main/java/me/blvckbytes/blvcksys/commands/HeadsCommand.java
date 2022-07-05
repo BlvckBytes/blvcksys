@@ -62,7 +62,7 @@ public class HeadsCommand extends APlayerCommand {
   protected void invoke(Player p, String label, String[] args) throws CommandException {
     SingleChoiceParam scp = new SingleChoiceParam(
       cfg.get(ConfigKey.GUI_HEADS_SEARCH_NAME).asScalar(),
-      new ArrayList<>(), stdGuiParamProvider,
+      new ArrayList<>(), stdGuiParamProvider, null,
 
       search -> (
         // Only return as many results at max as will fit into the search GUI

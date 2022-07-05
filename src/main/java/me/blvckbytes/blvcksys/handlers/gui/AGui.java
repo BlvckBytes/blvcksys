@@ -99,7 +99,7 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
     this.textures = textures;
     this.type = type;
 
-    this.pageSlots = slotExprToSlots(pageSlotExpr);
+    this.pageSlots = slotExprToSlots(pageSlotExpr, rows);
     this.activeInstances = new HashMap<>();
     this.tickerHandle = -1;
   }
@@ -301,8 +301,9 @@ public abstract class AGui<T> implements IAutoConstructed, Listener {
   /**
    * Convert a slot expression to a set of slot indices
    * @param slotExpr Slot expression
+   * @param rows Number of rows of the GUI
    */
-  public List<Integer> slotExprToSlots(String slotExpr) {
+  public List<Integer> slotExprToSlots(String slotExpr, int rows) {
     if (slotExpr.isBlank())
       return new ArrayList<>();
 

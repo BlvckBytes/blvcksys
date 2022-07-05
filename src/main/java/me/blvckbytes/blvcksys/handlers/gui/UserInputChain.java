@@ -1,6 +1,7 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
 import me.blvckbytes.blvcksys.config.ConfigValue;
+import me.blvckbytes.blvcksys.config.sections.GuiLayoutSection;
 import me.blvckbytes.blvcksys.handlers.TriResult;
 import me.blvckbytes.blvcksys.packets.communicators.bookeditor.IBookEditorCommunicator;
 import me.blvckbytes.blvcksys.util.ChatUtil;
@@ -156,6 +157,7 @@ public class UserInputChain {
    * @param field Name of the field
    * @param type Type of choice (part of the screen title)
    * @param stdProvider Provider for standard GUI items
+   * @param layout Layout for the GUI
    * @param yesButton Button to display for the YES action
    * @param noButton Button to display for the NO action
    * @param skip Optional skip predicate
@@ -165,6 +167,7 @@ public class UserInputChain {
     String field,
     ConfigValue type,
     IStdGuiParamProvider stdProvider,
+    @Nullable GuiLayoutSection layout,
     ItemStack yesButton,
     ItemStack noButton,
     @Nullable Function<Map<String, Object>, Boolean> skip
@@ -177,7 +180,7 @@ public class UserInputChain {
       }
 
       YesNoParam param = new YesNoParam(
-        type.asScalar(), stdProvider, yesButton, noButton,
+        type.asScalar(), stdProvider, layout, yesButton, noButton,
 
         // Has chosen
         (selection, selectionInst) -> {
@@ -227,6 +230,7 @@ public class UserInputChain {
    * @param field Name of the field
    * @param type Type of choice (part of the screen title)
    * @param stdProvider Provider for standard GUI items
+   * @param layout Layout for the GUI
    * @param representitives List of representitive items and their values
    * @param skip Optional skip predicate
    */
@@ -234,10 +238,11 @@ public class UserInputChain {
     String field,
     ConfigValue type,
     IStdGuiParamProvider stdProvider,
+    @Nullable GuiLayoutSection layout,
     Function<Map<String, Object>, List<Tuple<Object, ItemStack>>> representitives,
     @Nullable Function<Map<String, Object>, Boolean> skip
   ) {
-    return withChoice(null, null, field, type, stdProvider, representitives, skip);
+    return withChoice(null, null, field, type, stdProvider, layout, null, representitives, skip);
   }
 
   /**
@@ -246,6 +251,8 @@ public class UserInputChain {
    * @param field Name of the field
    * @param type Type of choice (part of the screen title)
    * @param stdProvider Provider for standard GUI items
+   * @param layout Layout for the GUI
+   * @param choiceLayout Layout for the single choice GUI when using multiple choice GUIs
    * @param representitives List of representitive items and their values
    * @param skip Optional skip predicate
    */
@@ -255,6 +262,8 @@ public class UserInputChain {
     String field,
     ConfigValue type,
     IStdGuiParamProvider stdProvider,
+    @Nullable GuiLayoutSection layout,
+    @Nullable GuiLayoutSection choiceLayout,
     Function<Map<String, Object>, List<Tuple<Object, ItemStack>>> representitives,
     @Nullable Function<Map<String, Object>, Boolean> skip
   ) {
@@ -295,7 +304,7 @@ public class UserInputChain {
       // Multiple choice
       if (multipleChoiceGui != null) {
         MultipleChoiceParam param = new MultipleChoiceParam(
-          type.asScalar(), representitives.apply(values), stdProvider, selectionTransform,
+          type.asScalar(), representitives.apply(values), stdProvider, layout, choiceLayout, selectionTransform,
           null, selected::accept, closed::accept, back::accept
         );
 
@@ -311,7 +320,7 @@ public class UserInputChain {
       // Single choice
       else {
         SingleChoiceParam param = new SingleChoiceParam(
-          type.asScalar(), representitives.apply(values), stdProvider,
+          type.asScalar(), representitives.apply(values), stdProvider, layout,
           null, selected::accept, closed::accept, back::accept
         );
 

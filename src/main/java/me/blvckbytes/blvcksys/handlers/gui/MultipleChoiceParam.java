@@ -1,5 +1,6 @@
 package me.blvckbytes.blvcksys.handlers.gui;
 
+import me.blvckbytes.blvcksys.config.sections.GuiLayoutSection;
 import net.minecraft.util.Tuple;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,14 @@ public record MultipleChoiceParam(
 
   // Provider for standard parameters used in GUIs
   IStdGuiParamProvider paramProvider,
+
+  // Optional custom GUI layout specification
+  // Available slots: prevPage, currPage, nextPage, back, submit, newChoice
+  @Nullable GuiLayoutSection layout,
+
+  // Optional custom GUI layout specification
+  // Available slots: See SingleChoiceParam
+  @Nullable GuiLayoutSection choiceLayout,
 
   // Used to transform selected items
   @Nullable Function<ItemStack, ItemStack> selectionTransform,

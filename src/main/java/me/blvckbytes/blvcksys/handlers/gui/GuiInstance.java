@@ -44,6 +44,7 @@ public class GuiInstance<T> {
   private GuiAnimation currAnimation;
   private ItemStack spacer;
   private Runnable beforePaging;
+  private String currTitle;
 
   @Setter private Supplier<List<GuiItem>> pageContents;
   @Setter private Consumer<Long> tickReceiver;
@@ -80,13 +81,14 @@ public class GuiInstance<T> {
     this.animating = new AtomicBoolean(false);
     this.animationsEnabled = true;
     this.rows = template.getRows();
+    this.currTitle = template.getTitle().apply(this).asScalar();
 
     // In order to evaluate the title supplier, this call needs to follow
     // after the instance's property assignments
     if (template.getType() == InventoryType.CHEST)
-      this.inv = Bukkit.createInventory(null, template.getRows() * 9, template.getTitle().apply(this).asScalar());
+      this.inv = Bukkit.createInventory(null, template.getRows() * 9, currTitle);
     else
-      this.inv = Bukkit.createInventory(null, template.getType(), template.getTitle().apply(this).asScalar());
+      this.inv = Bukkit.createInventory(null, template.getType(), currTitle);
   }
 
   //=========================================================================//
@@ -125,6 +127,9 @@ public class GuiInstance<T> {
     // Re-register this instance which was unregistered when closed
     template.getActiveInstances().get(viewer).add(this);
 
+    // Check that the title is still valid
+    syncTitle();
+
     Bukkit.getScheduler().runTask(plugin, () -> {
       redraw("*");
       open(animation, previous == null ? null : previous.getInv());
@@ -141,6 +146,21 @@ public class GuiInstance<T> {
   }
 
   //////////////////////////////// Inventory //////////////////////////////////
+
+  /**
+   * Checks if the title needs to be synchronized (has changed) and
+   * will force a inventory recreation if the title it outdated
+   */
+  private void syncTitle() {
+    String newTitle = template.getTitle().apply(this).asScalar();
+
+    // Title still up to date
+    if (newTitle.equals(currTitle))
+      return;
+
+    // Force inventory recreation
+    resize(rows, false);
+  }
 
   /**
    * Resizes the inventory to a given number of rows and copies over as much of

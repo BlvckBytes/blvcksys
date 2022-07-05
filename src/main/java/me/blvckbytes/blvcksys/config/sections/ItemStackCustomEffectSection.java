@@ -38,8 +38,8 @@ public class ItemStackCustomEffectSection extends AConfigSection {
     if (type == null || duration == null)
       return Optional.empty();
 
-    Integer amplifier = this.amplifier == null ? 0 : this.amplifier.asScalar(Integer.class);
-    Integer duration = this.duration == null ? 0 : this.duration.asScalar(Integer.class);
+    Integer amplifier = this.amplifier == null ? 0 : this.amplifier.withVariables(variables).asScalar(Integer.class);
+    Integer duration = this.duration.withVariables(variables).asScalar(Integer.class);
 
     return Optional.of(new PotionEffect(
       type, duration == null ? 20 * 60 : duration,

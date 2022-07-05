@@ -9,6 +9,7 @@ import me.blvckbytes.blvcksys.config.sections.itemeditor.IEPerm;
 import me.blvckbytes.blvcksys.config.sections.itemeditor.IESection;
 import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
+import me.blvckbytes.blvcksys.handlers.IGameProfileResolver;
 import me.blvckbytes.blvcksys.handlers.IPlayerTextureHandler;
 import me.blvckbytes.blvcksys.packets.communicators.bookeditor.IBookEditorCommunicator;
 import me.blvckbytes.blvcksys.persistence.models.PlayerTextureModel;
@@ -76,12 +77,14 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
   private final MCReflect refl;
   private final YesNoGui yesNoGui;
   private final MultipleChoiceGui multipleChoiceGui;
+  private final IGameProfileResolver profileResolver;
 
   private final IESection ies;
 
   public ItemEditorGui(
     @AutoInject IConfig cfg,
     @AutoInject JavaPlugin plugin,
+    // TODO: Remove this dependency from GUIs
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject SingleChoiceGui singleChoiceGui,
     @AutoInject ILogger logger,
@@ -89,7 +92,8 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     @AutoInject MCReflect refl,
     @AutoInject IBookEditorCommunicator bookEditor,
     @AutoInject YesNoGui yesNoGui,
-    @AutoInject MultipleChoiceGui multipleChoiceGui
+    @AutoInject MultipleChoiceGui multipleChoiceGui,
+    @AutoInject IGameProfileResolver profileResolver
   ) {
     super(6, "", null, plugin, cfg, textures);
 
@@ -100,6 +104,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     this.bookEditor = bookEditor;
     this.yesNoGui = yesNoGui;
     this.multipleChoiceGui = multipleChoiceGui;
+    this.profileResolver = profileResolver;
 
     this.ies = cfg.reader("itemeditor")
       .flatMap(r -> r.parseValue(null, IESection.class, true))
@@ -1378,37 +1383,37 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       new UserInputChain(inst, values -> {
         String owner = (String) values.get("owner");
 
-        // TODO: Write a simpler interface for resolving names in order to decouple from DB
-        // Load the corresponding textures
-        PlayerTextureModel ownerTextures = textures.getTextures(owner, false).orElse(null);
-        if (ownerTextures == null) {
+        profileResolver.resolve(owner, profile -> {
+          if (profile == null) {
+            inst.getViewer().sendMessage(
+              ies.getMessages().getSkullownerNotLoadable()
+                .withPrefix()
+                .withVariable("owner", owner)
+                .asScalar()
+            );
+            return;
+          }
+
+          // Overwrite the GameProfile of the skull
+          try {
+            Field profileField = skullMeta.getClass().getDeclaredField("profile");
+            profileField.setAccessible(true);
+            profileField.set(skullMeta, profile);
+          } catch (Exception ex) {
+            logger.logError(ex);
+          }
+
+          item.setItemMeta(skullMeta);
+          inst.redraw(slotExpr + "," + displaySlotExpr);
+
           inst.getViewer().sendMessage(
-            ies.getMessages().getSkullownerNotLoadable()
+            ies.getMessages().getSkullownerSet()
               .withPrefix()
-              .withVariable("owner", owner)
+              .withVariable("owner", profile.getName())
               .asScalar()
           );
+        });
 
-          return;
-        }
-
-        // Overwrite the GameProfile of the skull
-        try {
-          Field profileField = skullMeta.getClass().getDeclaredField("profile");
-          profileField.setAccessible(true);
-          profileField.set(skullMeta, ownerTextures.toProfile());
-        } catch (Exception ex) {
-          logger.logError(ex);
-        }
-
-        item.setItemMeta(skullMeta);
-
-        inst.getViewer().sendMessage(
-          ies.getMessages().getSkullownerSet()
-            .withPrefix()
-            .withVariable("owner", ownerTextures.getName())
-            .asScalar()
-        );
       }, singleChoiceGui, chatUtil)
         // TODO: Add buttons to config
         .withPrompt(

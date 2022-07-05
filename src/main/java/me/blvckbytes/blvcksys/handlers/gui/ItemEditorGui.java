@@ -53,6 +53,9 @@ import java.util.stream.Collectors;
 @AutoConstruct
 public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<ItemStack>, @Nullable Consumer<GuiInstance<?>>>> {
 
+  // Default leather color which getColor() returns, if no color has been set
+  private static final Color DEF_LEATHER_COLOR = Color.fromRGB(0xA06540);
+
   // Representitives which don't change are cached
   private final Map<Class<?>, List<Tuple<Object, ItemStack>>> staticRepresentitiveCache;
 
@@ -340,7 +343,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       if (key == 2) {
         if (!meta.hasCustomModelData()) {
           inst.getViewer().sendMessage(
-            ies.getMessages().getPotioneffectCustomNone()
+            ies.getMessages().getCustomModelDataNone()
               .withPrefix()
               .asScalar()
           );
@@ -934,7 +937,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
           meta.addAttributeModifier(attr.a(), new AttributeModifier(
             UUID.randomUUID(),
-            attr.a().name(),
+            String.valueOf(UUID.randomUUID()),
             amount, op, slot
           ));
 
@@ -944,6 +947,9 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             ies.getMessages().getAttributeAdded()
               .withPrefix()
               .withVariable("attribute", formatConstant(attr.a().name()))
+              .withVariable("equipment", formatConstant(slot.name()))
+              .withVariable("operator", formatConstant(op.name()))
+              .withVariable("amount", amount)
               .asScalar()
           );
         }, singleChoiceGui, chatUtil)
@@ -1307,6 +1313,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       // Set the target location
       if (key == 1) {
         cm.setLodestone(inst.getViewer().getLocation());
+        cm.setLodestoneTracked(false);
         item.setItemMeta(meta);
         inst.redraw(slotExpr + "," + displaySlotExpr);
 
@@ -1331,6 +1338,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         }
 
         cm.setLodestone(null);
+        cm.setLodestoneTracked(true);
         item.setItemMeta(meta);
         inst.redraw(slotExpr + "," + displaySlotExpr);
 
@@ -1370,6 +1378,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       new UserInputChain(inst, values -> {
         String owner = (String) values.get("owner");
 
+        // TODO: Write a simpler interface for resolving names in order to decouple from DB
         // Load the corresponding textures
         PlayerTextureModel ownerTextures = textures.getTextures(owner, false).orElse(null);
         if (ownerTextures == null) {
@@ -1401,6 +1410,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             .asScalar()
         );
       }, singleChoiceGui, chatUtil)
+        // TODO: Add buttons to config
         .withPrompt(
           "owner",
           values -> ies.getMessages().getSkullownerPrompt().withPrefix(),
@@ -1422,7 +1432,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.LEATHER_COLOR.has(inst.getViewer()))
         .build(
           ConfigValue.makeEmpty()
-            .withVariable("color", lam == null ? "/" : stringifyColor(lam.getColor()))
+            .withVariable("color", (lam == null || lam.getColor().equals(DEF_LEATHER_COLOR)) ? "/" : stringifyColor(lam.getColor()))
             .exportVariables()
         );
     }, e -> {
@@ -1438,12 +1448,12 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
         return;
 
       if (key == 1 || key == 2) {
-        promptForColor(inst, key == 2, item, meta, displaySlotExpr);
+        promptForColor(inst, key == 2, item, meta, slotExpr + "," + displaySlotExpr);
         return;
       }
 
       if (key == 3) {
-        resetColor(inst, item, meta, displaySlotExpr);
+        resetColor(inst, item, meta, slotExpr + "," + displaySlotExpr);
         return;
       }
     }, null);
@@ -1454,12 +1464,17 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     if (meta == null)
       return;
 
-    inst.fixedItem(slotExpr, () -> (
-      ies.getItems().getHome().getPotionEffects()
-        .patch(ies.getItems().getHome().getNotApplicable(), !(meta instanceof PotionMeta))
+    inst.fixedItem(slotExpr, () -> {
+      PotionMeta pm = (meta instanceof PotionMeta x) ? x : null;
+      return ies.getItems().getHome().getPotionEffects()
+        .patch(ies.getItems().getHome().getNotApplicable(), pm == null)
         .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.POTION_EFFECTS.has(inst.getViewer()))
-        .build()
-    ), e -> {
+        .build(
+          ConfigValue.makeEmpty()
+            .withVariable("color", (pm == null || pm.getColor() == null) ? "/" : stringifyColor(pm.getColor()))
+            .exportVariables()
+        );
+    }, e -> {
       if (missingPermission(IEPerm.POTION_EFFECTS, inst.getViewer()))
         return;
 
@@ -1632,7 +1647,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             ies.getTitles().getPotionEffectChoice(),
             ies.getItems().getGeneric(),
             ies.getLayouts().getSingleChoice(),
-            values -> buildPotionEffectRepresentitives(null),
+            values -> buildPotionEffectRepresentitives(null, false),
             null
           )
           .withPrompt(
@@ -1685,7 +1700,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
             ies.getTitles().getPotionEffectChoice(),
             ies.getItems().getGeneric(),
             ies.getLayouts().getSingleChoice(),
-            values -> buildPotionEffectRepresentitives(potionMeta.getCustomEffects()),
+            values -> buildPotionEffectRepresentitives(potionMeta.getCustomEffects(), true),
             null
           )
           .start();
@@ -1716,13 +1731,13 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
       // Change color
       if (key == 7 || key == 8) {
-        promptForColor(inst, key == 8, item, meta, displaySlotExpr);
+        promptForColor(inst, key == 8, item, meta, slotExpr + "," + displaySlotExpr);
         return;
       }
 
       // Reset color
       if (key == 9) {
-        resetColor(inst, item, meta, displaySlotExpr);
+        resetColor(inst, item, meta, slotExpr + "," + displaySlotExpr);
         return;
       }
     }, null);
@@ -1733,12 +1748,17 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     if (meta == null)
       return;
 
-    inst.fixedItem(slotExpr, () -> (
-      ies.getItems().getHome().getMaps()
-        .patch(ies.getItems().getHome().getNotApplicable(), !(meta instanceof MapMeta))
+    inst.fixedItem(slotExpr, () -> {
+      MapMeta mm = (meta instanceof MapMeta x) ? x : null;
+      return ies.getItems().getHome().getMaps()
+        .patch(ies.getItems().getHome().getNotApplicable(), mm == null)
         .patch(ies.getItems().getHome().getMissingPermission(), !IEPerm.MAPS.has(inst.getViewer()))
-        .build()
-    ), e -> {
+        .build(
+          ConfigValue.makeEmpty()
+            .withVariable("color", (mm == null || mm.getColor() == null) ? "/" : stringifyColor(mm.getColor()))
+            .exportVariables()
+        );
+    }, e -> {
       if (missingPermission(IEPerm.MAPS, inst.getViewer()))
         return;
 
@@ -1752,13 +1772,13 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
 
       // Change color
       if (key == 1 || key == 2) {
-        promptForColor(inst, key == 2, item, meta, displaySlotExpr);
+        promptForColor(inst, key == 2, item, meta, slotExpr + "," + displaySlotExpr);
         return;
       }
 
       // Reset color
       if (key == 3) {
-        resetColor(inst, item, meta, displaySlotExpr);
+        resetColor(inst, item, meta, slotExpr + "," + displaySlotExpr);
         return;
       }
     }, null);
@@ -1936,6 +1956,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
               .asScalar()
           );
         }, singleChoiceGui, chatUtil)
+          // TODO: Fix this thing up
           .withBookEditor(
             bookEditor, "result",
             values -> ies.getMessages().getBookEditPrompt().withPrefix(),
@@ -2210,7 +2231,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
       Color color = (Color) refl.invokeMethodByName(meta, "getColor", new Class<?>[]{});
 
       // Has no color applied yet (leather always has a color - brown)
-      if (color == null || (meta instanceof LeatherArmorMeta && color.equals(Color.fromRGB(0xA06540)))) {
+      if (color == null || (meta instanceof LeatherArmorMeta && color.equals(DEF_LEATHER_COLOR))) {
         inst.getViewer().sendMessage(
           ies.getMessages().getColorNone()
             .withPrefix()
@@ -2461,7 +2482,7 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
    * Build a list of representitives for all available potion effects
    * @param effects List of existing effects, leave null to build all available effects
    */
-  private List<Tuple<Object, ItemStack>> buildPotionEffectRepresentitives(@Nullable List<PotionEffect> effects) {
+  private List<Tuple<Object, ItemStack>> buildPotionEffectRepresentitives(@Nullable List<PotionEffect> effects, boolean active) {
     // Create representitive items for each effect
     List<Tuple<Object, ItemStack>> representitives = new ArrayList<>();
 
@@ -2475,7 +2496,11 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     for (PotionEffect effect : effects) {
       representitives.add(new Tuple<>(
         effect,
-        ies.getItems().getChoices().getPotionEffect()
+        (
+          active ?
+            ies.getItems().getChoices().getPotionEffectActive() :
+            ies.getItems().getChoices().getPotionEffectNew()
+        )
           .asItem(
             ConfigValue.makeEmpty()
               .withVariable("effect_hr", formatConstant(effect.getType().getName()))
@@ -2567,12 +2592,15 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
     return Arrays.stream(ItemFlag.values())
       .map(f -> (
           new Tuple<>((Object) f, (
-            ies.getItems().getChoices().getFlag()
+            (
+              isActive.apply(f) ?
+              ies.getItems().getChoices().getFlagActive() :
+              ies.getItems().getChoices().getFlagInactive()
+            )
               .asItem(
                 ConfigValue.makeEmpty()
                   .withVariable("icon", ies.getItems().getChoices().lookupItemFlagMaterial(f))
                   .withVariable("flag", formatConstant(f.name()))
-                  .withVariable("state", formatConstant(String.valueOf(isActive.apply(f))))
                   .exportVariables())
               )
             .build()
@@ -2714,7 +2742,6 @@ public class ItemEditorGui extends AGui<Triple<ItemStack, @Nullable Consumer<Ite
                   .withVariable("enchantment", ench.a())
                   .withVariable("icon", ies.getItems().getChoices().lookupEnchantmentMaterial(ench.b()).name())
                   .withVariable("enchantment_hr", formatConstant(ench.b().getKey().getKey()))
-                  .withVariable("state", formatConstant(String.valueOf(has)))
                   .withVariable("level", level)
                   .exportVariables())
               .build()

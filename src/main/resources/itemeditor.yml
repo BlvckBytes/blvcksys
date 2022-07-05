@@ -101,6 +101,7 @@ myLayout:
 ##########################################################
 
 messages:
+  prefix: '&5&lIE &8| '
   itemEmpty: '&7Es wurde &ckein Item &7zur Verfügung gestellt.'
   missingPermission: '&cDu hast für diese Aktion keine Rechte.'
   invalidInteger: '&7Die Eingabe &c{{number}} &7ist keine &cGanzzahl&7.'

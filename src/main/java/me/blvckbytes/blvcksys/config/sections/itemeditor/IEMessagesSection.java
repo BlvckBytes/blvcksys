@@ -4,6 +4,9 @@ import lombok.Getter;
 import me.blvckbytes.blvcksys.config.AConfigSection;
 import me.blvckbytes.blvcksys.config.ConfigValue;
 
+import java.lang.reflect.Field;
+import java.util.List;
+
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
   Created On: 07/01/2022
@@ -13,6 +16,7 @@ import me.blvckbytes.blvcksys.config.ConfigValue;
 @Getter
 public class IEMessagesSection extends AConfigSection {
 
+  private ConfigValue prefix;
   private ConfigValue itemEmpty;
   private ConfigValue missingPermission;
   private ConfigValue invalidInteger;
@@ -105,5 +109,23 @@ public class IEMessagesSection extends AConfigSection {
     if (type == ConfigValue.class)
       return ConfigValue.immediate("&cundefined");
     return super.defaultFor(type, field);
+  }
+
+  @Override
+  public void afterParsing(List<Field> fields) {
+    String pref = prefix.asScalar();
+
+    // Patch the prefix on all config values which are not the prefix itself
+    fields.stream()
+      .filter(f -> !f.getName().equals("prefix") && f.getType() == ConfigValue.class)
+      .forEach(f -> {
+        try {
+          ConfigValue cv = (ConfigValue) f.get(this);
+          if (cv != null)
+            cv.setPrefix(pref);
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
+      });
   }
 }

@@ -2,6 +2,7 @@ package me.blvckbytes.blvcksys.config;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Setter;
 import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.ChatColor;
 import org.bukkit.Color;
@@ -48,7 +49,8 @@ public class ConfigValue {
   private final Map<String, String> vars;
 
   // Global prefix value
-  private final String prefix;
+  @Setter
+  private String prefix;
 
   // Color palette
   private final String palette;

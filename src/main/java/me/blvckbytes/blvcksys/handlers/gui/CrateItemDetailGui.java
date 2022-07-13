@@ -30,7 +30,6 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
   private final ICrateHandler crateHandler;
   private final ChatUtil chatUtil;
   private final ConfirmationGui confirmationGui;
-  private final ItemEditorGui itemEditorGui;
   private final IStdGuiItemProvider stdGuiItemProvider;
 
   @AutoInjectLate
@@ -42,7 +41,6 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
     @AutoInject ICrateHandler crateHandler,
     @AutoInject ChatUtil chatUtil,
     @AutoInject ConfirmationGui confirmationGui,
-    @AutoInject ItemEditorGui itemEditorGui,
     @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
     super(6, "", i -> (
@@ -53,7 +51,6 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
     this.crateHandler = crateHandler;
     this.chatUtil = chatUtil;
     this.confirmationGui = confirmationGui;
-    this.itemEditorGui = itemEditorGui;
     this.stdGuiItemProvider = stdGuiItemProvider;
   }
 
@@ -184,20 +181,20 @@ public class CrateItemDetailGui extends AGui<Tuple<CrateModel, CrateItemModel>> 
         .withLore(cfg.get(ConfigKey.GUI_CRATE_DETAIL_EDIT_LORE))
         .build()
     ), i -> {
-      inst.switchTo(AnimationType.SLIDE_LEFT, itemEditorGui, new Triple<>(
-        item.getItem(),
-
-        // Store the item on edits
-        edited -> {
-          item.setItem(edited);
-          crateHandler.updateItem(item);
-        },
-
-        // Re-open the detail GUI on completion
-        editorInv -> {
-          editorInv.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
-        }
-      ));
+//      inst.switchTo(AnimationType.SLIDE_LEFT, itemEditorGui, new Triple<>(
+//        item.getItem(),
+//
+//        // Store the item on edits
+//        edited -> {
+//          item.setItem(edited);
+//          crateHandler.updateItem(item);
+//        },
+//
+//        // Re-open the detail GUI on completion
+//        editorInv -> {
+//          editorInv.switchTo(AnimationType.SLIDE_RIGHT, this, inst.getArg());
+//        }
+//      ));
     }, null);
 
     return true;

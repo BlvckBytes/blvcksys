@@ -54,7 +54,7 @@ public class YamlConfig implements IConfig, IAutoConstructed {
     this.palette = "";
 
     // Copy default config files from the resource folder
-    this.copyDefaults(new String[] {"quests"}, new String[] {"itemeditor"});
+    this.copyDefaults(new String[] {"quests"}, new String[] {});
 
     // Initially load the main config (always needed)
     this.load("config");

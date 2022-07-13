@@ -7,6 +7,8 @@ import me.blvckbytes.blvcksys.di.AutoConstruct;
 import me.blvckbytes.blvcksys.di.AutoInject;
 import me.blvckbytes.blvcksys.handlers.IObjectiveHandler;
 import me.blvckbytes.blvcksys.handlers.IPreferencesHandler;
+import me.blvckbytes.blvcksys.util.Triple;
+import me.blvckbytes.blvcksys.util.logging.ILogger;
 import net.minecraft.util.Tuple;
 import org.bukkit.Color;
 import org.bukkit.Material;
@@ -16,10 +18,13 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /*
   Author: BlvckBytes <blvckbytes@gmail.com>
@@ -33,8 +38,8 @@ public class PreferencesGui extends AGui<Object> {
   private final IPreferencesHandler prefs;
   private final IObjectiveHandler obj;
   private final SingleChoiceGui singleChoiceGui;
-  private final ItemEditorGui itemEditorGui;
   private final IStdGuiItemProvider stdGuiItemProvider;
+  private final ILogger logger;
 
   public PreferencesGui(
     @AutoInject IConfig cfg,
@@ -42,8 +47,8 @@ public class PreferencesGui extends AGui<Object> {
     @AutoInject IPreferencesHandler prefs,
     @AutoInject IObjectiveHandler obj,
     @AutoInject SingleChoiceGui singleChoiceGui,
-    @AutoInject ItemEditorGui itemEditorGui,
-    @AutoInject IStdGuiItemProvider stdGuiItemProvider
+    @AutoInject IStdGuiItemProvider stdGuiItemProvider,
+    @AutoInject ILogger logger
   ) {
     super(4, "", i -> (
       cfg.get(ConfigKey.GUI_PREFERENCES_TITLE)
@@ -52,7 +57,7 @@ public class PreferencesGui extends AGui<Object> {
 
     this.prefs = prefs;
     this.obj = obj;
-    this.itemEditorGui = itemEditorGui;
+    this.logger = logger;
     this.singleChoiceGui = singleChoiceGui;
     this.stdGuiItemProvider = stdGuiItemProvider;
   }
@@ -161,7 +166,7 @@ public class PreferencesGui extends AGui<Object> {
           "color",
           cfg.get(ConfigKey.GUI_PREFERENCES_ARROW_TRAILS_COLOR_TITLE),
           stdGuiItemProvider, null,
-          values -> itemEditorGui.generateColorReprs(this::colorToMaterial),
+          values -> generateColorReprs(this::colorToMaterial),
           values -> {
             // Skip whenever either the particle doesn't support color or the player hasn't yet unlocked this effect
             Particle particle = (Particle) values.get("particle");
@@ -198,6 +203,64 @@ public class PreferencesGui extends AGui<Object> {
     ), null, null);
 
     return true;
+  }
+
+  /**
+   * Get a list of all pre-defined color constants and their names
+   */
+  private List<Tuple<Color, String>> getColorConstants() {
+    List<Tuple<Color, String>> colors = new ArrayList<>();
+
+    // Get all available colors from the class's list of constant fields
+    try {
+      List<Field> constants = Arrays.stream(Color.class.getDeclaredFields())
+        .filter(field -> field.getType().equals(Color.class) && Modifier.isStatic(field.getModifiers()))
+        .toList();
+
+      for (Field constant : constants) {
+        Color color = (Color) constant.get(null);
+
+        if (color == null)
+          continue;
+
+        colors.add(new Tuple<>(color, constant.getName()));
+      }
+    } catch (Exception ex) {
+      logger.logError(ex);
+    }
+
+    return colors;
+  }
+
+  /**
+   * Generate a list of color representations from bukkit's color class to be used with a choice GUI
+   * @param material Material resolver function
+   */
+  private List<Tuple<Object, ItemStack>> generateColorReprs(Function<Color, Material> material) {
+    // Create a list of all available slots
+    List<Tuple<Object, ItemStack>> slotReprs = new ArrayList<>();
+
+    List<Triple<Color, String, Material>> colors = getColorConstants().stream()
+      .map(t -> new Triple<>(t.a(), t.b(), material.apply(t.a()))).toList();
+
+    for (Triple<Color, String, Material> color : colors) {
+      slotReprs.add(new Tuple<>(
+        new Tuple<>(color.a(), color.b()),
+        // TODO: Implement properly
+        new ItemStackBuilder(material.apply(color.a())).build()
+//        ies.getItems().getChoices().getColor()
+//          .asItem(
+//            ConfigValue.makeEmpty()
+//              .withVariable("color_hr", formatConstant(color.b()))
+//              .withVariable("color", color.b())
+//              .withVariable("icon", color.c())
+//              .exportVariables()
+//          )
+//          .build()
+      ));
+    }
+
+    return slotReprs;
   }
 
   /**

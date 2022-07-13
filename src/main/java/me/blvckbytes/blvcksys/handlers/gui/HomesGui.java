@@ -30,7 +30,6 @@ public class HomesGui extends AGui<OfflinePlayer> {
   private final IHomeHandler homeHandler;
   private final ConfirmationGui confirmationGui;
   private final SingleChoiceGui singleChoiceGui;
-  private final ItemEditorGui itemEditorGui;
   private final IStdGuiItemProvider stdGuiItemProvider;
 
   public HomesGui(
@@ -39,7 +38,6 @@ public class HomesGui extends AGui<OfflinePlayer> {
     @AutoInject IHomeHandler homeHandler,
     @AutoInject ConfirmationGui confirmationGui,
     @AutoInject SingleChoiceGui singleChoiceGui,
-    @AutoInject ItemEditorGui itemEditorGui,
     @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
     super(5, "10-16,19-25,28-34", i -> (
@@ -50,7 +48,6 @@ public class HomesGui extends AGui<OfflinePlayer> {
     this.homeHandler = homeHandler;
     this.confirmationGui = confirmationGui;
     this.singleChoiceGui = singleChoiceGui;
-    this.itemEditorGui = itemEditorGui;
     this.stdGuiItemProvider = stdGuiItemProvider;
   }
 
@@ -156,10 +153,29 @@ public class HomesGui extends AGui<OfflinePlayer> {
         "material",
         cfg.get(ConfigKey.GUI_HOMES_CHOICE_ICON_TITLE),
         stdGuiItemProvider, null,
-        values -> itemEditorGui.buildMaterialRepresentitives(),
+        values -> buildMaterialRepresentitives(),
         null
       )
       .start();
+  }
+
+  /**
+   * Build a list of representitives for all available materials
+   */
+  public List<Tuple<Object, ItemStack>> buildMaterialRepresentitives() {
+    // Representitive items for each material
+    return Arrays.stream(Material.values())
+      .filter(m -> !(
+        m.isAir() ||
+          m.isLegacy()
+      ) && m.isItem())
+      .map(m -> (
+          new Tuple<>((Object) m, (
+            // TODO: Create proper item
+            new ItemStackBuilder(m).build()
+          ))
+        )
+      ).toList();
   }
 
   private void moveHome(GuiInstance<OfflinePlayer> inst, HomeModel home) {

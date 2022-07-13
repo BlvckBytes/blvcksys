@@ -64,7 +64,6 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
   // Players mapped to their current mouse button state
   private final Map<Player, MoveRequest> moving;
   private final IArmorStandHandler standHandler;
-  private final ItemEditorGui itemEditorGui;
   private final ChatUtil chatUtil;
   private final IStdGuiItemProvider stdGuiItemProvider;
   private final IPlayerTextureHandler textures;
@@ -74,7 +73,6 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
     @AutoInject JavaPlugin plugin,
     @AutoInject IPlayerTextureHandler textures,
     @AutoInject IArmorStandHandler standHandler,
-    @AutoInject ItemEditorGui itemEditorGui,
     @AutoInject ChatUtil chatUtil,
     @AutoInject IStdGuiItemProvider stdGuiItemProvider
   ) {
@@ -86,7 +84,6 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
     this.moving = new HashMap<>();
     this.standHandler = standHandler;
     this.chatUtil = chatUtil;
-    this.itemEditorGui = itemEditorGui;
     this.stdGuiItemProvider = stdGuiItemProvider;
     this.textures = textures;
   }
@@ -508,15 +505,15 @@ public class ArmorStandGui extends AGui<ArmorStandModel> {
       }
 
       if (e.getClick().isLeftClick()) {
-        inst.switchTo(AnimationType.SLIDE_LEFT, itemEditorGui, new Triple<>(
-          slot.get(props),
-          stack -> {
-            slot.set(props, stack);
-            standHandler.setProperties(inst.getArg().getName(), props, true);
-            inst.redraw(invSlotExpr);
-          },
-          editorInst -> inst.reopen(AnimationType.SLIDE_RIGHT, editorInst)
-        ));
+//        inst.switchTo(AnimationType.SLIDE_LEFT, itemEditorGui, new Triple<>(
+//          slot.get(props),
+//          stack -> {
+//            slot.set(props, stack);
+//            standHandler.setProperties(inst.getArg().getName(), props, true);
+//            inst.redraw(invSlotExpr);
+//          },
+//          editorInst -> inst.reopen(AnimationType.SLIDE_RIGHT, editorInst)
+//        ));
       }
     }, null);
   }
